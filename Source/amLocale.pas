@@ -44,6 +44,7 @@ type
     function GetFlag: TBitmap;
     function GetDisplayName: string;
     function GetISO3166Name: string;
+    function GetLocaleName: string;
     function GetCountryCode: integer;
     function GetAnsiCodePage: integer;
     function GetLanguageName: string;
@@ -64,6 +65,7 @@ type
     property DisplayName: string read GetDisplayName;
     property ISO3166Name: string read GetISO3166Name;
     property ISO639_1Name: string read GetISO639_1Name;
+    property LocaleName: string read GetLocaleName;
     property CountryCode: integer read GetCountryCode;
     property CountryName: string read GetCountryName;
     property AnsiCodePage: integer read GetAnsiCodePage;
@@ -101,6 +103,7 @@ type
     class function FindLCID(Value: LCID): TLocaleItem; static;
     class function FindCountry(const Value: string): TLocaleItem; static;
     class function FindName(const Value: string): TLocaleItem; static;
+    class function FindLocaleName(const Value: string; Exact: boolean = False): TLocaleItem; static;
     class function FindLanguageName(const Value: string): TLocaleItem; static;
     class function FindLanguageShortName(const Value: string): TLocaleItem; static;
     class function FindCountryCode(const Value: integer): TLocaleItem; static; deprecated;
@@ -685,6 +688,28 @@ begin
     end;
 end;
 
+class function TLocaleItems.FindLocaleName(const Value: string; Exact: boolean): TLocaleItem;
+var
+  i: integer;
+  Language: string;
+begin
+  Result := nil;
+  for i := 0 to LocaleItems.Count-1 do
+    if (AnsiSameText(FLocaleItems[i].LocaleName, Value)) then
+      Exit(FLocaleItems[i]);
+
+  if (Exact) then
+    exit;
+
+  i := Pos('-', Value);
+  if (i = -1) then
+   exit;
+
+  Language := Copy(Value, 1, i-1);
+
+  Result := FindISO639_1Name(Language);
+end;
+
 //------------------------------------------------------------------------------
 
 class function TLocaleItems.FindName(const Value: string): TLocaleItem;
@@ -862,6 +887,12 @@ begin
   Buffer[0] := #0;
   GetLocaleInfoW(ID, Flag, Buffer, SizeOf(Buffer) div 2);
   Result := Buffer;
+end;
+
+function TLocaleItem.GetLocaleName: string;
+begin
+  // en-us, da-dk, etc.
+  Result := Format('%s-%s', [ISO639_1Name, ISO3166Name]);
 end;
 
 //------------------------------------------------------------------------------

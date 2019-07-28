@@ -3,13 +3,18 @@ program DFMReader;
 uses
   Vcl.Forms,
   Main in 'Main.pas' {Form4},
-  amLocalizer in 'amLocalizer.pas';
+  amLocalization.Model in 'amLocalization.Model.pas',
+  FormNewProject in 'FormNewProject.pas' {FormNewProject},
+  amLocalization.Import.XLIFF in 'amLocalization.Import.XLIFF.pas',
+  amLocalization.ResourceWriter in 'amLocalization.ResourceWriter.pas',
+  amLocalization.Persistence in 'amLocalization.Persistence.pas',
+  amLocalization.Engine in 'amLocalization.Engine.pas';
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm4, Form4);
+  Application.CreateForm(TFormMain, FormMain);
   Application.Run;
 end.
