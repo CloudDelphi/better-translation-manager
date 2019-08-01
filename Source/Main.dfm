@@ -120,8 +120,6 @@ object FormMain: TFormMain
     OptionsView.ShowColumnFilterButtons = sfbAlways
     TabOrder = 2
     OnEditValueChanged = TreeListEditValueChanged
-    ExplicitLeft = 8
-    ExplicitTop = 119
     Data = {
       00000500F80100000F00000044617461436F6E74726F6C6C6572310800000012
       000000546378537472696E6756616C7565547970651200000054637853747269
@@ -319,16 +317,16 @@ object FormMain: TFormMain
         end
         item
           BeginGroup = True
-          Visible = True
-          ItemName = 'dxBarButton1'
-        end
-        item
           ViewLevels = [ivlLargeControlOnly, ivlSmallIconWithText, ivlSmallIcon, ivlControlOnly]
           Visible = True
           ItemName = 'dxBarLargeButton2'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton1'
         end>
-      OneOnRow = True
-      Row = 1
+      OneOnRow = False
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -356,7 +354,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton3'
         end>
       OneOnRow = False
-      Row = 2
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -376,7 +374,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton2'
         end>
       OneOnRow = False
-      Row = 2
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -384,7 +382,7 @@ object FormMain: TFormMain
     object BarManagerBarLanguage: TdxBar
       Caption = 'Language'
       CaptionButtons = <>
-      DockedLeft = 0
+      DockedLeft = 395
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -399,7 +397,7 @@ object FormMain: TFormMain
           Visible = True
           ItemName = 'BarEditItemTargetLanguage'
         end>
-      OneOnRow = True
+      OneOnRow = False
       Row = 0
       UseOwnFont = False
       Visible = True
@@ -427,8 +425,8 @@ object FormMain: TFormMain
           Visible = True
           ItemName = 'dxBarButton5'
         end>
-      OneOnRow = True
-      Row = 1
+      OneOnRow = False
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -455,7 +453,7 @@ object FormMain: TFormMain
           Visible = True
           ItemName = 'dxBarButton8'
         end>
-      OneOnRow = True
+      OneOnRow = False
       Row = 0
       UseOwnFont = False
       Visible = True

@@ -1,5 +1,5 @@
 [ExpressSkins]
-Default=0
+Default=1
 ShowNotifications=0
 Enabled=1
 dxSkinBlack=0
@@ -33,7 +33,7 @@ dxSkinOffice2010Silver=0
 dxSkinOffice2013DarkGray=0
 dxSkinOffice2013LightGray=0
 dxSkinOffice2013White=0
-dxSkinOffice2016Colorful=1
+dxSkinOffice2016Colorful=0
 dxSkinOffice2016Dark=0
 dxSkinOffice2019Colorful=1
 dxSkinPumpkin=0
@@ -55,3 +55,10 @@ dxSkinVisualStudio2013Light=0
 dxSkinVS2010=0
 dxSkinWhiteprint=0
 dxSkinXmas2008Blue=0
+HorizonMT_Alt=0
+HMT_SKIN=0
+HRS_Skin=0
+IFX_Metropolis=0
+IFX_OptimizerBlue=0
+Skin_Horizon_dagkalkyle=0
+Skin_Horizon_Planner=0

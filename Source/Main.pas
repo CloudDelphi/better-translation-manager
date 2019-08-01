@@ -5,16 +5,16 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient,
   amLocalization.Model,
   dxRibbonForm,
-  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore, dxSkinOffice2019Colorful,
+  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
   dxRibbonCustomizationForm, cxStyles, cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges, Data.DB,
   cxDBData, cxGridLevel, cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid, dxBar, dxSkinsForm,
   cxClasses, dxStatusBar, dxRibbonStatusBar, dxRibbon, cxTL, cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxMemo,
-  cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, System.Actions, Vcl.ActnList, System.ImageList,
-  Vcl.ImgList, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, Datasnap.DBClient,
-  cxBarEditItem, dxSkinOffice2016Colorful;
+  cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
+  cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog;
 
 
 const
@@ -144,6 +144,10 @@ uses
   Generics.Collections,
   Generics.Defaults,
   msxmldom,
+
+  // DevExpress skins
+  dxSkinOffice2016Colorful,
+
   amLocale,
   amLocalization.Engine,
   amLocalization.ResourceWriter,

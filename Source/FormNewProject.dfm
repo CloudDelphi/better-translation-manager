@@ -23,6 +23,7 @@ object FormNewProject: TFormNewProject
     Height = 193
     TabOrder = 0
     AutoSize = True
+    LayoutLookAndFeel = LayoutSkinLookAndFeel
     object EditSourceApplication: TcxButtonEdit
       Left = 106
       Top = 10
@@ -55,29 +56,22 @@ object FormNewProject: TFormNewProject
           Kind = bkGlyph
         end>
       Properties.OnButtonClick = EditSourceApplicationPropertiesButtonClick
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebs3D
       Style.HotTrack = False
-      Style.ButtonStyle = bts3D
       TabOrder = 0
       Width = 326
     end
     object ComboBoxSourceLanguage: TcxExtLookupComboBox
       Left = 106
-      Top = 40
+      Top = 38
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebs3D
       Style.HotTrack = False
-      Style.ButtonStyle = bts3D
-      Style.PopupBorderStyle = epbsFrame3D
       TabOrder = 1
       Width = 145
     end
     object ButtonOK: TcxButton
       Left = 276
-      Top = 79
+      Top = 77
       Width = 75
       Height = 25
       Caption = 'OK'
@@ -87,12 +81,11 @@ object FormNewProject: TFormNewProject
     end
     object ButtonCancel: TcxButton
       Left = 357
-      Top = 79
+      Top = 77
       Width = 75
       Height = 25
       Cancel = True
       Caption = 'Cancel'
-      Default = True
       ModalResult = 2
       TabOrder = 3
     end
@@ -110,7 +103,7 @@ object FormNewProject: TFormNewProject
       CaptionOptions.Text = 'Source application:'
       Control = EditSourceApplication
       ControlOptions.AlignHorz = ahLeft
-      ControlOptions.OriginalHeight = 24
+      ControlOptions.OriginalHeight = 22
       ControlOptions.OriginalWidth = 326
       ControlOptions.ShowBorder = False
       Index = 0
@@ -178,5 +171,13 @@ object FormNewProject: TFormNewProject
     Options = [fdoPathMustExist, fdoFileMustExist]
     Left = 176
     Top = 128
+  end
+  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
+    Left = 68
+    Top = 96
+    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
+      LookAndFeel.NativeStyle = False
+      PixelsPerInch = 96
+    end
   end
 end

@@ -4,10 +4,11 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, Vcl.StdCtrls,
+  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxClasses, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
-  cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, Vcl.Menus, Vcl.StdCtrls, cxButtons, dxSkinsCore,
-  dxSkinOffice2019Colorful, cxGridDBTableView;
+  cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
+  cxGridDBTableView, dxLayoutLookAndFeels;
 
 type
   TFormNewProject = class(TForm)
@@ -24,6 +25,8 @@ type
     dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     FileOpenDialogApplication: TFileOpenDialog;
+    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
+    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     procedure EditSourceApplicationPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
   private
     function GetSourceApplication: string;
