@@ -1,10 +1,15 @@
 program DFMReader;
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Vcl.Forms,
   Main in 'Main.pas' {Form4},
   amLocalization.Model in 'amLocalization.Model.pas',
-  FormNewProject in 'FormNewProject.pas' {FormNewProject},
+  amLocalization.Dialog.NewProject in 'amLocalization.Dialog.NewProject.pas' {FormNewProject},
   amLocalization.Import.XLIFF in 'amLocalization.Import.XLIFF.pas',
   amLocalization.ResourceWriter in 'amLocalization.ResourceWriter.pas',
   amLocalization.Persistence in 'amLocalization.Persistence.pas',

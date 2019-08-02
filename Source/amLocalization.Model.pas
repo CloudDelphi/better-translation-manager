@@ -229,6 +229,8 @@ type
     FTranslations: TLocalizerTranslations;
   protected
     procedure SetValue(const Value: string);
+    function GetTranslatedValue(LocaleID: LCID): string;
+    procedure SetTranslatedValue(LocaleID: LCID; const Value: string);
   public
     constructor Create(AItem: TLocalizerItem; const AName: string);
     destructor Destroy; override;
@@ -239,6 +241,7 @@ type
 
     property Item: TLocalizerItem read GetParent;
     property Value: string read FValue write SetValue;
+    property TranslatedValue[LocaleID: LCID]: string read GetTranslatedValue write SetTranslatedValue;
 
     property Translations: TLocalizerTranslations read FTranslations;
   end;
@@ -668,6 +671,23 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TLocalizerProperty.SetTranslatedValue(LocaleID: LCID; const Value: string);
+begin
+  Translations.AddOrUpdateTranslation(LocaleID, Value);
+end;
+
+function TLocalizerProperty.GetTranslatedValue(LocaleID: LCID): string;
+var
+  Translation: TLocalizerTranslation;
+begin
+  if (Translations.TryGetTranslation(LocaleID, Translation)) and (Translation.Status <> tStatusObsolete) then
+    Result := Translation.Value
+  else
+    Result := Value;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerProperty.SetValue(const Value: string);
 begin
   if (FValue = Value) then
@@ -675,6 +695,8 @@ begin
   FValue := Value;
 end;
 
+
+// -----------------------------------------------------------------------------
 
 function TLocalizerProperty.Traverse(Delegate: TLocalizerTranslationDelegate): boolean;
 var
@@ -699,10 +721,10 @@ begin
   begin
     Result := TLocalizerTranslation.Create;
     FTranslations.Add(LocaleID, Result);
-
-    Result.Value := Value;
-    Result.Status := Status;
   end;
+
+  Result.Value := Value;
+  Result.Status := Status;
 end;
 
 constructor TLocalizerTranslations.Create;

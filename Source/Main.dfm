@@ -232,12 +232,14 @@ object FormMain: TFormMain
       Summary.GroupFooterSummaryItems = <>
     end
     object TreeListColumnTarget: TcxTreeListColumn
-      PropertiesClassName = 'TcxBlobEditProperties'
-      Properties.BlobEditKind = bekMemo
-      Properties.BlobPaintStyle = bpsText
-      Properties.ImmediateDropDownWhenActivated = False
-      Properties.ImmediateDropDownWhenKeyPressed = False
-      Properties.MemoWantTabs = False
+      PropertiesClassName = 'TcxButtonEditProperties'
+      Properties.Buttons = <
+        item
+          Default = True
+          Hint = 'Open in text editor'
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = TreeListColumnTargetPropertiesButtonClick
       Caption.AlignVert = vaTop
       Caption.Text = 'Target value'
       DataBinding.ValueType = 'String'
@@ -1641,5 +1643,19 @@ object FormMain: TFormMain
           231B5C2C19795E78CE131CCC3FD2409CCC2C3656140000000049454E44AE4260
           82}
       end>
+  end
+  object SpellChecker: TdxSpellChecker
+    CheckAsYouTypeOptions.Active = True
+    CheckAsYouTypeOptions.UnderlineStyle = usWavyLine
+    DictionaryItems = <
+      item
+        DictionaryTypeClassName = 'TdxUserSpellCheckerDictionary'
+        DictionaryType.Enabled = False
+        DictionaryType.DictionaryPath = '.\Dictionaries\user-xxx.dic'
+      end>
+    SpellingFormType = sftWord
+    UseThreadedLoad = True
+    Left = 552
+    Top = 376
   end
 end

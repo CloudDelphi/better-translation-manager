@@ -1,4 +1,4 @@
-unit FormNewProject;
+unit amLocalization.Dialog.NewProject;
 
 interface
 
