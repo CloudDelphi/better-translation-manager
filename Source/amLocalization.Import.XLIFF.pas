@@ -292,7 +292,7 @@ var
   SourceLanguage, TargetLanguage: string;
   SourceLocaleID, TargetLocaleID: LCID;
   LocaleItem: TLocaleItem;
-  Translation: TLocalizerTranslation;
+//  Translation: TLocalizerTranslation;
   SourceValue, TargetValue: string;
   Value: string;
   NewValue: string;
@@ -675,7 +675,7 @@ begin
         LocalizerProperty := LocalizerItem.AddProperty(PropertyName, SourceValue);
         if (TargetNode <> nil) then
         begin
-          Translation := LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLocaleID, TargetValue);
+          {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLocaleID, TargetValue);
         end;
       end;
     end;

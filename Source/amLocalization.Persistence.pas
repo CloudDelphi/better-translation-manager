@@ -116,74 +116,79 @@ begin
 
   ProjectNode := RootNode.ChildNodes['project'];
 
-  Project.Clear;
+  Project.BeginUpdate;
+  try
+    Project.Clear;
 
-  Project.Name := VarToStr(ProjectNode.Attributes['name']);
-  Project.BaseLocaleID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
+    Project.Name := VarToStr(ProjectNode.Attributes['name']);
+    Project.BaseLocaleID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
 
-  ModulesNode := ProjectNode.ChildNodes.FindNode('modules');
-  if (ModulesNode = nil) then
-    exit;
+    ModulesNode := ProjectNode.ChildNodes.FindNode('modules');
+    if (ModulesNode = nil) then
+      exit;
 
-  ModuleNode := ModulesNode.ChildNodes.First;
-  while (ModuleNode <> nil) do
-  begin
-    if (ModuleNode.NodeName = 'module') then
+    ModuleNode := ModulesNode.ChildNodes.First;
+    while (ModuleNode <> nil) do
     begin
-      Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
-      Module.Kind := StringToModuleKind(VarToStr(ModuleNode.Attributes['type']));
-      Module.State := StringToItemState(VarToStr(ModuleNode.Attributes['state']));
-      Module.Status := StringToItemStatus(VarToStr(ModuleNode.Attributes['status']));
-
-      ItemsNode := ModuleNode.ChildNodes.FindNode('items');
-      if (ItemsNode <> nil) then
+      if (ModuleNode.NodeName = 'module') then
       begin
-        ItemNode := ItemsNode.ChildNodes.First;
-        while (ItemNode <> nil) do
+        Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
+        Module.Kind := StringToModuleKind(VarToStr(ModuleNode.Attributes['type']));
+        Module.State := StringToItemState(VarToStr(ModuleNode.Attributes['state']));
+        Module.Status := StringToItemStatus(VarToStr(ModuleNode.Attributes['status']));
+
+        ItemsNode := ModuleNode.ChildNodes.FindNode('items');
+        if (ItemsNode <> nil) then
         begin
-          if (ItemNode.NodeName = 'item') then
+          ItemNode := ItemsNode.ChildNodes.First;
+          while (ItemNode <> nil) do
           begin
-            Item := Module.AddItem(VarToStr(ItemNode.Attributes['name']), VarToStr(ItemNode.Attributes['type']));
-            Item.ResourceID := StrToIntDef(VarToStr(ItemNode.Attributes['id']), 0);
-            Item.State := StringToItemState(VarToStr(ItemNode.Attributes['state']));
-            Item.Status := StringToItemStatus(VarToStr(ItemNode.Attributes['status']));
-
-            PropsNode := ItemNode.ChildNodes.FindNode('properties');
-            if (PropsNode <> nil) then
+            if (ItemNode.NodeName = 'item') then
             begin
-              PropNode := PropsNode.ChildNodes.First;
-              while (PropNode <> nil) do
-              begin
-                if (PropNode.NodeName = 'property') then
-                begin
-                  Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), VarToStr(PropNode.ChildValues['value']));
-                  Prop.State := StringToItemState(VarToStr(PropNode.Attributes['state']));
-                  Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
+              Item := Module.AddItem(VarToStr(ItemNode.Attributes['name']), VarToStr(ItemNode.Attributes['type']));
+              Item.ResourceID := StrToIntDef(VarToStr(ItemNode.Attributes['id']), 0);
+              Item.State := StringToItemState(VarToStr(ItemNode.Attributes['state']));
+              Item.Status := StringToItemStatus(VarToStr(ItemNode.Attributes['status']));
 
-                  XlatsNode := PropNode.ChildNodes.FindNode('translations');
-                  if (XlatsNode <> nil) then
+              PropsNode := ItemNode.ChildNodes.FindNode('properties');
+              if (PropsNode <> nil) then
+              begin
+                PropNode := PropsNode.ChildNodes.First;
+                while (PropNode <> nil) do
+                begin
+                  if (PropNode.NodeName = 'property') then
                   begin
-                    XlatNode := XlatsNode.ChildNodes.First;
-                    while (XlatNode <> nil) do
+                    Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), VarToStr(PropNode.ChildValues['value']));
+                    Prop.State := StringToItemState(VarToStr(PropNode.Attributes['state']));
+                    Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
+
+                    XlatsNode := PropNode.ChildNodes.FindNode('translations');
+                    if (XlatsNode <> nil) then
                     begin
-                      if (XlatNode.NodeName = 'translation') then
+                      XlatNode := XlatsNode.ChildNodes.First;
+                      while (XlatNode <> nil) do
                       begin
-                        Translation := Prop.Translations.AddOrUpdateTranslation(XlatNode.Attributes['language'], XlatNode.Text);
-                        Translation.Status := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
+                        if (XlatNode.NodeName = 'translation') then
+                        begin
+                          Translation := Prop.Translations.AddOrUpdateTranslation(XlatNode.Attributes['language'], XlatNode.Text);
+                          Translation.Status := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
+                        end;
+                        XlatNode := XlatNode.NextSibling;
                       end;
-                      XlatNode := XlatNode.NextSibling;
                     end;
                   end;
+                  PropNode := PropNode.NextSibling;
                 end;
-                PropNode := PropNode.NextSibling;
               end;
             end;
+            ItemNode := ItemNode.NextSibling;
           end;
-          ItemNode := ItemNode.NextSibling;
         end;
       end;
+      ModuleNode := ModuleNode.NextSibling;
     end;
-    ModuleNode := ModuleNode.NextSibling;
+  finally
+    Project.EndUpdate;
   end;
 end;
 

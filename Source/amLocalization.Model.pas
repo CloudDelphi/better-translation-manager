@@ -89,6 +89,8 @@ type
     FName: string;
     FState: TLocalizerItemState;
     FStatus: TLocalizerItemStatus;
+    procedure SetState(const Value: TLocalizerItemState);
+    procedure SetStatus(const Value: TLocalizerItemStatus);
   protected
     procedure SetName(const Value: string); virtual;
     function GetState: TLocalizerItemState; virtual;
@@ -106,8 +108,8 @@ type
 
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; virtual; abstract;
 
-    property State: TLocalizerItemState read GetState write FState;
-    property Status: TLocalizerItemStatus read GetStatus write FStatus;
+    property State: TLocalizerItemState read GetState write SetState;
+    property Status: TLocalizerItemStatus read GetStatus write SetStatus;
     property InheritParentState: boolean read GetInheritParentState;
     property InheritParentStatus: boolean read GetInheritParentStatus;
   end;
@@ -219,6 +221,8 @@ type
   public
     constructor Create(AOwner: TLocalizerProperty);
 
+    procedure Changed;
+
     property Owner: TLocalizerProperty read FOwner;
 
     property Value: string read FValue write SetValue;
@@ -286,6 +290,7 @@ uses
   IOUtils,
   Variants,
   System.SysUtils,
+  System.Hash,
   TypInfo,
   XMLDoc, XMLIntf,
   amLocale;
@@ -315,7 +320,7 @@ var
   s: string;
 begin
   s := AnsiUppercase(Value);
-  Result := BobJenkinsHash(PChar(s)^, SizeOf(Char) * Length(s), 0);
+  Result := THashBobJenkins.GetHashValue(s);
 end;
 
 
@@ -358,6 +363,24 @@ begin
 end;
 
 
+procedure TCustomLocalizerItem.SetState(const Value: TLocalizerItemState);
+begin
+  if (FState = Value) then
+    Exit;
+
+  FState := Value;
+  Changed;
+end;
+
+procedure TCustomLocalizerItem.SetStatus(const Value: TLocalizerItemStatus);
+begin
+  if (FStatus = Value) then
+    Exit;
+
+  FStatus := Value;
+  Changed;
+end;
+
 // -----------------------------------------------------------------------------
 //
 // TCustomLocalizerChildItem
@@ -385,7 +408,7 @@ end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentStatus: boolean;
 begin
-  Result := (Parent.Status <> lItemStatusTranslate);
+  Result := (inherited GetStatus <> lItemStatusDontTranslate) and (Parent.Status <> lItemStatusTranslate);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetParent: TParentClass;
@@ -444,7 +467,6 @@ end;
 procedure TLocalizerProject.Clear;
 begin
   FModules.Clear;
-  FModified := False;
 end;
 
 // -----------------------------------------------------------------------------
@@ -582,6 +604,7 @@ begin
   FResourceGroups := TList<Word>.Create;
   FProject := AProject;
   FProject.Modules.Add(Name, Self);
+  Changed;
 end;
 
 destructor TLocalizerModule.Destroy;
@@ -589,6 +612,7 @@ begin
   FProject.Modules.ExtractPair(FName);
   FItems.Free;
   FResourceGroups.Free;
+  Changed;
   inherited;
 end;
 
@@ -716,12 +740,14 @@ begin
   FProperties := TLocalizerProperties.Create([doOwnsValues], TTextComparer.Create);
   FTypeName := ATypeName;
   Module.Items.Add(FName, Self);
+  Changed;
 end;
 
 destructor TLocalizerItem.Destroy;
 begin
   Module.Items.ExtractPair(Name);
   FProperties.Free;
+  Changed;
   inherited;
 end;
 
@@ -792,12 +818,14 @@ begin
   inherited Create(AItem, AName);
   Item.Properties.Add(Name, Self);
   FTranslations := TLocalizerTranslations.Create(Self);
+  Changed;
 end;
 
 destructor TLocalizerProperty.Destroy;
 begin
   Item.Properties.ExtractPair(Name);
   FTranslations.Free;
+  Changed;
   inherited;
 end;
 
@@ -838,7 +866,8 @@ begin
 
   // If value changes then all existing translations are obsolete
   for Translation in FTranslations.FTranslations do
-    Translation.Value.Status := tStatusObsolete;
+    if (Translation.Value.Status in [tStatusProposed, tStatusTranslated]) then
+      Translation.Value.Status := tStatusObsolete;
 
   Changed;
 end;
@@ -875,13 +904,20 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TLocalizerTranslation.Changed;
+begin
+  Owner.Changed;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerTranslation.SetStatus(const Value: TTranslationStatus);
 begin
   if (FStatus = Value) then
     Exit;
 
   FStatus := Value;
-  Owner.Changed;
+  Changed;
 end;
 
 procedure TLocalizerTranslation.SetValue(const Value: string);
@@ -890,7 +926,7 @@ begin
     Exit;
 
   FValue := Value;
-  Owner.Changed;
+  Changed;
 end;
 
 

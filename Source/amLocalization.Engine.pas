@@ -576,6 +576,8 @@ begin
 
   if (not AnyFound) then
     LocalizerModule.State := lItemStateUnused;
+
+  Result := True;
 end;
 
 procedure TModuleStringResourceProcessor.ExecuteGroup(ResourceGroupID: Word; ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc);
@@ -731,49 +733,54 @@ var
   LocalizerModule: TLocalizerModule;
   ModuleProcessor: TModuleResourceProcessor;
 begin
-  LocalizerProject.BeginLoad;
+  LocalizerProject.BeginUpdate;
   try
-
-    EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesProc, integer(LocalizerProject));
-
-    EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesProc, integer(LocalizerProject));
-
-    if (ResourceWriter <> nil) then
-      ResourceWriter.BeginWrite;
+    LocalizerProject.BeginLoad;
     try
 
-      if (not Assigned(Translator)) then
-        Translator := TProjectResourceProcessor.DefaultTranslator;
+      EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesProc, integer(LocalizerProject));
 
-      for LocalizerModule in LocalizerProject.Modules.Values do
-      begin
-        if (LocalizerModule.Kind = mkForm) then
-          ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
-        else
-        if (LocalizerModule.Kind = mkString) then
-          ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance)
-        else
-          continue;
-        try
+      EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesProc, integer(LocalizerProject));
 
-          ModuleProcessor.Execute(ResourceWriter, LocaleID, Translator);
+      if (ResourceWriter <> nil) then
+        ResourceWriter.BeginWrite;
+      try
 
-        finally
-          ModuleProcessor.Free;
+        if (not Assigned(Translator)) then
+          Translator := TProjectResourceProcessor.DefaultTranslator;
+
+        for LocalizerModule in LocalizerProject.Modules.Values do
+        begin
+          if (LocalizerModule.Kind = mkForm) then
+            ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
+          else
+          if (LocalizerModule.Kind = mkString) then
+            ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance)
+          else
+            continue;
+          try
+
+            ModuleProcessor.Execute(ResourceWriter, LocaleID, Translator);
+
+          finally
+            ModuleProcessor.Free;
+          end;
         end;
+
+        if (ResourceWriter <> nil) then
+          ResourceWriter.EndWrite(True);
+
+      except
+        if (ResourceWriter <> nil) then
+          ResourceWriter.EndWrite(False);
+
+        raise;
       end;
-
-      if (ResourceWriter <> nil) then
-        ResourceWriter.EndWrite(True);
-
-    except
-      if (ResourceWriter <> nil) then
-        ResourceWriter.EndWrite(False);
-
-      raise;
+    finally
+      LocalizerProject.EndLoad;
     end;
   finally
-    LocalizerProject.EndLoad;
+    LocalizerProject.EndUpdate;
   end;
 end;
 

@@ -1,5 +1,7 @@
 unit amLocalization.Dialog.NewProject;
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 interface
 
 uses

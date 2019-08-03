@@ -1,6 +1,7 @@
 unit amLocalization.ResourceWriter;
 
 {$define INTERNAL_RESOURCE_MODULE}
+{$WARN SYMBOL_PLATFORM OFF}
 
 interface
 
@@ -227,12 +228,12 @@ end;
 
 procedure TResourceModuleWriter.WriteFormModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  UpdateResource(FResourceHandle, RT_RCDATA, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
+  Win32Check(UpdateResource(FResourceHandle, RT_RCDATA, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size));
 end;
 
 procedure TResourceModuleWriter.WriteStringModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  UpdateResource(FResourceHandle, RT_STRING, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
+  Win32Check(UpdateResource(FResourceHandle, RT_STRING, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size));
 end;
 
 procedure TResourceModuleWriter.WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);

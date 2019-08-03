@@ -39,7 +39,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -69,6 +68,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -214,9 +214,9 @@ object FormMain: TFormMain
       Caption.Text = 'Status'
       DataBinding.ValueType = 'Integer'
       Width = 80
-      Position.ColIndex = 1
+      Position.ColIndex = 3
       Position.RowIndex = 0
-      Position.BandIndex = 1
+      Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
     end
@@ -231,7 +231,7 @@ object FormMain: TFormMain
       Options.Editing = False
       Options.Filtering = False
       Width = 100
-      Position.ColIndex = 0
+      Position.ColIndex = 1
       Position.RowIndex = 0
       Position.BandIndex = 1
       Summary.FooterSummaryItems = <>
@@ -295,9 +295,9 @@ object FormMain: TFormMain
       Caption.Text = 'State'
       DataBinding.ValueType = 'String'
       Width = 100
-      Position.ColIndex = 3
+      Position.ColIndex = 0
       Position.RowIndex = 0
-      Position.BandIndex = 0
+      Position.BandIndex = 1
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
     end
@@ -404,7 +404,7 @@ object FormMain: TFormMain
     object BarManagerBarLanguage: TdxBar
       Caption = 'Language'
       CaptionButtons = <>
-      DockedLeft = 0
+      DockedLeft = 329
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
