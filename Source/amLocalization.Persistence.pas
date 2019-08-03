@@ -131,7 +131,6 @@ begin
     if (ModuleNode.NodeName = 'module') then
     begin
       Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
-      Module.ResourceID := StrToIntDef(VarToStr(ModuleNode.Attributes['id']), 0);
       Module.Kind := StringToModuleKind(VarToStr(ModuleNode.Attributes['type']));
       Module.State := StringToItemState(VarToStr(ModuleNode.Attributes['state']));
       Module.Status := StringToItemStatus(VarToStr(ModuleNode.Attributes['status']));
@@ -253,18 +252,17 @@ begin
 
   ModulesNode := Node.AddChild('modules');
 
-  for Module in Project.Modules.Values.ToArray do
+  for Module in Project.Modules.Values do
   begin
     ModuleNode := ModulesNode.AddChild('module');
     WriteItemName(ModuleNode, Module);
-    WriteItemID(ModuleNode, Module.ResourceID);
     ModuleNode.Attributes['type'] := sModuleKind[Module.Kind];
     WriteItemState(ModuleNode, Module);
     WriteItemStatus(ModuleNode, Module);
 
     ItemsNode := ModuleNode.AddChild('items');
 
-    for Item in Module.Items.Values.ToArray do
+    for Item in Module.Items.Values do
     begin
       ItemNode := ItemsNode.AddChild('item');
       WriteItemName(ItemNode, Item);
@@ -276,7 +274,7 @@ begin
 
       PropsNode := ItemNode.AddChild('properties');
 
-      for Prop in Item.Properties.Values.ToArray do
+      for Prop in Item.Properties.Values do
       begin
         PropNode := PropsNode.AddChild('property');
         WriteItemName(PropNode, Prop);

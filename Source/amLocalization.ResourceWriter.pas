@@ -18,7 +18,7 @@ type
     procedure BeginWrite;
     procedure EndWrite(Commit: boolean);
 
-    procedure WriteModule(Module: TLocalizerModule; Stream: TMemoryStream);
+    procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
   end;
 
 
@@ -34,7 +34,7 @@ type
   public
     procedure BeginWrite;
     procedure EndWrite(Commit: boolean);
-    procedure WriteModule(Module: TLocalizerModule; Stream: TMemoryStream);
+    procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
   end;
 
 
@@ -50,14 +50,14 @@ type
     FFilename: string;
     FResourceHandle: Cardinal;
   protected
-    procedure WriteFormModule(Module: TLocalizerModule; Stream: TMemoryStream);
-    procedure WriteStringModule(Module: TLocalizerModule; Stream: TMemoryStream);
+    procedure WriteFormModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
+    procedure WriteStringModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
   public
     constructor Create(const AFilename: string);
 
     procedure BeginWrite;
     procedure EndWrite(Commit: boolean);
-    procedure WriteModule(Module: TLocalizerModule; Stream: TMemoryStream);
+    procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
   end;
 
 
@@ -144,7 +144,7 @@ procedure TResourceFileWriter.EndWrite(Commit: boolean);
 begin
 end;
 
-procedure TResourceFileWriter.WriteModule(Module: TLocalizerModule; Stream: TMemoryStream);
+procedure TResourceFileWriter.WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 var
   Filename: string;
   DFMStream: TStream;
@@ -225,23 +225,23 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TResourceModuleWriter.WriteFormModule(Module: TLocalizerModule; Stream: TMemoryStream);
+procedure TResourceModuleWriter.WriteFormModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  UpdateResource(FResourceHandle, RT_RCDATA, PChar(Module.Name), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
+  UpdateResource(FResourceHandle, RT_RCDATA, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
 end;
 
-procedure TResourceModuleWriter.WriteStringModule(Module: TLocalizerModule; Stream: TMemoryStream);
+procedure TResourceModuleWriter.WriteStringModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  UpdateResource(FResourceHandle, RT_STRING, PChar(Module.ResourceID), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
+  UpdateResource(FResourceHandle, RT_STRING, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size);
 end;
 
-procedure TResourceModuleWriter.WriteModule(Module: TLocalizerModule; Stream: TMemoryStream);
+procedure TResourceModuleWriter.WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
   if (Module.Kind = mkForm) then
-    WriteFormModule(Module, Stream)
+    WriteFormModule(Module, ResourceID, Stream)
   else
   if (Module.Kind = mkString) then
-    WriteStringModule(Module, Stream);
+    WriteStringModule(Module, ResourceID, Stream);
 end;
 
 // -----------------------------------------------------------------------------

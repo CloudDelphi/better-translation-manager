@@ -125,9 +125,9 @@ type
   TLocalizerModule = class(TCustomLocalizerItem)
   private
     FProject: TLocalizerProject;
-    FResourceID: WORD;
     FKind: TLocalizerModuleKind;
     FItems: TLocalizerItems;
+    FResourceGroups: TList<Word>;
   protected
     procedure SetName(const Value: string); override;
   public
@@ -135,7 +135,6 @@ type
     destructor Destroy; override;
 
     property Project: TLocalizerProject read FProject;
-    property ResourceID: WORD read FResourceID write FResourceID;
     property Kind: TLocalizerModuleKind read FKind write FKind;
     property Items: TLocalizerItems read FItems;
 
@@ -143,6 +142,8 @@ type
 
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
+
+    property ResourceGroups: TList<Word> read FResourceGroups;
 
     function Traverse(Delegate: TLocalizerItemDelegate): boolean; overload;
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload;
@@ -413,13 +414,13 @@ var
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
 begin
-  for Module in Modules.Values.ToArray do
+  for Module in Modules.Values do
   begin
     Module.State := State;
-    for Item in Module.Items.Values.ToArray do
+    for Item in Module.Items.Values do
     begin
       Item.State:= State;
-      for Prop in Item.Properties.Values.ToArray do
+      for Prop in Item.Properties.Values do
         Prop.State := State;
     end;
   end;
@@ -431,7 +432,7 @@ var
 begin
   Result := True;
 
-  for Module in Modules.Values.ToArray do
+  for Module in Modules.Values do
     if (not Delegate(Module)) then
       Exit(False);
 end;
@@ -443,8 +444,8 @@ var
 begin
   Result := True;
 
-  for Module in Modules.Values.ToArray do
-    for Item in Module.Items.Values.ToArray do
+  for Module in Modules.Values do
+    for Item in Module.Items.Values do
       if (not Delegate(Item)) then
         Exit(False);
 end;
@@ -457,10 +458,10 @@ var
 begin
   Result := True;
 
-  for Module in Modules.Values.ToArray do
+  for Module in Modules.Values do
     if (Module.Kind in Kinds) then
-      for Item in Module.Items.Values.ToArray do
-        for Prop in Item.Properties.Values.ToArray do
+      for Item in Module.Items.Values do
+        for Prop in Item.Properties.Values do
           if (not Delegate(Prop)) then
             Exit(False);
 end;
@@ -486,6 +487,7 @@ constructor TLocalizerModule.Create(AProject: TLocalizerProject; const AName: st
 begin
   inherited Create(AName);
   FItems := TLocalizerItems.Create([doOwnsValues], TTextComparer.Create);
+  FResourceGroups := TList<Word>.Create;
   FProject := AProject;
   FProject.Modules.Add(Name, Self);
 end;
@@ -494,12 +496,14 @@ destructor TLocalizerModule.Destroy;
 begin
   FProject.Modules.ExtractPair(FName);
   FItems.Free;
+  FResourceGroups.Free;
   inherited;
 end;
 
 procedure TLocalizerModule.Clear;
 begin
   FItems.Clear;
+  FResourceGroups.Clear;
 end;
 
 procedure TLocalizerModule.SetName(const Value: string);
@@ -519,8 +523,8 @@ var
 begin
   Result := True;
 
-  for Item in Items.Values.ToArray do
-    for Prop in Item.Properties.Values.ToArray do
+  for Item in Items.Values do
+    for Prop in Item.Properties.Values do
       if (not Delegate(Prop)) then
         Exit(False);
 end;
@@ -531,7 +535,7 @@ var
 begin
   Result := True;
 
-  for Item in Items.Values.ToArray do
+  for Item in Items.Values do
     if (not Delegate(Item)) then
       Exit(False);
 end;
@@ -617,7 +621,7 @@ var
 begin
   Result := True;
 
-  for Prop in Properties.Values.ToArray do
+  for Prop in Properties.Values do
     if (not Delegate(Prop)) then
       Exit(False);
 end;

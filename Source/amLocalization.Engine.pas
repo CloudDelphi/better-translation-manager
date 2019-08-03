@@ -52,13 +52,9 @@ type
 type
   TProjectResourceProcessor = class
   private
-    FSymbolMap: TResourceStringSymbolMap;
   protected
     class function DefaultTranslator(LocaleID: LCID; LocalizerProperty: TLocalizerProperty; var NewValue: string): boolean; static;
   public
-    constructor Create;
-    destructor Destroy; override;
-
     procedure Execute(LocalizerProject: TLocalizerProject; Instance: HINST; LocaleID: LCID; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
     procedure Execute(LocalizerProject: TLocalizerProject; const Filename: string; LocaleID: LCID; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
 
@@ -180,28 +176,31 @@ type
   TModuleResourceProcessor = class abstract
   private
     FLocalizerModule: TLocalizerModule;
+    FInstance: HINST;
   protected
     property LocalizerModule: TLocalizerModule read FLocalizerModule;
+    property Instance: HINST read FInstance;
   public
-    constructor Create(ALocalizerModule: TLocalizerModule);
+    constructor Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
 
-    procedure Execute(ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc); overload; virtual; abstract;
-    procedure Execute(ReadStream, WriteStream: TStream; LocaleID: LCID); overload;
+    function Execute(ResourceWriter: IResourceWriter; LocaleID: LCID; Translator: TTranslateProc): boolean; overload; virtual; abstract;
+    function Execute(ResourceWriter: IResourceWriter; LocaleID: LCID): boolean; overload;
   end;
 
 // -----------------------------------------------------------------------------
 
-constructor TModuleResourceProcessor.Create(ALocalizerModule: TLocalizerModule);
+constructor TModuleResourceProcessor.Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
 begin
   inherited Create;
   FLocalizerModule := ALocalizerModule;
+  FInstance := AInstance;
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleResourceProcessor.Execute(ReadStream, WriteStream: TStream; LocaleID: LCID);
+function TModuleResourceProcessor.Execute(ResourceWriter: IResourceWriter; LocaleID: LCID): boolean;
 begin
-  Execute(ReadStream, WriteStream, LocaleID, TProjectResourceProcessor.DefaultTranslator);
+  Result := Execute(ResourceWriter, LocaleID, TProjectResourceProcessor.DefaultTranslator);
 end;
 
 
@@ -213,6 +212,7 @@ end;
 type
   TModuleDFMResourceProcessor = class(TModuleResourceProcessor)
   private
+    FStream: TStream;
     FReader: TReader;
     FWriter: TWriter;
     FLastCopied: integer;
@@ -223,7 +223,9 @@ type
 
     procedure CopyToHere(CopyPos: int64);
   public
-    procedure Execute(ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc); override;
+    destructor Destroy; override;
+
+    function Execute(ResourceWriter: IResourceWriter; LocaleID: LCID; Translator: TTranslateProc): boolean; override;
   end;
 
 // -----------------------------------------------------------------------------
@@ -271,31 +273,86 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleDFMResourceProcessor.Execute(ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc);
+destructor TModuleDFMResourceProcessor.Destroy;
 begin
-  Assert(ReadStream <> nil);
+  FStream.Free;
+  inherited;
+end;
+
+function TModuleDFMResourceProcessor.Execute(ResourceWriter: IResourceWriter; LocaleID: LCID; Translator: TTranslateProc): boolean;
+const
+  FilerSignature: UInt32 = $30465054; // ($54, $50, $46, $30) 'TPF0'
+var
+  SourceStream: TStream;
+  TargetStream: TMemoryStream;
+  Signature: UInt32;
+begin
   Assert(LocalizerModule.Kind = mkForm);
 
-  FReader := TReader.Create(ReadStream, 1024);
+  if (FindResource(Instance, PChar(LocalizerModule.Name), RT_RCDATA) = 0) then
+  begin
+    LocalizerModule.State := lItemStateUnused;
+    Exit(False);
+  end;
+
+  SourceStream := TResourceStream.Create(Instance, LocalizerModule.Name, RT_RCDATA);
   try
-    if (WriteStream <> nil) then
-      FWriter := TWriter.Create(WriteStream, 1024)
+
+    SourceStream.Read(Signature, SizeOf(Signature));
+    if (Signature <> FilerSignature) then
+    begin
+      LocalizerModule.Kind := mkOther;
+      LocalizerModule.Status := lItemStatusDontTranslate;
+      Exit(False);
+    end;
+
+    SourceStream.Position := 0;
+
+    if (ResourceWriter <> nil) then
+      TargetStream := TMemoryStream.Create
     else
-      FWriter := nil;
+      TargetStream := nil;
     try
+      if (LocalizerModule.Status = lItemStatusTranslate) then
+      begin
+        FReader := TReader.Create(SourceStream, 1024);
+        try
+          if (TargetStream <> nil) then
+            FWriter := TWriter.Create(TargetStream, 1024)
+          else
+            FWriter := nil;
+          try
 
-      FReader.ReadSignature;
+            FReader.ReadSignature;
 
-      ReadComponent(LocaleID, Translator, '');
+            ReadComponent(LocaleID, Translator, '');
 
-      CopyToHere(ReadStream.Size);
+            CopyToHere(SourceStream.Size);
 
+          finally
+            FreeAndNil(FWriter);
+          end;
+        finally
+          FreeAndNil(FReader);
+        end;
+      end else
+      if (ResourceWriter <> nil) and (TargetStream <> nil) then
+        TargetStream.CopyFrom(SourceStream, 0);
+
+      if (ResourceWriter <> nil) and (TargetStream <> nil) then
+      begin
+        // Write translated resource data
+        TargetStream.Position := 0;
+        ResourceWriter.WriteModule(LocalizerModule, PWideChar(LocalizerModule.Name), TargetStream);
+      end;
     finally
-      FreeAndNil(FWriter);
+      TargetStream.Free;
     end;
   finally
-    FreeAndNil(FReader);
+    SourceStream.Free;
   end;
+
+  Result := True;
 end;
 
 // -----------------------------------------------------------------------------
@@ -422,23 +479,106 @@ type
   private
     FSymbolMap: TResourceStringSymbolMap;
   protected
+    procedure ExecuteGroup(ResourceGroupID: Word; ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc);
   public
-    constructor Create(ALocalizerModule: TLocalizerModule; ASymbolMap: TResourceStringSymbolMap);
+    constructor Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
+    destructor Destroy; override;
 
-    procedure Execute(ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc); override;
+    function Execute(ResourceWriter: IResourceWriter; LocaleID: LCID; Translator: TTranslateProc): boolean; override;
   end;
 
 // -----------------------------------------------------------------------------
 
-constructor TModuleStringResourceProcessor.Create(ALocalizerModule: TLocalizerModule; ASymbolMap: TResourceStringSymbolMap);
+constructor TModuleStringResourceProcessor.Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
+var
+  Size: integer;
+  Filename: string;
 begin
-  inherited Create(ALocalizerModule);
-  FSymbolMap := ASymbolMap;
+  inherited Create(ALocalizerModule, AInstance);
+
+  FSymbolMap := TResourceStringSymbolMap.Create;
+
+  Filename := LocalizerModule.Project.SourceFilename;
+
+  if (not TFile.Exists(Filename)) then
+  begin
+    SetLength(Filename, MAX_PATH);
+    Size := GetModuleFileName(Instance, PChar(Filename), Length(Filename)+1);
+    SetLength(Filename, Size);
+  end;
+
+  Filename := TPath.ChangeExtension(Filename, '.drc');
+
+  if (TFile.Exists(Filename)) then
+    FSymbolMap.LoadFromFile(Filename);
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleStringResourceProcessor.Execute(ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc);
+destructor TModuleStringResourceProcessor.Destroy;
+begin
+  FSymbolMap.Free;
+
+  inherited;
+end;
+
+function TModuleStringResourceProcessor.Execute(ResourceWriter: IResourceWriter; LocaleID: LCID; Translator: TTranslateProc): boolean;
+var
+  SourceStream: TStream;
+  TargetStream: TMemoryStream;
+  ResourceID: Word;
+  AnyFound: boolean;
+begin
+  Assert(LocalizerModule.Kind = mkString);
+
+  if (LocalizerModule.ResourceGroups.Count = 0) then
+    Exit(False);
+
+  LocalizerModule.ResourceGroups.Sort;
+
+  AnyFound := False;
+
+  for ResourceID in LocalizerModule.ResourceGroups do
+  begin
+    if (FindResource(Instance, PChar(ResourceID), RT_STRING) <> 0) then
+    begin
+      SourceStream := TResourceStream.CreateFromID(Instance, ResourceID, RT_STRING);
+      AnyFound := True;
+    end else
+      SourceStream := nil;
+    try
+
+      if (ResourceWriter <> nil) and (SourceStream <> nil) then
+        TargetStream := TMemoryStream.Create
+      else
+        TargetStream := nil;
+      try
+
+        if (LocalizerModule.Status = lItemStatusTranslate) then
+          ExecuteGroup(ResourceID, SourceStream, TargetStream, LocaleID, Translator)
+        else
+        if (ResourceWriter <> nil) and (SourceStream <> nil) and (TargetStream <> nil) then
+          TargetStream.CopyFrom(SourceStream, 0);
+
+        if (ResourceWriter <> nil) and (TargetStream <> nil) then
+        begin
+          // Write translated resource data
+          TargetStream.Position := 0;
+          ResourceWriter.WriteModule(LocalizerModule, PWideChar(ResourceID), TargetStream);
+        end;
+      finally
+        TargetStream.Free;
+      end;
+    finally
+      SourceStream.Free;
+    end;
+  end;
+
+  if (not AnyFound) then
+    LocalizerModule.State := lItemStateUnused;
+end;
+
+procedure TModuleStringResourceProcessor.ExecuteGroup(ResourceGroupID: Word; ReadStream, WriteStream: TStream; LocaleID: LCID; Translator: TTranslateProc);
 var
   i: integer;
   Size: Word;
@@ -448,50 +588,56 @@ var
   Name: string;
   LocalizerProperty: TLocalizerProperty;
 begin
-  Assert(ReadStream <> nil);
-  Assert(LocalizerModule.Kind = mkString);
-
   i := 0;
-  ResourceID := (LocalizerModule.ResourceID-1) * 16;
+  ResourceID := (ResourceGroupID-1) * 16;
   while (i < 16) do
   begin
-    ReadStream.Read(Size, SizeOf(Size));
-    SetLength(Value, Size);
-
-    if (Size > 0) then
-      ReadStream.Read(PChar(Value)^, Size*SizeOf(Char));
-
-    // Skip string if value is empty and ID is unknown
-    Name := '';
-    if (FSymbolMap.TryLookupID(ResourceID, Name)) or (not Value.IsEmpty) then
+    if (ReadStream <> nil) then
     begin
-      Item := LocalizerModule.AddItem(ResourceID, '');
-
-      if (not Name.IsEmpty) then
-        Item.Name := Name;
-
-      if (Item.Status <> lItemStatusDontTranslate) then
-      begin
-        LocalizerProperty := Item.AddProperty('', Value);
-
-        // Perform translation
-        if (Assigned(Translator)) then
-        begin
-          Value := LocalizerProperty.Value;
-
-          if (not Translator(LocaleID, LocalizerProperty, Value)) then
-            Value := LocalizerProperty.Value;
-        end;
-      end;
-    end;
-
-    if (WriteStream <> nil) then
-    begin
-      Size := Length(Value);
-      WriteStream.Write(Size, SizeOf(Size));
+      ReadStream.Read(Size, SizeOf(Size));
+      SetLength(Value, Size);
 
       if (Size > 0) then
-        WriteStream.Write(PChar(Value)^, Size*SizeOf(Char));
+        ReadStream.Read(PChar(Value)^, Size*SizeOf(Char));
+
+      // Skip string if value is empty and ID is unknown
+      Name := '';
+      if (FSymbolMap.TryLookupID(ResourceID, Name)) or (not Value.IsEmpty) then
+      begin
+        Item := LocalizerModule.AddItem(ResourceID, '');
+
+        if (not Name.IsEmpty) then
+          Item.Name := Name;
+
+        if (Item.Status <> lItemStatusDontTranslate) then
+        begin
+          LocalizerProperty := Item.AddProperty('', Value);
+
+          // Perform translation
+          if (Assigned(Translator)) then
+          begin
+            Value := LocalizerProperty.Value;
+
+            if (not Translator(LocaleID, LocalizerProperty, Value)) then
+              Value := LocalizerProperty.Value;
+          end;
+        end;
+      end;
+
+      if (WriteStream <> nil) then
+      begin
+        Size := Length(Value);
+        WriteStream.Write(Size, SizeOf(Size));
+
+        if (Size > 0) then
+          WriteStream.Write(PChar(Value)^, Size*SizeOf(Char));
+      end;
+    end else
+    begin
+      if (LocalizerModule.Items.TryGetValue('', Item)) then
+      begin
+        Item.State := lItemStateUnused;
+      end;
     end;
 
     Inc(i);
@@ -505,20 +651,6 @@ end;
 // TProjectProcessorDFMResource
 //
 // -----------------------------------------------------------------------------
-constructor TProjectResourceProcessor.Create;
-begin
-  inherited Create;
-  FSymbolMap := TResourceStringSymbolMap.Create;
-end;
-
-destructor TProjectResourceProcessor.Destroy;
-begin
-  FSymbolMap.Free;
-  inherited;
-end;
-
-// -----------------------------------------------------------------------------
-
 class function TProjectResourceProcessor.DefaultTranslator(LocaleID: LCID; LocalizerProperty: TLocalizerProperty; var NewValue: string): boolean;
 var
   Translation: TLocalizerTranslation;
@@ -586,9 +718,9 @@ begin
   begin
     ResourceID := ResourceIdentToOrdinal(ResName);
 
-    LocalizerModule := LocalizerProject.AddModule(IntToStr(ResourceID));
+    LocalizerModule := LocalizerProject.AddModule('resourcestrings');
     LocalizerModule.Kind := mkString;
-    LocalizerModule.ResourceID := ResourceID;
+    LocalizerModule.ResourceGroups.Add(ResourceID);
   end;
 
   Result := True;
@@ -597,14 +729,7 @@ end;
 procedure TProjectResourceProcessor.Execute(LocalizerProject: TLocalizerProject; Instance: HINST; LocaleID: LCID; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
 var
   LocalizerModule: TLocalizerModule;
-  Stream: TStream;
-  TranslatedStream: TMemoryStream;
-  Signature: UInt32;
   ModuleProcessor: TModuleResourceProcessor;
-  Size: integer;
-  Filename: string;
-const
-  FilerSignature: UInt32 = $30465054; // ($54, $50, $46, $30) 'TPF0'
 begin
   LocalizerProject.BeginLoad;
   try
@@ -613,16 +738,6 @@ begin
 
     EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesProc, integer(LocalizerProject));
 
-    SetLength(Filename, MAX_PATH);
-    Size := GetModuleFileName(Instance, PChar(Filename), Length(Filename)+1);
-    SetLength(Filename, Size);
-
-    Filename := TPath.ChangeExtension(Filename, '.drc');
-    if (TFile.Exists(Filename)) then
-      FSymbolMap.LoadFromFile(Filename)
-    else
-      FSymbolMap.Clear;
-
     if (ResourceWriter <> nil) then
       ResourceWriter.BeginWrite;
     try
@@ -630,81 +745,21 @@ begin
       if (not Assigned(Translator)) then
         Translator := TProjectResourceProcessor.DefaultTranslator;
 
-      for LocalizerModule in LocalizerProject.Modules.Values.ToArray do
+      for LocalizerModule in LocalizerProject.Modules.Values do
       begin
         if (LocalizerModule.Kind = mkForm) then
-        begin
-          if (FindResource(Instance, PChar(LocalizerModule.Name), RT_RCDATA) = 0) then
-          begin
-            LocalizerModule.State := lItemStateUnused;
-            continue;
-          end;
-          Stream := TResourceStream.Create(Instance, LocalizerModule.Name, RT_RCDATA);
-        end else
+          ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
+        else
         if (LocalizerModule.Kind = mkString) then
-        begin
-          if (LocalizerModule.ResourceID = 0) then
-            continue;
-          if (FindResource(Instance, PChar(LocalizerModule.ResourceID), RT_STRING) = 0) then
-          begin
-            LocalizerModule.State := lItemStateUnused;
-            continue;
-          end;
-          Stream := TResourceStream.CreateFromID(Instance, LocalizerModule.ResourceID, RT_STRING);
-        end else
+          ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance)
+        else
           continue;
         try
 
-          if (LocalizerModule.Kind = mkForm) then
-          begin
-            Stream.Read(Signature, SizeOf(Signature));
-            if (Signature <> FilerSignature) then
-            begin
-              LocalizerModule.Kind := mkOther;
-              LocalizerModule.Status := lItemStatusDontTranslate;
-              continue;
-            end;
-          end;
-
-          if (LocalizerModule.Kind = mkForm) then
-            ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule)
-          else
-          if (LocalizerModule.Kind = mkString) then
-            ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, FSymbolMap)
-          else
-            continue;
-          try
-
-            if (ResourceWriter <> nil) then
-              TranslatedStream := TMemoryStream.Create
-            else
-              TranslatedStream := nil;
-            try
-
-              Stream.Position := 0;
-              if (LocalizerModule.Status = lItemStatusTranslate) then
-                ModuleProcessor.Execute(Stream, TranslatedStream, LocaleID, Translator)
-              else
-              if (ResourceWriter <> nil) and (TranslatedStream <> nil) then
-                TranslatedStream.CopyFrom(Stream, 0);
-
-              if (ResourceWriter <> nil) and (TranslatedStream <> nil) then
-              begin
-                // Write translated resource data
-                TranslatedStream.Position := 0;
-                ResourceWriter.WriteModule(LocalizerModule, TranslatedStream);
-              end;
-
-            finally
-              TranslatedStream.Free;
-            end;
-
-          finally
-            ModuleProcessor.Free;
-          end;
+          ModuleProcessor.Execute(ResourceWriter, LocaleID, Translator);
 
         finally
-          Stream.Free;
+          ModuleProcessor.Free;
         end;
       end;
 
