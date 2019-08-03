@@ -44,8 +44,13 @@ type
     FState: TLocalizerProjectStates;
     FLoadCount: integer;
     FSourceFilename: string;
+    FModified: boolean;
+    FUpdateCount: integer;
+    FUpdatePending: boolean;
+    FOnChanged: TNotifyEvent;
   protected
     procedure SetItemState(State: TLocalizerItemState);
+    procedure Changed;
   public
     constructor Create(const AName: string; ABaseLocaleID: LCID);
     destructor Destroy; override;
@@ -56,12 +61,18 @@ type
     property SourceFilename: string read FSourceFilename write FSourceFilename;
     property BaseLocaleID: LCID read FBaseLocaleID write FBaseLocaleID;
     property Modules: TLocalizerModules read FModules;
+    property Modified: boolean read FModified write FModified;
+
+    property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
 
     procedure Clear;
     function AddModule(const AName: string): TLocalizerModule;
 
     procedure BeginLoad;
     procedure EndLoad;
+
+    procedure BeginUpdate;
+    procedure EndUpdate;
 
     function Traverse(Delegate: TLocalizerModuleDelegate): boolean; overload;
     function Traverse(Delegate: TLocalizerItemDelegate): boolean; overload;
@@ -84,6 +95,8 @@ type
     function GetStatus: TLocalizerItemStatus; virtual;
     function GetInheritParentState: boolean; virtual;
     function GetInheritParentStatus: boolean; virtual;
+
+    procedure Changed; virtual; abstract;
   public
     constructor Create(const AName: string);
 
@@ -109,6 +122,8 @@ type
     FParent: TParentClass;
   protected
     function GetParent: TParentClass;
+
+    procedure Changed; override;
   protected
     function GetState: TLocalizerItemState; override;
     function GetStatus: TLocalizerItemStatus; override;
@@ -132,6 +147,7 @@ type
     FResourceGroups: TList<Word>;
   protected
     procedure SetName(const Value: string); override;
+    procedure Changed; override;
   public
     constructor Create(AProject: TLocalizerProject; const AName: string);
     destructor Destroy; override;
@@ -196,18 +212,27 @@ type
   private
     FValue: string;
     FStatus: TTranslationStatus;
+    FOwner: TLocalizerProperty;
+  protected
+    procedure SetStatus(const Value: TTranslationStatus);
+    procedure SetValue(const Value: string);
   public
-    property Value: string read FValue write FValue;
-    property Status: TTranslationStatus read FStatus write FStatus;
+    constructor Create(AOwner: TLocalizerProperty);
+
+    property Owner: TLocalizerProperty read FOwner;
+
+    property Value: string read FValue write SetValue;
+    property Status: TTranslationStatus read FStatus write SetStatus;
   end;
 
   TLocalizerTranslations = class
   private
     FTranslations: TDictionary<LCID, TLocalizerTranslation>;
+    FOwner: TLocalizerProperty;
   protected
     function GetItem(LocaleID: LCID): TLocalizerTranslation;
   public
-    constructor Create;
+    constructor Create(AOwner: TLocalizerProperty);
     destructor Destroy; override;
 
     procedure Clear;
@@ -217,6 +242,7 @@ type
     function AddOrUpdateTranslation(LocaleID: LCID; const Value: string; Status: TTranslationStatus = tStatusProposed): TLocalizerTranslation;
     procedure Remove(LocaleID: LCID);
 
+    property Owner: TLocalizerProperty read FOwner;
     property Items[LocaleID: LCID]: TLocalizerTranslation read GetItem; default;
   end;
 
@@ -304,6 +330,8 @@ begin
   FName := AName;
 end;
 
+// -----------------------------------------------------------------------------
+
 function TCustomLocalizerItem.GetInheritParentState: boolean;
 begin
   Result := False;
@@ -340,6 +368,15 @@ begin
   inherited Create(AName);
   FParent := AParent;
 end;
+
+// -----------------------------------------------------------------------------
+
+procedure TCustomLocalizerChildItem<TParentClass>.Changed;
+begin
+  FParent.Changed;
+end;
+
+// -----------------------------------------------------------------------------
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
 begin
@@ -392,10 +429,25 @@ begin
   inherited;
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerProject.Changed;
+begin
+  FModified := True;
+  BeginUpdate;
+  FUpdatePending := True;
+  EndUpdate;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerProject.Clear;
 begin
   FModules.Clear;
+  FModified := False;
 end;
+
+// -----------------------------------------------------------------------------
 
 procedure TLocalizerProject.BeginLoad;
 begin
@@ -414,23 +466,54 @@ begin
     Exclude(FState, ProjectStateLoading);
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerProject.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
+procedure TLocalizerProject.EndUpdate;
+begin
+  Dec(FUpdateCount);
+  if (FUpdateCount = 0) then
+  begin
+    if (FUpdatePending) then
+    begin
+      if (Assigned(FOnChanged)) then
+        FOnChanged(Self);
+
+      FUpdatePending := False;
+    end;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerProject.SetItemState(State: TLocalizerItemState);
 var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
 begin
-  for Module in Modules.Values do
-  begin
-    Module.State := State;
-    for Item in Module.Items.Values do
+  BeginUpdate;
+  try
+    for Module in Modules.Values do
     begin
-      Item.State:= State;
-      for Prop in Item.Properties.Values do
-        Prop.State := State;
+      Module.State := State;
+      for Item in Module.Items.Values do
+      begin
+        Item.State:= State;
+        for Prop in Item.Properties.Values do
+          Prop.State := State;
+      end;
     end;
+  finally
+    EndUpdate;
   end;
 end;
+
+// -----------------------------------------------------------------------------
 
 function TLocalizerProject.Traverse(Delegate: TLocalizerModuleDelegate): boolean;
 var
@@ -509,11 +592,22 @@ begin
   inherited;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerModule.Clear;
 begin
   FItems.Clear;
   FResourceGroups.Clear;
 end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerModule.Changed;
+begin
+  FProject.Changed;
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TLocalizerModule.SetName(const Value: string);
 begin
@@ -524,6 +618,8 @@ begin
   inherited SetName(Value);
   FProject.Modules.Add(Name, Self);
 end;
+
+// -----------------------------------------------------------------------------
 
 function TLocalizerModule.Traverse(Delegate: TLocalizerPropertyDelegate): boolean;
 begin
@@ -644,7 +740,9 @@ begin
     exit;
 
   Module.Items.ExtractPair(Name);
+
   inherited SetName(Value);
+
   Module.Items.Add(Name, Self);
 end;
 
@@ -693,7 +791,7 @@ constructor TLocalizerProperty.Create(AItem: TLocalizerItem; const AName: string
 begin
   inherited Create(AItem, AName);
   Item.Properties.Add(Name, Self);
-  FTranslations := TLocalizerTranslations.Create;
+  FTranslations := TLocalizerTranslations.Create(Self);
 end;
 
 destructor TLocalizerProperty.Destroy;
@@ -730,12 +828,20 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TLocalizerProperty.SetValue(const Value: string);
+var
+  Translation: TPair<LCID, TLocalizerTranslation>;
 begin
   if (FValue = Value) then
     exit;
-  FValue := Value;
-end;
 
+  FValue := Value;
+
+  // If value changes then all existing translations are obsolete
+  for Translation in FTranslations.FTranslations do
+    Translation.Value.Status := tStatusObsolete;
+
+  Changed;
+end;
 
 // -----------------------------------------------------------------------------
 
@@ -758,25 +864,46 @@ end;
 
 // -----------------------------------------------------------------------------
 //
+// TLocalizerTranslation
+//
+// -----------------------------------------------------------------------------
+constructor TLocalizerTranslation.Create(AOwner: TLocalizerProperty);
+begin
+  inherited Create;
+  FOwner := AOwner;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerTranslation.SetStatus(const Value: TTranslationStatus);
+begin
+  if (FStatus = Value) then
+    Exit;
+
+  FStatus := Value;
+  Owner.Changed;
+end;
+
+procedure TLocalizerTranslation.SetValue(const Value: string);
+begin
+  if (FValue = Value) then
+    Exit;
+
+  FValue := Value;
+  Owner.Changed;
+end;
+
+
+// -----------------------------------------------------------------------------
+//
 // TLocalizerTranslations
 //
 // -----------------------------------------------------------------------------
-function TLocalizerTranslations.AddOrUpdateTranslation(LocaleID: LCID; const Value: string; Status: TTranslationStatus): TLocalizerTranslation;
-begin
-  if (not FTranslations.TryGetValue(LocaleID, Result)) then
-  begin
-    Result := TLocalizerTranslation.Create;
-    FTranslations.Add(LocaleID, Result);
-  end;
-
-  Result.Value := Value;
-  Result.Status := Status;
-end;
-
-constructor TLocalizerTranslations.Create;
+constructor TLocalizerTranslations.Create(AOwner: TLocalizerProperty);
 begin
   inherited Create;
   FTranslations := TObjectDictionary<LCID, TLocalizerTranslation>.Create([doOwnsValues]);
+  FOwner := AOwner;
 end;
 
 destructor TLocalizerTranslations.Destroy;
@@ -785,10 +912,31 @@ begin
   inherited;
 end;
 
+// -----------------------------------------------------------------------------
+
+function TLocalizerTranslations.AddOrUpdateTranslation(LocaleID: LCID; const Value: string; Status: TTranslationStatus): TLocalizerTranslation;
+begin
+  if (not FTranslations.TryGetValue(LocaleID, Result)) then
+  begin
+    Result := TLocalizerTranslation.Create(Owner);
+    FTranslations.Add(LocaleID, Result);
+  end;
+
+  Result.Value := Value;
+  Result.Status := Status;
+
+  Owner.Changed;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerTranslations.Clear;
 begin
   FTranslations.Clear;
+  Owner.Changed;
 end;
+
+// -----------------------------------------------------------------------------
 
 function TLocalizerTranslations.FindTranslation(LocaleID: LCID): TLocalizerTranslation;
 begin
@@ -796,15 +944,23 @@ begin
     Result := nil;
 end;
 
+// -----------------------------------------------------------------------------
+
 function TLocalizerTranslations.GetItem(LocaleID: LCID): TLocalizerTranslation;
 begin
   Result := FTranslations[LocaleID];
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerTranslations.Remove(LocaleID: LCID);
 begin
   FTranslations.Remove(LocaleID);
+
+  Owner.Changed;
 end;
+
+// -----------------------------------------------------------------------------
 
 function TLocalizerTranslations.TryGetTranslation(LocaleID: LCID; var Value: TLocalizerTranslation): boolean;
 begin

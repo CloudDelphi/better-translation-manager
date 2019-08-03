@@ -151,6 +151,8 @@ type
     procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
     procedure ActionFindSearchExecute(Sender: TObject);
     procedure FindDialogFind(Sender: TObject);
+    procedure ActionProjectSaveUpdate(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
     FLocalizerProject: TLocalizerProject;
     FUpdateLockCount: integer;
@@ -170,6 +172,8 @@ type
     procedure LockUpdates;
     procedure UnlockUpdates;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
+    procedure OnProjectChanged(Sender: TObject);
+    function CheckSave: boolean;
   public
     property TargetLanguageID: Word read GetTargetLanguageID;
   end;
@@ -394,6 +398,8 @@ begin
     Importer.Free;
   end;
 
+  FLocalizerProject.Modified := True;
+
   LoadProject(FLocalizerProject);
 end;
 
@@ -401,6 +407,9 @@ procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
 var
   FormNewProject: TFormNewProject;
 begin
+  if (not CheckSave) then
+    exit;
+
   FormNewProject := TFormNewProject.Create(nil);
   try
     FormNewProject.SetLanguageView(GridTableViewLanguages, GridTableViewLanguagesColumnLanguage);
@@ -417,17 +426,23 @@ begin
     FormNewProject.Free;
   end;
 
+  FLocalizerProject.Modified := False;
+
   LoadProject(FLocalizerProject);
 end;
 
 procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
 begin
+  if (not CheckSave) then
+    exit;
+
   if (not OpenDialogProject.Execute(Handle)) then
     exit;
 
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
   TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
+  FLocalizerProject.Modified := False;
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
@@ -439,11 +454,15 @@ var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
+  NeedReload: boolean;
 begin
+  NeedReload := False;
+
   for Module in FLocalizerProject.Modules.Values.ToArray do
   begin
     if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
     begin
+      NeedReload := True;
       Module.Free;
       continue;
     end;
@@ -452,28 +471,50 @@ begin
     begin
       if (Item.State = lItemStateUnused) then
       begin
+        NeedReload := True;
         Item.Free;
         continue;
       end;
 
       for Prop in Item.Properties.Values.ToArray do
         if (Prop.State = lItemStateUnused) then
+        begin
+          NeedReload := True;
           Prop.Free;
+        end;
 
       if (Item.Properties.Count = 0) then
+      begin
+        NeedReload := True;
         Item.Free;
+      end;
     end;
 
     if (Module.Items.Count = 0) then
+    begin
+      NeedReload := True;
       Module.Free;
+    end;
   end;
 
-  LoadProject(FLocalizerProject);
+  if (NeedReload) then
+  begin
+    FLocalizerProject.Modified := True;
+
+    LoadProject(FLocalizerProject);
+  end;
 end;
 
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 begin
   TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.xml'));
+
+  FLocalizerProject.Modified := False;
+end;
+
+procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FLocalizerProject.Name.IsEmpty) and (FLocalizerProject.Modified);
 end;
 
 procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
@@ -482,7 +523,9 @@ var
 begin
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
+
     ProjectProcessor.ScanProject(FLocalizerProject, FLocalizerProject.SourceFilename);
+
   finally
     ProjectProcessor.Free;
   end;
@@ -611,6 +654,33 @@ begin
   dxShowSpellingOptionsDialog(SpellChecker);
 end;
 
+function TFormMain.CheckSave: boolean;
+var
+  Res: integer;
+begin
+  if (FLocalizerProject.Modified) then
+  begin
+    Res := TaskMessageDlg('Project has not been saved', 'Your changes has not been saved.'#13#13'Do you want to save them now?',
+      mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
+
+    if (Res = mrCancel) then
+      Exit(False);
+
+    if (Res = mrYes) then
+    begin
+      ActionProjectSave.Execute;
+      Result := (not FLocalizerProject.Modified);
+    end else
+      Result := True;
+  end else
+    Result := True;
+end;
+
+procedure TFormMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose := CheckSave;
+end;
+
 procedure TFormMain.FormCreate(Sender: TObject);
 var
   i: integer;
@@ -623,7 +693,7 @@ begin
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(Application.ExeName);
 
   FLocalizerProject := TLocalizerProject.Create(TPath.GetFileNameWithoutExtension(Application.ExeName), GetUserDefaultUILanguage);
-  FLocalizerProject.SourceFilename := Application.ExeName;
+  FLocalizerProject.OnChanged := OnProjectChanged;
 
   ClientDataSetLanguages.CreateDataSet;
   for i := 0 to TLocaleItems.Count-1 do
@@ -641,6 +711,8 @@ begin
       raise;
     end;
   end;
+
+  RibbonTabMain.Active := True;
 
   InitializeProject(Application.ExeName, GetUserDefaultUILanguage);
 
@@ -664,6 +736,8 @@ begin
   FLocalizerProject.SourceFilename := SourceFilename;
   FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
   FLocalizerProject.BaseLocaleID := SourceLocaleID;
+
+  FLocalizerProject.Modified := False;
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
@@ -878,6 +952,11 @@ begin
   end;
 
   LoadProject(FLocalizerProject);
+end;
+
+procedure TFormMain.OnProjectChanged(Sender: TObject);
+begin
+  //
 end;
 
 function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;

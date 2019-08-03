@@ -11,6 +11,7 @@ object FormMain: TFormMain
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
@@ -38,6 +39,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -67,7 +69,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -403,7 +404,7 @@ object FormMain: TFormMain
     object BarManagerBarLanguage: TdxBar
       Caption = 'Language'
       CaptionButtons = <>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -2400,6 +2401,7 @@ object FormMain: TFormMain
       ImageIndex = 2
       ShortCut = 16467
       OnExecute = ActionProjectSaveExecute
+      OnUpdate = ActionProjectSaveUpdate
     end
     object ActionProjectUpdate: TAction
       Category = 'Project'
