@@ -66,6 +66,8 @@ type
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
 
     procedure Clear;
+    function Purge: boolean;
+
     function AddModule(const AName: string): TLocalizerModule;
 
     procedure BeginLoad;
@@ -159,6 +161,7 @@ type
     property Items: TLocalizerItems read FItems;
 
     procedure Clear; override;
+    function Purge: boolean;
 
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
@@ -191,6 +194,7 @@ type
     property Properties: TLocalizerProperties read FProperties;
 
     procedure Clear; override;
+    function Purge: boolean;
 
     function AddProperty(const AName: string): TLocalizerProperty; overload;
     function AddProperty(const AName: string; const AValue: string): TLocalizerProperty; overload;
@@ -472,6 +476,33 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TLocalizerProject.Purge: boolean;
+var
+  Module: TLocalizerModule;
+begin
+  Result := False;
+  for Module in Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
+  begin
+    if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
+    begin
+      Module.Free;
+      Result := True;
+      continue;
+    end;
+
+    if (Module.Purge) then
+      Result := True;
+
+    if (Module.Items.Count = 0) then
+    begin
+      Module.Free;
+      Result := True;
+    end;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerProject.BeginLoad;
 begin
   Inc(FLoadCount);
@@ -619,6 +650,33 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TLocalizerModule.Purge: boolean;
+var
+  Item: TLocalizerItem;
+begin
+  Result := False;
+  for Item in FItems.Values.ToArray do // ToArray for stability since we delete from dictionary
+  begin
+    if (Item.State = lItemStateUnused) then
+    begin
+      Item.Free;
+      Result := True;
+      continue;
+    end;
+
+    if (Item.Purge) then
+      Result := True;
+
+    if (Item.Properties.Count = 0) then
+    begin
+      Item.Free;
+      Result := True;
+    end;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerModule.Clear;
 begin
   FItems.Clear;
@@ -750,6 +808,19 @@ begin
   FProperties.Free;
   Changed;
   inherited;
+end;
+
+function TLocalizerItem.Purge: boolean;
+var
+  Prop: TLocalizerProperty;
+begin
+  Result := True;
+  for Prop in Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
+    if (Prop.State = lItemStateUnused) then
+    begin
+      Prop.Free;
+      Result := True;
+    end;
 end;
 
 // -----------------------------------------------------------------------------

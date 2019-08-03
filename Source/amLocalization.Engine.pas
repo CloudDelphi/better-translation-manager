@@ -377,6 +377,10 @@ begin
     while (not FReader.EndOfList) do
       ReadProperty(LocaleID, Translator, CollectionLocalizerItem, Name);
     FReader.ReadListEnd;
+
+    if (CollectionLocalizerItem.State = lItemStateNew) and (CollectionLocalizerItem.Properties.Count = 0) then
+      CollectionLocalizerItem.Free;
+
     Inc(Index);
   end;
   FReader.ReadListEnd;
@@ -406,6 +410,9 @@ begin
   while (not FReader.EndOfList) do
     ReadProperty(LocaleID, Translator, LocalizerItem, Name);
   FReader.ReadListEnd;
+
+  if (LocalizerItem.State = lItemStateNew) and (LocalizerItem.Properties.Count = 0) then
+    LocalizerItem.Free;
 
   while (not FReader.EndOfList) do
     ReadComponent(LocaleID, Translator, Name);
@@ -747,7 +754,7 @@ begin
         if (not Assigned(Translator)) then
           Translator := TProjectResourceProcessor.DefaultTranslator;
 
-        for LocalizerModule in LocalizerProject.Modules.Values do
+        for LocalizerModule in LocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from the list
         begin
           if (LocalizerModule.Kind = mkForm) then
             ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
@@ -755,13 +762,22 @@ begin
           if (LocalizerModule.Kind = mkString) then
             ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance)
           else
+          begin
+            LocalizerModule.Free;
             continue;
+          end;
           try
 
             ModuleProcessor.Execute(ResourceWriter, LocaleID, Translator);
 
           finally
             ModuleProcessor.Free;
+          end;
+
+          if (LocalizerModule.State = lItemStateNew) and ((LocalizerModule.Kind = mkOther) or (LocalizerModule.Items.Count = 0)) then
+          begin
+            LocalizerModule.Free;
+            continue;
           end;
         end;
 

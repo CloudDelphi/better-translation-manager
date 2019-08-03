@@ -485,7 +485,7 @@ begin
   CountItem := 0;
   CountProp := 0;
 
-  for Module in FLocalizerProject.Modules.Values.ToArray do
+  for Module in FLocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
   begin
     if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
     begin
@@ -495,7 +495,7 @@ begin
       continue;
     end;
 
-    for Item in Module.Items.Values.ToArray do
+    for Item in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
     begin
       if (Item.State = lItemStateUnused) then
       begin
@@ -506,7 +506,7 @@ begin
       end;
 
       // TODO : Purge obsolete translations?
-      for Prop in Item.Properties.Values.ToArray do
+      for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
         if (Prop.State = lItemStateUnused) then
         begin
           NeedReload := True;
@@ -920,8 +920,8 @@ end;
 procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean);
 var
   PropNode: TcxTreeListNode;
-  PropNodes: TDictionary<TLocalizerProperty, TcxTreeListNode>;
-  Pair: TPair<TLocalizerProperty, TcxTreeListNode>;
+  PropNodes: TDictionary<pointer, TcxTreeListNode>;
+  Pair: TPair<pointer, TcxTreeListNode>;
 begin
   Assert(Node <> nil);
   Assert(Node.Data <> nil);
@@ -951,13 +951,14 @@ begin
       Exit;
 
     // Load item nodes
-    PropNodes := TDictionary<TLocalizerProperty, TcxTreeListNode>.Create;
+    // Dictionary uses pointer instead of TLocalizerProperty because object might have been deleted.
+    PropNodes := TDictionary<pointer, TcxTreeListNode>.Create;
     try
       // Get list of existing prop nodes
       PropNode := Node.GetFirstChild;
       while (PropNode <> nil) do
       begin
-        PropNodes.Add(TLocalizerProperty(PropNode.Data), PropNode);
+        PropNodes.Add(PropNode.Data, PropNode);
         PropNode := PropNode.GetNextSibling;
       end;
 
