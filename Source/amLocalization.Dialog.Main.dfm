@@ -2410,6 +2410,7 @@ object FormMain: TFormMain
       ImageIndex = 3
       ShortCut = 116
       OnExecute = ActionProjectUpdateExecute
+      OnUpdate = ActionProjectUpdateUpdate
     end
     object ActionBuild: TAction
       Category = 'Project'
@@ -2418,6 +2419,7 @@ object FormMain: TFormMain
       ImageIndex = 4
       ShortCut = 120
       OnExecute = ActionBuildExecute
+      OnUpdate = ActionBuildUpdate
     end
     object ActionImportXLIFF: TAction
       Category = 'Import'
@@ -2432,6 +2434,7 @@ object FormMain: TFormMain
       Hint = 'Remove unused items'
       ImageIndex = 6
       OnExecute = ActionProjectPurgeExecute
+      OnUpdate = ActionProjectPurgeUpdate
     end
     object ActionTranslationPropose: TAction
       Category = 'Translation'

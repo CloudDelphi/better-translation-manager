@@ -153,6 +153,9 @@ type
     procedure FindDialogFind(Sender: TObject);
     procedure ActionProjectSaveUpdate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure ActionProjectUpdateUpdate(Sender: TObject);
+    procedure ActionBuildUpdate(Sender: TObject);
+    procedure ActionProjectPurgeUpdate(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FUpdateLockCount: integer;
@@ -393,6 +396,11 @@ begin
   FindDialog.Options := FindDialog.Options + [frfindNext];
 end;
 
+procedure TFormMain.ActionBuildUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+end;
+
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
 begin
   FFindFirst := True;
@@ -540,6 +548,11 @@ begin
   StatusBar.SimplePanelStyle.Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
 end;
 
+procedure TFormMain.ActionProjectPurgeUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FLocalizerProject.Modules.Count > 0);
+end;
+
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 begin
   SaveCursor(crHourGlass);
@@ -574,6 +587,11 @@ begin
   LoadProject(FLocalizerProject, False);
 
   StatusBar.SimplePanelStyle.Text := 'Updated';
+end;
+
+procedure TFormMain.ActionProjectUpdateUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProofingLiveCheckExecute(Sender: TObject);
@@ -740,7 +758,7 @@ begin
   OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(Application.ExeName);
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(Application.ExeName);
 
-  FLocalizerProject := TLocalizerProject.Create(TPath.GetFileNameWithoutExtension(Application.ExeName), GetUserDefaultUILanguage);
+  FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
 
   ClientDataSetLanguages.CreateDataSet;
@@ -762,7 +780,7 @@ begin
 
   RibbonTabMain.Active := True;
 
-  InitializeProject(Application.ExeName, GetUserDefaultUILanguage);
+  InitializeProject('', GetUserDefaultUILanguage);
 
   PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
 end;
