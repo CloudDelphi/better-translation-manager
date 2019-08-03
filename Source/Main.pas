@@ -38,7 +38,7 @@ type
     dxBarLargeButton4: TdxBarLargeButton;
     BarManagerBarImport: TdxBar;
     dxBarButton2: TdxBarButton;
-    RibbonMainTab1: TdxRibbonTab;
+    RibbonTabTranslation: TdxRibbonTab;
     TreeList: TcxTreeList;
     TreeListColumnItemName: TcxTreeListColumn;
     TreeListColumnValueName: TcxTreeListColumn;
@@ -91,6 +91,29 @@ type
     ActionStatusDontTranslate: TAction;
     ActionStatusHold: TAction;
     SpellChecker: TdxSpellChecker;
+    BarManagerBarProofing: TdxBar;
+    BarButtonSpellCheck: TdxBarLargeButton;
+    ActionProofingCheck: TAction;
+    ActionProofingLiveCheck: TAction;
+    dxBarButton9: TdxBarButton;
+    dxBarButton10: TdxBarButton;
+    ActionProofingCheckSelected: TAction;
+    RibbonTabTools: TdxRibbonTab;
+    RibbonTabEdit: TdxRibbonTab;
+    BarManagerBarClipboard: TdxBar;
+    dxBarLargeButton5: TdxBarLargeButton;
+    dxBarButton11: TdxBarButton;
+    dxBarButton12: TdxBarButton;
+    ActionEditPaste: TAction;
+    ActionEditCopy: TAction;
+    ActionEditCut: TAction;
+    BarManagerBarFind: TdxBar;
+    ActionFindSearch: TAction;
+    ActionFindReplace: TAction;
+    dxBarButton13: TdxBarButton;
+    dxBarButton14: TdxBarButton;
+    FindDialog: TFindDialog;
+    ReplaceDialog: TReplaceDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -116,9 +139,26 @@ type
     procedure ActionStatusHoldExecute(Sender: TObject);
     procedure ActionStatusHoldUpdate(Sender: TObject);
     procedure TreeListColumnTargetPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
+    procedure ActionProofingLiveCheckExecute(Sender: TObject);
+    procedure ActionProofingLiveCheckUpdate(Sender: TObject);
+    procedure ActionProofingCheckExecute(Sender: TObject);
+    procedure SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean;
+      var AHandled: Boolean);
+    procedure SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
+    procedure TreeListEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
+    procedure ActionProofingCheckSelectedExecute(Sender: TObject);
+    procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
+    procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
+    procedure ActionFindSearchExecute(Sender: TObject);
+    procedure FindDialogFind(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FUpdateLockCount: integer;
+    FSpellCheckProp: TLocalizerProperty;
+    FSpellCheckingWord: boolean;
+    FSpellCheckingString: boolean;
+    FSpellCheckingStringResult: boolean;
+    FFindFirst: boolean;
   protected
     function GetTargetLanguageID: Word;
   protected
@@ -129,6 +169,7 @@ type
     procedure LoadProjectPropertyNode(PropNode: TcxTreeListNode);
     procedure LockUpdates;
     procedure UnlockUpdates;
+    function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
   public
     property TargetLanguageID: Word read GetTargetLanguageID;
   end;
@@ -146,14 +187,18 @@ implementation
 
 uses
   IOUtils,
+  StrUtils,
   Generics.Collections,
   Generics.Defaults,
+  System.Character,
+  Menus,
   msxmldom,
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
 
   dxHunspellDictionary,
+  dxSpellCheckerDialogs,
 
   amLocale,
   amLocalization.Engine,
@@ -162,6 +207,70 @@ uses
   amLocalization.Import.XLIFF,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject;
+
+
+type
+  TdxSpellCheckerCracker = class(TdxCustomSpellChecker);
+
+function SanitizeSpellCheckText(const Value: string): string;
+var
+  n: integer;
+begin
+  // Handle & accelerator chars
+  Result := StripHotkey(Value);
+
+  // Handle Format strings
+  if (Result = Value) then
+  begin
+    // Find first format specifier
+    n := PosEx('%', Result, 1);
+
+    while (n > 0) and (n < Length(Result)) do
+    begin
+      Inc(n);
+
+      if (Result[n] = '%') then
+      begin
+        // Escaped % - ignore
+        Delete(Result, n, 1);
+      end else
+      if (Result[n] in ['0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
+      begin
+        Result[n-1] := ' '; // Replace %... with space
+
+        // Remove chars until end of format specifier
+        while (Result[n] in ['0'..'9']) do
+          Delete(Result, n, 1);
+
+        if (Result[n] = ':') then
+          Delete(Result, n, 1);
+
+        if (Result[n] = '-') then
+          Delete(Result, n, 1);
+
+        while (Result[n] in ['0'..'9']) do
+          Delete(Result, n, 1);
+
+        if (Result[n] = '.') then
+          Delete(Result, n, 1);
+
+        while (Result[n] in ['0'..'9']) do
+          Delete(Result, n, 1);
+
+        if (Result[n] in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
+          Delete(Result, n, 1)
+        else
+          // Not a format string - undo
+          Exit(Value);
+      end else
+        // Not a format string - undo
+        Exit(Value);
+
+      // Find next format specifier
+      n := PosEx('%', Result, n);
+    end;
+  end;
+end;
 
 procedure TFormMain.LockUpdates;
 begin
@@ -213,6 +322,60 @@ begin
   end;
 
   LoadProject(FLocalizerProject);
+end;
+
+procedure TFormMain.FindDialogFind(Sender: TObject);
+var
+  Node: TcxTreeListNode;
+  Value: string;
+  StringSearchOptions: TStringSearchOptions;
+begin
+  if (FFindFirst) or (TreeList.FocusedNode = nil) then
+    Node := TreeList.Root
+  else
+    // Skip current node
+    Node := TreeList.FocusedNode.GetNext;
+
+  while (Node <> nil) do
+  begin
+    if (Node.Data <> nil) and (TObject(Node.Data) is TLocalizerProperty) then
+    begin
+      Value := TLocalizerProperty(Node.Data).Value;
+
+      StringSearchOptions := [soDown];
+      if (frMatchCase in FindDialog.Options) then
+        Include(StringSearchOptions, soMatchCase);
+      if (frHideWholeWord in FindDialog.Options) then
+        Include(StringSearchOptions, soWholeWord);
+
+      if (SearchBuf(PChar(Value), Length(Value), 0, 0, FindDialog.FindText, StringSearchOptions) <> nil) then
+        break;
+    end;
+
+    Node := Node.GetNext;
+  end;
+
+  if (Node <> nil) then
+  begin
+    Node.MakeVisible;
+    Node.Focused := True;
+  end else
+  begin
+    if (FFindFirst) then
+      ShowMessage('Not found')
+    else
+      ShowMessage('No more found');
+  end;
+
+  FFindFirst := False;
+  FindDialog.Options := FindDialog.Options + [frfindNext];
+end;
+
+procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
+begin
+  FFindFirst := True;
+  FindDialog.Options := FindDialog.Options - [frfindNext]; // Bug: frfindNext always visible regardless of option
+  FindDialog.Execute(Handle);
 end;
 
 procedure TFormMain.ActionImportXLIFFExecute(Sender: TObject);
@@ -327,6 +490,27 @@ begin
   LoadProject(FLocalizerProject);
 end;
 
+procedure TFormMain.ActionProofingLiveCheckExecute(Sender: TObject);
+begin
+  SpellChecker.CheckAsYouTypeOptions.Active := TAction(Sender).Checked;
+end;
+
+procedure TFormMain.ActionProofingLiveCheckUpdate(Sender: TObject);
+begin
+  TAction(Sender).Checked := SpellChecker.CheckAsYouTypeOptions.Active;
+end;
+
+procedure TFormMain.ActionProofingCheckExecute(Sender: TObject);
+begin
+  FLocalizerProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := PerformSpellCheck(Prop);
+    end);
+
+  SpellChecker.ShowSpellingCompleteMessage;
+end;
+
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 begin
   TLocalizerProperty(TreeList.FocusedNode.Data).Status := lItemStatusDontTranslate;
@@ -420,6 +604,11 @@ end;
 procedure TFormMain.BarEditItemTargetLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
   PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
+end;
+
+procedure TFormMain.BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
+begin
+  dxShowSpellingOptionsDialog(SpellChecker);
 end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
@@ -571,7 +760,7 @@ begin
     UnlockUpdates;
   end;
 
-  RibbonMain.Contexts[0].Visible := (FLocalizerProject.Modules.Count > 0);
+//  RibbonMain.Contexts[0].Visible := (FLocalizerProject.Modules.Count > 0);
 end;
 
 procedure TFormMain.LoadProjectPropertyNode(PropNode: TcxTreeListNode);
@@ -691,6 +880,128 @@ begin
   LoadProject(FLocalizerProject);
 end;
 
+function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
+begin
+  Result := (ANode.Data = AData);
+end;
+
+procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
+var
+  SanitizedWord: string;
+  Node: TcxTreeListNode;
+  i: integer;
+  HasLetters: boolean;
+begin
+  if (FSpellCheckingWord) then
+    Exit;
+
+  if (FSpellCheckingString) then
+    SanitizedWord := AWord
+  else
+    SanitizedWord := SanitizeSpellCheckText(AWord);
+
+  FSpellCheckingWord := True;
+  try
+
+    HasLetters := False;
+    for i := 1 to Length(SanitizedWord) do
+      if (SanitizedWord[i].IsLetter) then
+      begin
+        HasLetters := True;
+        break;
+      end;
+
+    if (HasLetters) then
+      // Call IsValidWord() to check the word against the dictionary.
+      // The FSpellCheckingWord flag guards against recursion (IsValidWord() calls this event).
+      AValid := Sender.IsValidWord(SanitizedWord)
+    else
+      // Ignore words without letters
+      AValid := True;
+
+  finally
+    FSpellCheckingWord := False;
+  end;
+
+  if (FSpellCheckingString) then
+  begin
+    // If we're pre checking the sanitized string we save the result and
+    // clear the returned result to avoid having the UI displayed at this time.
+    FSpellCheckingStringResult := FSpellCheckingStringResult and AValid;
+    AValid := True;
+  end;
+
+  AHandled := True;
+
+  if (not AValid) and (FSpellCheckProp <> nil) then
+  begin
+    Node := TreeList.Find(FSpellCheckProp, nil, False, True, TreeListFindFilter);
+
+    if (Node <> nil) then
+    begin
+      Node.MakeVisible;
+      Node.Focused := True;
+      Application.ProcessMessages;
+    end;
+  end;
+end;
+
+procedure TFormMain.SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
+begin
+  // Supress "Check complete" message
+  AHandled := True;
+end;
+
+function TFormMain.PerformSpellCheck(Prop: TLocalizerProperty): boolean;
+var
+  Text, CheckedText: string;
+  Node: TcxTreeListNode;
+begin
+  if (Prop.State = lItemStateUnused) then
+    Exit(True);
+
+  if (Prop.Status <> lItemStatusTranslate) then
+    Exit(True);
+
+  Text := Prop.TranslatedValue[TargetLanguageID];
+
+  // Display spell check dialog
+  FSpellCheckProp := Prop;
+  try
+
+    // Perform pre check on sanitized string.
+    // FSpellCheckingStringResult will indicate if string has errors.
+    FSpellCheckingStringResult := True;
+    FSpellCheckingString := True;
+    try
+      CheckedText := SanitizeSpellCheckText(Text);
+      SpellChecker.Check(CheckedText);
+    finally
+      FSpellCheckingString := False;
+    end;
+
+    CheckedText := Text;
+    // If sanitized string had errors we check the unsanitized string to display the UI
+    if (not FSpellCheckingStringResult) then
+      SpellChecker.Check(CheckedText);
+
+  finally
+    FSpellCheckProp := nil;
+  end;
+
+  if (CheckedText <> Text) then
+  begin
+    // Save spell corrected value
+    Prop.TranslatedValue[TargetLanguageID] := CheckedText;
+
+    // Update treenode
+    Node := TreeList.Find(Prop, nil, False, True, TreeListFindFilter);
+    LoadProjectPropertyNode(Node);
+  end;
+
+  Result := (TdxSpellCheckerCracker(SpellChecker).LastDialogResult = mrOK);
+end;
+
 procedure TFormMain.TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
 var
   Translation: TLocalizerTranslation;
@@ -742,6 +1053,12 @@ begin
   end;
 end;
 
+procedure TFormMain.TreeListEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
+begin
+  // Only allow editing of property nodes
+  Allow := (Sender.FocusedNode <> nil) and (Sender.FocusedNode.Data <> nil) and (TObject(Sender.FocusedNode.Data) is TLocalizerProperty);
+end;
+
 procedure TFormMain.TreeListEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
 begin
   if (AColumn = TreeListColumnTarget) then
@@ -759,6 +1076,22 @@ begin
       UnlockUpdates;
     end;
   end;
+end;
+
+procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);
+begin
+  TCustomLocalizerItem(TreeList.FocusedNode.Data).Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := PerformSpellCheck(Prop);
+    end);
+
+  SpellChecker.ShowSpellingCompleteMessage;
+end;
+
+procedure TFormMain.ActionProofingCheckSelectedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil);
 end;
 
 end.

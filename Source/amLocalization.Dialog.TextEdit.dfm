@@ -5,8 +5,8 @@ object FormTextEditor: TFormTextEditor
   BorderIcons = [biSystemMenu, biMaximize]
   BorderStyle = bsSizeToolWin
   Caption = 'Edit text'
-  ClientHeight = 256
-  ClientWidth = 363
+  ClientHeight = 276
+  ClientWidth = 434
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -24,18 +24,18 @@ object FormTextEditor: TFormTextEditor
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
-    Top = 220
-    Width = 363
+    Top = 240
+    Width = 434
     Height = 36
     Align = alBottom
     BevelOuter = bvNone
     FullRepaint = False
     TabOrder = 0
     DesignSize = (
-      363
+      434
       36)
     object ButtonOK: TcxButton
-      Left = 197
+      Left = 268
       Top = 6
       Width = 75
       Height = 25
@@ -46,7 +46,7 @@ object FormTextEditor: TFormTextEditor
       TabOrder = 0
     end
     object ButtonCancel: TcxButton
-      Left = 278
+      Left = 349
       Top = 6
       Width = 75
       Height = 25
@@ -59,7 +59,7 @@ object FormTextEditor: TFormTextEditor
   end
   object EditText: TcxRichEdit
     AlignWithMargins = True
-    Left = 193
+    Left = 221
     Top = 32
     Margins.Left = 0
     Margins.Top = 4
@@ -70,13 +70,13 @@ object FormTextEditor: TFormTextEditor
     PopupMenu = PopupActionBar1
     Properties.PlainText = True
     TabOrder = 1
-    Height = 188
-    Width = 166
+    Height = 208
+    Width = 209
   end
   object ToolActionBar2: TActionToolBar
     Left = 0
     Top = 0
-    Width = 363
+    Width = 434
     Height = 28
     ActionManager = ActionManager1
     Color = clMenuBar
@@ -109,18 +109,17 @@ object FormTextEditor: TFormTextEditor
     Properties.ReadOnly = True
     Style.TextColor = clGrayText
     TabOrder = 3
-    Height = 188
-    Width = 181
+    Height = 208
+    Width = 209
   end
   object Splitter: TcxSplitter
-    Left = 185
+    Left = 213
     Top = 28
     Width = 8
-    Height = 192
+    Height = 212
     HotZoneClassName = 'TcxSimpleStyle'
     AutoSnap = True
     ResizeUpdate = True
-    ExplicitLeft = 177
   end
   object ImageListNormal: TcxImageList
     SourceDPI = 96
@@ -559,6 +558,7 @@ object FormTextEditor: TFormTextEditor
             ShortCut = 16470
           end
           item
+            Visible = False
             Action = EditDelete1
             ImageIndex = 6
             ShortCut = 46
@@ -635,6 +635,7 @@ object FormTextEditor: TFormTextEditor
       Hint = 'Delete|Erases the selection'
       ImageIndex = 6
       ShortCut = 46
+      Visible = False
     end
     object FileOpen1: TFileOpen
       Category = 'File'

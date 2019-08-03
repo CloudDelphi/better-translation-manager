@@ -90,7 +90,7 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
-        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_MapFile>3</DCC_MapFile>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -119,6 +119,10 @@
         <DCCReference Include="amLocalization.ResourceWriter.pas"/>
         <DCCReference Include="amLocalization.Persistence.pas"/>
         <DCCReference Include="amLocalization.Engine.pas"/>
+        <DCCReference Include="amLocalization.Dialog.TextEdit.pas">
+            <Form>FormTextEditor</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

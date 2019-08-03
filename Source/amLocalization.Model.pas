@@ -91,6 +91,8 @@ type
 
     procedure Clear; virtual; abstract;
 
+    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; virtual; abstract;
+
     property State: TLocalizerItemState read GetState write FState;
     property Status: TLocalizerItemStatus read GetStatus write FStatus;
     property InheritParentState: boolean read GetInheritParentState;
@@ -145,8 +147,8 @@ type
 
     property ResourceGroups: TList<Word> read FResourceGroups;
 
-    function Traverse(Delegate: TLocalizerItemDelegate): boolean; overload;
-    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload;
+    function Traverse(Delegate: TLocalizerItemDelegate): boolean; reintroduce; overload;
+    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload; override;
   end;
 
 // -----------------------------------------------------------------------------
@@ -174,7 +176,7 @@ type
 
     function AddProperty(const AName: string; const AValue: string = ''): TLocalizerProperty;
 
-    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload;
+    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; override;
   end;
 
 
@@ -237,7 +239,8 @@ type
 
     procedure Clear; override;
 
-    function Traverse(Delegate: TLocalizerTranslationDelegate): boolean; overload;
+    function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload; override;
+    function Traverse(Delegate: TLocalizerTranslationDelegate): boolean; reintroduce; overload;
 
     property Item: TLocalizerItem read GetParent;
     property Value: string read FValue write SetValue;
@@ -431,42 +434,45 @@ end;
 
 function TLocalizerProject.Traverse(Delegate: TLocalizerModuleDelegate): boolean;
 var
+  SortedModules: TArray<TLocalizerModule>;
   Module: TLocalizerModule;
 begin
   Result := True;
 
-  for Module in Modules.Values do
+  SortedModules := Modules.Values.ToArray;
+
+  TArray.Sort<TLocalizerModule>(SortedModules, TComparer<TLocalizerModule>.Construct(
+    function(const Left, Right: TLocalizerModule): Integer
+    begin
+      Result := (Ord(Left.Kind) - Ord(Right.Kind));
+      if (Result = 0) then
+        Result := AnsiCompareText(Left.Name, Right.Name);
+    end));
+
+  for Module in SortedModules do
     if (not Delegate(Module)) then
       Exit(False);
 end;
 
 function TLocalizerProject.Traverse(Delegate: TLocalizerItemDelegate): boolean;
-var
-  Module: TLocalizerModule;
-  Item: TLocalizerItem;
 begin
-  Result := True;
-
-  for Module in Modules.Values do
-    for Item in Module.Items.Values do
-      if (not Delegate(Item)) then
-        Exit(False);
+  Result := Traverse(
+    function(Module: TLocalizerModule): boolean
+    begin
+      Result := Module.Traverse(Delegate);
+    end);
 end;
 
 function TLocalizerProject.Traverse(Delegate: TLocalizerPropertyDelegate; Kinds: TLocalizerModuleKinds): boolean;
-var
-  Module: TLocalizerModule;
-  Item: TLocalizerItem;
-  Prop: TLocalizerProperty;
 begin
-  Result := True;
-
-  for Module in Modules.Values do
-    if (Module.Kind in Kinds) then
-      for Item in Module.Items.Values do
-        for Prop in Item.Properties.Values do
-          if (not Delegate(Prop)) then
-            Exit(False);
+  Result := Traverse(
+    function(Module: TLocalizerModule): boolean
+    begin
+      if (Module.Kind in Kinds) then
+        Result := Module.Traverse(Delegate)
+      else
+        Result := True;
+    end);
 end;
 
 // -----------------------------------------------------------------------------
@@ -520,25 +526,51 @@ begin
 end;
 
 function TLocalizerModule.Traverse(Delegate: TLocalizerPropertyDelegate): boolean;
-var
-  Item: TLocalizerItem;
-  Prop: TLocalizerProperty;
 begin
-  Result := True;
-
-  for Item in Items.Values do
-    for Prop in Item.Properties.Values do
-      if (not Delegate(Prop)) then
-        Exit(False);
+  Result := Traverse(
+    function(Item: TLocalizerItem): boolean
+    begin
+      Result := Item.Traverse(Delegate);
+    end);
 end;
 
 function TLocalizerModule.Traverse(Delegate: TLocalizerItemDelegate): boolean;
 var
+  SortedItems: TArray<TLocalizerItem>;
   Item: TLocalizerItem;
 begin
   Result := True;
 
-  for Item in Items.Values do
+  SortedItems := Items.Values.ToArray;
+
+  TArray.Sort<TLocalizerItem>(SortedItems, TComparer<TLocalizerItem>.Construct(
+    function(const Left, Right: TLocalizerItem): Integer
+    begin
+      Result := (Ord(Left.Module.Kind) - Ord(Right.Module.Kind));
+      if (Result = 0) then
+      begin
+        if (Left.Module.Kind = mkForm) or ((Left.ResourceID = 0) and  (Right.ResourceID = 0)) then
+          Result := CompareText(Left.Name, Right.Name)
+        else
+        begin
+          if (Left.ResourceID = 0) then
+            Result := -1
+          else
+          if (Right.ResourceID = 0) then
+            Result := 1
+          else
+          if (Left.ResourceID > Right.ResourceID) then
+            Result := 1
+          else
+          if (Left.ResourceID < Right.ResourceID) then
+            Result := -1
+          else
+            Result := 0;
+        end;
+      end;
+    end));
+
+  for Item in SortedItems do
     if (not Delegate(Item)) then
       Exit(False);
 end;
@@ -620,11 +652,20 @@ end;
 
 function TLocalizerItem.Traverse(Delegate: TLocalizerPropertyDelegate): boolean;
 var
+  SortedProps: TArray<TLocalizerProperty>;
   Prop: TLocalizerProperty;
 begin
   Result := True;
 
-  for Prop in Properties.Values do
+  SortedProps := Properties.Values.ToArray;
+
+  TArray.Sort<TLocalizerProperty>(SortedProps, TComparer<TLocalizerProperty>.Construct(
+    function(const Left, Right: TLocalizerProperty): Integer
+    begin
+      Result := AnsiCompareText(Left.Name, Right.Name);
+    end));
+
+  for Prop in SortedProps do
     if (not Delegate(Prop)) then
       Exit(False);
 end;
@@ -697,6 +738,11 @@ end;
 
 
 // -----------------------------------------------------------------------------
+
+function TLocalizerProperty.Traverse(Delegate: TLocalizerPropertyDelegate): boolean;
+begin
+  Result := Delegate(Self);
+end;
 
 function TLocalizerProperty.Traverse(Delegate: TLocalizerTranslationDelegate): boolean;
 var

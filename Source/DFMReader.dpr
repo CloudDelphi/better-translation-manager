@@ -1,11 +1,6 @@
 program DFMReader;
 
 uses
-  madExcept,
-  madLinkDisAsm,
-  madListHardware,
-  madListProcesses,
-  madListModules,
   Vcl.Forms,
   Main in 'Main.pas' {Form4},
   amLocalization.Model in 'amLocalization.Model.pas',
@@ -13,7 +8,8 @@ uses
   amLocalization.Import.XLIFF in 'amLocalization.Import.XLIFF.pas',
   amLocalization.ResourceWriter in 'amLocalization.ResourceWriter.pas',
   amLocalization.Persistence in 'amLocalization.Persistence.pas',
-  amLocalization.Engine in 'amLocalization.Engine.pas';
+  amLocalization.Engine in 'amLocalization.Engine.pas',
+  amLocalization.Dialog.TextEdit in 'amLocalization.Dialog.TextEdit.pas' {FormTextEditor};
 
 {$R *.res}
 
