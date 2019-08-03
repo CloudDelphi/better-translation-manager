@@ -27,7 +27,7 @@ type
     BarManager: TdxBarManager;
     RibbonMain: TdxRibbon;
     RibbonTabMain: TdxRibbonTab;
-    dxRibbonStatusBar1: TdxRibbonStatusBar;
+    StatusBar: TdxRibbonStatusBar;
     SkinController: TdxSkinController;
     BarManagerBarFile: TdxBar;
     dxBarLargeButton1: TdxBarLargeButton;
@@ -167,10 +167,10 @@ type
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
-    procedure LoadProject(Project: TLocalizerProject);
+    procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
     procedure LoadNode(Node: TcxTreeListNode);
-    procedure LoadModuleNode(Node: TcxTreeListNode); overload;
-    procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule); overload;
+    procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
+    procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
     procedure LoadPropertyNode(Node: TcxTreeListNode); overload;
     procedure LoadPropertyNode(Node: TcxTreeListNode; Prop: TLocalizerProperty); overload;
     procedure LockUpdates;
@@ -208,6 +208,8 @@ uses
 
   dxHunspellDictionary,
   dxSpellCheckerDialogs,
+
+  amCursorService,
 
   amLocale,
   amLocalization.Engine,
@@ -281,6 +283,11 @@ begin
   end;
 end;
 
+function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
+begin
+  Result := (ANode.Data = AData);
+end;
+
 procedure TFormMain.LockUpdates;
 begin
   Inc(FUpdateLockCount);
@@ -301,6 +308,8 @@ var
   Filename: string;
   LocaleItem: TLocaleItem;
 begin
+  SaveCursor(crHourGlass);
+
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
     FLocalizerProject.BeginLoad;
@@ -330,7 +339,9 @@ begin
     ProjectProcessor.Free;
   end;
 
-  LoadProject(FLocalizerProject);
+  ShowMessage(Format('Resource module built:'#13'%s', [Filename]));
+
+  LoadProject(FLocalizerProject, False);
 end;
 
 procedure TFormMain.FindDialogFind(Sender: TObject);
@@ -339,6 +350,8 @@ var
   Value: string;
   StringSearchOptions: TStringSearchOptions;
 begin
+  SaveCursor(crAppStart);
+
   if (FFindFirst) or (TreeList.FocusedNode = nil) then
     Node := TreeList.Root
   else
@@ -394,6 +407,8 @@ begin
   if (not OpenDialogXLIFF.Execute(Handle)) then
     exit;
 
+  SaveCursor(crHourGlass);
+
   OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(OpenDialogXLIFF.FileName);
 
   Importer := TModuleImporterXLIFF.Create;
@@ -405,7 +420,7 @@ begin
 
   FLocalizerProject.Modified := True;
 
-  LoadProject(FLocalizerProject);
+  LoadProject(FLocalizerProject, False);
 end;
 
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
@@ -442,6 +457,8 @@ begin
   if (not OpenDialogProject.Execute(Handle)) then
     exit;
 
+  SaveCursor(crHourGlass);
+
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
   TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
@@ -458,8 +475,15 @@ var
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
   NeedReload: boolean;
+  CountModule, CountItem, CountProp: integer;
 begin
+  SaveCursor(crHourGlass);
+
   NeedReload := False;
+
+  CountModule := 0;
+  CountItem := 0;
+  CountProp := 0;
 
   for Module in FLocalizerProject.Modules.Values.ToArray do
   begin
@@ -467,6 +491,7 @@ begin
     begin
       NeedReload := True;
       Module.Free;
+      Inc(CountModule);
       continue;
     end;
 
@@ -475,20 +500,24 @@ begin
       if (Item.State = lItemStateUnused) then
       begin
         NeedReload := True;
+        Inc(CountItem);
         Item.Free;
         continue;
       end;
 
+      // TODO : Purge obsolete translations?
       for Prop in Item.Properties.Values.ToArray do
         if (Prop.State = lItemStateUnused) then
         begin
           NeedReload := True;
+          Inc(CountProp);
           Prop.Free;
         end;
 
       if (Item.Properties.Count = 0) then
       begin
         NeedReload := True;
+        Inc(CountItem);
         Item.Free;
       end;
     end;
@@ -496,6 +525,7 @@ begin
     if (Module.Items.Count = 0) then
     begin
       NeedReload := True;
+      Inc(CountModule);
       Module.Free;
     end;
   end;
@@ -504,15 +534,21 @@ begin
   begin
     FLocalizerProject.Modified := True;
 
-    LoadProject(FLocalizerProject);
+    LoadProject(FLocalizerProject, False);
   end;
+
+  StatusBar.SimplePanelStyle.Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
 end;
 
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 begin
+  SaveCursor(crHourGlass);
+
   TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.xml'));
 
   FLocalizerProject.Modified := False;
+
+  StatusBar.SimplePanelStyle.Text := 'Saved';
 end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
@@ -524,6 +560,8 @@ procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
 begin
+  SaveCursor(crHourGlass);
+
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
@@ -533,7 +571,9 @@ begin
     ProjectProcessor.Free;
   end;
 
-  LoadProject(FLocalizerProject);
+  LoadProject(FLocalizerProject, False);
+
+  StatusBar.SimplePanelStyle.Text := 'Updated';
 end;
 
 procedure TFormMain.ActionProofingLiveCheckExecute(Sender: TObject);
@@ -548,6 +588,8 @@ end;
 
 procedure TFormMain.ActionProofingCheckExecute(Sender: TObject);
 begin
+  SaveCursor(crAppStart);
+
   FLocalizerProject.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
@@ -737,6 +779,7 @@ end;
 
 procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
 begin
+  TreeList.Clear;
   FLocalizerProject.Clear;
 
   FLocalizerProject.SourceFilename := SourceFilename;
@@ -754,21 +797,25 @@ begin
   TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
 end;
 
-procedure TFormMain.LoadProject(Project: TLocalizerProject);
+procedure TFormMain.LoadProject(Project: TLocalizerProject; Clear: boolean);
 var
   Module: TLocalizerModule;
   Modules: TArray<TLocalizerModule>;
   ModuleNode: TcxTreeListNode;
+(*
   Item: TLocalizerItem;
   Items: TArray<TLocalizerItem>;
   Prop: TLocalizerProperty;
   Props: TArray<TLocalizerProperty>;
   PropNode: TcxTreeListNode;
+*)
 begin
-  TreeList.Clear;
+  SaveCursor(crHourGlass);
 
   LockUpdates;
   try
+    if (Clear) then
+      TreeList.Clear;
 
     Modules := Project.Modules.Values.ToArray;
 
@@ -785,9 +832,16 @@ begin
       if (Module.Kind = mkOther) then
         continue;
 
-      ModuleNode := TreeList.Add(nil, Module);
-      LoadModuleNode(ModuleNode, Module);
+      if (Clear) then
+        ModuleNode := nil
+      else
+        ModuleNode := TreeList.Find(Module, TreeList.Root, False, True, TreeListFindFilter);
 
+      if (ModuleNode = nil) then
+        ModuleNode := TreeList.Add(nil, Module);
+
+      LoadModuleNode(ModuleNode, Module, True);
+(*
       Items := Module.Items.Values.ToArray;
 
       TArray.Sort<TLocalizerItem>(Items, TComparer<TLocalizerItem>.Construct(
@@ -829,10 +883,18 @@ begin
 
         for Prop in Props do
         begin
-          PropNode := TreeList.AddChild(ModuleNode, Prop);
+          if (Clear) then
+            PropNode := nil
+          else
+            PropNode := TreeList.Find(Prop, ModuleNode, False, True, TreeListFindFilter);
+
+          if (PropNode = nil) then
+            PropNode := TreeList.AddChild(ModuleNode, Prop);
+
           LoadPropertyNode(PropNode, Prop);
         end;
       end;
+*)
     end;
 
   finally
@@ -852,12 +914,14 @@ begin
     LoadPropertyNode(Node, TLocalizerProperty(Node.Data))
   else
   if (TObject(Node.Data) is TLocalizerModule) then
-    LoadModuleNode(Node, TLocalizerModule(Node.Data));
+    LoadModuleNode(Node, TLocalizerModule(Node.Data), False);
 end;
 
-procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule);
+procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean);
 var
   PropNode: TcxTreeListNode;
+  PropNodes: TDictionary<TLocalizerProperty, TcxTreeListNode>;
+  Pair: TPair<TLocalizerProperty, TcxTreeListNode>;
 begin
   Assert(Node <> nil);
   Assert(Node.Data <> nil);
@@ -883,12 +947,41 @@ begin
     else
       Node.ImageIndex := 6;
 
+    if (not Recurse) then
+      Exit;
+
     // Load item nodes
-    PropNode := Node.GetFirstChild;
-    while (PropNode <> nil) do
-    begin
-      LoadPropertyNode(PropNode);
-      PropNode := PropNode.GetNextSibling;
+    PropNodes := TDictionary<TLocalizerProperty, TcxTreeListNode>.Create;
+    try
+      // Get list of existing prop nodes
+      PropNode := Node.GetFirstChild;
+      while (PropNode <> nil) do
+      begin
+        PropNodes.Add(TLocalizerProperty(PropNode.Data), PropNode);
+        PropNode := PropNode.GetNextSibling;
+      end;
+
+      Module.Traverse(
+        function(Prop: TLocalizerProperty): boolean
+        begin
+          // Find existing node - Create if not found
+          if (not PropNodes.TryGetValue(Prop, PropNode)) then
+            PropNode := TreeList.AddChild(Node, Prop);
+
+          LoadPropertyNode(PropNode, Prop);
+
+          PropNodes.Remove(Prop);
+
+          Result := True;
+        end);
+
+      // Remaining nodes are zombies and should be deleted
+      if (PropNodes.Count > 0) then
+        for Pair in PropNodes do
+          Pair.Value.Free;
+
+    finally
+      PropNodes.Free;
     end;
 
   finally
@@ -896,13 +989,13 @@ begin
   end;
 end;
 
-procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode);
+procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean);
 begin
   Assert(Node <> nil);
   Assert(Node.Data <> nil);
   Assert(TObject(Node.Data) is TLocalizerModule);
 
-  LoadModuleNode(Node, TLocalizerModule(Node.Data));
+  LoadModuleNode(Node, TLocalizerModule(Node.Data), Recurse);
 end;
 
 procedure TFormMain.LoadPropertyNode(Node: TcxTreeListNode; Prop: TLocalizerProperty);
@@ -974,7 +1067,9 @@ end;
 
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(BarEditItemSourceLanguage.EditValue).LanguageName;
+  FLocalizerProject.BaseLocaleID := BarEditItemSourceLanguage.EditValue;
+  FLocalizerProject.Modified := True;
+  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
 end;
 
 procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
@@ -1027,17 +1122,12 @@ begin
     end;
   end;
 
-  LoadProject(FLocalizerProject);
+  LoadProject(FLocalizerProject, False);
 end;
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
 begin
   //
-end;
-
-function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
-begin
-  Result := (ANode.Data = AData);
 end;
 
 procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);

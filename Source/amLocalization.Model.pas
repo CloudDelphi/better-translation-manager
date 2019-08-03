@@ -192,7 +192,8 @@ type
 
     procedure Clear; override;
 
-    function AddProperty(const AName: string; const AValue: string = ''): TLocalizerProperty;
+    function AddProperty(const AName: string): TLocalizerProperty; overload;
+    function AddProperty(const AName: string; const AValue: string): TLocalizerProperty; overload;
 
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; override;
   end;
@@ -796,14 +797,18 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerItem.AddProperty(const AName, AValue: string): TLocalizerProperty;
+function TLocalizerItem.AddProperty(const AName: string): TLocalizerProperty;
 begin
   if (not FProperties.TryGetValue(AName, Result)) then
     Result := TLocalizerProperty.Create(Self, AName)
   else
   if (ProjectStateLoading in Module.Project.State) then
     Result.State := lItemStateExisting;
+end;
 
+function TLocalizerItem.AddProperty(const AName, AValue: string): TLocalizerProperty;
+begin
+  Result := AddProperty(AName);
   Result.Value := AValue;
 end;
 

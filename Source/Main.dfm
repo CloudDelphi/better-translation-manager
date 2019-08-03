@@ -1,7 +1,7 @@
 object FormMain: TFormMain
   Left = 0
   Top = 0
-  Caption = 'Translation Builder'
+  Caption = 'Better Translation Manager'
   ClientHeight = 537
   ClientWidth = 790
   Color = clBtnFace
@@ -39,6 +39,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -68,7 +69,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -92,7 +92,7 @@ object FormMain: TFormMain
       Index = 3
     end
   end
-  object dxRibbonStatusBar1: TdxRibbonStatusBar
+  object StatusBar: TdxRibbonStatusBar
     Left = 0
     Top = 514
     Width = 790
@@ -126,7 +126,7 @@ object FormMain: TFormMain
     Images = ImageListTree
     Navigator.Buttons.CustomButtons = <>
     OptionsBehavior.CellHints = True
-    OptionsBehavior.RecordScrollMode = rsmByPixel
+    OptionsBehavior.RecordScrollMode = rsmByRecord
     OptionsCustomizing.BandCustomizing = False
     OptionsCustomizing.BandMoving = False
     OptionsCustomizing.ColumnFiltering = bTrue
@@ -404,7 +404,7 @@ object FormMain: TFormMain
     object BarManagerBarLanguage: TdxBar
       Caption = 'Language'
       CaptionButtons = <>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2

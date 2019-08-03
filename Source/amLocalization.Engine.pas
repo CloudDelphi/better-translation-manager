@@ -420,7 +420,7 @@ var
   LocalizerProperty: TLocalizerProperty;
   ValueType: TValueType;
   StartPos, EndPos: int64;
-  NewValue: string;
+  Value, NewValue: string;
 begin
   // TReader.ReadProperty
   PropertyName := FReader.ReadStr;
@@ -436,21 +436,21 @@ begin
 
   vaWString, vaUTF8String, vaString, vaLString:
     begin
-      LocalizerProperty := LocalizerItem.AddProperty(PropertyName);
-
       StartPos := FReader.Position;
 
       // TReader.ReadPropValue
-      LocalizerProperty.Value := FReader.ReadString;
+      Value := FReader.ReadString;
 
       EndPos := FReader.Position;
+
+      LocalizerProperty := LocalizerItem.AddProperty(PropertyName, Value);
 
       // Perform translation
       if (Assigned(Translator)) then
       begin
         NewValue := LocalizerProperty.Value;
 
-        if (Translator(LocaleID, LocalizerProperty, NewValue)) and (NewValue <> LocalizerProperty.Value) and (FWriter <> nil) then
+        if (Translator(LocaleID, LocalizerProperty, NewValue)) and (NewValue <> Value) and (FWriter <> nil) then
         begin
           // Copy up until original value
           CopyToHere(StartPos);
@@ -657,9 +657,7 @@ class function TProjectResourceProcessor.DefaultTranslator(LocaleID: LCID; Local
 var
   Translation: TLocalizerTranslation;
 begin
-  if (LocalizerProperty.Status <> lItemStatusTranslate) or
-    (LocalizerProperty.Item.Status <> lItemStatusTranslate) or
-    (LocalizerProperty.Item.Module.Status <> lItemStatusTranslate) then
+  if (LocalizerProperty.Status <> lItemStatusTranslate) then
     Exit(False);
 
   if (not LocalizerProperty.Translations.TryGetTranslation(LocaleID, Translation)) or (not (Translation.Status in [tStatusProposed, tStatusTranslated])) then
