@@ -1,4 +1,4 @@
-unit Main;
+unit amLocalization.Dialog.Main;
 
 
 interface

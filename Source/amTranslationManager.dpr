@@ -1,8 +1,8 @@
-program DFMReader;
+program amTranslationManager;
 
 uses
   Vcl.Forms,
-  Main in 'Main.pas' {Form4},
+  amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {Form4},
   amLocalization.Model in 'amLocalization.Model.pas',
   amLocalization.Dialog.NewProject in 'amLocalization.Dialog.NewProject.pas' {FormNewProject},
   amLocalization.Import.XLIFF in 'amLocalization.Import.XLIFF.pas',
