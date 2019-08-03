@@ -114,6 +114,7 @@ type
     dxBarButton14: TdxBarButton;
     FindDialog: TFindDialog;
     ReplaceDialog: TReplaceDialog;
+    PopupMenuTree: TdxRibbonPopupMenu;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);

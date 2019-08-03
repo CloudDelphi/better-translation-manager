@@ -137,6 +137,7 @@ object FormMain: TFormMain
     OptionsView.DynamicIndent = True
     OptionsView.FixedSeparatorWidth = 1
     OptionsView.ShowColumnFilterButtons = sfbAlways
+    PopupMenu = PopupMenuTree
     TabOrder = 2
     OnEditing = TreeListEditing
     OnEditValueChanged = TreeListEditValueChanged
@@ -2438,7 +2439,7 @@ object FormMain: TFormMain
     end
     object ActionTranslationPropose: TAction
       Category = 'Translation'
-      Caption = '&Propose ranslation'
+      Caption = '&Propose translation'
       ImageIndex = 7
       OnExecute = ActionTranslationProposeExecute
       OnUpdate = ActionTranslationProposeUpdate
@@ -2846,5 +2847,44 @@ object FormMain: TFormMain
   object ReplaceDialog: TReplaceDialog
     Left = 164
     Top = 380
+  end
+  object PopupMenuTree: TdxRibbonPopupMenu
+    BarManager = BarManager
+    ItemLinks = <
+      item
+        Visible = True
+        ItemName = 'BarButton4'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton4'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton5'
+      end
+      item
+        BeginGroup = True
+        Visible = True
+        ItemName = 'dxBarButton6'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton7'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton8'
+      end
+      item
+        BeginGroup = True
+        Visible = True
+        ItemName = 'dxBarButton10'
+      end>
+    Ribbon = RibbonMain
+    UseOwnFont = False
+    Left = 276
+    Top = 240
+    PixelsPerInch = 96
   end
 end
