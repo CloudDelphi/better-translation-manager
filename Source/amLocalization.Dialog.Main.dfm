@@ -2,8 +2,8 @@ object FormMain: TFormMain
   Left = 0
   Top = 0
   Caption = 'Better Translation Manager'
-  ClientHeight = 537
-  ClientWidth = 790
+  ClientHeight = 643
+  ClientWidth = 964
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,7 +19,7 @@ object FormMain: TFormMain
   object RibbonMain: TdxRibbon
     Left = 0
     Top = 0
-    Width = 790
+    Width = 964
     Height = 125
     ApplicationButton.Visible = False
     BarManager = BarManager
@@ -38,8 +38,8 @@ object FormMain: TFormMain
     TabAreaToolbar.Visible = False
     TabOrder = 0
     TabStop = False
+    ExplicitWidth = 790
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -55,6 +55,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -94,8 +95,8 @@ object FormMain: TFormMain
   end
   object StatusBar: TdxRibbonStatusBar
     Left = 0
-    Top = 514
-    Width = 790
+    Top = 620
+    Width = 964
     Height = 23
     Panels = <>
     Ribbon = RibbonMain
@@ -106,22 +107,17 @@ object FormMain: TFormMain
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
+    ExplicitTop = 514
+    ExplicitWidth = 790
   end
-  object TreeList: TcxTreeList
-    Left = 0
+  object TreeListItems: TcxVirtualTreeList
+    Left = 241
     Top = 125
-    Width = 790
-    Height = 389
+    Width = 723
+    Height = 495
     Align = alClient
     Bands = <
       item
-        FixedKind = tlbfLeft
-        Options.Moving = False
-        Options.OnlyOwnColumns = True
-      end
-      item
-        Caption.Text = 'Property'
-        Options.OnlyOwnColumns = True
       end>
     Images = ImageListTree
     Navigator.Buttons.CustomButtons = <>
@@ -133,38 +129,28 @@ object FormMain: TFormMain
     OptionsData.AnsiSort = True
     OptionsData.CaseInsensitive = True
     OptionsData.Deleting = False
+    OptionsData.CheckHasChildren = False
     OptionsView.CellEndEllipsis = True
-    OptionsView.DynamicIndent = True
     OptionsView.FixedSeparatorWidth = 1
     OptionsView.ShowColumnFilterButtons = sfbAlways
+    OptionsView.ShowRoot = False
+    OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
     TabOrder = 2
-    OnEditing = TreeListEditing
-    OnEditValueChanged = TreeListEditValueChanged
-    Data = {
-      00000500F80100000F00000044617461436F6E74726F6C6C6572310800000012
-      000000546378537472696E6756616C7565547970651200000054637853747269
-      6E6756616C75655479706512000000546378537472696E6756616C7565547970
-      6513000000546378496E746567657256616C7565547970651200000054637853
-      7472696E6756616C75655479706512000000546378537472696E6756616C7565
-      5479706512000000546378537472696E6756616C756554797065120000005463
-      78537472696E6756616C75655479706504000000445855464D54000004000000
-      780078007800780001010101010101445855464D540000040000007800780078
-      00780001010101010101445855464D5400010100040000007A007A007A007A00
-      0100030000003100310031000003000000610061006100000300000041004100
-      410001445855464D540001010004000000640064007300660001000400000033
-      0034003200330000030000006200620062000003000000420042004200010100
-      0000000000000208010000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
-      010000001208020000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF0200
-      000008080000000000000000FFFFFFFFFFFFFFFFFFFFFFFF0300000008080000
-      000000000000FFFFFFFFFFFFFFFFFFFFFFFF0A0801000000}
+    OnEditing = TreeListItemsEditing
+    OnEditValueChanged = TreeListItemsEditValueChanged
+    OnEnter = TreeListModulesEnter
+    OnExit = TreeListModulesExit
+    OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
+    ExplicitWidth = 549
+    ExplicitHeight = 389
     object TreeListColumnItemName: TcxTreeListColumn
       Caption.AlignVert = vaTop
       Caption.Text = 'Element'
       DataBinding.ValueType = 'String'
       Options.Editing = False
       Options.Filtering = False
-      Width = 200
+      Width = 198
       Position.ColIndex = 0
       Position.RowIndex = 0
       Position.BandIndex = 0
@@ -173,11 +159,12 @@ object FormMain: TFormMain
     end
     object TreeListColumnType: TcxTreeListColumn
       Visible = False
+      Caption.AlignVert = vaTop
       Caption.Text = 'Type'
       DataBinding.ValueType = 'String'
       Options.Editing = False
       Width = 100
-      Position.ColIndex = 1
+      Position.ColIndex = 6
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -188,8 +175,25 @@ object FormMain: TFormMain
       Caption.Text = 'Name'
       DataBinding.ValueType = 'String'
       Options.Editing = False
+      Width = 125
+      Position.ColIndex = 1
+      Position.RowIndex = 0
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
+    object TreeListColumnID: TcxTreeListColumn
+      PropertiesClassName = 'TcxLabelProperties'
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Visible = False
+      Caption.AlignVert = vaTop
+      Caption.Text = 'ID'
+      DataBinding.ValueType = 'String'
+      Options.Editing = False
+      Options.Filtering = False
       Width = 100
-      Position.ColIndex = 2
+      Position.ColIndex = 7
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -212,63 +216,13 @@ object FormMain: TFormMain
           Value = 2
         end>
       Properties.OnEditValueChanged = TreeListColumnStatusPropertiesEditValueChanged
+      Caption.AlignVert = vaTop
       Caption.Text = 'Status'
       DataBinding.ValueType = 'Integer'
-      Width = 80
-      Position.ColIndex = 3
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnID: TcxTreeListColumn
-      PropertiesClassName = 'TcxLabelProperties'
-      Properties.Alignment.Horz = taRightJustify
-      Properties.ShowAccelChar = False
-      Visible = False
-      Caption.AlignVert = vaTop
-      Caption.Text = 'ID'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Width = 100
-      Position.ColIndex = 1
-      Position.RowIndex = 0
-      Position.BandIndex = 1
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnSource: TcxTreeListColumn
-      PropertiesClassName = 'TcxMemoProperties'
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Source value'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Width = 150
+      Width = 70
       Position.ColIndex = 2
       Position.RowIndex = 0
-      Position.BandIndex = 1
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnTarget: TcxTreeListColumn
-      PropertiesClassName = 'TcxButtonEditProperties'
-      Properties.Buttons = <
-        item
-          Default = True
-          Hint = 'Open in text editor'
-          Kind = bkEllipsis
-        end>
-      Properties.OnButtonClick = TreeListColumnTargetPropertiesButtonClick
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Target value'
-      DataBinding.ValueType = 'String'
-      Options.Filtering = False
-      Width = 150
-      Position.ColIndex = 3
-      Position.RowIndex = 0
-      Position.BandIndex = 1
+      Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
     end
@@ -293,12 +247,142 @@ object FormMain: TFormMain
           Value = 3
         end>
       Properties.OnEditValueChanged = TreeListColumnStatePropertiesEditValueChanged
+      Caption.AlignVert = vaTop
       Caption.Text = 'State'
       DataBinding.ValueType = 'String'
-      Width = 100
+      Width = 70
+      Position.ColIndex = 4
+      Position.RowIndex = 0
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
+    object TreeListColumnSource: TcxTreeListColumn
+      PropertiesClassName = 'TcxMemoProperties'
+      Caption.AlignVert = vaTop
+      Caption.Text = 'Source value'
+      DataBinding.ValueType = 'String'
+      Options.Editing = False
+      Options.Filtering = False
+      Width = 120
+      Position.ColIndex = 3
+      Position.RowIndex = 0
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
+    object TreeListColumnTarget: TcxTreeListColumn
+      PropertiesClassName = 'TcxButtonEditProperties'
+      Properties.Buttons = <
+        item
+          Default = True
+          Hint = 'Open in text editor'
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = TreeListColumnTargetPropertiesButtonClick
+      Caption.AlignVert = vaTop
+      Caption.Text = 'Target value'
+      DataBinding.ValueType = 'String'
+      Options.Filtering = False
+      Width = 120
+      Position.ColIndex = 5
+      Position.RowIndex = 0
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
+  end
+  object SplitterTreeLists: TcxSplitter
+    Left = 237
+    Top = 125
+    Width = 4
+    Height = 495
+    HotZoneClassName = 'TcxSimpleStyle'
+    ResizeUpdate = True
+    ExplicitHeight = 389
+  end
+  object TreeListModules: TcxTreeList
+    Left = 0
+    Top = 125
+    Width = 237
+    Height = 495
+    Align = alLeft
+    Bands = <
+      item
+        FixedKind = tlbfLeft
+        Options.Moving = False
+        Options.OnlyOwnColumns = True
+      end>
+    Images = ImageListTree
+    Navigator.Buttons.CustomButtons = <>
+    OptionsBehavior.CellHints = True
+    OptionsBehavior.RecordScrollMode = rsmByRecord
+    OptionsCustomizing.BandCustomizing = False
+    OptionsCustomizing.BandMoving = False
+    OptionsCustomizing.ColumnFiltering = bTrue
+    OptionsData.AnsiSort = True
+    OptionsData.CaseInsensitive = True
+    OptionsData.Deleting = False
+    OptionsSelection.CellSelect = False
+    OptionsView.CellEndEllipsis = True
+    OptionsView.ColumnAutoWidth = True
+    OptionsView.DynamicIndent = True
+    OptionsView.FixedSeparatorWidth = 1
+    OptionsView.ShowColumnFilterButtons = sfbAlways
+    OptionsView.ShowRoot = False
+    OptionsView.TreeLineStyle = tllsNone
+    PopupMenu = PopupMenuTree
+    TabOrder = 4
+    OnEnter = TreeListModulesEnter
+    OnExit = TreeListModulesExit
+    OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
+    ExplicitLeft = -2
+    Data = {
+      00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
+      000000546378537472696E6756616C75655479706513000000546378496E7465
+      67657256616C75655479706504000000445855464D5400000400000078007800
+      7800780001445855464D54000004000000780078007800780001445855464D54
+      000101445855464D540001010100000000000000020801000000000000000000
+      0000FFFFFFFFFFFFFFFFFFFFFFFF010000001208020000000000000000000000
+      FFFFFFFFFFFFFFFFFFFFFFFF0200000008080000000000000000FFFFFFFFFFFF
+      FFFFFFFFFFFF0300000008080000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
+      0A0801000000}
+    object TreeListColumnModuleName: TcxTreeListColumn
+      Caption.AlignVert = vaTop
+      Caption.Text = 'Module'
+      DataBinding.ValueType = 'String'
+      Options.Editing = False
+      Options.Filtering = False
+      Width = 160
       Position.ColIndex = 0
       Position.RowIndex = 0
-      Position.BandIndex = 1
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
+    object TreeListColumnModuleStatus: TcxTreeListColumn
+      PropertiesClassName = 'TcxImageComboBoxProperties'
+      Properties.Items = <
+        item
+          Description = 'Translate'
+          ImageIndex = 0
+          Value = 0
+        end
+        item
+          Description = 'Don'#39't translate'
+          Value = 1
+        end
+        item
+          Description = 'Hold'
+          Value = 2
+        end>
+      Properties.OnEditValueChanged = TreeListColumnModuleStatusPropertiesEditValueChanged
+      Caption.Text = 'Status'
+      DataBinding.ValueType = 'Integer'
+      Width = 70
+      Position.ColIndex = 1
+      Position.RowIndex = 0
+      Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
     end
@@ -404,8 +488,12 @@ object FormMain: TFormMain
     end
     object BarManagerBarLanguage: TdxBar
       Caption = 'Language'
-      CaptionButtons = <>
-      DockedLeft = 0
+      CaptionButtons = <
+        item
+          Enabled = False
+          Hint = 'Select available target languages'
+        end>
+      DockedLeft = 329
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -640,15 +728,15 @@ object FormMain: TFormMain
       GroupIndex = 1
     end
     object dxBarButton6: TdxBarButton
-      Action = ActionTranslationPropose
+      Action = ActionTranslationStatePropose
       Category = 0
     end
     object dxBarButton7: TdxBarButton
-      Action = ActionTranslationAccept
+      Action = ActionTranslationStateAccept
       Category = 0
     end
     object dxBarButton8: TdxBarButton
-      Action = ActionTranslationReject
+      Action = ActionTranslationStateReject
       Category = 0
     end
     object BarButtonSpellCheck: TdxBarLargeButton
@@ -2437,26 +2525,26 @@ object FormMain: TFormMain
       OnExecute = ActionProjectPurgeExecute
       OnUpdate = ActionProjectPurgeUpdate
     end
-    object ActionTranslationPropose: TAction
+    object ActionTranslationStatePropose: TAction
       Category = 'Translation'
       Caption = '&Propose translation'
       ImageIndex = 7
-      OnExecute = ActionTranslationProposeExecute
-      OnUpdate = ActionTranslationProposeUpdate
+      OnExecute = ActionTranslationStateProposeExecute
+      OnUpdate = ActionTranslationStateUpdate
     end
-    object ActionTranslationAccept: TAction
+    object ActionTranslationStateAccept: TAction
       Category = 'Translation'
       Caption = '&Accept translation'
       ImageIndex = 8
-      OnExecute = ActionTranslationAcceptExecute
-      OnUpdate = ActionTranslationProposeUpdate
+      OnExecute = ActionTranslationStateAcceptExecute
+      OnUpdate = ActionTranslationStateUpdate
     end
-    object ActionTranslationReject: TAction
+    object ActionTranslationStateReject: TAction
       Category = 'Translation'
       Caption = '&Reject translation'
       ImageIndex = 9
-      OnExecute = ActionTranslationRejectExecute
-      OnUpdate = ActionTranslationProposeUpdate
+      OnExecute = ActionTranslationStateRejectExecute
+      OnUpdate = ActionTranslationStateUpdate
     end
     object ActionStatusTranslate: TAction
       Category = 'Translation'

@@ -14,13 +14,47 @@ uses
   cxDBData, cxGridLevel, cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid, dxBar, dxSkinsForm,
   cxClasses, dxStatusBar, dxRibbonStatusBar, dxRibbon, cxTL, cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxMemo,
   cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
-  cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker;
+  cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData;
 
 
 const
   MSG_SOURCE_CHANGED = WM_USER;
   MSG_TARGET_CHANGED = WM_USER+1;
 
+// -----------------------------------------------------------------------------
+//
+// TLocalizerDataSource
+//
+// -----------------------------------------------------------------------------
+// TcxVirtualTreeList data provider for module properties
+// -----------------------------------------------------------------------------
+type
+  TLocalizerDataSource = class(TcxTreeListCustomDataSource)
+  private
+    FModule: TLocalizerModule;
+    FTargetLanguageID: Word;
+  protected
+    procedure SetModule(const Value: TLocalizerModule);
+    procedure SetTargetLanguageID(const Value: Word);
+
+    function GetRootRecordHandle: TcxDataRecordHandle; override;
+    function GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle; override;
+    function GetRecordCount: Integer; override;
+    function GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle; override;
+
+    function GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant; override;
+  public
+    constructor Create(AModule: TLocalizerModule);
+
+    property Module: TLocalizerModule read FModule write SetModule;
+    property TargetLanguageID: Word read FTargetLanguageID write SetTargetLanguageID;
+  end;
+
+// -----------------------------------------------------------------------------
+//
+// TFormMain
+//
+// -----------------------------------------------------------------------------
 type
   TFormMain = class(TdxRibbonForm)
     OpenDialogXLIFF: TOpenDialog;
@@ -39,7 +73,7 @@ type
     BarManagerBarImport: TdxBar;
     dxBarButton2: TdxBarButton;
     RibbonTabTranslation: TdxRibbonTab;
-    TreeList: TcxTreeList;
+    TreeListItems: TcxVirtualTreeList;
     TreeListColumnItemName: TcxTreeListColumn;
     TreeListColumnValueName: TcxTreeListColumn;
     TreeListColumnID: TcxTreeListColumn;
@@ -84,9 +118,9 @@ type
     dxBarButton6: TdxBarButton;
     dxBarButton7: TdxBarButton;
     dxBarButton8: TdxBarButton;
-    ActionTranslationPropose: TAction;
-    ActionTranslationAccept: TAction;
-    ActionTranslationReject: TAction;
+    ActionTranslationStatePropose: TAction;
+    ActionTranslationStateAccept: TAction;
+    ActionTranslationStateReject: TAction;
     ActionStatusTranslate: TAction;
     ActionStatusDontTranslate: TAction;
     ActionStatusHold: TAction;
@@ -115,10 +149,14 @@ type
     FindDialog: TFindDialog;
     ReplaceDialog: TReplaceDialog;
     PopupMenuTree: TdxRibbonPopupMenu;
+    SplitterTreeLists: TcxSplitter;
+    TreeListModules: TcxTreeList;
+    TreeListColumnModuleName: TcxTreeListColumn;
+    TreeListColumnModuleStatus: TcxTreeListColumn;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
-    procedure TreeListEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
+    procedure TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
     procedure TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
     procedure ActionProjectUpdateExecute(Sender: TObject);
     procedure ActionProjectSaveExecute(Sender: TObject);
@@ -129,10 +167,10 @@ type
     procedure BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
     procedure ActionProjectOpenExecute(Sender: TObject);
     procedure ActionProjectPurgeExecute(Sender: TObject);
-    procedure ActionTranslationProposeUpdate(Sender: TObject);
-    procedure ActionTranslationProposeExecute(Sender: TObject);
-    procedure ActionTranslationAcceptExecute(Sender: TObject);
-    procedure ActionTranslationRejectExecute(Sender: TObject);
+    procedure ActionTranslationStateUpdate(Sender: TObject);
+    procedure ActionTranslationStateProposeExecute(Sender: TObject);
+    procedure ActionTranslationStateAcceptExecute(Sender: TObject);
+    procedure ActionTranslationStateRejectExecute(Sender: TObject);
     procedure ActionStatusTranslateUpdate(Sender: TObject);
     procedure ActionStatusTranslateExecute(Sender: TObject);
     procedure ActionStatusDontTranslateExecute(Sender: TObject);
@@ -143,10 +181,9 @@ type
     procedure ActionProofingLiveCheckExecute(Sender: TObject);
     procedure ActionProofingLiveCheckUpdate(Sender: TObject);
     procedure ActionProofingCheckExecute(Sender: TObject);
-    procedure SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean;
-      var AHandled: Boolean);
+    procedure SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
     procedure SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
-    procedure TreeListEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
+    procedure TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
     procedure ActionProofingCheckSelectedExecute(Sender: TObject);
     procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
     procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
@@ -157,6 +194,11 @@ type
     procedure ActionProjectUpdateUpdate(Sender: TObject);
     procedure ActionBuildUpdate(Sender: TObject);
     procedure ActionProjectPurgeUpdate(Sender: TObject);
+    procedure TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
+    procedure TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
+    procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
+    procedure TreeListModulesEnter(Sender: TObject);
+    procedure TreeListModulesExit(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FUpdateLockCount: integer;
@@ -165,18 +207,30 @@ type
     FSpellCheckingString: boolean;
     FSpellCheckingStringResult: boolean;
     FFindFirst: boolean;
+    FLocalizerDataSource: TLocalizerDataSource;
+    FActiveTreeList: TcxCustomTreeList;
+
   protected
     function GetTargetLanguageID: Word;
+    function GetFocusedNode: TcxTreeListNode;
+    function GetFocusedItem: TCustomLocalizerItem;
+    function GetFocusedModule: TLocalizerModule;
+    function GetFocusedProperty: TLocalizerProperty;
+
+    property FocusedNode: TcxTreeListNode read GetFocusedNode;
+    property FocusedItem: TCustomLocalizerItem read GetFocusedItem;
+    property FocusedModule: TLocalizerModule read GetFocusedModule;
+    property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
   protected
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
-    procedure LoadNode(Node: TcxTreeListNode; Recurse: boolean = False);
+    procedure LoadFocusedItem(Recurse: boolean = False);
     procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
-    procedure LoadPropertyNode(Node: TcxTreeListNode); overload;
-    procedure LoadPropertyNode(Node: TcxTreeListNode; Prop: TLocalizerProperty); overload;
+    procedure LoadFocusedPropertyNode;
+    procedure ReloadNode(Node: TcxTreeListNode); overload;
     procedure LockUpdates;
     procedure UnlockUpdates;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
@@ -223,9 +277,12 @@ uses
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject;
 
+// -----------------------------------------------------------------------------
 
 type
   TdxSpellCheckerCracker = class(TdxCustomSpellChecker);
+
+// -----------------------------------------------------------------------------
 
 function SanitizeSpellCheckText(const Value: string): string;
 var
@@ -287,21 +344,25 @@ begin
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
 function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
 begin
   Result := (ANode.Data = AData);
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.LockUpdates;
 begin
   Inc(FUpdateLockCount);
-  TreeList.BeginUpdate;
+  TreeListModules.BeginUpdate;
 end;
 
 procedure TFormMain.UnlockUpdates;
 begin
   ASSERT(FUpdateLockCount > 0);
-  TreeList.EndUpdate;
+  TreeListModules.EndUpdate;
   Dec(FUpdateLockCount);
 end;
 
@@ -356,6 +417,7 @@ var
 begin
   SaveCursor(crAppStart);
 
+(*
   if (FFindFirst) or (TreeList.FocusedNode = nil) then
     Node := TreeList.Root
   else
@@ -395,6 +457,7 @@ begin
 
   FFindFirst := False;
   FindDialog.Options := FindDialog.Options + [frfindNext];
+*)
 end;
 
 procedure TFormMain.ActionBuildUpdate(Sender: TObject);
@@ -620,91 +683,89 @@ end;
 
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 begin
-  TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusDontTranslate;
-  LoadNode(TreeList.FocusedNode, True);
+  FocusedItem.Status := lItemStatusDontTranslate;
+  LoadFocusedItem;
 end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil) and
-    (TObject(TreeList.FocusedNode.Data) is TCustomLocalizerItem) and
-    (TCustomLocalizerItem(TreeList.FocusedNode.Data).State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (TCustomLocalizerItem(TreeList.FocusedNode.Data).Status = lItemStatusDontTranslate);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusDontTranslate);
 end;
 
 procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
 begin
-  TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusHold;
-  LoadNode(TreeList.FocusedNode, True);
+  FocusedItem.Status := lItemStatusHold;
+  LoadFocusedItem;
 end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil) and
-    (TObject(TreeList.FocusedNode.Data) is TCustomLocalizerItem) and
-    (TCustomLocalizerItem(TreeList.FocusedNode.Data).State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (TCustomLocalizerItem(TreeList.FocusedNode.Data).Status = lItemStatusHold);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusHold);
 end;
 
 procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
 begin
-  TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusTranslate;
-  LoadNode(TreeList.FocusedNode, True);
+  FocusedItem.Status := lItemStatusTranslate;
+  LoadFocusedItem;
 end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil) and
-    (TObject(TreeList.FocusedNode.Data) is TCustomLocalizerItem) and
-    (TCustomLocalizerItem(TreeList.FocusedNode.Data).State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (TCustomLocalizerItem(TreeList.FocusedNode.Data).Status = lItemStatusTranslate);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusTranslate);
 end;
 
-procedure TFormMain.ActionTranslationAcceptExecute(Sender: TObject);
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionTranslationStateUpdate(Sender: TObject);
 var
   Translation: TLocalizerTranslation;
+  Prop: TLocalizerProperty;
 begin
-  if (not TLocalizerProperty(TreeList.FocusedNode.Data).Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-    Translation := TLocalizerProperty(TreeList.FocusedNode.Data).Translations.AddOrUpdateTranslation(TargetLanguageID, TLocalizerProperty(TreeList.FocusedNode.Data).Value);
+  Prop := FocusedProperty;
 
-  Translation.Status := tStatusTranslated;
-
-  LoadPropertyNode(TreeList.FocusedNode);
-end;
-
-procedure TFormMain.ActionTranslationProposeExecute(Sender: TObject);
-var
-  Translation: TLocalizerTranslation;
-begin
-  if (not TLocalizerProperty(TreeList.FocusedNode.Data).Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-    Translation := TLocalizerProperty(TreeList.FocusedNode.Data).Translations.AddOrUpdateTranslation(TargetLanguageID, TLocalizerProperty(TreeList.FocusedNode.Data).Value);
-
-  Translation.Status := tStatusProposed;
-
-  LoadPropertyNode(TreeList.FocusedNode);
-end;
-
-procedure TFormMain.ActionTranslationProposeUpdate(Sender: TObject);
-var
-  Translation: TLocalizerTranslation;
-begin
-  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil) and
-    (TObject(TreeList.FocusedNode.Data) is TLocalizerProperty) and
-    (TLocalizerProperty(TreeList.FocusedNode.Data).State <> lItemStateUnused) and
-    (TLocalizerProperty(TreeList.FocusedNode.Data).Status <> lItemStatusDontTranslate) and
-    ((not TLocalizerProperty(TreeList.FocusedNode.Data).Translations.TryGetTranslation(TargetLanguageID, Translation)) or
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> lItemStateUnused) and (Prop.Status <> lItemStatusDontTranslate) and
+    ((not Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) or
      (Translation.Status <> tStatusObsolete));
 end;
 
-procedure TFormMain.ActionTranslationRejectExecute(Sender: TObject);
+procedure TFormMain.ActionTranslationStateAcceptExecute(Sender: TObject);
+var
+  Translation: TLocalizerTranslation;
 begin
-  TLocalizerProperty(TreeList.FocusedNode.Data).Translations.Remove(TargetLanguageID);
+  if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+    Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
 
-  LoadPropertyNode(TreeList.FocusedNode);
+  Translation.Status := tStatusTranslated;
+
+  LoadFocusedPropertyNode;
 end;
+
+procedure TFormMain.ActionTranslationStateProposeExecute(Sender: TObject);
+var
+  Translation: TLocalizerTranslation;
+begin
+  if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+    Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
+
+  Translation.Status := tStatusProposed;
+
+  LoadFocusedPropertyNode;
+end;
+
+procedure TFormMain.ActionTranslationStateRejectExecute(Sender: TObject);
+begin
+  FocusedProperty.Translations.Remove(TargetLanguageID);
+
+  LoadFocusedPropertyNode;
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
@@ -762,6 +823,9 @@ begin
   FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
 
+  FLocalizerDataSource := TLocalizerDataSource.Create(nil);
+  TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
+
   ClientDataSetLanguages.CreateDataSet;
   for i := 0 to TLocaleItems.Count-1 do
   begin
@@ -788,7 +852,40 @@ end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
+  FLocalizerDataSource.Free;
   FLocalizerProject.Free;
+end;
+
+function TFormMain.GetFocusedItem: TCustomLocalizerItem;
+begin
+  Result := FocusedProperty;
+
+  if (Result = nil) then
+    Result := FocusedModule;
+end;
+
+function TFormMain.GetFocusedModule: TLocalizerModule;
+begin
+  if (TreeListModules.FocusedNode <> nil) then
+    Result := TLocalizerModule(TreeListModules.FocusedNode.Data)
+  else
+    Result := nil;
+end;
+
+function TFormMain.GetFocusedNode: TcxTreeListNode;
+begin
+  if (FActiveTreeList = TreeListItems) then
+    Result := TreeListItems.FocusedNode
+  else
+    Result := TreeListModules.FocusedNode;
+end;
+
+function TFormMain.GetFocusedProperty: TLocalizerProperty;
+begin
+  if (FActiveTreeList = TreeListItems) and (TreeListItems.FocusedNode <> nil) then
+    Result := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.FocusedNode))
+  else
+    Result := nil;
 end;
 
 function TFormMain.GetTargetLanguageID: Word;
@@ -798,7 +895,9 @@ end;
 
 procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
 begin
-  TreeList.Clear;
+  TreeListModules.Clear;
+  FLocalizerDataSource.Module := nil;
+
   FLocalizerProject.Clear;
 
   FLocalizerProject.SourceFilename := SourceFilename;
@@ -821,20 +920,18 @@ var
   Module: TLocalizerModule;
   Modules: TArray<TLocalizerModule>;
   ModuleNode: TcxTreeListNode;
-(*
-  Item: TLocalizerItem;
-  Items: TArray<TLocalizerItem>;
-  Prop: TLocalizerProperty;
-  Props: TArray<TLocalizerProperty>;
-  PropNode: TcxTreeListNode;
-*)
+  SelectedModuleFound: boolean;
 begin
   SaveCursor(crHourGlass);
 
   LockUpdates;
   try
     if (Clear) then
-      TreeList.Clear;
+    begin
+      FLocalizerDataSource.Module := nil;
+      TreeListModules.Clear;
+      TreeListItems.Clear;
+    end;
 
     Modules := Project.Modules.Values.ToArray;
 
@@ -846,6 +943,8 @@ begin
           Result := CompareText(Left.Name, Right.Name);
       end));
 
+    SelectedModuleFound := False;
+
     for Module in Modules do
     begin
       if (Module.Kind = mkOther) then
@@ -854,86 +953,39 @@ begin
       if (Clear) then
         ModuleNode := nil
       else
-        ModuleNode := TreeList.Find(Module, TreeList.Root, False, True, TreeListFindFilter);
+      begin
+        if (Module = FLocalizerDataSource.Module) then
+          SelectedModuleFound := True;
+
+        // Look for existing node
+        ModuleNode := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+      end;
 
       if (ModuleNode = nil) then
-        ModuleNode := TreeList.Add(nil, Module);
+        // Create node if it didn't already exist
+        ModuleNode := TreeListModules.Add(nil, Module);
 
       LoadModuleNode(ModuleNode, Module, True);
-(*
-      Items := Module.Items.Values.ToArray;
-
-      TArray.Sort<TLocalizerItem>(Items, TComparer<TLocalizerItem>.Construct(
-        function(const Left, Right: TLocalizerItem): Integer
-        begin
-          Result := (Ord(Left.Module.Kind) - Ord(Right.Module.Kind));
-          if (Result = 0) then
-          begin
-            if (Left.Module.Kind = mkForm) or ((Left.ResourceID = 0) and  (Right.ResourceID = 0)) then
-              Result := CompareText(Left.Name, Right.Name)
-            else
-            begin
-              if (Left.ResourceID = 0) then
-                Result := -1
-              else
-              if (Right.ResourceID = 0) then
-                Result := 1
-              else
-              if (Left.ResourceID > Right.ResourceID) then
-                Result := 1
-              else
-              if (Left.ResourceID < Right.ResourceID) then
-                Result := -1
-              else
-                Result := 0;
-            end;
-          end;
-        end));
-
-      for Item in Items do
-      begin
-        Props := Item.Properties.Values.ToArray;
-
-        TArray.Sort<TLocalizerProperty>(Props, TComparer<TLocalizerProperty>.Construct(
-          function(const Left, Right: TLocalizerProperty): Integer
-          begin
-            Result := CompareText(Left.Name, Right.Name);
-          end));
-
-        for Prop in Props do
-        begin
-          if (Clear) then
-            PropNode := nil
-          else
-            PropNode := TreeList.Find(Prop, ModuleNode, False, True, TreeListFindFilter);
-
-          if (PropNode = nil) then
-            PropNode := TreeList.AddChild(ModuleNode, Prop);
-
-          LoadPropertyNode(PropNode, Prop);
-        end;
-      end;
-*)
     end;
 
+    if (not Clear) and (not SelectedModuleFound) then
+      // Selected module no longer exist
+      FLocalizerDataSource.Module := nil;
+
+    if (Clear) then
+      // Reassign TreeListItems.CustomDataSource if it was cleared by TreeListItems.Clear
+      TreeListItems.CustomDataSource := FLocalizerDataSource;
   finally
     UnlockUpdates;
   end;
-
-//  RibbonMain.Contexts[0].Visible := (FLocalizerProject.Modules.Count > 0);
 end;
 
-procedure TFormMain.LoadNode(Node: TcxTreeListNode; Recurse: boolean);
+procedure TFormMain.LoadFocusedItem;
 begin
-  Assert(Node <> nil);
-  Assert(Node.Data <> nil);
-  Assert(TObject(Node.Data) is TCustomLocalizerItem);
-
-  if (TObject(Node.Data) is TLocalizerProperty) then
-    LoadPropertyNode(Node, TLocalizerProperty(Node.Data))
+  if (FocusedItem is TLocalizerProperty) then
+    LoadFocusedPropertyNode
   else
-  if (TObject(Node.Data) is TLocalizerModule) then
-    LoadModuleNode(Node, TLocalizerModule(Node.Data), Recurse);
+    LoadModuleNode(FocusedNode, True);
 end;
 
 procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean);
@@ -949,8 +1001,8 @@ begin
   LockUpdates;
   try
 
-    Node.Texts[TreeListColumnItemName.ItemIndex] := Module.Name;
-    Node.Values[TreeListColumnStatus.ItemIndex] := Ord(Module.Status);
+    Node.Texts[TreeListColumnModuleName.ItemIndex] := Module.Name;
+    Node.Values[TreeListColumnModuleStatus.ItemIndex] := Ord(Module.Status);
 
     if (Module.State = lItemStateUnused) then
       Node.ImageIndex := 1
@@ -966,43 +1018,8 @@ begin
     else
       Node.ImageIndex := 6;
 
-    if (not Recurse) then
-      Exit;
-
-    // Load item nodes
-    // Dictionary uses pointer instead of TLocalizerProperty because object might have been deleted.
-    PropNodes := TDictionary<pointer, TcxTreeListNode>.Create;
-    try
-      // Get list of existing prop nodes
-      PropNode := Node.GetFirstChild;
-      while (PropNode <> nil) do
-      begin
-        PropNodes.Add(PropNode.Data, PropNode);
-        PropNode := PropNode.GetNextSibling;
-      end;
-
-      Module.Traverse(
-        function(Prop: TLocalizerProperty): boolean
-        begin
-          // Find existing node - Create if not found
-          if (not PropNodes.TryGetValue(Prop, PropNode)) then
-            PropNode := TreeList.AddChild(Node, Prop);
-
-          LoadPropertyNode(PropNode, Prop);
-
-          PropNodes.Remove(Prop);
-
-          Result := True;
-        end);
-
-      // Remaining nodes are zombies and should be deleted
-      if (PropNodes.Count > 0) then
-        for Pair in PropNodes do
-          Pair.Value.Free;
-
-    finally
-      PropNodes.Free;
-    end;
+    if (Recurse) then
+      TreeListItems.FullRefresh;
 
   finally
     UnlockUpdates;
@@ -1018,71 +1035,14 @@ begin
   LoadModuleNode(Node, TLocalizerModule(Node.Data), Recurse);
 end;
 
-procedure TFormMain.LoadPropertyNode(Node: TcxTreeListNode; Prop: TLocalizerProperty);
+procedure TFormMain.LoadFocusedPropertyNode;
 var
-  Translation: TLocalizerTranslation;
+  Node: TcxTreeListNode;
 begin
+  Node := TreeListItems.FocusedNode;
   Assert(Node <> nil);
-  Assert(Node.Data <> nil);
-  Assert(Node.Data = Prop);
 
-  LockUpdates;
-  try
-
-    Node.Texts[TreeListColumnItemName.ItemIndex] := Prop.Item.Name;
-    Node.Texts[TreeListColumnType.ItemIndex] := Prop.Item.TypeName;
-
-    Node.Texts[TreeListColumnValueName.ItemIndex] := Prop.Name;
-    Node.Values[TreeListColumnID.ItemIndex] := Prop.Item.ResourceID;
-    Node.Values[TreeListColumnStatus.ItemIndex] := Ord(Prop.Status);
-    Node.Texts[TreeListColumnSource.ItemIndex] := Prop.Value;
-    if (Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-    begin
-      Node.Texts[TreeListColumnTarget.ItemIndex] := Translation.Value;
-      Node.Values[TreeListColumnState.ItemIndex] := Ord(Translation.Status);
-    end else
-    begin
-      Translation := nil;
-      Node.Texts[TreeListColumnTarget.ItemIndex] := Prop.Value;
-      Node.Values[TreeListColumnState.ItemIndex] := Ord(tStatusPending);
-    end;
-
-    if (Prop.State = lItemStateUnused) then
-      Node.ImageIndex := 1
-    else
-    if (Prop.State = lItemStateNew) and (Prop.Status = lItemStatusTranslate) and (Translation = nil) then
-      Node.ImageIndex := 0
-    else
-    if (Prop.Status = lItemStatusDontTranslate) then
-      Node.ImageIndex := 2
-    else
-    if (Prop.Status = lItemStatusHold) then
-      Node.ImageIndex := 5
-    else
-    if (Translation <> nil) and (Translation.Status <> tStatusPending) then
-    begin
-      if (Translation.Status = tStatusProposed) then
-        Node.ImageIndex := 3
-      else
-      if (Translation.Status = tStatusTranslated) then
-        Node.ImageIndex := 4
-      else
-        Node.ImageIndex := 7; // Obsolete
-    end else
-      Node.ImageIndex := 6;
-
-  finally
-    UnlockUpdates;
-  end;
-end;
-
-procedure TFormMain.LoadPropertyNode(Node: TcxTreeListNode);
-begin
-  Assert(Node <> nil);
-  Assert(Node.Data <> nil);
-  Assert(TObject(Node.Data) is TLocalizerProperty);
-
-  LoadPropertyNode(Node, TLocalizerProperty(Node.Data));
+  ReloadNode(Node);
 end;
 
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
@@ -1105,14 +1065,21 @@ begin
 
   TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
 
+  (*
+  ** Load spell check dictionary for new language
+  *)
+
+  // Unload old custom dictionary
   Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
   SpellChecker.Dictionaries[0].Enabled := False;
   SpellChecker.Dictionaries[0].Unload;
+  // Load new custom dictionary
   TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := Format('.\dictionaries\user-%s.dic', [LocaleItem.LanguageShortName]);
   SpellChecker.Dictionaries[0].Enabled := True;
   SpellChecker.Dictionaries[0].Load;
   SpellChecker.Dictionaries[0].Language := LocaleItem.Locale;
 
+  // Deactivate all existing dictionaries except ones that match new language
   AnyFound := False;
   for i := 1 to SpellChecker.DictionaryCount-1 do
   begin
@@ -1125,13 +1092,14 @@ begin
     AnyFound := AnyFound or Found;
   end;
 
+  // Add and load  new dictionary
   if (not AnyFound) then
   begin
     FilenameDic := Format('.\dictionaries\%s.dic', [LocaleItem.LanguageShortName]);
     FilenameAff := Format('.\dictionaries\%s.aff', [LocaleItem.LanguageShortName]);
     if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
     begin
-//      AnyFound := True;
+      // AnyFound := True;
       SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
       SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
       TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := LocaleItem.Locale;
@@ -1140,9 +1108,13 @@ begin
       TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
       SpellCheckerDictionaryItem.DictionaryType.Load;
     end;
+
+    // TODO : Add support for other formats here...
   end;
 
-  LoadProject(FLocalizerProject, False);
+  // Reload project
+  FLocalizerDataSource.TargetLanguageID := LocaleItem.Locale;
+//  LoadProject(FLocalizerProject, False);
 end;
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
@@ -1200,12 +1172,21 @@ begin
 
   if (not AValid) and (FSpellCheckProp <> nil) then
   begin
-    Node := TreeList.Find(FSpellCheckProp, nil, False, True, TreeListFindFilter);
+    // Find and select module
+    Node := TreeListModules.Find(FSpellCheckProp.Item.Module, nil, False, True, TreeListFindFilter);
 
     if (Node <> nil) then
     begin
       Node.MakeVisible;
       Node.Focused := True;
+
+      // Find and select property node
+      Node := TreeListItems.NodeFromHandle(FSpellCheckProp);
+      if (Node <> nil) then
+      begin
+        Node.MakeVisible;
+        Node.Focused := True;
+      end;
       Application.ProcessMessages;
     end;
   end;
@@ -1260,11 +1241,28 @@ begin
     Prop.TranslatedValue[TargetLanguageID] := CheckedText;
 
     // Update treenode
-    Node := TreeList.Find(Prop, nil, False, True, TreeListFindFilter);
-    LoadPropertyNode(Node, Prop);
+    LoadFocusedPropertyNode;
   end;
 
   Result := (TdxSpellCheckerCracker(SpellChecker).LastDialogResult = mrOK);
+end;
+
+type
+  TcxTreeListNodeCracker = class(TcxTreeListNode);
+
+procedure TFormMain.ReloadNode(Node: TcxTreeListNode);
+begin
+  // Hack to reload a single tree node
+  Exclude(TcxTreeListNodeCracker(Node).State, nsValuesAssigned);
+  Node.TreeList.LayoutChanged;
+end;
+
+procedure TFormMain.TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
+begin
+  // Module status edited inline
+  TCustomLocalizerItem(TreeListModules.FocusedNode.Data).Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
+
+  LoadModuleNode(TreeListModules.FocusedNode, True);
 end;
 
 procedure TFormMain.TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
@@ -1277,22 +1275,23 @@ begin
   if (TranslationStatus = tStatusPending) then
   begin
     // Remove translation
-    TLocalizerProperty(TreeList.FocusedNode.Data).Translations.Remove(TargetLanguageID);
+    FocusedProperty.Translations.Remove(TargetLanguageID);
   end else
   begin
-    if (not TLocalizerProperty(TreeList.FocusedNode.Data).Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-      Translation := TLocalizerProperty(TreeList.FocusedNode.Data).Translations.AddOrUpdateTranslation(TargetLanguageID, TLocalizerProperty(TreeList.FocusedNode.Data).Value);
+    if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
     Translation.Status := TranslationStatus;
   end;
 
-  LoadPropertyNode(TreeList.FocusedNode);
+  LoadFocusedPropertyNode;
 end;
 
 procedure TFormMain.TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
 begin
-  TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
+  // Item status edited inline
+  FocusedProperty.Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
 
-  LoadNode(TreeList.FocusedNode);
+  LoadFocusedPropertyNode;
 end;
 
 type
@@ -1304,8 +1303,8 @@ var
 begin
   TextEditor := TFormTextEditor.Create(nil);
   try
-    TextEditor.SourceText := TLocalizerProperty(TreeList.FocusedNode.Data).Value;
-    TextEditor.Text := TLocalizerProperty(TreeList.FocusedNode.Data).TranslatedValue[TargetLanguageID];
+    TextEditor.SourceText := FocusedProperty.Value;
+    TextEditor.Text := FocusedProperty.TranslatedValue[TargetLanguageID];
 
     if (TextEditor.Execute) then
     begin
@@ -1318,13 +1317,13 @@ begin
   end;
 end;
 
-procedure TFormMain.TreeListEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
+procedure TFormMain.TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
 begin
   // Only allow inline editing of property nodes
-  Allow := (Sender.FocusedNode <> nil) and (Sender.FocusedNode.Data <> nil) and (TObject(Sender.FocusedNode.Data) is TLocalizerProperty);
+  Allow := (FocusedProperty <> nil);
 end;
 
-procedure TFormMain.TreeListEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
+procedure TFormMain.TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
 begin
   if (AColumn = TreeListColumnTarget) then
   begin
@@ -1334,18 +1333,80 @@ begin
     LockUpdates;
     try
 
-      TLocalizerProperty(TreeList.FocusedNode.Data).TranslatedValue[TargetLanguageID] := VarToStr(Sender.InplaceEditor.EditValue);
+      FocusedProperty.TranslatedValue[TargetLanguageID] := VarToStr(Sender.InplaceEditor.EditValue);
 
-      LoadPropertyNode(TreeList.FocusedNode);
+      LoadFocusedPropertyNode;
     finally
       UnlockUpdates;
     end;
   end;
 end;
 
+procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode;
+  AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+begin
+  AIndex := -1;
+
+  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
+    Exit;
+
+  if (Sender is TcxVirtualTreeList) then
+    Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode))
+  else
+    Prop := TLocalizerProperty(ANode.Data);
+
+  if (not Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+    Translation := nil;
+
+  if (Prop.State = lItemStateUnused) then
+    AIndex := 1
+  else
+  if (Prop.State = lItemStateNew) and (Prop.Status = lItemStatusTranslate) and (Translation = nil) then
+    AIndex := 0
+  else
+  if (Prop.Status = lItemStatusDontTranslate) then
+    AIndex := 2
+  else
+  if (Prop.Status = lItemStatusHold) then
+    AIndex := 5
+  else
+  if (Translation <> nil) and (Translation.Status <> tStatusPending) then
+  begin
+    if (Translation.Status = tStatusProposed) then
+      AIndex := 3
+    else
+    if (Translation.Status = tStatusTranslated) then
+      AIndex := 4
+    else
+    if (Translation.Status = tStatusObsolete) then
+      AIndex := 7
+    else
+      AIndex := -1; // Should never happen
+  end else
+    AIndex := 6;
+end;
+
+procedure TFormMain.TreeListModulesEnter(Sender: TObject);
+begin
+  FActiveTreeList := TcxCustomTreeList(Sender);
+end;
+
+procedure TFormMain.TreeListModulesExit(Sender: TObject);
+begin
+  FActiveTreeList := nil;
+end;
+
+procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
+begin
+  FLocalizerDataSource.Module := FocusedModule;
+end;
+
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);
 begin
-  TCustomLocalizerItem(TreeList.FocusedNode.Data).Traverse(
+  FocusedItem.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := PerformSpellCheck(Prop);
@@ -1356,7 +1417,137 @@ end;
 
 procedure TFormMain.ActionProofingCheckSelectedUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeList.FocusedNode <> nil) and (TreeList.FocusedNode.Data <> nil);
+  TAction(Sender).Enabled := (FocusedItem <> nil);
 end;
+
+// -----------------------------------------------------------------------------
+//
+// TLocalizerDataSource
+//
+// -----------------------------------------------------------------------------
+constructor TLocalizerDataSource.Create(AModule: TLocalizerModule);
+begin
+  inherited Create;
+  FModule := AModule;
+end;
+
+function TLocalizerDataSource.GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle;
+begin
+  Result := nil;
+end;
+
+function TLocalizerDataSource.GetRecordCount: Integer;
+var
+  i: integer;
+begin
+  Result := 0;
+
+  if (FModule = nil) then
+    Exit;
+
+  for i := 0 to FModule.Items.Count-1 do
+    Inc(Result, FModule.Items.Values.ToArray[i].Properties.Count);
+end;
+
+function TLocalizerDataSource.GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle;
+var
+  Item: TLocalizerItem;
+  Prop: TLocalizerProperty;
+begin
+  Result := nil;
+
+  if (FModule = nil) then
+    Exit;
+
+  for Item in FModule.Items.Values.ToArray do
+    for Prop in Item.Properties.Values.ToArray do
+    begin
+      if (ARecordIndex = 0) then
+        Exit(Prop);
+      Dec(ARecordIndex);
+    end;
+end;
+
+function TLocalizerDataSource.GetRootRecordHandle: TcxDataRecordHandle;
+begin
+  Result := nil;
+end;
+
+function TLocalizerDataSource.GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
+const
+  TreeItemIndexName             = 0;
+  TreeItemIndexType             = 1;
+  TreeItemIndexValueName        = 2;
+  TreeItemIndexID               = 3;
+  TreeItemIndexStatus           = 4;
+  TreeItemIndexState            = 5;
+  TreeItemIndexSourceValue      = 6;
+  TreeItemIndexTargetValue      = 7;
+var
+  ItemIndex: integer;
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+begin
+  Prop := TLocalizerProperty(ARecordHandle);
+  ItemIndex := integer(AItemHandle);
+
+  case ItemIndex of
+    TreeItemIndexName:
+      Result := Prop.Item.Name;
+
+    TreeItemIndexType:
+      Result := Prop.Item.TypeName;
+
+    TreeItemIndexValueName:
+      Result := Prop.Name;
+
+    TreeItemIndexID:
+      Result := Prop.Item.ResourceID;
+
+    TreeItemIndexStatus:
+      Result := Ord(Prop.Status);
+
+    TreeItemIndexState:
+      if (Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+        Result := Ord(Translation.Status)
+      else
+        Result := Ord(tStatusPending);
+
+    TreeItemIndexSourceValue:
+      Result := Prop.Value;
+
+    TreeItemIndexTargetValue:
+      if (Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+        Result := Translation.Value
+      else
+        Result := Prop.Value;
+  else
+    Result := Null;
+  end;
+end;
+
+procedure TLocalizerDataSource.SetModule(const Value: TLocalizerModule);
+begin
+  if (FModule = Value) then
+    Exit;
+
+  FModule := Value;
+
+  DataChanged;
+end;
+
+procedure TLocalizerDataSource.SetTargetLanguageID(const Value: Word);
+begin
+  if (FTargetLanguageID = Value) then
+    Exit;
+
+  FTargetLanguageID := Value;
+
+  DataChanged;
+end;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 end.
