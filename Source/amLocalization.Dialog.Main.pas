@@ -172,7 +172,7 @@ type
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
-    procedure LoadNode(Node: TcxTreeListNode);
+    procedure LoadNode(Node: TcxTreeListNode; Recurse: boolean = False);
     procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
     procedure LoadPropertyNode(Node: TcxTreeListNode); overload;
@@ -621,7 +621,7 @@ end;
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 begin
   TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusDontTranslate;
-  LoadNode(TreeList.FocusedNode);
+  LoadNode(TreeList.FocusedNode, True);
 end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
@@ -636,7 +636,7 @@ end;
 procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
 begin
   TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusHold;
-  LoadNode(TreeList.FocusedNode);
+  LoadNode(TreeList.FocusedNode, True);
 end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
@@ -651,7 +651,7 @@ end;
 procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
 begin
   TCustomLocalizerItem(TreeList.FocusedNode.Data).Status := lItemStatusTranslate;
-  LoadNode(TreeList.FocusedNode);
+  LoadNode(TreeList.FocusedNode, True);
 end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
@@ -923,7 +923,7 @@ begin
 //  RibbonMain.Contexts[0].Visible := (FLocalizerProject.Modules.Count > 0);
 end;
 
-procedure TFormMain.LoadNode(Node: TcxTreeListNode);
+procedure TFormMain.LoadNode(Node: TcxTreeListNode; Recurse: boolean);
 begin
   Assert(Node <> nil);
   Assert(Node.Data <> nil);
@@ -933,7 +933,7 @@ begin
     LoadPropertyNode(Node, TLocalizerProperty(Node.Data))
   else
   if (TObject(Node.Data) is TLocalizerModule) then
-    LoadModuleNode(Node, TLocalizerModule(Node.Data), False);
+    LoadModuleNode(Node, TLocalizerModule(Node.Data), Recurse);
 end;
 
 procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean);
