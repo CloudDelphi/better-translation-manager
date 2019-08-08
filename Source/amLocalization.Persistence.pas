@@ -106,7 +106,11 @@ var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
+  Language: TTargetLanguage;
+  CachedLanguage: string;
   Translation: TLocalizerTranslation;
+  TranslationStatus: TTranslationStatus;
+  s: string;
 begin
   XML := TXMLDocument.Create(nil);
   XML.Options := XML.Options + [doAttrNull];
@@ -115,6 +119,9 @@ begin
   RootNode := XML.ChildNodes['delphi_l10n'];
 
   ProjectNode := RootNode.ChildNodes['project'];
+
+  Language := nil;
+  CachedLanguage := '';
 
   Project.BeginUpdate;
   try
@@ -170,8 +177,11 @@ begin
                       begin
                         if (XlatNode.NodeName = 'translation') then
                         begin
-                          Translation := Prop.Translations.AddOrUpdateTranslation(XlatNode.Attributes['language'], XlatNode.Text);
-                          Translation.Status := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
+                          s := VarToStr(XlatNode.Attributes['language']);
+                          if (Language = nil) or (s <> CachedLanguage) then
+                            Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
+                          TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
+                          Translation := Prop.Translations.AddOrUpdateTranslation(Language, XlatNode.Text, TranslationStatus);
                         end;
                         XlatNode := XlatNode.NextSibling;
                       end;
@@ -290,13 +300,13 @@ begin
 
         XlatsNode := nil;
         Prop.Traverse(
-          function(Prop: TLocalizerProperty; LocaleID: LCID; Translation: TLocalizerTranslation): boolean
+          function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean
           begin
             if (XlatsNode = nil) then
               XlatsNode :=  PropNode.AddChild('translations');
 
             XlatNode := XlatsNode.AddChild('translation');
-            XlatNode.Attributes['language'] := LocaleID;
+            XlatNode.Attributes['language'] := Translation.Language.LanguageID;
             if (Translation.Status <> tStatusTranslated) then
               XlatNode.Attributes['status'] := sTranslationStatus[Translation.Status];
             XlatNode.Text := Translation.Value;

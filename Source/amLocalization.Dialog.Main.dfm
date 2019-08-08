@@ -38,8 +38,8 @@ object FormMain: TFormMain
     TabAreaToolbar.Visible = False
     TabOrder = 0
     TabStop = False
-    ExplicitWidth = 790
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -55,7 +55,6 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
-      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -80,6 +79,9 @@ object FormMain: TFormMain
         end
         item
           ToolbarName = 'BarManagetBarTranslationState'
+        end
+        item
+          ToolbarName = 'BarManagerBarLookup'
         end>
       KeyTip = 'T'
       Index = 2
@@ -107,8 +109,6 @@ object FormMain: TFormMain
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
-    ExplicitTop = 514
-    ExplicitWidth = 790
   end
   object TreeListItems: TcxVirtualTreeList
     Left = 241
@@ -130,6 +130,7 @@ object FormMain: TFormMain
     OptionsData.CaseInsensitive = True
     OptionsData.Deleting = False
     OptionsData.CheckHasChildren = False
+    OptionsSelection.MultiSelect = True
     OptionsView.CellEndEllipsis = True
     OptionsView.FixedSeparatorWidth = 1
     OptionsView.ShowColumnFilterButtons = sfbAlways
@@ -142,8 +143,6 @@ object FormMain: TFormMain
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
-    ExplicitWidth = 549
-    ExplicitHeight = 389
     object TreeListColumnItemName: TcxTreeListColumn
       Caption.AlignVert = vaTop
       Caption.Text = 'Element'
@@ -299,7 +298,6 @@ object FormMain: TFormMain
     Height = 495
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
-    ExplicitHeight = 389
   end
   object TreeListModules: TcxTreeList
     Left = 0
@@ -324,6 +322,7 @@ object FormMain: TFormMain
     OptionsData.CaseInsensitive = True
     OptionsData.Deleting = False
     OptionsSelection.CellSelect = False
+    OptionsSelection.MultiSelect = True
     OptionsView.CellEndEllipsis = True
     OptionsView.ColumnAutoWidth = True
     OptionsView.DynamicIndent = True
@@ -336,7 +335,6 @@ object FormMain: TFormMain
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
     OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
-    ExplicitLeft = -2
     Data = {
       00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
       000000546378537472696E6756616C75655479706513000000546378496E7465
@@ -490,10 +488,10 @@ object FormMain: TFormMain
       Caption = 'Language'
       CaptionButtons = <
         item
-          Enabled = False
           Hint = 'Select available target languages'
+          OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -537,7 +535,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton5'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -565,7 +563,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton8'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -647,8 +645,40 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton14'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton16'
         end>
       OneOnRow = False
+      Row = 0
+      UseOwnFont = False
+      Visible = True
+      WholeRow = False
+    end
+    object BarManagerBarLookup: TdxBar
+      Caption = 'Lookup'
+      CaptionButtons = <
+        item
+          Enabled = False
+          Hint = 'Settings'
+        end>
+      DockedLeft = 411
+      DockedTop = 0
+      FloatLeft = 998
+      FloatTop = 8
+      FloatClientWidth = 0
+      FloatClientHeight = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarLargeButton6'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton15'
+        end>
+      OneOnRow = True
       Row = 0
       UseOwnFont = False
       Visible = True
@@ -686,9 +716,9 @@ object FormMain: TFormMain
       Visible = ivAlways
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.DropDownAutoSize = True
-      Properties.View = GridTableViewLanguages
+      Properties.View = DataModuleMain.GridTableViewLanguages
       Properties.KeyFieldNames = 'LocaleID'
-      Properties.ListFieldItem = GridTableViewLanguagesColumnLocaleName
+      Properties.ListFieldItem = DataModuleMain.GridTableViewLanguagesColumnLanguage
       Properties.OnEditValueChanged = BarEditItemSourceLanguagePropertiesEditValueChanged
     end
     object BarEditItemTargetLanguage: TcxBarEditItem
@@ -699,10 +729,11 @@ object FormMain: TFormMain
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
-      Properties.View = GridTableViewLanguages
+      Properties.View = DataModuleMain.GridTableViewTargetLanguages
       Properties.KeyFieldNames = 'LocaleID'
-      Properties.ListFieldItem = GridTableViewLanguagesColumnLocaleName
+      Properties.ListFieldItem = DataModuleMain.GridTableViewTargetLanguagesLanguageName
       Properties.OnEditValueChanged = BarEditItemTargetLanguagePropertiesEditValueChanged
+      Properties.OnInitPopup = BarEditItemTargetLanguagePropertiesInitPopup
     end
     object dxBarButton3: TdxBarButton
       Action = ActionProjectPurge
@@ -771,6 +802,138 @@ object FormMain: TFormMain
     object dxBarButton14: TdxBarButton
       Action = ActionFindReplace
       Category = 0
+    end
+    object dxBarLargeButton6: TdxBarLargeButton
+      Caption = 'Auto translate'
+      Category = 0
+      Enabled = False
+      Hint = 'Auto translate'
+      Visible = ivAlways
+      LargeGlyph.SourceDPI = 96
+      LargeGlyph.Data = {
+        89504E470D0A1A0A0000000D4948445200000020000000200806000000737A7A
+        F40000001974455874536F6674776172650041646F626520496D616765526561
+        647971C9653C0000000E744558745469746C6500436F756E7472793B9D0B04DD
+        000009AD49444154785EC5976D8C5CD57DC67FE7DC7BE7CEEBCE78BC5EEF9BD7
+        BB0683B1EB601A1C371817D4268AAAF45BA4004A9BF0A292F6431BA944084494
+        B41F5A8AD2120922944869A4B4AA2A2A5E1A14DA10686ABA35B80263B08DB11D
+        2FB6D7EB5DEFEBECBCDEB92FE79C9E5EDD0FABAE2A3EF6AF7DF4DC3D5733CFF3
+        7FFEF3BFA311C618FE3F4B64CC3BF7E401509ABD893677260A62657E19297331
+        4AC4EF4789793254E699AFBE997C171080C9980DFFB399376363D3EE86F3BAD2
+        E667D22D7EB656A860A4607E798D28EC53AE6D65F74D137C7C69EEA9BFB9FD7A
+        F0C8BBEA471BC4E506033A83CA587F9219F1C51B790238F047B7F83B6E99BAF1
+        50B9588720A0EC06C4387CD4C8E3967C8AF112C5E01227967CF342EFCEE74E4F
+        3C50925EF9204E6E4A2BD5D249704605EDE351F3DAF1E6E5A3671B177EBE0A44
+        4002A89BEF7BC1A01330064838F7FCEF9119602F30FDB951B7F83BFB27F395A0
+        895A59C635924AD9A71D4ADEBBD623E71BEA03501910BC71ADC6FB87BFC7AE4F
+        1F666AB4C6D5959099F93697E75AACAD75E9763AD783D5CB3F6C5E3AFAF2EA87
+        2F5D06FA407CC763A77492689A573EE0DC3F7D358BCF70D6E29137E693B5D74F
+        5F5E5F571AE9418CA6DD89A8E40437D47C8200D6DAD06E19EE1C6E3175ECCFD8
+        EAB5A8150D5BAA2E77FCDA20771D1CE3F64F4FB277FFD4F0B6A97DDFD976EB3D
+        2FEFB8FB5BF7003520FFD65F7DCA1108308AAC90087875869F18C32F5FB3268E
+        5D695D6B95EB383E28A9E9F6FAD44B0E5BF2B9D4C4FB8BF0D2E53A011E0BFFFC
+        347947D30A14CBEDD89A71D951F7A8950B4CED1A63747272AA3A79F0073B3FF7
+        178FE62AA34340FEBFFEFA5607BDD1800180E51E7FA221F9976BB17B7CB6B7DC
+        2FD588A4E1172B9ABF5B2EF39F6191D33D41F3B30F32FCC4AB8C3FF61223F7FD
+        3903A53C9EE3102786B9F5C85E0B46AD09216160A0C2B6D1315119DFFBA72387
+        1E7E14A803FEF997FE400A21C812C8D67081EE7297872243E9B5F9B0323DA7CD
+        74B34AEF2BCFB1FD3BAFB3F7E963DCF6EC7176DEFB04233B26D8363C4C79A04A
+        D126E3380229C11582855642DE930C57BC942786CAEC9C18A73ABCE70FC70FFF
+        F1034015F000012001BE78030650D6C4D9D5C079665DFB627A05F1F16D0F53DD
+        7B98BDBB46B9F9861D6CDD7933F5C16D948A25BC9C8FE7B938528010080B3008
+        03CD9E62A4E632B1D525529A4EE291AB0C8BE2B6DD0FD7777FFE2050021C614B
+        C2868D067D75FCFE8FC3DA3E7F198F0B1F1E63B5D9254A40C81CC3B52223559F
+        6AC1A5E80AA400630CAE14547C69EF79DCB43DC7E4568F4819A2D8B0D64A305A
+        E0F803F8D51D6395B103F76F4801099041B8C5ADEE965D77DF53BFEB1B08E9D0
+        B97A9A33FFFA639AAB8B5CB6F3996D44744245C183B1AACBFE111FAD0CBF3EEE
+        73E360CE1A93B443CD470B21334B21BE0B9E2BD046A7700A759BC4C8DDD58943
+        FB813C2025C0AB1711803B7CE0DEDDE5C1D1CFDF7AFBA718F9C237312A62EECD
+        9F70FCDF7FCEF5C5251AED888566CCAF16FB9CBC1AF0D6C73D94D24CCFF478FB
+        52C0A9B93E9796ADC940D10B35BD4853F605263128C0B845DCE2D096F2D02D5F
+        201B43960002F00A83371DAC568A695C437BEEA47CE04B205D4E3EFF2433E7CF
+        D2586FD10B62FA91268C35B13229A25011279A3806959D25169D409393A0B406
+        6DD0B1417865DC7C79FFFF3620015F16EA876BB522312E5EB9CEF891AF511AB9
+        19AD132EBCF234A98130218834419C7648122B82C410C59A585B24865869540C
+        EDBE461A83B2504A632CE3967072C59D400170DC347E3203FEC06D03953C5164
+        C87B05CA83631C79E82F79E7F517F18A5522E3D08D0C90759F28A2C4210C1561
+        A209238D3562919AA01F6A8A058D529086A0C0481F47E606011F90EEC61148AF
+        B063627B817AD96320EF50CE1770CD1626266F4C77BA5A29E379394060944E0D
+        047DC591C99CE5846E4FD10EA01518D6BB9AF58EA16DCF46070C41CFD0978644
+        BA345C59005C406C34204D1275CFCF76F395720EDF15E43CC96FEC2EF3C1428C
+        510621FB08D1471B88B521490CBFBDCBE795533DFA91B248BBB65084B1C6249A
+        C1BCB61BA451898512B8AE42C7619FAC5CC064D049AF31B3D6EC6F755C496211
+        2963BB48105AA6F30693421950690286208CE9F69334FA3032A463482C424D5E
+        18C2D8A4ABAA14200D26E9A2A34E0350809159F71A88C3D6B553AD75DB4D5FD3
+        B5B091B2DC8A11C6D0B2D71D2BD4B1DCEE59D14061852D546ACEBEC68AA79D13
+        DAEB48295C4713669BA1B54108017193246CCE037D4049630BB0200A96CFBDD7
+        EDF6D31D0E328185D5088149D7AFD34D6865E29D9E15EF697BAEE85B049145A8
+        ACB84AC5E35023D104969531184020205C25EAAC9D07BAA90180CC40D8BEFAF6
+        E97EAFD1E874FAE9AAF5ACC04223C231A0137080D101977DDB3D0EEDCC7164CA
+        A51D247C665C706058B267503232007969700524A1A2D935180376AC08DD245E
+        BFDCE9ADCFBE057400E502009A3481F30BEDABEFBEEC17071EDC32B81D21216A
+        6AAE979CF48BA59413E9A77A6E45D1E8699A81E2E098E4D84C4C3E07BE303818
+        B6FA8AC040101BBA91464A89740434E708562F9E6CCD9F7907E86506C0D81242
+        244073FD57AFFDB43878CBEFBA7E71C8F78B0CD98E55AC0985E6C2B584E55682
+        3106AD2C2CB7EB0EEBDD04DDD4241A74A2A915049E48D22DD95276684702115E
+        275A3EBDDE5BBBF22AB004F401E302645040B73B7FF2C3F59937FED62F561EAF
+        8E8EA195C399D92EB5B26313900456CC088381D440A39D3E8AD126154769D2F8
+        8344D24B4853ABC816BDD6053A8B1FFDA2317BE235A0012469E31600085B8004
+        CAC0D4C81DDF787CF086DFFCB2280D81C8610C760C5ECAB32B1106C0186EDA26
+        393BAFC91261A82A2CC36AD7A47397AA8D6C9EA13173F4E8FCA957BE0D9C03D6
+        C90C48B2CAB64167B3B9B674E2C7CFAE5E3CFAD3687D16D56FA76B7465294C1F
+        36235587BC803836740245A215791FB667E2CDBEC0F51C64B4885E7B3F155FBE
+        F81FDF05668016993880C838C59E7B9FE7FCF3F70AC0036AC0D4D0ADF73D3430
+        7EFB97DCDA645DB85B304E815A5192F7A01F1B5C34B191382265DA21903411DD
+        39A2E553CDFF89DDFE7D1FB808AC01D1EEBBBEAE2F1CFD0100920D658CE6E037
+        4F1A20CEE67471E9837F7C66F1837FF856E7D21BD3F1CA89AEE95CA4DF5DA0D5
+        6901315A9894FB619BA87505B1F61EF1ECBF759B177E766C7566FA292BFE6416
+        FB2A10D9F7D72803C0E604BEFCF7609485E1FC8B0F0AC005F2591ADB4BC3FB6E
+        AB6CDFF75B6EA1B6C7CB97471CAF50958EEBEB380855D86E26FDD6F5A8BB723E
+        685C7DAB75FDEC7160316BA40724BB8F7CDD90E95D98FEE126039B206C01D948
+        F08132309071293B938006C24CA80B34330E8024BB6F36FD38DD64E0938D3880
+        9BB1F37FFC304D3228C064C86AB381FF062CC1A4BBF2054CA60000000049454E
+        44AE426082}
+    end
+    object dxBarButton15: TdxBarButton
+      Caption = 'Dictionary'
+      Category = 0
+      Enabled = False
+      Hint = 'Dictionary'
+      Visible = ivAlways
+      ButtonStyle = bsChecked
+      Glyph.SourceDPI = 96
+      Glyph.Data = {
+        89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+        610000001D744558745469746C650044617461626173653B44423B536F757263
+        653B53746F72ACB1EA720000029849444154785E6591CB6E5B551486BF73B54F
+        E2D83881242D0E992006A1158A50C78C90102378843E04521F821740883760C4
+        089870197480A0266949012548CD055F523BCEB1CFDEC7FBCA91155509D9D2BF
+        B4F6607D5AFA56ECBD27A8DE379F7FD2B9B3B6FC300E8307C0561470CF7B1779
+        07CE393B57F64069DB97A5F9FDE9D1CBAF3EFBE2F161356B630020DADE683C5E
+        DFF9A8535FDD265D6A506FAD81156004CECC22797E725F89FC7E311A7E580B7E
+        FD14780F10AF00DEB8CE1BEF7E4018BF0601E00C04293ECC08A30AD88E486A23
+        965A2BFCF3E497B78198AB0210686DF0F204965382A8859507E8FC296A7A48D9
+        D35CFCFD82B896D2DE5EC7280B10DE005865F1DE501500F016BCC6BB2A56E34C
+        952858F4466980E006E0F27CD21D1D1DEC36DE6C92AE4454F6F06E015D00CAA9
+        C0E505CE49F2F1B40BD8EB80306BB576C32463D23FC39E0C91839F5093BF984F
+        7B889EA518CCC896EB34D63649927817486F385042D2DEDA265AD9210C5B38B9
+        86CA9F2D1CC833C1E88F43C2C8B37AB78DD97F79DB812A15DE4CC1CD21747835
+        C2C933F4EC183551949311719A62551DA36F3BB0F968DA3DAF1C34DFDAA0D64C
+        883078A7C0AA8540994B3C822052CC2E451750D70169D66CEC46499DCBC129F6
+        6C8C38FD8E72FC1C39E9333BB5E4FF0AB29584D67A46142F1C64C0C52B07F342
+        B2DAE910B71F10C6AF63DEC9D09327C88B3F295E48FADD23C2D0B37AA789FB6D
+        7CFB8C66AE703A07570206AF8698E2189D1F538E75051A93D412ACAA61B503E0
+        3AC088520FF6BEFF796373A746EBEE3D966B8BFBE3AA78AD91A541CCA1783EA1
+        28F5C9FF1D886FF7FB1F1FF77E78B814FFF87E12F84E3D0CB69C7578E7AB3884
+        B63DA1DC69A1DCB3BD73F92590DFD8E0EBBDE13EF0084881E40A1E5C05C00016
+        9803F2EACF7FF1BE83483B8CD56F0000000049454E44AE426082}
+    end
+    object dxBarButton16: TdxBarButton
+      Caption = 'Next untranslated'
+      Category = 0
+      Hint = 'Next untranslated'
+      Visible = ivAlways
+      ShortCut = 16462
     end
   end
   object SkinController: TdxSkinController
@@ -2607,69 +2770,6 @@ object FormMain: TFormMain
       Hint = 'Find and replace text'
       ImageIndex = 19
     end
-  end
-  object ClientDataSetLanguages: TClientDataSet
-    Aggregates = <>
-    Params = <>
-    Left = 520
-    Top = 256
-    object ClientDataSetLanguagesLocaleID: TWordField
-      FieldName = 'LocaleID'
-    end
-    object ClientDataSetLanguagesLocaleName: TStringField
-      FieldName = 'LocaleName'
-      Size = 10
-    end
-    object ClientDataSetLanguagesLanguageName: TStringField
-      FieldName = 'LanguageName'
-      Size = 40
-    end
-    object ClientDataSetLanguagesCountryName: TStringField
-      FieldName = 'CountryName'
-      Size = 40
-    end
-  end
-  object GridViewRepository: TcxGridViewRepository
-    Left = 208
-    Top = 288
-    object GridTableViewLanguages: TcxGridDBTableView
-      Navigator.Buttons.CustomButtons = <>
-      DataController.DataSource = DataSourceLanguages
-      DataController.KeyFieldNames = 'LocaleID'
-      DataController.Summary.DefaultGroupSummaryItems = <>
-      DataController.Summary.FooterSummaryItems = <>
-      DataController.Summary.SummaryGroups = <>
-      OptionsBehavior.IncSearchItem = GridTableViewLanguagesColumnLocaleName
-      OptionsData.Deleting = False
-      OptionsData.Editing = False
-      OptionsData.Inserting = False
-      OptionsSelection.CellSelect = False
-      OptionsView.ColumnAutoWidth = True
-      OptionsView.GroupByBox = False
-      object GridTableViewLanguagesColumnLocaleID: TcxGridDBColumn
-        Caption = 'Locale'
-        DataBinding.FieldName = 'LocaleID'
-      end
-      object GridTableViewLanguagesColumnLocaleName: TcxGridDBColumn
-        Caption = 'Locale'
-        DataBinding.FieldName = 'LocaleName'
-      end
-      object GridTableViewLanguagesColumnLanguage: TcxGridDBColumn
-        Caption = 'Language'
-        DataBinding.FieldName = 'LanguageName'
-      end
-      object GridTableViewLanguagesColumnCountry: TcxGridDBColumn
-        Caption = 'Country'
-        DataBinding.FieldName = 'CountryName'
-        Visible = False
-      end
-    end
-  end
-  object DataSourceLanguages: TDataSource
-    AutoEdit = False
-    DataSet = ClientDataSetLanguages
-    Left = 520
-    Top = 312
   end
   object OpenDialogProject: TOpenDialog
     Filter = 'Translation projects (*.xml)|*.xml|All files (*.*)|*.*'

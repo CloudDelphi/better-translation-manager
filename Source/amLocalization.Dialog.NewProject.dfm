@@ -7,11 +7,7 @@ object FormNewProject: TFormNewProject
   ClientHeight = 193
   ClientWidth = 471
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
-  Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'Tahoma'
-  Font.Style = []
+  ParentFont = True
   OldCreateOrder = False
   Position = poMainFormCenter
   PixelsPerInch = 96
@@ -62,7 +58,7 @@ object FormNewProject: TFormNewProject
     end
     object ComboBoxSourceLanguage: TcxExtLookupComboBox
       Left = 106
-      Top = 38
+      Top = 37
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
       Style.HotTrack = False
@@ -71,7 +67,7 @@ object FormNewProject: TFormNewProject
     end
     object ButtonOK: TcxButton
       Left = 276
-      Top = 77
+      Top = 76
       Width = 75
       Height = 25
       Caption = 'OK'
@@ -81,7 +77,7 @@ object FormNewProject: TFormNewProject
     end
     object ButtonCancel: TcxButton
       Left = 357
-      Top = 77
+      Top = 76
       Width = 75
       Height = 25
       Cancel = True
@@ -103,7 +99,7 @@ object FormNewProject: TFormNewProject
       CaptionOptions.Text = 'Source application:'
       Control = EditSourceApplication
       ControlOptions.AlignHorz = ahLeft
-      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalHeight = 21
       ControlOptions.OriginalWidth = 326
       ControlOptions.ShowBorder = False
       Index = 0

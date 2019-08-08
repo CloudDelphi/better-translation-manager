@@ -32,10 +32,10 @@ type
   TLocalizerDataSource = class(TcxTreeListCustomDataSource)
   private
     FModule: TLocalizerModule;
-    FTargetLanguageID: Word;
+    FTargetLanguage: TTargetLanguage;
   protected
     procedure SetModule(const Value: TLocalizerModule);
-    procedure SetTargetLanguageID(const Value: Word);
+    procedure SetTargetLanguage(const Value: TTargetLanguage);
 
     function GetRootRecordHandle: TcxDataRecordHandle; override;
     function GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle; override;
@@ -47,7 +47,7 @@ type
     constructor Create(AModule: TLocalizerModule);
 
     property Module: TLocalizerModule read FModule write SetModule;
-    property TargetLanguageID: Word read FTargetLanguageID write SetTargetLanguageID;
+    property TargetLanguage: TTargetLanguage read FTargetLanguage write SetTargetLanguage;
   end;
 
 // -----------------------------------------------------------------------------
@@ -93,18 +93,6 @@ type
     ActionImportXLIFF: TAction;
     BarManagerBarLanguage: TdxBar;
     BarEditItemSourceLanguage: TcxBarEditItem;
-    ClientDataSetLanguages: TClientDataSet;
-    ClientDataSetLanguagesLocaleID: TWordField;
-    ClientDataSetLanguagesLanguageName: TStringField;
-    ClientDataSetLanguagesCountryName: TStringField;
-    GridViewRepository: TcxGridViewRepository;
-    GridTableViewLanguages: TcxGridDBTableView;
-    GridTableViewLanguagesColumnLocaleID: TcxGridDBColumn;
-    GridTableViewLanguagesColumnLanguage: TcxGridDBColumn;
-    GridTableViewLanguagesColumnCountry: TcxGridDBColumn;
-    DataSourceLanguages: TDataSource;
-    ClientDataSetLanguagesLocaleName: TStringField;
-    GridTableViewLanguagesColumnLocaleName: TcxGridDBColumn;
     BarEditItemTargetLanguage: TcxBarEditItem;
     OpenDialogProject: TOpenDialog;
     dxBarButton3: TdxBarButton;
@@ -153,6 +141,10 @@ type
     TreeListModules: TcxTreeList;
     TreeListColumnModuleName: TcxTreeListColumn;
     TreeListColumnModuleStatus: TcxTreeListColumn;
+    BarManagerBarLookup: TdxBar;
+    dxBarLargeButton6: TdxBarLargeButton;
+    dxBarButton15: TdxBarButton;
+    dxBarButton16: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -199,8 +191,11 @@ type
     procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
     procedure TreeListModulesEnter(Sender: TObject);
     procedure TreeListModulesExit(Sender: TObject);
+    procedure BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
+    procedure BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
+    FTargetLanguage: TTargetLanguage;
     FUpdateLockCount: integer;
     FSpellCheckProp: TLocalizerProperty;
     FSpellCheckingWord: boolean;
@@ -209,9 +204,15 @@ type
     FFindFirst: boolean;
     FLocalizerDataSource: TLocalizerDataSource;
     FActiveTreeList: TcxCustomTreeList;
-
+    FFilterTargetLanguages: boolean;
   protected
+    function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
+    procedure SetSourceLanguageID(const Value: Word);
+    procedure SetTargetLanguageID(const Value: Word);
+    function GetTargetLanguage: TTargetLanguage;
+    procedure ClearTargetLanguage;
+
     function GetFocusedNode: TcxTreeListNode;
     function GetFocusedItem: TCustomLocalizerItem;
     function GetFocusedModule: TLocalizerModule;
@@ -221,23 +222,29 @@ type
     property FocusedItem: TCustomLocalizerItem read GetFocusedItem;
     property FocusedModule: TLocalizerModule read GetFocusedModule;
     property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
+
+    function NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
   protected
-    procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
-    procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
-    procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
+    procedure LoadItem(Item: TCustomLocalizerItem; Recurse: boolean = False);
     procedure LoadFocusedItem(Recurse: boolean = False);
     procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
     procedure LoadFocusedPropertyNode;
     procedure ReloadNode(Node: TcxTreeListNode); overload;
+  protected
+    procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
+    procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
+    procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
     procedure OnProjectChanged(Sender: TObject);
     function CheckSave: boolean;
   public
-    property TargetLanguageID: Word read GetTargetLanguageID;
+    property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
+    property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
+    property TargetLanguage: TTargetLanguage read GetTargetLanguage;
   end;
 
 var
@@ -274,8 +281,10 @@ uses
   amLocalization.ResourceWriter,
   amLocalization.Persistence,
   amLocalization.Import.XLIFF,
+  amLocalization.Data.Main,
   amLocalization.Dialog.TextEdit,
-  amLocalization.Dialog.NewProject;
+  amLocalization.Dialog.NewProject,
+  amLocalization.Dialog.Languages;
 
 // -----------------------------------------------------------------------------
 
@@ -391,7 +400,7 @@ begin
       ResourceWriter := TResourceModuleWriter.Create(Filename);
       try
 
-        ProjectProcessor.Execute(FLocalizerProject, FLocalizerProject.SourceFilename, TargetLanguageID, ResourceWriter);
+        ProjectProcessor.Execute(FLocalizerProject, FLocalizerProject.SourceFilename, TargetLanguage, ResourceWriter);
 
       finally
         ResourceWriter := nil;
@@ -504,7 +513,7 @@ begin
 
   FormNewProject := TFormNewProject.Create(nil);
   try
-    FormNewProject.SetLanguageView(GridTableViewLanguages, GridTableViewLanguagesColumnLanguage);
+    FormNewProject.SetLanguageView(DataModuleMain.GridTableViewLanguages, DataModuleMain.GridTableViewLanguagesColumnLanguage);
 
     FormNewProject.SourceApplication := Application.ExeName;
     FormNewProject.SourceLanguageID := GetUserDefaultUILanguage;
@@ -681,10 +690,19 @@ begin
   SpellChecker.ShowSpellingCompleteMessage;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
 begin
-  FocusedItem.Status := lItemStatusDontTranslate;
-  LoadFocusedItem;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Status := lItemStatusDontTranslate;
+    LoadItem(Item, True);
+  end;
 end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
@@ -695,9 +713,16 @@ begin
 end;
 
 procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
 begin
-  FocusedItem.Status := lItemStatusHold;
-  LoadFocusedItem;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Status := lItemStatusHold;
+    LoadItem(Item, True);
+  end;
 end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
@@ -708,9 +733,16 @@ begin
 end;
 
 procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
 begin
-  FocusedItem.Status := lItemStatusTranslate;
-  LoadFocusedItem;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Status := lItemStatusTranslate;
+    LoadItem(Item, True);
+  end;
 end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
@@ -730,45 +762,68 @@ begin
   Prop := FocusedProperty;
 
   TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> lItemStateUnused) and (Prop.Status <> lItemStatusDontTranslate) and
-    ((not Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) or
+    ((not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or
      (Translation.Status <> tStatusObsolete));
 end;
 
 procedure TFormMain.ActionTranslationStateAcceptExecute(Sender: TObject);
 var
+  i: integer;
+  Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-    Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
+  for i := 0 to TreeListItems.SelectionCount-1 do
+  begin
+    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-  Translation.Status := tStatusTranslated;
+    if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+      Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Prop.Value);
 
-  LoadFocusedPropertyNode;
+    Translation.Status := tStatusTranslated;
+
+    LoadItem(Prop);
+  end;
 end;
 
 procedure TFormMain.ActionTranslationStateProposeExecute(Sender: TObject);
 var
+  i: integer;
+  Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-    Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
+  for i := 0 to TreeListItems.SelectionCount-1 do
+  begin
+    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-  Translation.Status := tStatusProposed;
+    if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+      Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Prop.Value);
 
-  LoadFocusedPropertyNode;
+    Translation.Status := tStatusProposed;
+
+    LoadItem(Prop);
+  end;
 end;
 
 procedure TFormMain.ActionTranslationStateRejectExecute(Sender: TObject);
+var
+  i: integer;
+  Prop: TLocalizerProperty;
 begin
-  FocusedProperty.Translations.Remove(TargetLanguageID);
+  for i := 0 to TreeListItems.SelectionCount-1 do
+  begin
+    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-  LoadFocusedPropertyNode;
+    Prop.Translations.Remove(TargetLanguage);
+
+    LoadItem(Prop);
+  end;
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
+  FLocalizerProject.Modified := True;
   PostMessage(Handle, MSG_SOURCE_CHANGED, 0, 0);
 end;
 
@@ -777,10 +832,150 @@ begin
   PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
 end;
 
+procedure TFormMain.BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
+begin
+  DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
+    ((FLocalizerProject.TargetLanguages.Count > 1) or
+     ((FLocalizerProject.TargetLanguages.Count = 1) and (FLocalizerProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
+
+  DataModuleMain.LocalizerProject := FLocalizerProject;
+end;
+
+procedure TFormMain.BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
+var
+  FormLanguages: TFormLanguages;
+  i: integer;
+  Languages: TList<integer>;
+  DeleteLanguages: TList<TTargetLanguage>;
+  Language: TTargetLanguage;
+  PromptCount: integer;
+  LocaleItem: TLocaleItem;
+  Res: integer;
+  Buttons: TMsgDlgButtons;
+resourcestring
+  sDeleteLanguageTranslationsTitle = 'Delete translations?';
+  sDeleteLanguageTranslations = 'If you remove the %0:s target language you will also delete all translations made in this language from the project.'+#13#13+
+    'There are currently %1:d translations in the %0:s language.'+#13#13+
+    'Do you want to remove the language?';
+begin
+  FormLanguages := TFormLanguages.Create(nil);
+  try
+
+    FormLanguages.SourceLanguageID := SourceLanguageID;
+
+    for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
+      FormLanguages.SelectTargetLanguage(FLocalizerProject.TargetLanguages[i].LanguageID);
+
+    FormLanguages.ApplyFilter := FFilterTargetLanguages;
+
+    if (not FormLanguages.Execute) then
+      Exit;
+
+    FFilterTargetLanguages := FormLanguages.ApplyFilter;
+
+    TreeListItems.BeginUpdate;
+    try
+      DeleteLanguages := TList<TTargetLanguage>.Create;
+      try
+        Languages := TList<integer>.Create;
+        try
+
+          // Build list of selected languages
+          for i := 0 to FormLanguages.TargetLanguageCount-1 do
+            Languages.Add(FormLanguages.TargetLanguage[i]);
+
+          // Loop though list of current languages and build list of languages to delete
+          PromptCount := 0;
+          for i := FLocalizerProject.TargetLanguages.Count-1 downto 0 do
+            if (not Languages.Contains(FLocalizerProject.TargetLanguages[i].LanguageID)) then
+            begin
+              DeleteLanguages.Add(FLocalizerProject.TargetLanguages[i]);
+
+              if (FLocalizerProject.TargetLanguages[i].TranslatedCount > 0) then
+                Inc(PromptCount);
+            end;
+
+        finally
+          Languages.Free;
+        end;
+
+        if (PromptCount > 0) then
+        begin
+          Buttons := [mbYes, mbNo, mbCancel];
+          if (PromptCount > 1) then
+            Include(Buttons, mbYesToAll);
+          for i := DeleteLanguages.Count-1 downto 0 do
+          begin
+            Language := DeleteLanguages[i];
+            // Prompt user if language contains translations
+            if (Language.TranslatedCount > 0) then
+            begin
+              LocaleItem := TLocaleItems.FindLCID(Language.LanguageID);
+
+              Res := TaskMessageDlg(sDeleteLanguageTranslationsTitle,
+                Format(sDeleteLanguageTranslations, [LocaleItem.LanguageName, Language.TranslatedCount]),
+                mtConfirmation, Buttons, 0, mbNo);
+
+              if (Res = mrCancel) then
+                Exit;
+
+              if (Res = mrYesToAll) then
+                break;
+
+              if (Res = mrNo) then
+                DeleteLanguages.Delete(i);
+            end;
+          end;
+        end;
+
+        // Remove languages no longer in use
+        SaveCursor(crHourGlass);
+        for Language in DeleteLanguages do
+        begin
+          // If we delete current target language we must clear references to it in the GUI
+          if (Language = FTargetLanguage) then
+            ClearTargetLanguage;
+
+          // Delete translations
+          FLocalizerProject.Traverse(
+            function(Prop: TLocalizerProperty): boolean
+            begin
+              Prop.Translations.Remove(Language);
+              Result := True;
+            end);
+
+          Assert(Language.TranslatedCount = 0);
+
+          FLocalizerProject.TargetLanguages.Remove(Language.LanguageID);
+        end;
+
+      finally
+        DeleteLanguages.Free;
+      end;
+
+      // Add selected languages
+      for i := 0 to FormLanguages.TargetLanguageCount-1 do
+        FLocalizerProject.TargetLanguages.Add(FormLanguages.TargetLanguage[i]);
+
+      // If we deleted current target language we must select a new one - default to source language
+      if (FTargetLanguage = nil) then
+        TargetLanguageID := SourceLanguageID;
+
+    finally
+      TreeListItems.EndUpdate;
+    end;
+
+  finally
+    FormLanguages.Free;
+  end;
+end;
+
 procedure TFormMain.BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
 begin
   dxShowSpellingOptionsDialog(SpellChecker);
 end;
+
+// -----------------------------------------------------------------------------
 
 function TFormMain.CheckSave: boolean;
 var
@@ -804,14 +999,16 @@ begin
     Result := True;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   CanClose := CheckSave;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.FormCreate(Sender: TObject);
-var
-  i: integer;
 begin
   DisableAero := True;
 
@@ -826,34 +1023,27 @@ begin
   FLocalizerDataSource := TLocalizerDataSource.Create(nil);
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
-  ClientDataSetLanguages.CreateDataSet;
-  for i := 0 to TLocaleItems.Count-1 do
-  begin
-    ClientDataSetLanguages.Append;
-    try
-      ClientDataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
-      ClientDataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
-      ClientDataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
-      ClientDataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
-
-      ClientDataSetLanguages.Post;
-    except
-      ClientDataSetLanguages.Cancel;
-      raise;
-    end;
-  end;
+  DataModuleMain := TDataModuleMain.Create(Self);
 
   RibbonTabMain.Active := True;
 
   InitializeProject('', GetUserDefaultUILanguage);
-
-  PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
 end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
   FLocalizerDataSource.Free;
   FLocalizerProject.Free;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TFormMain.NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
+begin
+  if (Node.TreeList = TreeListItems) then
+    Result := TLocalizerProperty(TreeListItems.HandleFromNode(Node))
+  else
+    Result := TLocalizerModule(Node.Data);
 end;
 
 function TFormMain.GetFocusedItem: TCustomLocalizerItem;
@@ -888,15 +1078,59 @@ begin
     Result := nil;
 end;
 
+// -----------------------------------------------------------------------------
+
+function TFormMain.GetSourceLanguageID: Word;
+begin
+  Result := BarEditItemSourceLanguage.EditValue;
+end;
+
+procedure TFormMain.SetSourceLanguageID(const Value: Word);
+begin
+  BarEditItemSourceLanguage.EditValue := Value;
+
+  Perform(MSG_SOURCE_CHANGED, 0, 0);
+end;
+
+function TFormMain.GetTargetLanguage: TTargetLanguage;
+begin
+  if (FTargetLanguage = nil) then
+  begin
+    if (TargetLanguageID <> 0) then
+      FTargetLanguage := FLocalizerProject.TargetLanguages.Add(TargetLanguageID)
+    else
+      FTargetLanguage := FLocalizerProject.TargetLanguages.Add(SourceLanguageID);
+  end;
+
+  Result := FTargetLanguage;
+end;
+
 function TFormMain.GetTargetLanguageID: Word;
 begin
   Result := BarEditItemTargetLanguage.EditValue;
 end;
 
+procedure TFormMain.ClearTargetLanguage;
+begin
+  FTargetLanguage := nil;
+  FLocalizerDataSource.TargetLanguage := nil;
+end;
+
+procedure TFormMain.SetTargetLanguageID(const Value: Word);
+begin
+  ClearTargetLanguage;
+
+  BarEditItemTargetLanguage.EditValue := Value;
+
+  Perform(MSG_TARGET_CHANGED, 0, 0);
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
 begin
   TreeListModules.Clear;
-  FLocalizerDataSource.Module := nil;
+  ClearTargetLanguage;
 
   FLocalizerProject.Clear;
 
@@ -908,8 +1142,8 @@ begin
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
-  BarEditItemSourceLanguage.EditValue := FLocalizerProject.BaseLocaleID;
-  BarEditItemTargetLanguage.EditValue := FLocalizerProject.BaseLocaleID;
+  SourceLanguageID := FLocalizerProject.BaseLocaleID;
+  TargetLanguageID := FLocalizerProject.BaseLocaleID;
 
   TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
   TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
@@ -980,19 +1214,32 @@ begin
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.LoadFocusedItem;
 begin
-  if (FocusedItem is TLocalizerProperty) then
-    LoadFocusedPropertyNode
-  else
-    LoadModuleNode(FocusedNode, True);
+  LoadItem(FocusedItem);
+end;
+
+procedure TFormMain.LoadItem(Item: TCustomLocalizerItem; Recurse: boolean);
+var
+  Node: TcxTreeListNode;
+begin
+  if (Item is TLocalizerProperty) then
+  begin
+    Node := TreeListItems.NodeFromHandle(Item);
+    if (Node <> nil) then
+      ReloadNode(Node);
+  end else
+  if (Item is TLocalizerModule) then
+  begin
+    Node := TreeListModules.Find(Item, TreeListModules.Root, False, True, TreeListFindFilter);
+    if (Node <> nil) then
+      LoadModuleNode(Node, TLocalizerModule(Item), Recurse);
+  end;
 end;
 
 procedure TFormMain.LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean);
-var
-  PropNode: TcxTreeListNode;
-  PropNodes: TDictionary<pointer, TcxTreeListNode>;
-  Pair: TPair<pointer, TcxTreeListNode>;
 begin
   Assert(Node <> nil);
   Assert(Node.Data <> nil);
@@ -1018,7 +1265,7 @@ begin
     else
       Node.ImageIndex := 6;
 
-    if (Recurse) then
+    if (Recurse) and (Node.Focused) then
       TreeListItems.FullRefresh;
 
   finally
@@ -1045,10 +1292,11 @@ begin
   ReloadNode(Node);
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
   FLocalizerProject.BaseLocaleID := BarEditItemSourceLanguage.EditValue;
-  FLocalizerProject.Modified := True;
   TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
 end;
 
@@ -1061,7 +1309,9 @@ var
   FilenameDic, FilenameAff: string;
   SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
 begin
-  LocaleItem := TLocaleItems.FindLCID(BarEditItemTargetLanguage.EditValue);
+  ClearTargetLanguage;
+
+  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
 
   TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
 
@@ -1113,7 +1363,7 @@ begin
   end;
 
   // Reload project
-  FLocalizerDataSource.TargetLanguageID := LocaleItem.Locale;
+  FLocalizerDataSource.TargetLanguage := TargetLanguage;
 //  LoadProject(FLocalizerProject, False);
 end;
 
@@ -1201,7 +1451,6 @@ end;
 function TFormMain.PerformSpellCheck(Prop: TLocalizerProperty): boolean;
 var
   Text, CheckedText: string;
-  Node: TcxTreeListNode;
 begin
   if (Prop.State = lItemStateUnused) then
     Exit(True);
@@ -1209,7 +1458,7 @@ begin
   if (Prop.Status <> lItemStatusTranslate) then
     Exit(True);
 
-  Text := Prop.TranslatedValue[TargetLanguageID];
+  Text := Prop.TranslatedValue[TargetLanguage];
 
   // Display spell check dialog
   FSpellCheckProp := Prop;
@@ -1238,7 +1487,7 @@ begin
   if (CheckedText <> Text) then
   begin
     // Save spell corrected value
-    Prop.TranslatedValue[TargetLanguageID] := CheckedText;
+    Prop.TranslatedValue[TargetLanguage] := CheckedText;
 
     // Update treenode
     LoadFocusedPropertyNode;
@@ -1275,11 +1524,11 @@ begin
   if (TranslationStatus = tStatusPending) then
   begin
     // Remove translation
-    FocusedProperty.Translations.Remove(TargetLanguageID);
+    FocusedProperty.Translations.Remove(TargetLanguage);
   end else
   begin
-    if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
-      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguageID, FocusedProperty.Value);
+    if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguage, FocusedProperty.Value);
     Translation.Status := TranslationStatus;
   end;
 
@@ -1304,7 +1553,7 @@ begin
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := FocusedProperty.TranslatedValue[TargetLanguageID];
+    TextEditor.Text := FocusedProperty.TranslatedValue[TargetLanguage];
 
     if (TextEditor.Execute) then
     begin
@@ -1333,7 +1582,7 @@ begin
     LockUpdates;
     try
 
-      FocusedProperty.TranslatedValue[TargetLanguageID] := VarToStr(Sender.InplaceEditor.EditValue);
+      FocusedProperty.TranslatedValue[TargetLanguage] := VarToStr(Sender.InplaceEditor.EditValue);
 
       LoadFocusedPropertyNode;
     finally
@@ -1358,7 +1607,7 @@ begin
   else
     Prop := TLocalizerProperty(ANode.Data);
 
-  if (not Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
     Translation := nil;
 
   if (Prop.State = lItemStateUnused) then
@@ -1405,12 +1654,20 @@ begin
 end;
 
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
 begin
-  FocusedItem.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    begin
-      Result := PerformSpellCheck(Prop);
-    end);
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Result := PerformSpellCheck(Prop);
+      end);
+  end;
 
   SpellChecker.ShowSpellingCompleteMessage;
 end;
@@ -1508,7 +1765,7 @@ begin
       Result := Ord(Prop.Status);
 
     TreeItemIndexState:
-      if (Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+      if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
         Result := Ord(Translation.Status)
       else
         Result := Ord(tStatusPending);
@@ -1517,7 +1774,7 @@ begin
       Result := Prop.Value;
 
     TreeItemIndexTargetValue:
-      if (Prop.Translations.TryGetTranslation(TargetLanguageID, Translation)) then
+      if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
         Result := Translation.Value
       else
         Result := Prop.Value;
@@ -1536,12 +1793,12 @@ begin
   DataChanged;
 end;
 
-procedure TLocalizerDataSource.SetTargetLanguageID(const Value: Word);
+procedure TLocalizerDataSource.SetTargetLanguage(const Value: TTargetLanguage);
 begin
-  if (FTargetLanguageID = Value) then
+  if (FTargetLanguage = Value) then
     Exit;
 
-  FTargetLanguageID := Value;
+  FTargetLanguage := Value;
 
   DataChanged;
 end;

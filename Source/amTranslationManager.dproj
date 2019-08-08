@@ -122,12 +122,10 @@
         </DelphiCompile>
         <DCCReference Include="amLocalization.Dialog.Main.pas">
             <Form>Form4</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="amLocalization.Model.pas"/>
         <DCCReference Include="amLocalization.Dialog.NewProject.pas">
             <Form>FormNewProject</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="amLocalization.Import.XLIFF.pas"/>
         <DCCReference Include="amLocalization.ResourceWriter.pas"/>
@@ -135,7 +133,13 @@
         <DCCReference Include="amLocalization.Engine.pas"/>
         <DCCReference Include="amLocalization.Dialog.TextEdit.pas">
             <Form>FormTextEditor</Form>
-            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="amLocalization.Dialog.Languages.pas">
+            <Form>FormLanguages</Form>
+        </DCCReference>
+        <DCCReference Include="amLocalization.Data.Main.pas">
+            <Form>DataModuleMain</Form>
+            <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

@@ -289,8 +289,9 @@ var
   PropChild, NextPropChild: IXMLNode;
   s: string;
   i: integer;
-  SourceLanguage, TargetLanguage: string;
+  SourceLanguageName, TargetLanguageName: string;
   SourceLocaleID, TargetLocaleID: LCID;
+  TargetLanguage: TTargetLanguage;
   LocaleItem: TLocaleItem;
 //  Translation: TLocalizerTranslation;
   SourceValue, TargetValue: string;
@@ -368,43 +369,47 @@ begin
     Inc(FixCount);
   end;
 
-  SourceLanguage := Node.Attributes['source-language'];
-  TargetLanguage := Node.Attributes['target-language'];
+  SourceLanguageName := Node.Attributes['source-language'];
+  TargetLanguageName := Node.Attributes['target-language'];
 
-  LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
+  // Translate Language Name to Locale ID
+  LocaleItem := TLocaleItems.FindLocaleName(SourceLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindISO3166Name(SourceLanguage);
+    LocaleItem := TLocaleItems.FindISO3166Name(SourceLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageShortName(SourceLanguage);
+    LocaleItem := TLocaleItems.FindLanguageShortName(SourceLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageName(SourceLanguage);
+    LocaleItem := TLocaleItems.FindLanguageName(SourceLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindCountry(SourceLanguage);
+    LocaleItem := TLocaleItems.FindCountry(SourceLanguageName);
 
   if (LocaleItem <> nil) then
     SourceLocaleID := LocaleItem.Locale
   else
-    SourceLocaleID := 0;
+    SourceLocaleID := 0; // TODO : This is an error
 
-  LocaleItem := TLocaleItems.FindLocaleName(TargetLanguage);
+  // Translate Language Name to Locale ID
+  LocaleItem := TLocaleItems.FindLocaleName(TargetLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindISO3166Name(TargetLanguage);
+    LocaleItem := TLocaleItems.FindISO3166Name(TargetLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageShortName(TargetLanguage);
+    LocaleItem := TLocaleItems.FindLanguageShortName(TargetLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageName(TargetLanguage);
+    LocaleItem := TLocaleItems.FindLanguageName(TargetLanguageName);
   if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindCountry(TargetLanguage);
+    LocaleItem := TLocaleItems.FindCountry(TargetLanguageName);
 
   if (LocaleItem <> nil) then
     TargetLocaleID := LocaleItem.Locale
   else
-    TargetLocaleID := 0;
+    TargetLocaleID := 0; // TODO : This is an error
+
+  TargetLanguage := LocalizerModule.Project.TargetLanguages.Add(TargetLocaleID);
 
   if (LocalizerModule.Project.BaseLocaleID = 0) then
     LocalizerModule.Project.BaseLocaleID := SourceLocaleID
   else
-  if (SourceLanguage = '') then
+  if (SourceLanguageName = '') then
     Node.Attributes['source-language'] := TLocaleItems.FindLCID(LocalizerModule.Project.BaseLocaleID).LanguageShortName; // TODO
 
 (*
@@ -507,8 +512,8 @@ begin
           SourceValue := Unescape(s);
           // Set source language
           s := Child.Attributes['xml:lang'];
-          if (s = '') and (SourceLanguage <> '') then
-            Child.Attributes['xml:lang'] := SourceLanguage;
+          if (s = '') and (SourceLanguageName <> '') then
+            Child.Attributes['xml:lang'] := SourceLanguageName;
         end else
           SourceValue := '';
 
@@ -522,8 +527,8 @@ begin
 
           // Set target language
           s := TargetNode.Attributes['xml:lang'];
-          if (s = '') and (TargetLanguage <> '') then
-            TargetNode.Attributes['xml:lang'] := TargetLanguage;
+          if (s = '') and (TargetLanguageName <> '') then
+            TargetNode.Attributes['xml:lang'] := TargetLanguageName;
 
           Value := TargetNode.Attributes['state'];
           if (Value = 'final') then
@@ -675,7 +680,7 @@ begin
         LocalizerProperty := LocalizerItem.AddProperty(PropertyName, SourceValue);
         if (TargetNode <> nil) then
         begin
-          {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLocaleID, TargetValue);
+          {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue);
         end;
       end;
     end;
