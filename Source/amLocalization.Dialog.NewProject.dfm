@@ -70,7 +70,7 @@ object FormNewProject: TFormNewProject
       Top = 76
       Width = 75
       Height = 25
-      Caption = 'OK'
+      Action = ActionOK
       Default = True
       ModalResult = 1
       TabOrder = 2
@@ -80,8 +80,8 @@ object FormNewProject: TFormNewProject
       Top = 76
       Width = 75
       Height = 25
+      Action = ActionCancel
       Cancel = True
-      Caption = 'Cancel'
       ModalResult = 2
       TabOrder = 3
     end
@@ -174,6 +174,19 @@ object FormNewProject: TFormNewProject
     object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
       LookAndFeel.NativeStyle = False
       PixelsPerInch = 96
+    end
+  end
+  object ActionList1: TActionList
+    Left = 268
+    Top = 116
+    object ActionOK: TAction
+      Caption = 'OK'
+      OnExecute = ActionOKExecute
+      OnUpdate = ActionOKUpdate
+    end
+    object ActionCancel: TAction
+      Caption = 'Cancel'
+      OnExecute = ActionCancelExecute
     end
   end
 end

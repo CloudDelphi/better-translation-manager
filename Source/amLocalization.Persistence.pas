@@ -38,6 +38,8 @@ implementation
 
 uses
   SysUtils,
+  DateUtils,
+  IOUtils,
   Windows,
   Variants,
   XMLDoc, XMLIntf,
@@ -99,6 +101,7 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
 var
   XML: IXMLDocument;
   RootNode, ProjectNode: IXMLNode;
+  LanguagesNode, LanguageNode: IXMLNode;
   ModulesNode, ModuleNode: IXMLNode;
   ItemsNode, ItemNode: IXMLNode;
   PropsNode, PropNode: IXMLNode;
@@ -108,7 +111,7 @@ var
   Prop: TLocalizerProperty;
   Language: TTargetLanguage;
   CachedLanguage: string;
-  Translation: TLocalizerTranslation;
+//  Translation: TLocalizerTranslation;
   TranslationStatus: TTranslationStatus;
   s: string;
 begin
@@ -128,7 +131,33 @@ begin
     Project.Clear;
 
     Project.Name := VarToStr(ProjectNode.Attributes['name']);
+
+    Project.SourceFilename := VarToStr(ProjectNode.Attributes['sourcefile']);
+    if (Project.SourceFilename.IsEmpty) then
+      Project.SourceFilename := Project.Name;
+    if (TPath.GetExtension(Project.SourceFilename).IsEmpty) then
+      Project.SourceFilename := Project.SourceFilename + '.exe';
+
     Project.BaseLocaleID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
+
+    LanguagesNode := ProjectNode.ChildNodes.FindNode('targetlanguages');
+    if (LanguagesNode <> nil) then
+      LanguageNode := LanguagesNode.ChildNodes.First
+    else
+      LanguageNode := nil;
+
+    // Precreate target languages.
+    // This ensures that they are present in the language list even if there are no translations for them yet.
+    while (LanguageNode <> nil) do
+    begin
+      if (LanguageNode.NodeName = 'language') then
+      begin
+        s := VarToStr(LanguageNode.Attributes['language']);
+        if (Language = nil) or (s <> CachedLanguage) then
+          Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
+      end;
+      LanguageNode := LanguageNode.NextSibling;
+    end;
 
     ModulesNode := ProjectNode.ChildNodes.FindNode('modules');
     if (ModulesNode = nil) then
@@ -181,7 +210,7 @@ begin
                           if (Language = nil) or (s <> CachedLanguage) then
                             Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
                           TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
-                          Translation := Prop.Translations.AddOrUpdateTranslation(Language, XlatNode.Text, TranslationStatus);
+                          {Translation :=} Prop.Translations.AddOrUpdateTranslation(Language, XlatNode.Text, TranslationStatus);
                         end;
                         XlatNode := XlatNode.NextSibling;
                       end;
@@ -246,7 +275,9 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
 var
   XML: IXMLDocument;
-  RootNode, Node: IXMLNode;
+  RootNode: IXMLNode;
+  ProjectNode: IXMLNode;
+  LanguagesNode, LanguageNode: IXMLNode;
   ModulesNode, ModuleNode: IXMLNode;
   ItemsNode, ItemNode: IXMLNode;
   PropsNode, PropNode: IXMLNode;
@@ -254,6 +285,7 @@ var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
+  i: integer;
 begin
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
@@ -261,11 +293,22 @@ begin
 
   RootNode := XML.AddChild('delphi_l10n');
 
-  Node := RootNode.AddChild('project');
-  Node.Attributes['name'] := Project.Name;
-  Node.Attributes['language'] := Project.BaseLocaleID;
+  RootNode.AddChild('meta').AddChild('created').Text := DateToISO8601(Now, False);
 
-  ModulesNode := Node.AddChild('modules');
+  ProjectNode := RootNode.AddChild('project');
+  ProjectNode.Attributes['name'] := Project.Name;
+  ProjectNode.Attributes['sourcefile'] := TPath.GetFileName(Project.SourceFilename);
+  ProjectNode.Attributes['language'] := Project.BaseLocaleID;
+
+  LanguagesNode := ProjectNode.AddChild('targetlanguages');
+  for i := 0 to Project.TargetLanguages.Count-1 do
+  begin
+    LanguageNode := LanguagesNode.AddChild('language');
+    LanguageNode.Attributes['language'] := Project.TargetLanguages[i].LanguageID;
+    LanguageNode.Attributes['translated'] := Project.TargetLanguages[i].TranslatedCount;
+  end;
+
+  ModulesNode := ProjectNode.AddChild('modules');
 
   for Module in Project.Modules.Values do
   begin

@@ -145,6 +145,11 @@ type
     dxBarLargeButton6: TdxBarLargeButton;
     dxBarButton15: TdxBarButton;
     dxBarButton16: TdxBarButton;
+    ActionMain: TAction;
+    ActionFindNextUntranslated: TAction;
+    OpenDialogEXE: TOpenDialog;
+    dxBarButton17: TdxBarButton;
+    ActionExternalUpdate: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -177,15 +182,14 @@ type
     procedure SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
     procedure TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
     procedure ActionProofingCheckSelectedExecute(Sender: TObject);
-    procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
+    procedure ActionHasItemFocusedUpdate(Sender: TObject);
     procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
     procedure ActionFindSearchExecute(Sender: TObject);
     procedure FindDialogFind(Sender: TObject);
     procedure ActionProjectSaveUpdate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure ActionProjectUpdateUpdate(Sender: TObject);
-    procedure ActionBuildUpdate(Sender: TObject);
-    procedure ActionProjectPurgeUpdate(Sender: TObject);
+    procedure ActionHasProjectUpdate(Sender: TObject);
+    procedure ActionHasModulesUpdate(Sender: TObject);
     procedure TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
     procedure TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
     procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
@@ -193,6 +197,9 @@ type
     procedure TreeListModulesExit(Sender: TObject);
     procedure BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
     procedure BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
+    procedure ActionMainExecute(Sender: TObject);
+    procedure ActionMainUpdate(Sender: TObject);
+    procedure ActionExternalUpdateExecute(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -469,9 +476,39 @@ begin
 *)
 end;
 
-procedure TFormMain.ActionBuildUpdate(Sender: TObject);
+procedure TFormMain.ActionExternalUpdateExecute(Sender: TObject);
+var
+  ProjectProcessor: TProjectResourceProcessor;
 begin
-  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  if (not OpenDialogEXE.Execute(Handle)) then
+    exit;
+
+  SaveCursor(crHourGlass);
+
+  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
+
+  SaveCursor(crHourGlass);
+
+  ProjectProcessor := TProjectResourceProcessor.Create;
+  try
+
+    ProjectProcessor.ScanProject(FLocalizerProject, OpenDialogEXE.FileName);
+
+  finally
+    ProjectProcessor.Free;
+  end;
+
+  LoadProject(FLocalizerProject, False);
+
+  StatusBar.SimplePanelStyle.Text := 'Updated';
+
+  if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
+    mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
+  begin
+    FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
+    FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
+    RibbonMain.DocumentName := FLocalizerProject.Name;
+  end;
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -502,6 +539,17 @@ begin
   FLocalizerProject.Modified := True;
 
   LoadProject(FLocalizerProject, False);
+end;
+
+procedure TFormMain.ActionMainExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFormMain.ActionMainUpdate(Sender: TObject);
+begin
+  BarEditItemSourceLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  BarEditItemTargetLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
@@ -552,76 +600,127 @@ end;
 
 procedure TFormMain.ActionProjectPurgeExecute(Sender: TObject);
 var
+  CurrentModule: TLocalizerModule;
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
   NeedReload: boolean;
   CountModule, CountItem, CountProp: integer;
+  Node: TcxTreeListNode;
 begin
   SaveCursor(crHourGlass);
 
   NeedReload := False;
+  CurrentModule := FocusedModule;
 
   CountModule := 0;
   CountItem := 0;
   CountProp := 0;
 
-  for Module in FLocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
-  begin
-    if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
-    begin
-      NeedReload := True;
-      Module.Free;
-      Inc(CountModule);
-      continue;
-    end;
+  TreeListItems.BeginUpdate;
+  try
+    try
 
-    for Item in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
-    begin
-      if (Item.State = lItemStateUnused) then
+      for Module in FLocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
       begin
-        NeedReload := True;
-        Inc(CountItem);
-        Item.Free;
-        continue;
-      end;
-
-      // TODO : Purge obsolete translations?
-      for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-        if (Prop.State = lItemStateUnused) then
+        if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
         begin
           NeedReload := True;
-          Inc(CountProp);
-          Prop.Free;
+          if (Module = CurrentModule) then
+          begin
+            FLocalizerDataSource.Module := nil;
+//            TreeListItems.Clear;
+            CurrentModule := nil;
+          end;
+          Module.Free;
+          Inc(CountModule);
+          continue;
         end;
 
-      if (Item.Properties.Count = 0) then
-      begin
-        NeedReload := True;
-        Inc(CountItem);
-        Item.Free;
+        for Item in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
+        begin
+          if (Item.State = lItemStateUnused) then
+          begin
+            NeedReload := True;
+            if (Module = CurrentModule) then
+            begin
+              FLocalizerDataSource.Module := nil;
+//              TreeListItems.Clear;
+              CurrentModule := nil;
+            end;
+            Inc(CountItem);
+            Item.Free;
+            continue;
+          end;
+
+          // TODO : Purge obsolete translations?
+          for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
+            if (Prop.State = lItemStateUnused) then
+            begin
+              NeedReload := True;
+              if (Module = CurrentModule) then
+              begin
+                Node := TreeListItems.NodeFromHandle(Prop);
+                if (Node <> nil) then
+                  Node.Free
+                else
+                begin
+                  FLocalizerDataSource.Module := nil;
+//                  TreeListItems.Clear;
+                  CurrentModule := nil;
+                end;
+              end;
+              Inc(CountProp);
+              Prop.Free;
+            end;
+
+          if (Item.Properties.Count = 0) then
+          begin
+            NeedReload := True;
+            if (Module = CurrentModule) then
+            begin
+              FLocalizerDataSource.Module := nil;
+//              TreeListItems.Clear;
+              CurrentModule := nil;
+            end;
+            Inc(CountItem);
+            Item.Free;
+          end;
+        end;
+
+        if (Module.Items.Count = 0) then
+        begin
+          NeedReload := True;
+          if (Module = CurrentModule) then
+          begin
+            FLocalizerDataSource.Module := nil;
+//            TreeListItems.Clear;
+            CurrentModule := nil;
+          end;
+          Inc(CountModule);
+          Module.Free;
+        end;
       end;
+
+      if (NeedReload) then
+      begin
+        FLocalizerProject.Modified := True;
+
+        LoadProject(FLocalizerProject, False);
+      end;
+
+    finally
+      if (TreeListItems.CustomDataSource = nil) then
+        TreeListItems.CustomDataSource := FLocalizerDataSource;
     end;
-
-    if (Module.Items.Count = 0) then
-    begin
-      NeedReload := True;
-      Inc(CountModule);
-      Module.Free;
-    end;
-  end;
-
-  if (NeedReload) then
-  begin
-    FLocalizerProject.Modified := True;
-
-    LoadProject(FLocalizerProject, False);
+  finally
+    TreeListItems.EndUpdate;
   end;
 
   StatusBar.SimplePanelStyle.Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
 end;
 
-procedure TFormMain.ActionProjectPurgeUpdate(Sender: TObject);
+procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
 begin
   TAction(Sender).Enabled := (FLocalizerProject.Modules.Count > 0);
 end;
@@ -662,7 +761,7 @@ begin
   StatusBar.SimplePanelStyle.Text := 'Updated';
 end;
 
-procedure TFormMain.ActionProjectUpdateUpdate(Sender: TObject);
+procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
 begin
   TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
@@ -1160,55 +1259,58 @@ begin
 
   LockUpdates;
   try
-    if (Clear) then
-    begin
-      FLocalizerDataSource.Module := nil;
-      TreeListModules.Clear;
-      TreeListItems.Clear;
-    end;
-
-    Modules := Project.Modules.Values.ToArray;
-
-    TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
-      function(const Left, Right: TLocalizerModule): Integer
-      begin
-        Result := (Ord(Left.Kind) - Ord(Right.Kind));
-        if (Result = 0) then
-          Result := CompareText(Left.Name, Right.Name);
-      end));
-
-    SelectedModuleFound := False;
-
-    for Module in Modules do
-    begin
-      if (Module.Kind = mkOther) then
-        continue;
-
+    try
       if (Clear) then
-        ModuleNode := nil
-      else
       begin
-        if (Module = FLocalizerDataSource.Module) then
-          SelectedModuleFound := True;
-
-        // Look for existing node
-        ModuleNode := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+        FLocalizerDataSource.Module := nil;
+        TreeListModules.Clear;
+        TreeListItems.Clear;
       end;
 
-      if (ModuleNode = nil) then
-        // Create node if it didn't already exist
-        ModuleNode := TreeListModules.Add(nil, Module);
+      Modules := Project.Modules.Values.ToArray;
 
-      LoadModuleNode(ModuleNode, Module, True);
+      TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
+        function(const Left, Right: TLocalizerModule): Integer
+        begin
+          Result := (Ord(Left.Kind) - Ord(Right.Kind));
+          if (Result = 0) then
+            Result := CompareText(Left.Name, Right.Name);
+        end));
+
+      SelectedModuleFound := False;
+
+      for Module in Modules do
+      begin
+        if (Module.Kind = mkOther) then
+          continue;
+
+        if (Clear) then
+          ModuleNode := nil
+        else
+        begin
+          if (Module = FLocalizerDataSource.Module) then
+            SelectedModuleFound := True;
+
+          // Look for existing node
+          ModuleNode := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+        end;
+
+        if (ModuleNode = nil) then
+          // Create node if it didn't already exist
+          ModuleNode := TreeListModules.Add(nil, Module);
+
+        LoadModuleNode(ModuleNode, Module, True);
+      end;
+
+      if (not Clear) and (not SelectedModuleFound) then
+        // Selected module no longer exist
+        FLocalizerDataSource.Module := nil;
+
+    finally
+      if (Clear) then
+        // Reassign TreeListItems.CustomDataSource if it was cleared by TreeListItems.Clear
+        TreeListItems.CustomDataSource := FLocalizerDataSource;
     end;
-
-    if (not Clear) and (not SelectedModuleFound) then
-      // Selected module no longer exist
-      FLocalizerDataSource.Module := nil;
-
-    if (Clear) then
-      // Reassign TreeListItems.CustomDataSource if it was cleared by TreeListItems.Clear
-      TreeListItems.CustomDataSource := FLocalizerDataSource;
   finally
     UnlockUpdates;
   end;
@@ -1672,7 +1774,7 @@ begin
   SpellChecker.ShowSpellingCompleteMessage;
 end;
 
-procedure TFormMain.ActionProofingCheckSelectedUpdate(Sender: TObject);
+procedure TFormMain.ActionHasItemFocusedUpdate(Sender: TObject);
 begin
   TAction(Sender).Enabled := (FocusedItem <> nil);
 end;

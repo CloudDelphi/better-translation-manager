@@ -10,7 +10,7 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxClasses, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
   cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
-  cxGridDBTableView, dxLayoutLookAndFeels;
+  cxGridDBTableView, dxLayoutLookAndFeels, System.Actions, Vcl.ActnList;
 
 type
   TFormNewProject = class(TForm)
@@ -29,7 +29,13 @@ type
     FileOpenDialogApplication: TFileOpenDialog;
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
+    ActionList1: TActionList;
+    ActionOK: TAction;
+    ActionCancel: TAction;
     procedure EditSourceApplicationPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
+    procedure ActionCancelExecute(Sender: TObject);
+    procedure ActionOKExecute(Sender: TObject);
+    procedure ActionOKUpdate(Sender: TObject);
   private
     function GetSourceApplication: string;
     function GetSourceLanguageID: Word;
@@ -48,6 +54,21 @@ implementation
 
 uses
   IOUtils;
+
+procedure TFormNewProject.ActionCancelExecute(Sender: TObject);
+begin
+  ModalResult := mrCancel;
+end;
+
+procedure TFormNewProject.ActionOKExecute(Sender: TObject);
+begin
+  ModalResult := mrOK;
+end;
+
+procedure TFormNewProject.ActionOKUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (SourceApplication <> '') and (TFile.Exists(SourceApplication));
+end;
 
 procedure TFormNewProject.EditSourceApplicationPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
 begin
