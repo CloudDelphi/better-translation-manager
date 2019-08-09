@@ -150,6 +150,11 @@ type
     OpenDialogEXE: TOpenDialog;
     dxBarButton17: TdxBarButton;
     ActionExternalUpdate: TAction;
+    StyleRepository: TcxStyleRepository;
+    StyleNormal: TcxStyle;
+    StyleComplete: TcxStyle;
+    StyleNeedTranslation: TcxStyle;
+    StyleDontTranslate: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -201,6 +206,9 @@ type
     procedure ActionMainUpdate(Sender: TObject);
     procedure ActionExternalUpdateExecute(Sender: TObject);
     procedure ActionFindNextUntranslatedExecute(Sender: TObject);
+    procedure TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode;
+      var AStyle: TcxStyle);
+    procedure SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -243,11 +251,11 @@ type
   protected
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
+    procedure OnProjectChanged(Sender: TObject);
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
-    procedure OnProjectChanged(Sender: TObject);
     function CheckSave: boolean;
   public
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
@@ -487,8 +495,6 @@ begin
   SaveCursor(crHourGlass);
 
   OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
-
-  SaveCursor(crHourGlass);
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -870,6 +876,8 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    if (Item.Status = lItemStatusDontTranslate) then
+      continue;
     Item.Status := lItemStatusDontTranslate;
     LoadItem(Item, True);
   end;
@@ -890,6 +898,8 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    if (Item.Status = lItemStatusHold) then
+      continue;
     Item.Status := lItemStatusHold;
     LoadItem(Item, True);
   end;
@@ -910,6 +920,8 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    if (Item.Status = lItemStatusTranslate) then
+      continue;
     Item.Status := lItemStatusTranslate;
     LoadItem(Item, True);
   end;
@@ -1441,7 +1453,10 @@ begin
     if (Module.Status = lItemStatusHold) then
       Node.ImageIndex := 5
     else
-      Node.ImageIndex := 6;
+    if (Module.Status = lItemStatusTranslate) then
+      Node.ImageIndex := 6
+    else
+      Node.ImageIndex := -1;
 
     if (Recurse) and (Node.Focused) then
       TreeListItems.FullRefresh;
@@ -1548,6 +1563,14 @@ end;
 procedure TFormMain.OnProjectChanged(Sender: TObject);
 begin
   StatusBar.Panels[0].Text := 'Modified';
+  StatusBar.Panels[2].Text := Format('Translate: %d, Ignore: %d, Hold: %d',
+    [FLocalizerProject.StatusCount[lItemStatusTranslate], FLocalizerProject.StatusCount[lItemStatusDontTranslate], FLocalizerProject.StatusCount[lItemStatusHold]]);
+end;
+
+procedure TFormMain.SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
+begin
+  // Only spell check inplace editor and memo in text dialog
+  AAllow := ((AControl.Parent = TreeListItems) and (AControl is TcxCustomButtonEdit)) or (AControl is TcxCustomMemo);
 end;
 
 procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
@@ -1731,7 +1754,7 @@ begin
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := FocusedProperty.TranslatedValue[TargetLanguage];
+    TextEditor.Text := TcxButtonEdit(Sender).EditingText;// FocusedProperty.TranslatedValue[TargetLanguage];
 
     if (TextEditor.Execute) then
     begin
@@ -1829,6 +1852,18 @@ end;
 procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
 begin
   FLocalizerDataSource.Module := FocusedModule;
+end;
+
+procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
+var
+  Module: TLocalizerModule;
+begin
+  AStyle := StyleNormal;
+
+  Module := TLocalizerModule(ANode.Data);
+
+  if (Module.State = lItemStateUnused) or (Module.Status in [lItemStatusDontTranslate, lItemStatusHold]) then
+    AStyle := StyleDontTranslate;
 end;
 
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);

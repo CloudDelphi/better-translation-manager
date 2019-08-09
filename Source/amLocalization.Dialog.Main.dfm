@@ -111,6 +111,10 @@ object FormMain: TFormMain
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
         PanelStyle.AutoHint = True
         Fixed = False
+      end
+      item
+        PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
+        Width = 200
       end>
     Ribbon = RibbonMain
     Font.Charset = DEFAULT_CHARSET
@@ -344,6 +348,7 @@ object FormMain: TFormMain
     OptionsView.ShowRoot = False
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
+    Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
     TabOrder = 4
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
@@ -510,7 +515,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 329
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -3239,6 +3244,7 @@ object FormMain: TFormMain
       end>
     SpellingFormType = sftWord
     UseThreadedLoad = True
+    OnCheckAsYouTypeStart = SpellCheckerCheckAsYouTypeStart
     OnCheckWord = SpellCheckerCheckWord
     OnSpellingComplete = SpellCheckerSpellingComplete
     Left = 552
@@ -3301,5 +3307,25 @@ object FormMain: TFormMain
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 448
     Top = 412
+  end
+  object StyleRepository: TcxStyleRepository
+    Left = 156
+    Top = 296
+    PixelsPerInch = 96
+    object StyleNormal: TcxStyle
+    end
+    object StyleComplete: TcxStyle
+      AssignedValues = [svTextColor]
+      TextColor = 16742656
+    end
+    object StyleNeedTranslation: TcxStyle
+      AssignedValues = [svTextColor]
+      TextColor = 7536895
+    end
+    object StyleDontTranslate: TcxStyle
+      AssignedValues = [svColor, svTextColor]
+      Color = 15132390
+      TextColor = clGray
+    end
   end
 end
