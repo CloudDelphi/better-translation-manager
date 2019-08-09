@@ -200,6 +200,7 @@ type
     procedure ActionMainExecute(Sender: TObject);
     procedure ActionMainUpdate(Sender: TObject);
     procedure ActionExternalUpdateExecute(Sender: TObject);
+    procedure ActionFindNextUntranslatedExecute(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -500,7 +501,7 @@ begin
 
   LoadProject(FLocalizerProject, False);
 
-  StatusBar.SimplePanelStyle.Text := 'Updated';
+  StatusBar.Panels[0].Text := 'Updated';
 
   if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
     mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
@@ -509,6 +510,76 @@ begin
     FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
     RibbonMain.DocumentName := FLocalizerProject.Name;
   end;
+end;
+
+procedure TFormMain.ActionFindNextUntranslatedExecute(Sender: TObject);
+var
+  CurrentModule: TLocalizerModule;
+  CurrentProp: TLocalizerProperty;
+  Found: boolean;
+begin
+  SaveCursor(crHourGlass);
+
+  CurrentModule := FocusedModule;
+  CurrentProp := FocusedProperty;
+
+  Found := False;
+
+  FLocalizerProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+      ModuleNode, PropNode: TcxTreeListNode;
+    begin
+      // Skip until we reach the current module
+      if (CurrentModule <> nil) then
+      begin
+        if (Prop.Item.Module = CurrentModule) then
+          CurrentModule := nil
+        else
+          Exit(True);
+      end;
+
+      // Skip until we reach the current property
+      if (CurrentProp <> nil) then
+      begin
+        if (Prop = CurrentProp) then
+          CurrentProp := nil; // Skip current one but check next one
+        Exit(True);
+      end;
+
+      if (Prop.Status <> lItemStatusTranslate) or (Prop.State = lItemStateUnused) then
+        Exit(True);
+
+      if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
+      begin
+        // Found - find treelist nodes
+        // Select module tree node
+        ModuleNode := TreeListModules.Find(Prop.Item.Module, TreeListModules.Root, False, True, TreeListFindFilter);
+        if (ModuleNode = nil) or (ModuleNode.IsHidden) then
+          Exit(True); // ModuleNode might have been hidden by a filter
+
+        // Select property tree node
+        PropNode := TreeListItems.NodeFromHandle(Prop);
+        if (PropNode = nil) or (PropNode.IsHidden) then
+          Exit(True); // PropNode might have been hidden by a filter
+
+        ModuleNode.MakeVisible;
+        ModuleNode.Focused := True;
+
+        PropNode.MakeVisible;
+        PropNode.Focused := True;
+
+        // Done
+        Found := True;
+        Exit(False);
+      end;
+
+      Result := True;
+    end);
+
+  if (not Found) then
+    ShowMessage('No more untranslated items found');
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -717,7 +788,7 @@ begin
     TreeListItems.EndUpdate;
   end;
 
-  StatusBar.SimplePanelStyle.Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
+  StatusBar.Panels[1].Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
 end;
 
 procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
@@ -733,7 +804,7 @@ begin
 
   FLocalizerProject.Modified := False;
 
-  StatusBar.SimplePanelStyle.Text := 'Saved';
+  StatusBar.Panels[0].Text := 'Saved';
 end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
@@ -758,7 +829,7 @@ begin
 
   LoadProject(FLocalizerProject, False);
 
-  StatusBar.SimplePanelStyle.Text := 'Updated';
+  StatusBar.Panels[0].Text := 'Updated';
 end;
 
 procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
@@ -923,6 +994,7 @@ end;
 procedure TFormMain.BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
   FLocalizerProject.Modified := True;
+  StatusBar.Panels[0].Text := 'Modified';
   PostMessage(Handle, MSG_SOURCE_CHANGED, 0, 0);
 end;
 
@@ -1314,6 +1386,10 @@ begin
   finally
     UnlockUpdates;
   end;
+  if (FLocalizerProject.Modified) then
+    StatusBar.Panels[0].Text := 'Modified'
+  else
+    StatusBar.Panels[0].Text := '';
 end;
 
 // -----------------------------------------------------------------------------
@@ -1471,7 +1547,7 @@ end;
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
 begin
-  //
+  StatusBar.Panels[0].Text := 'Modified';
 end;
 
 procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
@@ -1759,16 +1835,21 @@ procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
+  Items: TArray<TCustomLocalizerItem>;
 begin
+  // TreeList selection will change during spell check so save a static copy before we start
+  SetLength(Items, FocusedNode.TreeList.SelectionCount);
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Items[i] := NodeToItem(FocusedNode.TreeList.Selections[i]);
 
-    Item.Traverse(
+  for Item in Items do
+  begin
+    if (not Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
         Result := PerformSpellCheck(Prop);
-      end);
+      end)) then
+      break;
   end;
 
   SpellChecker.ShowSpellingCompleteMessage;

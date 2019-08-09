@@ -41,6 +41,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -88,7 +89,6 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
-      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -102,10 +102,17 @@ object FormMain: TFormMain
     Top = 620
     Width = 964
     Height = 23
-    Panels = <>
+    Panels = <
+      item
+        PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
+        Width = 100
+      end
+      item
+        PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
+        PanelStyle.AutoHint = True
+        Fixed = False
+      end>
     Ribbon = RibbonMain
-    SimplePanelStyle.Active = True
-    SimplePanelStyle.AutoHint = True
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clDefault
     Font.Height = -11
@@ -503,7 +510,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -2789,6 +2796,7 @@ object FormMain: TFormMain
     object ActionProofingCheck: TAction
       Category = 'Proofing'
       Caption = 'Spell check'
+      Hint = 'Perform spell check on the whole project'
       ImageIndex = 13
       ShortCut = 118
       OnExecute = ActionProofingCheckExecute
@@ -2797,6 +2805,7 @@ object FormMain: TFormMain
     object ActionProjectOpen: TAction
       Category = 'File'
       Caption = 'Open project'
+      Hint = 'Open an existing translation project'
       ImageIndex = 0
       ShortCut = 16463
       OnExecute = ActionProjectOpenExecute
@@ -2804,6 +2813,7 @@ object FormMain: TFormMain
     object ActionProofingCheckSelected: TAction
       Category = 'Proofing'
       Caption = 'Check selected'
+      Hint = 'Perform spell check on the selected items'
       ImageIndex = 13
       ShortCut = 8310
       OnExecute = ActionProofingCheckSelectedExecute
@@ -2812,13 +2822,15 @@ object FormMain: TFormMain
     object ActionProjectNew: TAction
       Category = 'File'
       Caption = 'New project'
+      Hint = 'Create a new translation project'
       ImageIndex = 1
-      ShortCut = 16462
+      ShortCut = 16449
       OnExecute = ActionProjectNewExecute
     end
     object ActionProjectSave: TAction
       Category = 'File'
       Caption = 'Save'
+      Hint = 'Save the current translation project'
       ImageIndex = 2
       ShortCut = 16467
       OnExecute = ActionProjectSaveExecute
@@ -2845,7 +2857,9 @@ object FormMain: TFormMain
     object ActionImportXLIFF: TAction
       Category = 'Import'
       Caption = 'XLIFF'
-      Hint = 'Import translation from XLIFF file'
+      Hint = 
+        'Import translation from XLIFF file (used by Delphi amonst others' +
+        ')'
       ImageIndex = 5
       OnExecute = ActionImportXLIFFExecute
       OnUpdate = ActionHasProjectUpdate
@@ -2904,6 +2918,7 @@ object FormMain: TFormMain
       Category = 'Proofing'
       AutoCheck = True
       Caption = 'Live check'
+      Hint = 'Enable or disable check-as-you-type spell check'
       ImageIndex = 14
       OnExecute = ActionProofingLiveCheckExecute
       OnUpdate = ActionProofingLiveCheckUpdate
@@ -2950,8 +2965,10 @@ object FormMain: TFormMain
     object ActionFindNextUntranslated: TAction
       Category = 'Find'
       Caption = 'Next untranslated'
+      Hint = 'Find the next untranslated item'
       ImageIndex = 20
       ShortCut = 16462
+      OnExecute = ActionFindNextUntranslatedExecute
       OnUpdate = ActionHasModulesUpdate
     end
     object ActionExternalUpdate: TAction
