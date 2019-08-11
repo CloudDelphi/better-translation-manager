@@ -155,6 +155,7 @@ type
     StyleComplete: TcxStyle;
     StyleNeedTranslation: TcxStyle;
     StyleDontTranslate: TcxStyle;
+    StyleHold: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -252,6 +253,7 @@ type
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure OnProjectChanged(Sender: TObject);
+    procedure OnModuleCompleteChanged(Module: TLocalizerModule);
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
@@ -1213,6 +1215,7 @@ begin
 
   FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
+  FLocalizerProject.OnModuleCompleteChanged := OnModuleCompleteChanged;
 
   FLocalizerDataSource := TLocalizerDataSource.Create(nil);
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
@@ -1456,8 +1459,12 @@ begin
       Node.ImageIndex := 1
     else
     if (Module.State = lItemStateNew) and (Module.Status = lItemStatusTranslate) then
-      Node.ImageIndex := 0
-    else
+    begin
+      if (Module.Complete) then
+        Node.ImageIndex := 4
+      else
+        Node.ImageIndex := 0;
+    end else
     if (Module.Status = lItemStatusDontTranslate) then
       Node.ImageIndex := 2
     else
@@ -1465,8 +1472,12 @@ begin
       Node.ImageIndex := 5
     else
     if (Module.Status = lItemStatusTranslate) then
-      Node.ImageIndex := 6
-    else
+    begin
+      if (Module.Complete) then
+        Node.ImageIndex := 4
+      else
+        Node.ImageIndex := 6;
+    end else
       Node.ImageIndex := -1;
 
     if (Recurse) and (Node.Focused) then
@@ -1569,6 +1580,14 @@ begin
   // Reload project
   FLocalizerDataSource.TargetLanguage := TargetLanguage;
 //  LoadProject(FLocalizerProject, False);
+end;
+
+procedure TFormMain.OnModuleCompleteChanged(Module: TLocalizerModule);
+var
+  Node: TcxTreeListNode;
+begin
+  Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+  LoadModuleNode(Node, Module, False);
 end;
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
@@ -1869,12 +1888,24 @@ procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeLi
 var
   Module: TLocalizerModule;
 begin
-  AStyle := StyleNormal;
-
   Module := TLocalizerModule(ANode.Data);
 
-  if (Module.State = lItemStateUnused) or (Module.Status in [lItemStatusDontTranslate, lItemStatusHold]) then
+  if (Module.State = lItemStateUnused) or (Module.Status = lItemStatusDontTranslate) then
+  begin
     AStyle := StyleDontTranslate;
+    Exit;
+  end;
+
+  if (Module.Status = lItemStatusHold) then
+  begin
+    AStyle := StyleHold;
+    Exit;
+  end;
+
+  if (Module.Complete) then
+    AStyle := StyleComplete
+  else
+    AStyle := StyleNeedTranslation;
 end;
 
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);

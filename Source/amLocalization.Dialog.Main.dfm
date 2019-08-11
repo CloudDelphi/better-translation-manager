@@ -3319,13 +3319,17 @@ object FormMain: TFormMain
       TextColor = 16742656
     end
     object StyleNeedTranslation: TcxStyle
-      AssignedValues = [svTextColor]
-      TextColor = 7536895
+      AssignedValues = [svColor]
+      Color = 15654911
     end
     object StyleDontTranslate: TcxStyle
       AssignedValues = [svColor, svTextColor]
       Color = 15132390
       TextColor = clGray
+    end
+    object StyleHold: TcxStyle
+      AssignedValues = [svColor]
+      Color = 15132390
     end
   end
 end
