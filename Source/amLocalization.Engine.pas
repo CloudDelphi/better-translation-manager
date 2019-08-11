@@ -30,6 +30,7 @@ type
   private
     FSymbols: TDictionary<string, Word>;
     FIDs: TDictionary<Word, string>;
+    FConflicts: TList<string>;
   public
     constructor Create;
     destructor Destroy; override;
@@ -41,6 +42,8 @@ type
 
     function TryLookupSymbol(const Symbol: string; var ID: Word): boolean;
     function TryLookupID(ID: Word; Var Symbol: string): boolean;
+
+    function HasConflicts: boolean;
   end;
 
 
@@ -92,8 +95,16 @@ destructor TResourceStringSymbolMap.Destroy;
 begin
   FSymbols.Free;
   FIDs.Free;
+  FConflicts.Free;
 
   inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TResourceStringSymbolMap.HasConflicts: boolean;
+begin
+  Result := (FConflicts <> nil) and (FConflicts.Count > 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -102,6 +113,7 @@ procedure TResourceStringSymbolMap.Clear;
 begin
   FSymbols.Clear;
   FIDs.Clear;
+  FreeAndNil(FConflicts);
 end;
 
 // -----------------------------------------------------------------------------
@@ -147,9 +159,57 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TResourceStringSymbolMap.Add(const Symbol: string; ID: Word);
+var
+  SymbolName, DuplicateName: string;
+  DuplicateValue: Word;
 begin
-  FSymbols.Add(AnsiUppercase(Symbol), ID);
-  FIDs.Add(ID, Symbol);
+  SymbolName := AnsiUppercase(Symbol);
+  // Look for existing symbol
+  if (FSymbols.TryGetValue(SymbolName, DuplicateValue)) then
+  begin
+    // Existing symbol found
+    if (DuplicateValue <> ID) then
+    begin
+      // Existing is conflict.
+      // Update existing symbol->id
+      FSymbols.AddOrSetValue(SymbolName, ID);
+      // Get existing id->symbol
+      DuplicateName := FIDs[DuplicateValue];
+      // Replace existing id->symbol with new
+      FIDs.Remove(DuplicateValue);
+      FIDs.Add(ID, Symbol);
+      // Save conflict
+      if (DuplicateName <> Symbol) then
+      begin
+        if (FConflicts = nil) then
+          FConflicts := TList<string>.Create;
+        FConflicts.Add(DuplicateName);
+      end;
+    end;
+  end else
+  begin
+    FSymbols.Add(SymbolName, ID);
+
+    // Look for existing ID
+    if (FIDs.TryGetValue(ID, DuplicateName)) then
+    begin
+      // Existing ID found.
+      if (DuplicateName <> Symbol) then
+      begin
+        // Existing is conflict.
+        // Update existing id->symbol
+        FIDs.AddOrSetValue(ID, Symbol);
+        // Remove existing symbol->id
+        FSymbols.Remove(AnsiUppercase(DuplicateName));
+
+        // Save conflict
+        if (FConflicts = nil) then
+          FConflicts := TList<string>.Create;
+        FConflicts.Add(DuplicateName);
+      end;
+    end else
+      FIDs.Add(ID, Symbol);
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -313,8 +373,12 @@ begin
     else
       TargetStream := nil;
     try
+      // We need to process the module even if it is marked as "don't translate".
+      // Otherwise the items/properties will be left with lItemStateUnused state.
+(*
       if (LocalizerModule.Status = lItemStatusTranslate) then
       begin
+*)
         FReader := TReader.Create(SourceStream, 1024);
         try
           if (TargetStream <> nil) then
@@ -335,10 +399,11 @@ begin
         finally
           FreeAndNil(FReader);
         end;
+(*
       end else
       if (ResourceWriter <> nil) and (TargetStream <> nil) then
         TargetStream.CopyFrom(SourceStream, 0);
-
+*)
       if (ResourceWriter <> nil) and (TargetStream <> nil) then
       begin
         // Write translated resource data
@@ -411,6 +476,7 @@ begin
     ReadProperty(Language, Translator, LocalizerItem, Name);
   FReader.ReadListEnd;
 
+  // Remove empty item
   if (LocalizerItem.State = lItemStateNew) and (LocalizerItem.Properties.Count = 0) then
     LocalizerItem.Free;
 
@@ -613,10 +679,12 @@ begin
       Name := '';
       if (FSymbolMap.TryLookupID(ResourceID, Name)) or (not Value.IsEmpty) then
       begin
-        Item := LocalizerModule.AddItem(ResourceID, '');
-
         if (not Name.IsEmpty) then
-          Item.Name := Name;
+          Item := LocalizerModule.AddItem(Name, '')
+        else
+          // TODO : This could be considered an error. Should flag item as unmapped.
+          Item := LocalizerModule.AddItem(ResourceID, '');
+
 
         if (Item.Status <> lItemStatusDontTranslate) then
         begin

@@ -382,11 +382,13 @@ procedure TFormMain.LockUpdates;
 begin
   Inc(FUpdateLockCount);
   TreeListModules.BeginUpdate;
+  TreeListItems.BeginUpdate;
 end;
 
 procedure TFormMain.UnlockUpdates;
 begin
   ASSERT(FUpdateLockCount > 0);
+  TreeListItems.EndUpdate;
   TreeListModules.EndUpdate;
   Dec(FUpdateLockCount);
 end;
@@ -488,6 +490,7 @@ end;
 procedure TFormMain.ActionExternalUpdateExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
+  SaveFilename: string;
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
@@ -495,6 +498,10 @@ begin
   SaveCursor(crHourGlass);
 
   OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
+
+  // Temporarily switch to new file or we will not be able to find the companion files (*.drc)
+  SaveFilename := FLocalizerProject.SourceFilename;
+  FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -512,10 +519,10 @@ begin
   if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
     mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
   begin
-    FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
     FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
     RibbonMain.DocumentName := FLocalizerProject.Name;
-  end;
+  end else
+    FLocalizerProject.SourceFilename := SaveFilename;
 end;
 
 procedure TFormMain.ActionFindNextUntranslatedExecute(Sender: TObject);
@@ -709,6 +716,8 @@ begin
 //            TreeListItems.Clear;
             CurrentModule := nil;
           end;
+          Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+          Node.Free;
           Module.Free;
           Inc(CountModule);
           continue;
@@ -775,6 +784,8 @@ begin
             CurrentModule := nil;
           end;
           Inc(CountModule);
+          Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+          Node.Free;
           Module.Free;
         end;
       end;
@@ -1927,7 +1938,7 @@ end;
 function TLocalizerDataSource.GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle;
 var
   Item: TLocalizerItem;
-  Prop: TLocalizerProperty;
+  Props: TArray<TLocalizerProperty>;
 begin
   Result := nil;
 
@@ -1935,12 +1946,16 @@ begin
     Exit;
 
   for Item in FModule.Items.Values.ToArray do
-    for Prop in Item.Properties.Values.ToArray do
+  begin
+    Props := Item.Properties.Values.ToArray;
+    if (ARecordIndex > Length(Props)-1) then
     begin
-      if (ARecordIndex = 0) then
-        Exit(Prop);
-      Dec(ARecordIndex);
+      Dec(ARecordIndex, Length(Props));
+      continue;
     end;
+
+    Exit(Props[ARecordIndex]);
+  end;
 end;
 
 function TLocalizerDataSource.GetRootRecordHandle: TcxDataRecordHandle;
