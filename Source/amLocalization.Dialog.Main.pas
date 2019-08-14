@@ -148,14 +148,25 @@ type
     ActionMain: TAction;
     ActionFindNextUntranslated: TAction;
     OpenDialogEXE: TOpenDialog;
-    dxBarButton17: TdxBarButton;
-    ActionExternalUpdate: TAction;
+    ActionImportFile: TAction;
     StyleRepository: TcxStyleRepository;
     StyleNormal: TcxStyle;
     StyleComplete: TcxStyle;
     StyleNeedTranslation: TcxStyle;
     StyleDontTranslate: TcxStyle;
     StyleHold: TcxStyle;
+    dxBarSubItem1: TdxBarSubItem;
+    dxBarButton18: TdxBarButton;
+    ActionImportFileSource: TAction;
+    ActionImportFileTarget: TAction;
+    dxBarButton19: TdxBarButton;
+    BarManagerBarExport: TdxBar;
+    dxBarButton17: TdxBarButton;
+    dxBarButton20: TdxBarButton;
+    dxBarButton21: TdxBarButton;
+    dxBarButton22: TdxBarButton;
+    dxBarButton23: TdxBarButton;
+    dxBarButton24: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -205,11 +216,13 @@ type
     procedure BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
     procedure ActionMainExecute(Sender: TObject);
     procedure ActionMainUpdate(Sender: TObject);
-    procedure ActionExternalUpdateExecute(Sender: TObject);
+    procedure ActionImportFileExecute(Sender: TObject);
     procedure ActionFindNextUntranslatedExecute(Sender: TObject);
-    procedure TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode;
-      var AStyle: TcxStyle);
+    procedure TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
+    procedure ActionImportFileSourceExecute(Sender: TObject);
+    procedure ActionImportFileTargetExecute(Sender: TObject);
+    procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -253,6 +266,7 @@ type
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure OnProjectChanged(Sender: TObject);
+    procedure OnTranslateChanged(Module: TLocalizerModule);
     procedure OnModuleCompleteChanged(Module: TLocalizerModule);
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
@@ -420,7 +434,7 @@ begin
       ResourceWriter := TResourceModuleWriter.Create(Filename);
       try
 
-        ProjectProcessor.Execute(FLocalizerProject, FLocalizerProject.SourceFilename, TargetLanguage, ResourceWriter);
+        ProjectProcessor.Execute(liaTranslate, FLocalizerProject, FLocalizerProject.SourceFilename, TargetLanguage, ResourceWriter);
 
       finally
         ResourceWriter := nil;
@@ -489,7 +503,12 @@ begin
 *)
 end;
 
-procedure TFormMain.ActionExternalUpdateExecute(Sender: TObject);
+procedure TFormMain.ActionImportFileExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFormMain.ActionImportFileSourceExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
   SaveFilename: string;
@@ -503,12 +522,51 @@ begin
 
   // Temporarily switch to new file or we will not be able to find the companion files (*.drc)
   SaveFilename := FLocalizerProject.SourceFilename;
-  FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
+  try
+    FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
+
+    ProjectProcessor := TProjectResourceProcessor.Create;
+    try
+
+      ProjectProcessor.ScanProject(FLocalizerProject, OpenDialogEXE.FileName);
+
+    finally
+      ProjectProcessor.Free;
+    end;
+
+    LoadProject(FLocalizerProject, False);
+
+    StatusBar.Panels[0].Text := 'Updated';
+
+    if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
+      mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
+    begin
+      FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
+      SaveFilename := '';
+      RibbonMain.DocumentName := FLocalizerProject.Name;
+    end;
+
+  finally
+    if (SaveFilename <> '') then
+      FLocalizerProject.SourceFilename := SaveFilename;
+  end;
+end;
+
+procedure TFormMain.ActionImportFileTargetExecute(Sender: TObject);
+var
+  ProjectProcessor: TProjectResourceProcessor;
+begin
+  if (not OpenDialogEXE.Execute(Handle)) then
+    exit;
+
+  SaveCursor(crHourGlass);
+
+  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
-    ProjectProcessor.ScanProject(FLocalizerProject, OpenDialogEXE.FileName);
+    ProjectProcessor.Execute(liaUpdateTarget, FLocalizerProject, OpenDialogEXE.FileName, TargetLanguage, nil);
 
   finally
     ProjectProcessor.Free;
@@ -516,15 +574,7 @@ begin
 
   LoadProject(FLocalizerProject, False);
 
-  StatusBar.Panels[0].Text := 'Updated';
-
-  if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
-    mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
-  begin
-    FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
-    RibbonMain.DocumentName := FLocalizerProject.Name;
-  end else
-    FLocalizerProject.SourceFilename := SaveFilename;
+  StatusBar.Panels[0].Text := 'Imported';
 end;
 
 procedure TFormMain.ActionFindNextUntranslatedExecute(Sender: TObject);
@@ -563,7 +613,7 @@ begin
         Exit(True);
       end;
 
-      if (Prop.Status <> lItemStatusTranslate) or (Prop.State = lItemStateUnused) then
+      if (Prop.Status <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
         Exit(True);
 
       if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
@@ -636,6 +686,7 @@ procedure TFormMain.ActionMainUpdate(Sender: TObject);
 begin
   BarEditItemSourceLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
   BarEditItemTargetLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  BarManagerBarLanguage.CaptionButtons[0].Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
@@ -649,8 +700,15 @@ begin
   try
     FormNewProject.SetLanguageView(DataModuleMain.GridTableViewLanguages, DataModuleMain.GridTableViewLanguagesColumnLanguage);
 
-    FormNewProject.SourceApplication := Application.ExeName;
-    FormNewProject.SourceLanguageID := GetUserDefaultUILanguage;
+    if (FLocalizerProject.SourceFilename <> '') then
+      FormNewProject.SourceApplication := FLocalizerProject.SourceFilename
+    else
+      FormNewProject.SourceApplication := Application.ExeName;
+
+    if (FLocalizerProject.BaseLocaleID <> 0) then
+      FormNewProject.SourceLanguageID := FLocalizerProject.BaseLocaleID
+    else
+      FormNewProject.SourceLanguageID := GetUserDefaultUILanguage;
 
     if (not FormNewProject.Execute) then
       exit;
@@ -675,6 +733,8 @@ begin
   SaveCursor(crHourGlass);
 
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
+
+  ClearTargetLanguage;
 
   TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
   FLocalizerProject.Modified := False;
@@ -709,7 +769,7 @@ begin
 
       for Module in FLocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
       begin
-        if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
+        if (Module.Kind = mkOther) or (Module.State = ItemStateUnused) then
         begin
           NeedReload := True;
           if (Module = CurrentModule) then
@@ -727,7 +787,7 @@ begin
 
         for Item in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
         begin
-          if (Item.State = lItemStateUnused) then
+          if (Item.State = ItemStateUnused) then
           begin
             NeedReload := True;
             if (Module = CurrentModule) then
@@ -743,7 +803,7 @@ begin
 
           // TODO : Purge obsolete translations?
           for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-            if (Prop.State = lItemStateUnused) then
+            if (Prop.State = ItemStateUnused) then
             begin
               NeedReload := True;
               if (Module = CurrentModule) then
@@ -889,18 +949,18 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = lItemStatusDontTranslate) then
+    if (Item.Status = ItemStatusDontTranslate) then
       continue;
-    Item.Status := lItemStatusDontTranslate;
+    Item.Status := ItemStatusDontTranslate;
     LoadItem(Item, True);
   end;
 end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> ItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusDontTranslate);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusDontTranslate);
 end;
 
 procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
@@ -911,18 +971,18 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = lItemStatusHold) then
+    if (Item.Status = ItemStatusHold) then
       continue;
-    Item.Status := lItemStatusHold;
+    Item.Status := ItemStatusHold;
     LoadItem(Item, True);
   end;
 end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> ItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusHold);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusHold);
 end;
 
 procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
@@ -933,18 +993,18 @@ begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = lItemStatusTranslate) then
+    if (Item.Status = ItemStatusTranslate) then
       continue;
-    Item.Status := lItemStatusTranslate;
+    Item.Status := ItemStatusTranslate;
     LoadItem(Item, True);
   end;
 end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> lItemStateUnused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> ItemStateUnused);
 
-  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = lItemStatusTranslate);
+  TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusTranslate);
 end;
 
 // -----------------------------------------------------------------------------
@@ -956,7 +1016,7 @@ var
 begin
   Prop := FocusedProperty;
 
-  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> lItemStateUnused) and (Prop.Status <> lItemStatusDontTranslate) and
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> ItemStateUnused) and (Prop.Status <> ItemStatusDontTranslate) and
     ((not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or
      (Translation.Status <> tStatusObsolete));
 end;
@@ -1215,6 +1275,7 @@ begin
 
   FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
+  FLocalizerProject.OnTranslateChanged := OnTranslateChanged;
   FLocalizerProject.OnModuleCompleteChanged := OnModuleCompleteChanged;
 
   FLocalizerDataSource := TLocalizerDataSource.Create(nil);
@@ -1329,13 +1390,20 @@ begin
   TreeListModules.Clear;
   ClearTargetLanguage;
 
-  FLocalizerProject.Clear;
+  FLocalizerProject.BeginUpdate;
+  try
 
-  FLocalizerProject.SourceFilename := SourceFilename;
-  FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
-  FLocalizerProject.BaseLocaleID := SourceLocaleID;
+    FLocalizerProject.Clear;
 
-  FLocalizerProject.Modified := False;
+    FLocalizerProject.SourceFilename := SourceFilename;
+    FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
+    FLocalizerProject.BaseLocaleID := SourceLocaleID;
+
+    FLocalizerProject.Modified := False;
+
+  finally
+    FLocalizerProject.EndUpdate;
+  end;
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
@@ -1455,31 +1523,6 @@ begin
     Node.Texts[TreeListColumnModuleName.ItemIndex] := Module.Name;
     Node.Values[TreeListColumnModuleStatus.ItemIndex] := Ord(Module.Status);
 
-    if (Module.State = lItemStateUnused) then
-      Node.ImageIndex := 1
-    else
-    if (Module.State = lItemStateNew) and (Module.Status = lItemStatusTranslate) then
-    begin
-      if (Module.Complete) then
-        Node.ImageIndex := 4
-      else
-        Node.ImageIndex := 0;
-    end else
-    if (Module.Status = lItemStatusDontTranslate) then
-      Node.ImageIndex := 2
-    else
-    if (Module.Status = lItemStatusHold) then
-      Node.ImageIndex := 5
-    else
-    if (Module.Status = lItemStatusTranslate) then
-    begin
-      if (Module.Complete) then
-        Node.ImageIndex := 4
-      else
-        Node.ImageIndex := 6;
-    end else
-      Node.ImageIndex := -1;
-
     if (Recurse) and (Node.Focused) then
       TreeListItems.FullRefresh;
 
@@ -1583,18 +1626,39 @@ begin
 end;
 
 procedure TFormMain.OnModuleCompleteChanged(Module: TLocalizerModule);
+(*
 var
   Node: TcxTreeListNode;
+*)
 begin
+(*
   Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
-  LoadModuleNode(Node, Module, False);
+  if (Node <> nil) then
+    LoadModuleNode(Node, Module, False);
+*)
 end;
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
 begin
   StatusBar.Panels[0].Text := 'Modified';
   StatusBar.Panels[2].Text := Format('Translate: %d, Ignore: %d, Hold: %d',
-    [FLocalizerProject.StatusCount[lItemStatusTranslate], FLocalizerProject.StatusCount[lItemStatusDontTranslate], FLocalizerProject.StatusCount[lItemStatusHold]]);
+    [FLocalizerProject.StatusCount[ItemStatusTranslate], FLocalizerProject.StatusCount[ItemStatusDontTranslate], FLocalizerProject.StatusCount[ItemStatusHold]]);
+end;
+
+procedure TFormMain.OnTranslateChanged(Module: TLocalizerModule);
+var
+  Node: TcxTreeListNode;
+begin
+  // Do nothing if we just transitioned from non-complete to complete as
+  // this will be handled by another event.
+//  if (Module.Complete) then
+//    exit;
+
+  Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+
+  if (Node <> nil) then
+    // Refresh node colors and images
+    Node.Repaint(True);
 end;
 
 procedure TFormMain.SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
@@ -1683,10 +1747,10 @@ function TFormMain.PerformSpellCheck(Prop: TLocalizerProperty): boolean;
 var
   Text, CheckedText: string;
 begin
-  if (Prop.State = lItemStateUnused) then
+  if (Prop.State = ItemStateUnused) then
     Exit(True);
 
-  if (Prop.Status <> lItemStatusTranslate) then
+  if (Prop.Status <> ItemStatusTranslate) then
     Exit(True);
 
   Text := Prop.TranslatedValue[TargetLanguage];
@@ -1833,24 +1897,21 @@ begin
   if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
     Exit;
 
-  if (Sender is TcxVirtualTreeList) then
-    Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode))
-  else
-    Prop := TLocalizerProperty(ANode.Data);
+  Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
 
   if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
     Translation := nil;
 
-  if (Prop.State = lItemStateUnused) then
+  if (Prop.State = ItemStateUnused) then
     AIndex := 1
   else
-  if (Prop.State = lItemStateNew) and (Prop.Status = lItemStatusTranslate) and (Translation = nil) then
+  if (Prop.State = ItemStateNew) and (Prop.Status = ItemStatusTranslate) and (Translation = nil) then
     AIndex := 0
   else
-  if (Prop.Status = lItemStatusDontTranslate) then
+  if (Prop.Status = ItemStatusDontTranslate) then
     AIndex := 2
   else
-  if (Prop.Status = lItemStatusHold) then
+  if (Prop.Status = ItemStatusHold) then
     AIndex := 5
   else
   if (Translation <> nil) and (Translation.Status <> tStatusPending) then
@@ -1880,8 +1941,79 @@ begin
 end;
 
 procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
+var
+  OldNameVisible, NewNameVisible: boolean;
 begin
-  FLocalizerDataSource.Module := FocusedModule;
+  TreeListItems.BeginUpdate;
+  try
+
+    OldNameVisible := TreeListColumnValueName.Visible;
+
+    FLocalizerDataSource.Module := FocusedModule;
+
+    NewNameVisible := (FLocalizerDataSource.Module = nil) or (FLocalizerDataSource.Module.Kind = mkForm);
+    TreeListColumnValueName.Visible := NewNameVisible;
+
+    if (OldNameVisible <> NewNameVisible) then
+    begin
+      if (NewNameVisible) then
+        TreeListColumnItemName.Width := TreeListColumnItemName.Width - TreeListColumnValueName.Width
+      else
+        TreeListColumnItemName.Width := TreeListColumnItemName.Width + TreeListColumnValueName.Width;
+    end;
+
+  finally
+    TreeListItems.EndUpdate;
+  end;
+
+  if (TreeListItems.TopNode <> nil) then
+    TreeListItems.TopNode.MakeVisible;
+end;
+
+procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
+var
+  Module: TLocalizerModule;
+  Completeness: integer;
+begin
+  AIndex := -1;
+
+  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
+    Exit;
+
+  Module := TLocalizerModule(ANode.Data);
+
+  if (Module.State = ItemStateUnused) then
+    AIndex := 1
+  else
+  if (Module.Status = ItemStatusTranslate) then
+  begin
+    if (Module.Complete) then
+      AIndex := 4 // 100% complete
+    else
+    begin
+      Completeness := MulDiv(Module.TranslatedCount, 100, Module.PropertyCount);
+      if (Completeness >= 75) then
+        AIndex := 10 // 75%..99% complete
+      else
+      if (Completeness >= 50) then
+        AIndex := 9 // 50%..74% complete
+      else
+      if (Completeness >= 25) then
+        AIndex := 8 // 25%..49% complete
+      else
+      if (Module.State = ItemStateNew) then
+        AIndex := 0 // 0%..24% complete
+      else
+        AIndex := 6;
+    end;
+  end else
+  if (Module.Status = ItemStatusDontTranslate) then
+    AIndex := 2
+  else
+  if (Module.Status = ItemStatusHold) then
+    AIndex := 5
+  else
+    AIndex := -1;
 end;
 
 procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
@@ -1890,13 +2022,13 @@ var
 begin
   Module := TLocalizerModule(ANode.Data);
 
-  if (Module.State = lItemStateUnused) or (Module.Status = lItemStatusDontTranslate) then
+  if (Module.State = ItemStateUnused) or (Module.Status = ItemStatusDontTranslate) then
   begin
     AStyle := StyleDontTranslate;
     Exit;
   end;
 
-  if (Module.Status = lItemStatusHold) then
+  if (Module.Status = ItemStatusHold) then
   begin
     AStyle := StyleHold;
     Exit;

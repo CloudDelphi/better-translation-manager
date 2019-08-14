@@ -93,6 +93,9 @@ object FormMain: TFormMain
       Groups = <
         item
           ToolbarName = 'BarManagerBarImport'
+        end
+        item
+          ToolbarName = 'BarManagerBarExport'
         end>
       Index = 3
     end
@@ -353,6 +356,7 @@ object FormMain: TFormMain
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
     OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
+    OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
     Data = {
       00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
       000000546378537472696E6756616C75655479706513000000546378496E7465
@@ -423,8 +427,8 @@ object FormMain: TFormMain
     ImageOptions.UseLeftBottomPixelAsTransparent = False
     PopupMenuLinks = <>
     UseSystemFont = True
-    Left = 592
-    Top = 8
+    Left = 824
+    Top = 44
     PixelsPerInch = 96
     object BarManagerBarFile: TdxBar
       Caption = 'File'
@@ -500,9 +504,17 @@ object FormMain: TFormMain
         end
         item
           Visible = True
-          ItemName = 'dxBarButton17'
+          ItemName = 'dxBarButton21'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton22'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarSubItem1'
         end>
-      OneOnRow = True
+      OneOnRow = False
       Row = 0
       UseOwnFont = False
       Visible = True
@@ -515,7 +527,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -681,7 +693,7 @@ object FormMain: TFormMain
       WholeRow = False
     end
     object BarManagerBarLookup: TdxBar
-      Caption = 'Lookup'
+      Caption = 'Automation'
       CaptionButtons = <
         item
           Enabled = False
@@ -701,6 +713,38 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton15'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton23'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton24'
+        end>
+      OneOnRow = False
+      Row = 0
+      UseOwnFont = False
+      Visible = True
+      WholeRow = False
+    end
+    object BarManagerBarExport: TdxBar
+      Caption = 'Export'
+      CaptionButtons = <>
+      DockedLeft = 197
+      DockedTop = 0
+      FloatLeft = 998
+      FloatTop = 8
+      FloatClientWidth = 0
+      FloatClientHeight = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton17'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton20'
         end>
       OneOnRow = False
       Row = 0
@@ -828,10 +872,10 @@ object FormMain: TFormMain
       Category = 0
     end
     object dxBarLargeButton6: TdxBarLargeButton
-      Caption = 'Auto translate'
+      Caption = 'Web lookup'
       Category = 0
       Enabled = False
-      Hint = 'Auto translate'
+      Hint = 'Web lookup'
       Visible = ivAlways
       LargeGlyph.SourceDPI = 96
       LargeGlyph.Data = {
@@ -956,20 +1000,84 @@ object FormMain: TFormMain
       Action = ActionFindNextUntranslated
       Category = 0
     end
-    object dxBarButton17: TdxBarButton
-      Action = ActionExternalUpdate
+    object dxBarSubItem1: TdxBarSubItem
+      Action = ActionImportFile
       Category = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton18'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton19'
+        end>
+    end
+    object dxBarButton18: TdxBarButton
+      Action = ActionImportFileSource
+      Category = 0
+    end
+    object dxBarButton19: TdxBarButton
+      Action = ActionImportFileTarget
+      Category = 0
+    end
+    object dxBarButton17: TdxBarButton
+      Caption = 'Save to CSV'
+      Category = 0
+      Enabled = False
+      Hint = 'Save to CSV'
+      Visible = ivAlways
+    end
+    object dxBarButton20: TdxBarButton
+      Caption = 'Save to Excel'
+      Category = 0
+      Enabled = False
+      Hint = 'Save to Excel'
+      Visible = ivAlways
+    end
+    object dxBarButton21: TdxBarButton
+      Caption = 'Import CSV'
+      Category = 0
+      Enabled = False
+      Hint = 'Import CSV'
+      Visible = ivAlways
+    end
+    object dxBarButton22: TdxBarButton
+      Caption = 'Import from Excel'
+      Category = 0
+      Enabled = False
+      Hint = 'Import from Excel'
+      Visible = ivAlways
+    end
+    object dxBarButton23: TdxBarButton
+      Caption = 'Add to dictionary'
+      Category = 0
+      Enabled = False
+      Hint = 'Add to dictionary'
+      Visible = ivAlways
+    end
+    object dxBarButton24: TdxBarButton
+      Caption = 'Translate from dictionary'
+      Category = 0
+      Enabled = False
+      Hint = 'Translate from dictionary'
+      Visible = ivAlways
     end
   end
   object SkinController: TdxSkinController
     NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
-    Left = 536
-    Top = 8
+    Left = 748
+    Top = 48
   end
   object OpenDialogXLIFF: TOpenDialog
-    Filter = 'XLIFF files (*.xlf;*.xliff)|*.xlf;*.xliff|All files (*.*)|*.*'
+    Filter = 
+      'XLIFF files (*.xlf;*.xliff)|*.xlf;*.xliff|Delphi form translatio' +
+      'ns (*.dfn)|*.dfn|Delphi resourcestring translations (*.rcn)|*.rc' +
+      'n|All supported files (*.xlf;*.xliff;*.dfn;*.rcn)|*.xlf;*.xliff;' +
+      '*.dfn;*.rcn|All files (*.*)|*.*'
+    FilterIndex = 4
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 344
     Top = 364
@@ -2855,13 +2963,12 @@ object FormMain: TFormMain
       Caption = 'Build'
       Hint = 'Build localized resource modules'
       ImageIndex = 4
-      ShortCut = 120
       OnExecute = ActionBuildExecute
       OnUpdate = ActionHasProjectUpdate
     end
     object ActionImportXLIFF: TAction
       Category = 'Import'
-      Caption = 'XLIFF'
+      Caption = 'Import XLIFF'
       Hint = 
         'Import translation from XLIFF file (used by Delphi amonst others' +
         ')'
@@ -2976,12 +3083,28 @@ object FormMain: TFormMain
       OnExecute = ActionFindNextUntranslatedExecute
       OnUpdate = ActionHasModulesUpdate
     end
-    object ActionExternalUpdate: TAction
+    object ActionImportFile: TAction
       Category = 'Import'
-      Caption = 'Update from file'
-      Hint = 'Update from arbitrary application or library file'
+      Caption = 'Import application'
+      Hint = 
+        'Update source or target values from arbitrary application or lib' +
+        'rary file'
       ImageIndex = 21
-      OnExecute = ActionExternalUpdateExecute
+      OnExecute = ActionImportFileExecute
+      OnUpdate = ActionHasProjectUpdate
+    end
+    object ActionImportFileSource: TAction
+      Category = 'Import'
+      Caption = 'Import source language'
+      Hint = 'Import values in the source language from an external file'
+      OnExecute = ActionImportFileSourceExecute
+      OnUpdate = ActionHasProjectUpdate
+    end
+    object ActionImportFileTarget: TAction
+      Category = 'Import'
+      Caption = 'Import target language'
+      Hint = 'Import translated values from an external file'
+      OnExecute = ActionImportFileTargetExecute
       OnUpdate = ActionHasProjectUpdate
     end
   end
@@ -3232,6 +3355,92 @@ object FormMain: TFormMain
           571FE0EB1F18CBA13FC699C42C8BD867DAEEAFDA9A2F9605EC17283A14678315
           CC7CF7B8177A16C6AD5513D687C3D8CFBD3ACE3F01521932D6949C3B97000000
           0049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000002E64944415478DA8D937F48535114C7CF7D6FBF9CD3B5E5ACA95337A6
+          D3E52A6CF6C308CA89030D0A54B034FF295224FBA308C4A0EC9FE88FA4204282
+          4CFAC3C00821B1C414A18C14C5E95E6998DA6CB6CAA91BCDD2B9B7F75EF7CD26
+          59067E2F970BF79DF3B9E79C770EE2380E78212CFE38DF5961946D919D020161
+          41244A090E9730C0308E204BF7785C8E86A66BA59FB01DCBFD7644FCC93B675B
+          5344FBEBF26FC8A4D2EA0C453AB93D4205DBF09EA200486532B81796616C727E
+          D133BF70E9DEC5DC26EC4BF390D0ABBCF3BEBABCA77AA5DE9A9F980B1C62F0D7
+          15BC69981A8E00B5C1082202011308424FDF0C7C74BADB5B1BAB4B66296A8907
+          90552F2B6E1962F5D5C7B45698A5BF028B5758CEA118884E4A03020304D87ABB
+          5C045DAF1C408D4ED73FA8B1D6A2A2E6C21D09FA387B654639E90C4C6343021B
+          926B00D7603C446A0C2100CBB1B81C00C94A11343FA1E8B1A13E332AEF2C6DB0
+          E8732A558A48A0210002208024046B00F7A00EC4F1A98080077018C08660B4E7
+          3B3C7B61BB8D4E74978C9C3415EEF2A139D848BEFEDDC0A9F4EBEE481C608C18
+          C1E3D6A15154DC5D345F6C2AD8EA0DBA37042CF5674340A15B0FC0692AA42474
+          B48F78D1F1DA4E9FC51C11156011FC4FCB72ED5F80D582BEE9A2BC28FF421B75
+          E088D1C40AC4B0197178F111D0FE000CF48CD851CED947774D59862A45826A53
+          8030C4EBF282AD77E026321DBD9A199F6AEECF3A9C2164565B1A57F95F278408
+          605916F8FE65832C50AFDF073FF4B599F9C4257BCB1AEB357A6D55FA1E1D0418
+          BEB5391009D65382F83ED45E2C079394131CA3EFEED85ACED5F000422E4F8A4E
+          29A86B51EB3479C64C2D70B84832B10084B8527CB30769167C7E06BFCCC0E45B
+          277C1E773CB7B59C29E5FF72789848B93C313AD152733D4A117B5A93AA16C6C6
+          2940221387425EFEB9027338E79909D792C7357165BCE3F27D7CFD03FB32E88F
+          71E66396241DACDC2955A69509255187388254E36C7007D3DF02FEC5DEC5197B
+          E317FBC3716CE70F8FF32FF7E032D6A733DD520000000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000002B14944415478DA8D536B48D351143FF7FFFFEFA14DD78CF94A67CAD4
+          3457E0A327413971A041810A96E6972245B40F412006E5A7E843521062843282
+          0A461065928DC410A3426AB999898F9A69964ED768A6CEFD5F9D3B142AFCB073
+          B95CB8F7FE1EE7DC7B882CCB408360D0E5BCBD365BB355731A38C64C58920E12
+          88B248DC22CFF779DDBEF68E2AEB57BC27C9EB4042570A3E684957EE6F29B9A6
+          898C6CCCD165B1F1117A88C3C9E0980B78606E750186173F2D79BDDE8B6D4577
+          AC88E52949489582F7B5143F31C6182D258622908988A76B38F9903B25510047
+          54101404B0CFBC84CF9E2FDD3D0D8F2A2786E75728015BDF5F7B2333D6D8783C
+          D502F3FC0F742DC1FF413364818338653C3C75BF800F53AED60E8BB59994DF2F
+          DB95644C74D6E5D4B0D3C129601806D5D84D094092804772837207DC76DDE347
+          5F8FE7931A7B55BBD95858A7D76DC1C3206A30C032DCA604B45EA224008302FE
+          5F3C3C7674DF24277B2B874E99CAF6F8C902841B54444BF4607D6F1B2115BDE5
+          8B15A6D26D3EC11336014D53CBEAE0E1D0731F39D16CF79BF322A28252D878A0
+          E56070F6BF5BF691920B5DAE0347B34D12A70A0B2CE360D1011F08C260DF9093
+          149E7BD0662AC8ACD725E9C37640497CB33E700C0C5E27A6635772B767E4BF2D
+          3892A310D7AB8D029BD866F01525A0FF57122470BD1A15C6DF74E5D38FA4DE5B
+          DDD99A6C4CADCFCA4B83A048BFB60C4AEE5F1601F74365926498744D837BE4E3
+          2D87ADA18912305A6D4A747A698B2D212DB9383B371564AC9046C58182C3B7C7
+          1B022F813F20A2B20893C3D3F06DCCFDCC613B5B8558FF4633B15AAD21DA606E
+          BA1AA58B3D939C91A0884DD4815AA30A595E5D5E8305CC79666276E5E7ECC4E5
+          B19E4B1DB8FD1BB122F9AB9DA96775CAA1BADD91313BAB15EAA8C332C3266036
+          922CF173C1C0D2C0D28CB3F3BBF3EE18DE0B6CB4F31F81AE22489B4642E30000
+          000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000002D84944415478DA8D536B489361143EEFF7EDE69C7E4D99B7743A9B9A
+          CB159876252A35172614686069FE895224FB11042251FE8A7E2405614628FB51
+          8916449658234942C8044D9D99953A6D56DEB656735EB6EFD6FB8A86C682CEC7
+          CBE1BD3CCF73CEF9CE41A2280231848DB8F39612836A83EA1448A84C44A30410
+          80177934C6B3EC2BE798ABB6AED0FC05BF13C41520229E80F7981264BBAA72AE
+          A994CAF21475321D11A08170BC28FC4D2DCDC0D4E22C0C383ECC399DCE8B3559
+          77CD18CB1292655502DE5995DDAC0FD19B72B45920221EDF7AF16297A3932129
+          48901C7C1C07968976189DB1B53C3FF7B86078607A8110D065AF4B6E2485E9CB
+          8FEA4C30CD4EE2A805F8DB48863448205C1601CFC65E42EFB8B5BACE64AE44F9
+          0FF2B644EBA3FA4B538A69BB6F1C288AC26AB45F0210046031B956160777ACF7
+          D9A1379FD350B1A5B036539F51AA5107E24B1FD6A080A6247E0948BD7881030A
+          0BB87FB1F0E45DCB4D74A2ADA0EFA4316F9B1BCDC2FF1A11619006CC3D4D83E8
+          785BBE2337C014BAC4CFFF1BB1C9BB6E4BD26468353CEA7BE142C72A2DEEFD87
+          0C41F31CF28B0D91378118BFB8EE8CC6299082B65A3B5D28E7C253EBEE8306A3
+          2091FB27086C045EB7F0674FEA4022F0FA3868EFEDEE4719671B6A8CE94965EA
+          688D5F82506523706B0856BA0FBEBA5CD0D565BD8E8CB957523726A6BD4D3F90
+          22E557AA8D05FE980647C0C57940C48702FE8D22E912EC3B86DE73C3CDB63492
+          B86247517D758C5E5796BC3D1E7C3C696D1164126A1D012B127A321822F4D947
+          6074C07EABA7BCBB8210500C131B9C70A4AA29323E26DB90AAC36A0854720948
+          250818F943F0C57AC0C3CF01CFF3CB60BBCDD1DA73A6B31063DDABC344338C36
+          589B597135481D763A2631521A16A506854A0EE14C0338222671CEB3609BF8BE
+          F063E4E7E58F9706EB30D883B13C5A33CE246645ECDED2ADCA90CD455245D03E
+          91A223A9C3B70591E5A67C6E6FC75CFF62FDB77BB64FF8DDD2EA38FF0617C533
+          CC7E0455AA0000000049454E44AE426082}
       end>
   end
   object SpellChecker: TdxSpellChecker

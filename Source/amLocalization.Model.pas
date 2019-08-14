@@ -7,6 +7,9 @@ uses
   Generics.Defaults,
   Winapi.Windows, System.Classes;
 
+const
+  sModuleNameResourcestrings = 'resourcestrings';
+
 type
   TLocalizerModule = class;
   TLocalizerItem = class;
@@ -22,11 +25,12 @@ type
   TLocalizerPropertyDelegate = reference to function(Prop: TLocalizerProperty): boolean;
   TLocalizerTranslationDelegate = reference to function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean;
 
-  TLocalizerItemState = (lItemStateNew, lItemStateExisting, lItemStateUnused);
-  TLocalizerItemStatus = (lItemStatusTranslate, lItemStatusDontTranslate, lItemStatusHold);
+  TLocalizerItemState = (ItemStateNew, ItemStateExisting, ItemStateUnused);
+  TLocalizerItemStatus = (ItemStatusTranslate, ItemStatusDontTranslate, ItemStatusHold);
 
   TLocalizerModuleKind = (mkOther, mkForm, mkString);
   TLocalizerModuleKinds = set of TLocalizerModuleKind;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -43,6 +47,7 @@ type
     property LanguageID: LCID read FLanguageID;
     property TranslatedCount: integer read FTranslatedCount write FTranslatedCount;
   end;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -70,6 +75,7 @@ type
     property Languages[Index: integer]: TTargetLanguage read GetItem; default;
   end;
 
+
 // -----------------------------------------------------------------------------
 //
 // TLocalizerProject
@@ -84,12 +90,12 @@ type
   TLocalizerProject = class
   strict private
     FName: string;
+    FSourceFilename: string;
     FModules: TLocalizerModules;
     FBaseLocaleID: LCID;
     FTargetLanguages: TTargetLanguageList;
     FState: TLocalizerProjectStates;
     FLoadCount: integer;
-    FSourceFilename: string;
     FPropertyCount: integer;
     FTranslatedCount: integer;
     FStatusCount: array[TLocalizerItemStatus] of integer;
@@ -97,6 +103,7 @@ type
     FUpdateCount: integer;
     FUpdatePending: boolean;
     FOnChanged: TNotifyEvent;
+    FOnTranslateChanged: TLocalizerModuleEvent;
     FOnModuleCompleteChanged: TLocalizerModuleEvent;
   strict protected
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
@@ -104,6 +111,7 @@ type
   protected
     procedure UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
     procedure UpdateTranslatedCount(Delta: integer);
+    procedure ModuleTranslatedChanged(Module: TLocalizerModule);
     procedure ModuleCompleteChanged(Module: TLocalizerModule);
   public
     constructor Create(const AName: string; ABaseLocaleID: LCID);
@@ -116,7 +124,7 @@ type
 
     function AddModule(const AName: string): TLocalizerModule;
 
-    procedure BeginLoad;
+    procedure BeginLoad(MarkUnused: boolean = False);
     procedure EndLoad;
 
     procedure BeginUpdate;
@@ -143,8 +151,10 @@ type
     property StatusCount[Status: TLocalizerItemStatus]: integer read GetStatusCount;
 
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
+    property OnTranslateChanged: TLocalizerModuleEvent read FOnTranslateChanged write FOnTranslateChanged;
     property OnModuleCompleteChanged: TLocalizerModuleEvent read FOnModuleCompleteChanged write FOnModuleCompleteChanged;
   end;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -158,13 +168,13 @@ type
     FStatus: TLocalizerItemStatus;
     FStatusCount: array[TLocalizerItemStatus] of integer;
     FTranslatedCount: integer;
-  strict
-  private
-    function GetPropertyCount: integer; protected
+    FUpdateCount: integer;
+    FChanged: boolean;
+  strict protected
     procedure UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
     procedure UpdateParentStatusCount(Status: TLocalizerItemStatus; Delta: integer); virtual; abstract;
-  private
-  protected
+    procedure DoChanged; virtual; abstract;
+
     procedure SetName(const Value: string); virtual;
     procedure SetState(const Value: TLocalizerItemState);
     procedure SetStatus(const Value: TLocalizerItemStatus);
@@ -174,8 +184,9 @@ type
     function GetInheritParentStatus: boolean; virtual;
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
     function GetComplete: boolean;
-
-    procedure Changed; virtual; abstract;
+    function GetPropertyCount: integer;
+  protected
+    procedure Changed;
     procedure UpdateStatusCountFromChild(Status: TLocalizerItemStatus; Delta: integer);
     procedure UpdateParentTranslatedCount(Delta: integer); virtual; abstract;
     procedure UpdateTranslatedCount(Delta: integer);
@@ -186,6 +197,8 @@ type
     property Name: string read FName write SetName;
 
     procedure Clear; virtual; abstract;
+    procedure BeginUpdate;
+    procedure EndUpdate;
 
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; virtual; abstract;
 
@@ -201,6 +214,7 @@ type
     property Complete: boolean read GetComplete;
   end;
 
+
 // -----------------------------------------------------------------------------
 //
 // TCustomLocalizerChildItem
@@ -211,19 +225,21 @@ type
     FParent: TParentClass;
   strict protected
     procedure UpdateParentStatusCount(Status: TLocalizerItemStatus; Delta: integer); override;
-  protected
-    procedure Changed; override;
-    procedure UpdateParentTranslatedCount(Delta: integer); override;
+    procedure DoChanged; override;
+
     function GetState: TLocalizerItemState; override;
     function GetStatus: TLocalizerItemStatus; override;
     function GetInheritParentState: boolean; override;
     function GetInheritParentStatus: boolean; override;
+  protected
+    procedure UpdateParentTranslatedCount(Delta: integer); override;
 
     function GetParent: TParentClass;
     property Parent: TParentClass read GetParent;
   public
     constructor Create(AParent: TParentClass; const AName: string);
   end;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -240,9 +256,9 @@ type
   strict protected
     procedure SetName(const Value: string); override;
     procedure UpdateParentStatusCount(Status: TLocalizerItemStatus; Delta: integer); override;
+    procedure DoChanged; override;
     procedure NotifyComplete;
   protected
-    procedure Changed; override;
     procedure UpdateParentTranslatedCount(Delta: integer); override;
   public
     constructor Create(AProject: TLocalizerProject; const AName: string);
@@ -255,6 +271,7 @@ type
     procedure Clear; override;
     function Purge: boolean;
 
+    function FindItem(const AName: string): TLocalizerItem;
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
 
@@ -263,6 +280,7 @@ type
     function Traverse(Delegate: TLocalizerItemDelegate): boolean; reintroduce; overload;
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload; override;
   end;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -280,24 +298,25 @@ type
     constructor Create(AModule: TLocalizerModule; const AName, ATypeName: string);
     destructor Destroy; override;
 
-    property Module: TLocalizerModule read GetParent;
-    property ResourceID: WORD read FResourceID write FResourceID;
-    property TypeName: string read FTypeName write FTypeName;
-    property Properties: TLocalizerProperties read FProperties;
-
     procedure Clear; override;
     function Purge: boolean;
 
+    function FindProperty(const AName: string): TLocalizerProperty;
     function AddProperty(const AName: string): TLocalizerProperty; overload;
     function AddProperty(const AName: string; const AValue: string): TLocalizerProperty; overload;
 
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; override;
+
+    property Module: TLocalizerModule read GetParent;
+    property ResourceID: WORD read FResourceID write FResourceID;
+    property TypeName: string read FTypeName write FTypeName;
+    property Properties: TLocalizerProperties read FProperties;
   end;
 
 
 // -----------------------------------------------------------------------------
 //
-// TLocalizerTranslations
+// TLocalizerTranslation
 //
 // -----------------------------------------------------------------------------
   TTranslationStatus = (
@@ -307,7 +326,8 @@ type
     tStatusTranslated           // Translation complete
     );
     // Note:
-    // Status > tStatusPending is considered "translated". Take this into consideration if changing the order.
+    // Status > tStatusPending is considered "translated".
+    // Take this into consideration if adding values or changing the order.
 
   TLocalizerTranslation = class
   strict private
@@ -315,16 +335,22 @@ type
     FLanguage: TTargetLanguage;
     FStatus: TTranslationStatus;
     FOwner: TLocalizerProperty;
+    FUpdateCount: integer;
+    FChanged: boolean;
   strict protected
     procedure SetStatus(const Value: TTranslationStatus);
     procedure SetValue(const Value: string);
+    procedure Changed;
   public
     constructor Create(AOwner: TLocalizerProperty; ALanguage: TTargetLanguage);
     destructor Destroy; override;
 
-    procedure Changed;
+    procedure BeginUpdate;
+    procedure EndUpdate;
 
     property Owner: TLocalizerProperty read FOwner;
+
+    procedure Update(const AValue: string; AStatus: TTranslationStatus);
 
     property Value: string read FValue write SetValue;
     property Language: TTargetLanguage read FLanguage;
@@ -354,6 +380,7 @@ type
     property Items[Language: TTargetLanguage]: TLocalizerTranslation read GetItem; default;
   end;
 
+
 // -----------------------------------------------------------------------------
 //
 // TLocalizerProperty
@@ -375,6 +402,8 @@ type
 
     function Traverse(Delegate: TLocalizerPropertyDelegate): boolean; overload; override;
     function Traverse(Delegate: TLocalizerTranslationDelegate): boolean; reintroduce; overload;
+
+    function HasTranslation(Language: TTargetLanguage): boolean;
 
     property Item: TLocalizerItem read GetParent;
     property Value: string read FValue write SetValue;
@@ -448,9 +477,33 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TCustomLocalizerItem.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
+procedure TCustomLocalizerItem.EndUpdate;
+begin
+  Dec(FUpdateCount);
+  if (FChanged) and (FUpdateCount = 0) then
+  begin
+    DoChanged;
+    FChanged := False;
+  end;
+end;
+
+procedure TCustomLocalizerItem.Changed;
+begin
+  BeginUpdate;
+  FChanged := True;
+  EndUpdate;
+end;
+
+// -----------------------------------------------------------------------------
+
 function TCustomLocalizerItem.GetComplete: boolean;
 begin
-  Result := (FTranslatedCount = FStatusCount[lItemStatusTranslate]);
+  Result := (FTranslatedCount = FStatusCount[ItemStatusTranslate]);
 end;
 
 function TCustomLocalizerItem.GetInheritParentState: boolean;
@@ -478,23 +531,23 @@ begin
   if (FState = Value) then
     Exit;
 
-  if (FState = lItemStateUnused) then
+  if (FState = ItemStateUnused) then
   begin
-    UpdateParentStatusCount(lItemStatusTranslate, FStatusCount[lItemStatusTranslate]);
-    UpdateParentStatusCount(lItemStatusDontTranslate, FStatusCount[lItemStatusDontTranslate]);
-    UpdateParentStatusCount(lItemStatusHold, FStatusCount[lItemStatusHold]);
-    if (FStatus = lItemStatusTranslate) then
+    UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
+    UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
+    UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
+    if (FStatus = ItemStatusTranslate) then
       UpdateParentTranslatedCount(FTranslatedCount);
   end;
 
   FState := Value;
 
-  if (FState = lItemStateUnused) then
+  if (FState = ItemStateUnused) then
   begin
-    UpdateParentStatusCount(lItemStatusTranslate, -FStatusCount[lItemStatusTranslate]);
-    UpdateParentStatusCount(lItemStatusDontTranslate, -FStatusCount[lItemStatusDontTranslate]);
-    UpdateParentStatusCount(lItemStatusHold, -FStatusCount[lItemStatusHold]);
-    if (FStatus = lItemStatusTranslate) then
+    UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
+    UpdateParentStatusCount(ItemStatusDontTranslate, -FStatusCount[ItemStatusDontTranslate]);
+    UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
+    if (FStatus = ItemStatusTranslate) then
       UpdateParentTranslatedCount(-FTranslatedCount);
   end;
 
@@ -508,70 +561,70 @@ begin
   if (FStatus = Value) then
     Exit;
 
-  if (FState <> lItemStateUnused) then
+  if (FState <> ItemStateUnused) then
   begin
-    if (FStatus = lItemStatusTranslate) then
+    if (FStatus = ItemStatusTranslate) then
       UpdateParentTranslatedCount(-FTranslatedCount);
 
-    DeltaCount[lItemStatusTranslate] := 0;
-    DeltaCount[lItemStatusDontTranslate] := 0;
-    DeltaCount[lItemStatusHold] := 0;
+    DeltaCount[ItemStatusTranslate] := 0;
+    DeltaCount[ItemStatusDontTranslate] := 0;
+    DeltaCount[ItemStatusHold] := 0;
     // Update counts as if we are performing a temporary status change TO lItemStatusTranslate
     case FStatus of
-      lItemStatusTranslate:
+      ItemStatusTranslate:
         begin
-          DeltaCount[lItemStatusTranslate] := 0;
+          DeltaCount[ItemStatusTranslate] := 0;
         end;
 
-      lItemStatusDontTranslate:
+      ItemStatusDontTranslate:
         begin
-          DeltaCount[lItemStatusTranslate] := FStatusCount[lItemStatusTranslate];
-          DeltaCount[lItemStatusDontTranslate] := -FStatusCount[lItemStatusTranslate]-FStatusCount[lItemStatusHold];
-          DeltaCount[lItemStatusHold] := FStatusCount[lItemStatusHold];
+          DeltaCount[ItemStatusTranslate] := FStatusCount[ItemStatusTranslate];
+          DeltaCount[ItemStatusDontTranslate] := -FStatusCount[ItemStatusTranslate]-FStatusCount[ItemStatusHold];
+          DeltaCount[ItemStatusHold] := FStatusCount[ItemStatusHold];
         end;
 
-      lItemStatusHold:
+      ItemStatusHold:
         begin
-          DeltaCount[lItemStatusTranslate] := FStatusCount[lItemStatusTranslate];
-          DeltaCount[lItemStatusDontTranslate] := 0;
-          DeltaCount[lItemStatusHold] := -FStatusCount[lItemStatusTranslate];
+          DeltaCount[ItemStatusTranslate] := FStatusCount[ItemStatusTranslate];
+          DeltaCount[ItemStatusDontTranslate] := 0;
+          DeltaCount[ItemStatusHold] := -FStatusCount[ItemStatusTranslate];
         end;
     end;
   end;
 
   FStatus := Value;
 
-  if (FState <> lItemStateUnused) then
+  if (FState <> ItemStateUnused) then
   begin
-    if (FStatus = lItemStatusTranslate) then
+    if (FStatus = ItemStatusTranslate) then
       UpdateParentTranslatedCount(FTranslatedCount);
 
     // Update counts as if we are performing a temporary status change FROM lItemStatusTranslate
     case FStatus of
-      lItemStatusTranslate:
+      ItemStatusTranslate:
         ;
 
-      lItemStatusDontTranslate:
+      ItemStatusDontTranslate:
         begin
-          Inc(DeltaCount[lItemStatusTranslate], -FStatusCount[lItemStatusTranslate]);
-          Inc(DeltaCount[lItemStatusDontTranslate], FStatusCount[lItemStatusTranslate]+FStatusCount[lItemStatusHold]);
-          Inc(DeltaCount[lItemStatusHold], -FStatusCount[lItemStatusHold]);
+          Inc(DeltaCount[ItemStatusTranslate], -FStatusCount[ItemStatusTranslate]);
+          Inc(DeltaCount[ItemStatusDontTranslate], FStatusCount[ItemStatusTranslate]+FStatusCount[ItemStatusHold]);
+          Inc(DeltaCount[ItemStatusHold], -FStatusCount[ItemStatusHold]);
         end;
 
-      lItemStatusHold:
+      ItemStatusHold:
         begin
-          Inc(DeltaCount[lItemStatusTranslate], -FStatusCount[lItemStatusTranslate]);
-          Inc(DeltaCount[lItemStatusHold], FStatusCount[lItemStatusTranslate]);
+          Inc(DeltaCount[ItemStatusTranslate], -FStatusCount[ItemStatusTranslate]);
+          Inc(DeltaCount[ItemStatusHold], FStatusCount[ItemStatusTranslate]);
         end;
     end;
 
     // Apply change in count
-    if (DeltaCount[lItemStatusTranslate] <> 0) then
-      UpdateParentStatusCount(lItemStatusTranslate, DeltaCount[lItemStatusTranslate]);
-    if (DeltaCount[lItemStatusDontTranslate] <> 0) then
-      UpdateParentStatusCount(lItemStatusDontTranslate, DeltaCount[lItemStatusDontTranslate]);
-    if (DeltaCount[lItemStatusHold] <> 0) then
-      UpdateParentStatusCount(lItemStatusHold, DeltaCount[lItemStatusHold]);
+    if (DeltaCount[ItemStatusTranslate] <> 0) then
+      UpdateParentStatusCount(ItemStatusTranslate, DeltaCount[ItemStatusTranslate]);
+    if (DeltaCount[ItemStatusDontTranslate] <> 0) then
+      UpdateParentStatusCount(ItemStatusDontTranslate, DeltaCount[ItemStatusDontTranslate]);
+    if (DeltaCount[ItemStatusHold] <> 0) then
+      UpdateParentStatusCount(ItemStatusHold, DeltaCount[ItemStatusHold]);
   end;
 
   Changed;
@@ -581,12 +634,12 @@ end;
 
 function TCustomLocalizerItem.GetPropertyCount: integer;
 begin
-  Result := FStatusCount[lItemStatusTranslate];
+  Result := FStatusCount[ItemStatusTranslate];
 end;
 
 function TCustomLocalizerItem.GetStatusCount(Status: TLocalizerItemStatus): integer;
 begin
-  if (FState <> lItemStateUnused) then
+  if (FState <> ItemStateUnused) then
     Result := FStatusCount[Status]
   else
     Result := 0;
@@ -601,7 +654,7 @@ begin
 
   Assert(FStatusCount[Status] >= 0);
 
-  if (FState <> lItemStateUnused) then
+  if (FState <> ItemStateUnused) then
     UpdateParentStatusCount(Status, Delta);
 end;
 
@@ -619,7 +672,7 @@ begin
   Inc(FTranslatedCount, Delta);
   Assert(FTranslatedCount >= 0);
 
-  if (FState <> lItemStateUnused) and (Status = lItemStatusTranslate) then
+  if (FState <> ItemStateUnused) and (Status = ItemStatusTranslate) then
     UpdateParentTranslatedCount(Delta);
 end;
 
@@ -627,14 +680,14 @@ function TCustomLocalizerItem.TranslateChildStatus(Status: TLocalizerItemStatus)
 begin
   // Translate status
   case FStatus of
-    lItemStatusDontTranslate:
-      Result := lItemStatusDontTranslate;
+    ItemStatusDontTranslate:
+      Result := ItemStatusDontTranslate;
 
-    lItemStatusHold:
-      if (Status = lItemStatusDontTranslate) then
-        Result := lItemStatusDontTranslate
+    ItemStatusHold:
+      if (Status = ItemStatusDontTranslate) then
+        Result := ItemStatusDontTranslate
       else
-        Result := lItemStatusHold;
+        Result := ItemStatusHold;
   else // i.e. lItemStatusTranslate
     Result := Status;
   end;
@@ -653,7 +706,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TCustomLocalizerChildItem<TParentClass>.Changed;
+procedure TCustomLocalizerChildItem<TParentClass>.DoChanged;
 begin
   FParent.Changed;
 end;
@@ -662,12 +715,13 @@ end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
 begin
-  Result := (Parent.State <> lItemStateExisting);
+  //  If the parent is unused, the children are also unused
+  Result := (Parent.State = ItemStateUnused);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentStatus: boolean;
 begin
-  Result := (inherited GetStatus <> lItemStatusDontTranslate) and (Parent.Status <> lItemStatusTranslate);
+  Result := (inherited GetStatus <> ItemStatusDontTranslate) and (Parent.Status <> ItemStatusTranslate);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetParent: TParentClass;
@@ -811,6 +865,7 @@ end;
 procedure TLocalizerProject.Changed;
 begin
   FModified := True;
+
   BeginUpdate;
   FUpdatePending := True;
   EndUpdate;
@@ -825,6 +880,7 @@ begin
   FModules.Clear;
   FTargetLanguages.Clear;
   FPropertyCount := 0;
+  FTranslatedCount := 0;
   for Status := Low(TLocalizerItemStatus) to High(TLocalizerItemStatus) do
     FStatusCount[Status] := 0;
 end;
@@ -838,7 +894,7 @@ begin
   Result := False;
   for Module in Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
   begin
-    if (Module.Kind = mkOther) or (Module.State = lItemStateUnused) then
+    if (Module.Kind = mkOther) or (Module.State = ItemStateUnused) then
     begin
       Module.Free;
       Result := True;
@@ -858,13 +914,14 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerProject.BeginLoad;
+procedure TLocalizerProject.BeginLoad(MarkUnused: boolean);
 begin
   Inc(FLoadCount);
   if (FLoadCount = 1) then
   begin
     Include(FState, ProjectStateLoading);
-    SetItemState(lItemStateUnused);
+    if (MarkUnused) then
+      SetItemState(ItemStateUnused);
   end;
 end;
 
@@ -901,8 +958,20 @@ end;
 
 procedure TLocalizerProject.ModuleCompleteChanged(Module: TLocalizerModule);
 begin
+  if (FUpdateCount > 0) then
+    Exit;
+
   if (Assigned(FOnModuleCompleteChanged)) then
     FOnModuleCompleteChanged(Module);
+end;
+
+procedure TLocalizerProject.ModuleTranslatedChanged(Module: TLocalizerModule);
+begin
+  if (FUpdateCount > 0) then
+    Exit;
+
+  if (Assigned(FOnTranslateChanged)) then
+    FOnTranslateChanged(Module);
 end;
 
 // -----------------------------------------------------------------------------
@@ -914,6 +983,9 @@ end;
 
 procedure TLocalizerProject.UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
 begin
+  if (Delta = 0) then
+    Exit;
+
   Inc(FPropertyCount, Delta);
   Assert(FPropertyCount >= 0);
 
@@ -923,6 +995,9 @@ end;
 
 procedure TLocalizerProject.UpdateTranslatedCount(Delta: integer);
 begin
+  if (Delta = 0) then
+    Exit;
+
   Inc(FTranslatedCount, Delta);
   Assert(FTranslatedCount >= 0);
 end;
@@ -1005,7 +1080,7 @@ begin
     Result := TLocalizerModule.Create(Self, AName)
   else
   if (ProjectStateLoading in State) then
-    Result.State := lItemStateExisting;
+    Result.State := ItemStateExisting;
 end;
 
 
@@ -1019,17 +1094,28 @@ begin
   inherited Create(AName);
   FItems := TLocalizerItems.Create([doOwnsValues], TTextComparer.Create);
   FResourceGroups := TList<Word>.Create;
-  FProject := AProject;
-  FProject.Modules.Add(Name, Self);
-  Changed;
+  BeginUpdate;
+  try
+    FProject := AProject;
+    FProject.Modules.Add(Name, Self);
+    Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 destructor TLocalizerModule.Destroy;
 begin
-  FProject.Modules.ExtractPair(Name);
-  FItems.Free;
-  FResourceGroups.Free;
-  Changed;
+  BeginUpdate;
+  try
+    Clear;
+    FProject.Modules.ExtractPair(Name);
+    FItems.Free;
+    FResourceGroups.Free;
+    Changed;
+  finally
+    EndUpdate;
+  end;
   inherited;
 end;
 
@@ -1056,23 +1142,32 @@ var
   Item: TLocalizerItem;
 begin
   Result := False;
-  for Item in FItems.Values.ToArray do // ToArray for stability since we delete from dictionary
-  begin
-    if (Item.State = lItemStateUnused) then
+
+  BeginUpdate;
+  try
+    for Item in FItems.Values.ToArray do // ToArray for stability since we delete from dictionary
     begin
-      Item.Free;
-      Result := True;
-      continue;
+      if (Item.State = ItemStateUnused) then
+      begin
+        Item.Free;
+        Result := True;
+        continue;
+      end;
+
+      if (Item.Purge) then
+        Result := True;
+
+      if (Item.Properties.Count = 0) then
+      begin
+        Item.Free;
+        Result := True;
+      end;
     end;
 
-    if (Item.Purge) then
-      Result := True;
-
-    if (Item.Properties.Count = 0) then
-    begin
-      Item.Free;
-      Result := True;
-    end;
+    if (Result) then
+      Changed;
+  finally
+    EndUpdate;
   end;
 end;
 
@@ -1080,13 +1175,18 @@ end;
 
 procedure TLocalizerModule.Clear;
 begin
-  FItems.Clear;
-  FResourceGroups.Clear;
+  BeginUpdate;
+  try
+    FItems.Clear;
+    FResourceGroups.Clear;
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerModule.Changed;
+procedure TLocalizerModule.DoChanged;
 begin
   FProject.Changed;
 end;
@@ -1098,11 +1198,18 @@ begin
   if (Name = Value) then
     exit;
 
-  FProject.Modules.ExtractPair(Name);
+  BeginUpdate;
+  try
+    FProject.Modules.ExtractPair(Name);
 
-  inherited SetName(Value);
+    inherited SetName(Value);
 
-  FProject.Modules.Add(Name, Self);
+    FProject.Modules.Add(Name, Self);
+
+    Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1124,6 +1231,7 @@ begin
 
   FProject.UpdateTranslatedCount(Delta);
 
+  FProject.ModuleTranslatedChanged(Self);
   NotifyComplete;
 end;
 
@@ -1181,13 +1289,21 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TLocalizerModule.FindItem(const AName: string): TLocalizerItem;
+begin
+  if (not FItems.TryGetValue(AName, Result)) then
+    Result := nil;
+end;
+
+// -----------------------------------------------------------------------------
+
 function TLocalizerModule.AddItem(const AName, ATypeName: string): TLocalizerItem;
 begin
   if (not FItems.TryGetValue(AName, Result)) then
     Result := TLocalizerItem.Create(Self, AName, ATypeName)
   else
   if (ProjectStateLoading in Project.State) then
-    Result.State := lItemStateExisting;
+    Result.State := ItemStateExisting;
 end;
 
 function TLocalizerModule.AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem;
@@ -1209,7 +1325,7 @@ begin
     Result.ResourceID := AResourceID;
   end else
   if (ProjectStateLoading in Project.State) then
-    Result.State := lItemStateExisting;
+    Result.State := ItemStateExisting;
 end;
 
 
@@ -1222,16 +1338,27 @@ constructor TLocalizerItem.Create(AModule: TLocalizerModule; const AName, ATypeN
 begin
   inherited Create(AModule, AName);
   FProperties := TLocalizerProperties.Create([doOwnsValues], TTextComparer.Create);
-  FTypeName := ATypeName;
-  Module.Items.Add(Name, Self);
-  Changed;
+  BeginUpdate;
+  try
+    FTypeName := ATypeName;
+    Module.Items.Add(Name, Self);
+    Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 destructor TLocalizerItem.Destroy;
 begin
-  Module.Items.ExtractPair(Name);
-  FProperties.Free;
-  Changed;
+  BeginUpdate;
+  try
+    Clear;
+    Module.Items.ExtractPair(Name);
+    FProperties.Free;
+    Changed;
+  finally
+    EndUpdate;
+  end;
   inherited;
 end;
 
@@ -1239,20 +1366,36 @@ function TLocalizerItem.Purge: boolean;
 var
   Prop: TLocalizerProperty;
 begin
-  Result := True;
-  for Prop in Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-    if (Prop.State = lItemStateUnused) then
-    begin
-      Prop.Free;
-      Result := True;
-    end;
+  Result := False;
+  BeginUpdate;
+  try
+
+    for Prop in Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
+      if (Prop.State = ItemStateUnused) then
+      begin
+        Prop.Free;
+        Result := True;
+      end;
+
+    if (Result) then
+      Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TLocalizerItem.Clear;
 begin
-  FProperties.Clear;
+  BeginUpdate;
+  try
+
+    FProperties.Clear;
+
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1262,11 +1405,18 @@ begin
   if (Name = Value) then
     exit;
 
-  Module.Items.ExtractPair(Name);
+  BeginUpdate;
+  try
+    Module.Items.ExtractPair(Name);
 
-  inherited SetName(Value);
+    inherited SetName(Value);
 
-  Module.Items.Add(Name, Self);
+    Module.Items.Add(Name, Self);
+
+    Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1293,19 +1443,32 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TLocalizerItem.FindProperty(const AName: string): TLocalizerProperty;
+begin
+  if (not FProperties.TryGetValue(AName, Result)) then
+    Result := nil;
+end;
+
+// -----------------------------------------------------------------------------
+
 function TLocalizerItem.AddProperty(const AName: string): TLocalizerProperty;
 begin
   if (not FProperties.TryGetValue(AName, Result)) then
     Result := TLocalizerProperty.Create(Self, AName)
   else
   if (ProjectStateLoading in Module.Project.State) then
-    Result.State := lItemStateExisting;
+    Result.State := ItemStateExisting;
 end;
 
 function TLocalizerItem.AddProperty(const AName, AValue: string): TLocalizerProperty;
 begin
-  Result := AddProperty(AName);
-  Result.Value := AValue;
+  BeginUpdate;
+  try
+    Result := AddProperty(AName);
+    Result.Value := AValue;
+  finally
+    EndUpdate;
+  end;
 end;
 
 
@@ -1317,19 +1480,30 @@ end;
 constructor TLocalizerProperty.Create(AItem: TLocalizerItem; const AName: string);
 begin
   inherited Create(AItem, AName);
-  Item.Properties.Add(Name, Self);
-  FTranslations := TLocalizerTranslations.Create(Self);
-  UpdateStatusCount(Status, 1);
-  Changed;
+  BeginUpdate;
+  try
+    Item.Properties.Add(Name, Self);
+    FTranslations := TLocalizerTranslations.Create(Self);
+    UpdateStatusCount(Status, 1);
+    Changed;
+  finally
+    EndUpdate;
+  end;
 end;
 
 destructor TLocalizerProperty.Destroy;
 begin
-  if (State <> lItemStateUnused) then
+  if (State <> ItemStateUnused) then
     UpdateParentStatusCount(Status, -1);
-  Item.Properties.ExtractPair(Name);
-  FTranslations.Free;
-  Changed;
+  BeginUpdate;
+  try
+    Clear;
+    Item.Properties.ExtractPair(Name);
+    FTranslations.Free;
+    Changed;
+  finally
+    EndUpdate;
+  end;
   inherited;
 end;
 
@@ -1337,7 +1511,14 @@ end;
 
 procedure TLocalizerProperty.Clear;
 begin
-  FTranslations.Clear;
+  BeginUpdate;
+  try
+
+    FTranslations.Clear;
+
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1359,6 +1540,15 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TLocalizerProperty.HasTranslation(Language: TTargetLanguage): boolean;
+var
+  Translation: TLocalizerTranslation;
+begin
+  Result := (Translations.TryGetTranslation(Language, Translation)) and (Translation.Status <> tStatusObsolete);
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TLocalizerProperty.SetValue(const Value: string);
 var
   Translation: TPair<TTargetLanguage, TLocalizerTranslation>;
@@ -1366,14 +1556,21 @@ begin
   if (FValue = Value) then
     exit;
 
-  FValue := Value;
+  BeginUpdate;
+  try
 
-  // If value changes then all existing translations are obsolete
-  for Translation in FTranslations.Translations do
-    if (Translation.Value.Status in [tStatusProposed, tStatusTranslated]) then
-      Translation.Value.Status := tStatusObsolete;
+    FValue := Value;
 
-  Changed;
+    // If value changes then all existing translations are obsolete
+    for Translation in FTranslations.Translations do
+      if (Translation.Value.Status in [tStatusProposed, tStatusTranslated]) then
+        Translation.Value.Status := tStatusObsolete;
+
+    Changed;
+
+  finally
+    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1423,9 +1620,26 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TLocalizerTranslation.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
+procedure TLocalizerTranslation.EndUpdate;
+begin
+  Dec(FUpdateCount);
+  if (FChanged) and (FUpdateCount = 0) then
+  begin
+    Owner.Changed;
+    FChanged := False;
+  end;
+end;
+
 procedure TLocalizerTranslation.Changed;
 begin
-  Owner.Changed;
+  BeginUpdate;
+  FChanged := True;
+  EndUpdate;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1437,22 +1651,29 @@ begin
   if (FStatus = Value) then
     Exit;
 
-  OldStatus := FStatus;
+  BeginUpdate;
+  try
 
-  FStatus := Value;
+    OldStatus := FStatus;
 
-  if (OldStatus <= tStatusPending) and (Value > tStatusPending) then
-  begin
-    Inc(FLanguage.FTranslatedCount);
-    FOwner.UpdateTranslatedCount(1);
-  end else
-  if (OldStatus > tStatusPending) and (Value <= tStatusPending) then
-  begin
-    Dec(FLanguage.FTranslatedCount);
-    FOwner.UpdateTranslatedCount(-1);
+    FStatus := Value;
+
+    if (OldStatus <= tStatusPending) and (Value > tStatusPending) then
+    begin
+      Inc(FLanguage.FTranslatedCount);
+      FOwner.UpdateTranslatedCount(1);
+    end else
+    if (OldStatus > tStatusPending) and (Value <= tStatusPending) then
+    begin
+      Dec(FLanguage.FTranslatedCount);
+      FOwner.UpdateTranslatedCount(-1);
+    end;
+
+    Changed;
+
+  finally
+    EndUpdate;
   end;
-
-  Changed;
 end;
 
 procedure TLocalizerTranslation.SetValue(const Value: string);
@@ -1462,6 +1683,24 @@ begin
 
   FValue := Value;
   Changed;
+end;
+
+procedure TLocalizerTranslation.Update(const AValue: string; AStatus: TTranslationStatus);
+begin
+  if (FValue = AValue) and (FStatus = AStatus) then
+    Exit;
+
+  BeginUpdate;
+  try
+
+    FValue := AValue;
+    SetStatus(AStatus);
+
+    Changed;
+
+  finally
+    EndUpdate;
+  end;
 end;
 
 
@@ -1493,10 +1732,10 @@ begin
     FTranslations.Add(Language, Result);
   end;
 
-  Result.Value := Value;
-  Result.Status := Status;
+  Result.Update(Value, Status);
 
-  Owner.Changed;
+  // TLocalizerTranslation.Update() will call Changed
+  // Owner.Changed;
 end;
 
 // -----------------------------------------------------------------------------

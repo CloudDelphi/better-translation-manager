@@ -16,10 +16,8 @@ type
   private
   protected
   public
-    function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const ModuleName: string = ''): TLocalizerModule; overload;
-    procedure LoadFromStream(LocalizerModule: TLocalizerModule; Stream: TStream; const ModuleName: string = ''); overload;
+    function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string = ''): TLocalizerModule; overload;
     function LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string): TLocalizerModule; overload;
-    procedure LoadFromFile(LocalizerModule: TLocalizerModule; const Filename: string); overload;
   end;
 
 
@@ -48,38 +46,9 @@ var
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   try
-    Result := LoadFromStream(LocalizerProject, Stream, TPath.GetFileNameWithoutExtension(Filename));
+    Result := LoadFromStream(LocalizerProject, Stream, Filename);
   finally
     Stream.Free;
-  end;
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TModuleImporterXLIFF.LoadFromFile(LocalizerModule: TLocalizerModule; const Filename: string);
-var
-  Stream: TStream;
-begin
-  Stream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
-  try
-    LoadFromStream(LocalizerModule, Stream);
-  finally
-    Stream.Free;
-  end;
-end;
-
-// -----------------------------------------------------------------------------
-
-function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const ModuleName: string): TLocalizerModule;
-begin
-  Result := LocalizerProject.AddModule(ModuleName);
-  try
-
-    LoadFromStream(Result, Stream);
-
-  except
-    Result.Free;
-    raise;
   end;
 end;
 
@@ -98,6 +67,21 @@ end;
   *)
 type
   TETMTranslationStatus = (tsUntranslated, tsTranslated, tsAutoTranslated, tsUnused, tsNewlyTranslated, tsHold, tsDontTranslate, tsEgged, tsFinal, tsApproved, tsUnknown);
+
+const
+  TranslationStatusMap: array[TETMTranslationStatus]of TTranslationStatus = (
+    tStatusPending,             // tsUntranslated
+    tStatusProposed,            // tsTranslated
+    tStatusProposed,            // tsAutoTranslated
+    tStatusPending,             // tsUnused
+    tStatusProposed,            // tsNewlyTranslated
+    tStatusPending,             // tsHold
+    tStatusPending,             // tsDontTranslate
+    tStatusPending,             // tsEgged
+    tStatusTranslated,          // tsFinal
+    tStatusTranslated,          // tsApproved
+    tStatusObsolete);           // tsUnknown
+
 
 function EscapeChar(c: Char; IsUnicode: boolean): string;
 begin
@@ -276,8 +260,12 @@ begin
   end;
 end;
 
-procedure TModuleImporterXLIFF.LoadFromStream(LocalizerModule: TLocalizerModule; Stream: TStream; const ModuleName: string);
+function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string): TLocalizerModule;
 var
+  ModuleName: string;
+  ModuleKind: TLocalizerModuleKind;
+  SourceFilename: string;
+  NewModule: TLocalizerModule;
   LocalizerItem: TLocalizerItem;
   LocalizerProperty: TLocalizerProperty;
   XML: IXMLDocument;
@@ -297,9 +285,7 @@ var
   SourceValue, TargetValue: string;
   Value: string;
   NewValue: string;
-  FixCount: integer;
-  OldTranslationStatus, TranslationStatus: TETMTranslationStatus;
-  CountTranslated, CountUntranslated: integer;
+  TranslationStatus: TETMTranslationStatus;
   Localize: boolean;
   RemoveNode: boolean;
   ItemName, ItemType, PropertyName, PropertyValue: string;
@@ -310,10 +296,6 @@ begin
 
   XML.LoadFromStream(Stream);
 
-  FixCount := 0;
-  CountTranslated := 0;
-  CountUntranslated := 0;
-
   if (XML.DocumentElement.NodeName <> 'xliff') then
     raise Exception.CreateFmt('XML document root node is not named "xliff": %s', [XML.DocumentElement.NodeName]);
 
@@ -321,53 +303,37 @@ begin
   if (Node = nil) then
     raise Exception.Create('xliff node not found: xliff\file');
 
+  if (Filename <> '') then
+    ModuleName := TPath.GetFileNameWithoutExtension(Filename)
+  else
+    ModuleName := '';
+
+  SourceFilename := Node.Attributes['original'];
+  if (SourceFilename = '') then
+    SourceFilename := Node.Attributes['ts'];
+  if (SourceFilename <> '') then
+    ModuleName := TPath.GetFileNameWithoutExtension(SourceFilename);
+
   if (Node.Attributes['datatype'] ='delphiform') then
-      LocalizerModule.Kind := mkForm;
+    ModuleKind := mkForm
+  else
+  if (AnsiSameText(TPath.GetExtension(Filename), '.rcn')) then
+    ModuleKind := mkString
+  else
+  if (AnsiSameText(TPath.GetExtension(Filename), '.dfn')) then
+    ModuleKind := mkForm
+  else
+  if (SourceFilename <> '') and (AnsiSameText(TPath.GetExtension(SourceFilename), '.drc')) then
+    ModuleKind := mkString
+  else
+    ModuleKind := mkForm;
 
-  Value := Node.Attributes['original'];
-  if (Value <> '') then
-  begin
-    // Remove path from filename
-    NewValue := TPath.GetFileName(Value);
-    if (Value <> NewValue) then
-    begin
-      Node.Attributes['original'] := NewValue;
-      Inc(FixCount);
-    end;
-    s := TPath.GetFileNameWithoutExtension(NewValue);
-    if (not AnsiSameText(s, LocalizerModule.Name)) then
-      LocalizerModule.Name := s;
+  if (ModuleKind = mkString) then
+    ModuleName := sModuleNameResourcestrings;
 
-    if (AnsiSameText(TPath.GetExtension(NewValue), '.drc')) then
-      LocalizerModule.Kind := mkString;
-  end else
-  if (LocalizerModule.Name <> '') then
-  begin
-    // Fix empty filename (caused by ETM)
-    Node.Attributes['original'] := TPath.ChangeExtension(LocalizerModule.Name, '.xliff');
-    Inc(FixCount);
-  end;
-
-  Value := Node.Attributes['ts'];
-  if (Value <> '') then
-  begin
-    // Remove path from filename
-    NewValue := TPath.GetFileName(Value);
-    if (Value <> NewValue) then
-    begin
-      Node.Attributes['ts'] := NewValue;
-      Inc(FixCount);
-    end;
-
-    if (LocalizerModule.Name = '') then
-      LocalizerModule.Name := TPath.GetFileNameWithoutExtension(NewValue);
-  end else
-  if (LocalizerModule.Name <> '') then
-  begin
-    // Fix empty filename (caused by ETM)
-    Node.Attributes['ts'] := TPath.ChangeExtension(LocalizerModule.Name, '.xliff');
-    Inc(FixCount);
-  end;
+  Result := LocalizerProject.AddModule(ModuleName);
+  if (Result.Kind = mkOther) then
+    Result.Kind := ModuleKind;
 
   SourceLanguageName := Node.Attributes['source-language'];
   TargetLanguageName := Node.Attributes['target-language'];
@@ -404,21 +370,10 @@ begin
   else
     TargetLocaleID := 0; // TODO : This is an error
 
-  TargetLanguage := LocalizerModule.Project.TargetLanguages.Add(TargetLocaleID);
+  TargetLanguage := Result.Project.TargetLanguages.Add(TargetLocaleID);
 
-  if (LocalizerModule.Project.BaseLocaleID = 0) then
-    LocalizerModule.Project.BaseLocaleID := SourceLocaleID
-  else
-  if (SourceLanguageName = '') then
-    Node.Attributes['source-language'] := TLocaleItems.FindLCID(LocalizerModule.Project.BaseLocaleID).LanguageShortName; // TODO
-
-(*
-  if (LocalizerModule.Project.TargetLanguage = '') then
-    LocalizerModule.Project.TargetLanguage := TargetLanguage
-  else
-  if (TargetLanguage = '') then
-    Node.Attributes['target-language'] := LocalizerModule.Project.TargetLanguage;
-*)
+  if (Result.Project.BaseLocaleID = 0) then
+    Result.Project.BaseLocaleID := SourceLocaleID;
 
   // TODO : Validation that module languages matches project
 
@@ -431,14 +386,17 @@ begin
   Node := Body.ChildNodes.First;
   while (Node <> nil) do
   begin
-    RemoveNode := False;
     Localize := True;
     if (Node.NodeName = 'trans-unit') then
     begin
+      TranslationStatus := tsUnknown;
+
       if (Node.Attributes['translate'] = 'no') then
         Localize := False;
 
       s := VarToStr(Node.Attributes['resname']);
+      if (s = '') then
+        s := VarToStr(Node.Attributes['id']);
       if (s <> '') then
       begin
         // Build a property path from the resname value.
@@ -464,7 +422,6 @@ begin
           end;
           inc(i);
         end;
-        Node.Attributes['resname'] := s;
 
         // Property name starts at first '.'
         i := Pos('.', s);
@@ -477,23 +434,7 @@ begin
           ItemName := s;
           PropertyName := '';
         end;
-(*
-        if (ItemName = '') then
-          ItemName := 'item';
-        if (propertyName = '') then
-          propertyName := 'value';
-*)
         ItemType := '';
-
-
-        // Remove <alt-trans>: Old translation
-        Child := Node.ChildNodes.FindNode('alt-trans');
-        while (Child <> nil) do // There can be more than one
-        begin
-          Inc(FixCount);
-          Node.ChildNodes.Remove(Child);
-          Child := Node.ChildNodes.FindNode('alt-trans');
-        end;
 
         // Get Source value
         Child := Node.ChildNodes.FindNode('source');
@@ -510,10 +451,6 @@ begin
           end;
 
           SourceValue := Unescape(s);
-          // Set source language
-          s := Child.Attributes['xml:lang'];
-          if (s = '') and (SourceLanguageName <> '') then
-            Child.Attributes['xml:lang'] := SourceLanguageName;
         end else
           SourceValue := '';
 
@@ -525,11 +462,6 @@ begin
           s := TargetNode.Text;
           TargetValue := Unescape(s);
 
-          // Set target language
-          s := TargetNode.Attributes['xml:lang'];
-          if (s = '') and (TargetLanguageName <> '') then
-            TargetNode.Attributes['xml:lang'] := TargetLanguageName;
-
           Value := TargetNode.Attributes['state'];
           if (Value = 'final') then
             TranslationStatus := tsFinal
@@ -540,7 +472,7 @@ begin
           if (Value = 'signed-off') then
             TranslationStatus := tsApproved
           else
-          if (Value = '') or (Value = 'new') then
+          if (Value = 'new') then
             TranslationStatus := tsUntranslated
           else
           if (Value = 'x-ignore') then
@@ -565,25 +497,6 @@ begin
           begin
             NextPropChild := PropChild.NextSibling;
             Value := PropChild.Attributes['prop-type'];
-            if (Value = 'Created') then
-            begin
-              // Use static timestamp
-              if (PropChild.Text <> '41356') then
-              begin
-                PropChild.Text := '41356';
-                Inc(FixCount);
-              end;
-            end else
-            if (Value = 'Order') then
-            begin
-              // Use static order
-              if (PropChild.Text <> '0') then
-              begin
-                PropChild.Text := '0';
-                Inc(FixCount);
-              end;
-              // Child.ChildNodes.Remove(PropChild);
-            end else
             if (Value = 'Type') then
             begin
               ItemType := PropChild.Text;
@@ -598,14 +511,15 @@ begin
             end else
             if (Value = 'Status') and (TranslationStatus = tsUnknown) then
             begin
-              OldTranslationStatus := TETMTranslationStatus(StrToIntDef(PropChild.Text, 0));
-              TranslationStatus := OldTranslationStatus;
+              TranslationStatus := TETMTranslationStatus(StrToIntDef(PropChild.Text, Ord(tsUnknown)));
 
               // Change variations of Translated
+              (*
               if (TranslationStatus in [tsAutoTranslated, tsNewlyTranslated]) then
               begin
                 TranslationStatus := tsTranslated;
               end else
+              *)
               // Change "Untranslated" to "Don't translate" for non-string values
               // String in .dfn are ' delimited. Strings in .rcn are " delimited.
               if (TranslationStatus = tsUntranslated) then
@@ -614,49 +528,10 @@ begin
                   TranslationStatus := tsDontTranslate;
               end;
 
-(*
-  Unfortunately removing properties from the DFN causes the Localization Editor to crash.
-
-  Update Localized Projects can reconstruct the original (verbose) DFN by merging the DFN and the unlocalized DFM, so
-  if the Update Localized Projects step is performed first then the DFN can be opened in the Localization Editor.
-  Unfortunately this risks corrupting the localization strings as we need SigmaLocalizer to escape singlequotes before
-  Localization Editor is used. Catch 22. Game over.
-
-              if (TranslationStatus = tsDontTranslate) then
-              begin
-                if (Length(SourceValue) < 2) or (not(SourceValue[1] in ['"', ''''])) then
-                begin
-                  RemoveNode := True;
-                  TranslationStatus := tsEgged; // So we don't count it below
-                  break;
-                end;
-              end;
-*)
-
-              if (PropChild <> nil) and (TranslationStatus <> OldTranslationStatus) then
-              begin
-                Inc(FixCount);
-                PropChild.Text := IntToStr(Ord(TranslationStatus));
-              end;
             end;
             PropChild := NextPropChild;
           end;
 
-          // Count status so we can update counters
-          if (not RemoveNode) and (Localize) then
-          begin
-            if (TargetNode <> nil) and (TranslationStatus in [tsUntranslated, tsDontTranslate]) then
-            begin
-              Inc(FixCount);
-              Node.ChildNodes.Remove(TargetNode);
-            end;
-
-            if (TranslationStatus in [tsTranslated, tsAutoTranslated, tsNewlyTranslated, tsDontTranslate]) then
-              Inc(CountTranslated)
-            else
-            if (TranslationStatus in [tsUntranslated, tsHold]) then
-              Inc(CountUntranslated);
-          end;
         end;
 
       end else
@@ -676,79 +551,46 @@ begin
             SetLength(ItemType, i -1);
         end;
 
-        LocalizerItem := LocalizerModule.AddItem(ItemName, ItemType);
-        LocalizerProperty := LocalizerItem.AddProperty(PropertyName, SourceValue);
-        if (TargetNode <> nil) then
+        // Sanity check - don't add if node is invalid
+        if (Localize) and (TranslationStatus in [tsEgged, tsUnknown]) then
         begin
-          {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue);
+          // Rescue "valid" translations without status or state
+          if (TranslationStatus <> tsUnknown) or (TargetValue.IsEmpty) or (TargetValue = SourceValue) then
+            Localize := False;
+        end;
+
+        if (Localize) then
+        begin
+          LocalizerItem := Result.AddItem(ItemName, ItemType);
+
+          LocalizerProperty := LocalizerItem.AddProperty(PropertyName, SourceValue);
+          case TranslationStatus of
+            tsUnused:
+              LocalizerProperty.State := ItemStateUnused;
+
+            tsDontTranslate:
+              LocalizerProperty.Status := ItemStatusDontTranslate;
+
+            tsHold:
+              LocalizerProperty.Status := ItemStatusHold;
+          else
+            LocalizerProperty.Status := ItemStatusTranslate;
+          end;
+
+          if (TargetNode <> nil) then
+            {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus])
+          else
+          // Translation without target value (implicit: target=source)
+          if (TranslationStatusMap[TranslationStatus] in [tStatusProposed, tStatusTranslated]) then
+            {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, SourceValue, TranslationStatusMap[TranslationStatus]);
         end;
       end;
     end;
 
     NextNode := Node.NextSibling;
 
-    if (RemoveNode) and (Localize) then
-    begin
-      Inc(FixCount);
-      Body.ChildNodes.Remove(Node);
-    end;
-
     Node := NextNode;
   end;
-
-  if (Header <> nil) then
-  begin
-    HeaderProps := Header.ChildNodes.FindNode('prop-group');
-
-    if (HeaderProps <> nil) then
-    begin
-      PropChild := HeaderProps.ChildNodes.First;
-      while (PropChild <> nil) do
-      begin
-        NextPropChild := PropChild.NextSibling;
-        Value := PropChild.Attributes['prop-type'];
-        if (Value = 'SelfDateTime') or (Value = 'OrigDateTime') or (Value = 'XlatDateTime') then
-        begin
-          // Use static timestamp
-          if (PropChild.Text <> '41356') then
-          begin
-            PropChild.Text := '41356';
-            Inc(FixCount);
-          end;
-        end else
-        if (Value = 'Translated') then
-        begin
-          // Update status counters
-          NewValue := IntToStr(CountTranslated);
-          if (PropChild.Text <> NewValue) then
-          begin
-            PropChild.Text := NewValue;
-            Inc(FixCount);
-          end;
-        end else
-        if (Value = 'UnTranslated') then
-        begin
-          // Update status counters
-          NewValue := IntToStr(CountUntranslated);
-          if (PropChild.Text <> NewValue) then
-          begin
-            PropChild.Text := NewValue;
-            Inc(FixCount);
-          end;
-        end;
-        PropChild := NextPropChild;
-      end;
-    end;
-  end;
-
-//  if (FixCount > 0) then
-//    LogLine(Format('%s: Fixed properties: %d', [ExtractFilename(Filename), FixCount]));
-
-//  if (FForceSave) then
-//    LogLine(Format('Saving %s', [ExtractFilename(Filename)]));
-
-//  if ((FixCount > 0) or (FForceSave)) and (not FTest) then
-//    WriteDocumentToFile(TMSDOMDocument(XML.DOMDocument).MSDocument, Filename);
 end;
 
 // -----------------------------------------------------------------------------

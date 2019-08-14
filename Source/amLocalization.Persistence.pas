@@ -251,13 +251,13 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
   procedure WriteItemState(const Node: IXMLNode; Item: TCustomLocalizerItem);
   begin
-    if (not Item.InheritParentState) and (Item.State <> lItemStateExisting) then
+    if (not Item.InheritParentState) and (Item.State <> ItemStateExisting) then
       Node.Attributes['state'] := sItemState[Item.State];
   end;
 
   procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem);
   begin
-    if (not Item.InheritParentStatus) and (Item.Status <> lItemStatusTranslate) then
+    if (not Item.InheritParentStatus) and (Item.Status <> ItemStatusTranslate) then
       Node.Attributes['status'] := sItemStatus[Item.Status];
   end;
 
