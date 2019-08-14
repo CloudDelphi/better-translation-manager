@@ -190,7 +190,7 @@ type
     procedure UpdateStatusCountFromChild(Status: TLocalizerItemStatus; Delta: integer);
     procedure UpdateParentTranslatedCount(Delta: integer); virtual; abstract;
     procedure UpdateTranslatedCount(Delta: integer);
-    function TranslateChildStatus(Status: TLocalizerItemStatus): TLocalizerItemStatus;
+    function EffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
   public
     constructor Create(const AName: string);
 
@@ -664,7 +664,7 @@ begin
   if (Delta = 0) then
     Exit;
 
-  UpdateStatusCount(TranslateChildStatus(Status), Delta);
+  UpdateStatusCount(EffectiveStatus(Status), Delta);
 end;
 
 procedure TCustomLocalizerItem.UpdateTranslatedCount(Delta: integer);
@@ -676,7 +676,7 @@ begin
     UpdateParentTranslatedCount(Delta);
 end;
 
-function TCustomLocalizerItem.TranslateChildStatus(Status: TLocalizerItemStatus): TLocalizerItemStatus;
+function TCustomLocalizerItem.EffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
 begin
   // Translate status
   case FStatus of
@@ -684,12 +684,12 @@ begin
       Result := ItemStatusDontTranslate;
 
     ItemStatusHold:
-      if (Status = ItemStatusDontTranslate) then
+      if (ChildStatus = ItemStatusDontTranslate) then
         Result := ItemStatusDontTranslate
       else
         Result := ItemStatusHold;
   else // i.e. lItemStatusTranslate
-    Result := Status;
+    Result := ChildStatus;
   end;
 end;
 
