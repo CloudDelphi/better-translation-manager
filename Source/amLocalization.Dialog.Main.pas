@@ -6,7 +6,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
-  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes,
   amLocalization.Model,
   dxRibbonForm,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
@@ -293,7 +293,6 @@ implementation
 uses
   IOUtils,
   StrUtils,
-  UITypes,
   Generics.Collections,
   Generics.Defaults,
   System.Character,
@@ -413,23 +412,29 @@ procedure TFormMain.ActionBuildExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
-  Filename: string;
+  Filename, Path: string;
   LocaleItem: TLocaleItem;
 begin
+  Filename := FLocalizerProject.SourceFilename;
+  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+
+  if (LocaleItem <> nil) then
+    Filename := TPath.ChangeExtension(Filename, '.'+LocaleItem.LanguageShortName)
+  else
+    Filename := TPath.ChangeExtension(Filename, '.dll');
+
+  Path := TPath.GetDirectoryName(Filename);
+  Filename := TPath.GetFileName(Filename);
+
+  if (not PromptForFileName(Filename, '', '', 'Enter filename of resource module', Path)) then
+    Exit;
+
   SaveCursor(crHourGlass);
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
     FLocalizerProject.BeginLoad;
     try
-
-      Filename := FLocalizerProject.SourceFilename;
-      LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-      if (LocaleItem <> nil) then
-        Filename := TPath.ChangeExtension(Filename, '.'+LocaleItem.LanguageShortName)
-      else
-        Filename := TPath.ChangeExtension(Filename, '.dll');
 
       ResourceWriter := TResourceModuleWriter.Create(Filename);
       try
