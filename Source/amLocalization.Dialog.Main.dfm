@@ -153,6 +153,7 @@ object FormMain: TFormMain
     OptionsView.ShowRoot = False
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
+    Styles.Selection = StyleSelected
     TabOrder = 2
     OnEditing = TreeListItemsEditing
     OnEditValueChanged = TreeListItemsEditValueChanged
@@ -351,6 +352,8 @@ object FormMain: TFormMain
     OptionsView.ShowRoot = False
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
+    Styles.Inactive = StyleSelected
+    Styles.Selection = StyleSelected
     Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
     TabOrder = 4
     OnEnter = TreeListModulesEnter
@@ -3539,6 +3542,11 @@ object FormMain: TFormMain
     object StyleHold: TcxStyle
       AssignedValues = [svColor]
       Color = 15132390
+    end
+    object StyleSelected: TcxStyle
+      AssignedValues = [svColor, svTextColor]
+      Color = clHighlight
+      TextColor = clHighlightText
     end
   end
 end

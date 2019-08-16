@@ -168,6 +168,7 @@ type
     dxBarButton22: TdxBarButton;
     dxBarButton23: TdxBarButton;
     dxBarButton24: TdxBarButton;
+    StyleSelected: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -1451,6 +1452,8 @@ begin
   TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.LoadProject(Project: TLocalizerProject; Clear: boolean);
 var
   Module: TLocalizerModule;
@@ -1670,6 +1673,8 @@ begin
 //  LoadProject(FLocalizerProject, False);
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.OnProjectChanged(Sender: TObject);
 begin
   StatusBar.Panels[0].Text := 'Modified';
@@ -1689,6 +1694,46 @@ begin
     // Refresh node colors and images
     Node.Repaint(True);
 end;
+
+// -----------------------------------------------------------------------------
+
+function TFormMain.GetTranslatedCount(Module: TLocalizerModule): integer;
+var
+  Language: TTargetLanguage;
+  Count: integer;
+begin
+  if (FTranslationCounts.TryGetValue(Module, Result)) and (Result <> -1) then
+    Exit;
+
+  // Calculate translated count
+  Count := 0;
+  Language := TargetLanguage; // Cache costly conversion
+  Module.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      if (Prop.State <> ItemStateUnused) and (Prop.Status = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
+        Inc(Count);
+      Result := True;
+    end, False);
+
+  Result := Count;
+
+  // Update cache
+  FTranslationCounts.AddOrSetValue(Module, Result);
+end;
+
+procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
+begin
+  if (FTranslationCounts.ContainsKey(Module)) then
+    FTranslationCounts.AddOrSetValue(Module, -1);
+end;
+
+procedure TFormMain.RemoveTranslatedCount(Module: TLocalizerModule);
+begin
+  FTranslationCounts.Remove(Module);
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
 begin
@@ -1820,6 +1865,8 @@ begin
   Result := (TdxSpellCheckerCracker(SpellChecker).LastDialogResult = mrOK);
 end;
 
+// -----------------------------------------------------------------------------
+
 type
   TcxTreeListNodeCracker = class(TcxTreeListNode);
 
@@ -1829,6 +1876,8 @@ begin
   Exclude(TcxTreeListNodeCracker(Node).State, nsValuesAssigned);
   Node.TreeList.LayoutChanged;
 end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
 begin
@@ -1996,43 +2045,10 @@ begin
   end;
 
   if (TreeListItems.TopNode <> nil) then
+  begin
     TreeListItems.TopNode.MakeVisible;
-end;
-
-function TFormMain.GetTranslatedCount(Module: TLocalizerModule): integer;
-var
-  Language: TTargetLanguage;
-  Count: integer;
-begin
-  if (FTranslationCounts.TryGetValue(Module, Result)) and (Result <> -1) then
-    Exit;
-
-  // Calculate translated count
-  Count := 0;
-  Language := TargetLanguage; // Cache costly conversion
-  Module.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    begin
-      if (Prop.State <> ItemStateUnused) and (Prop.Status = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
-        Inc(Count);
-      Result := True;
-    end, False);
-
-  Result := Count;
-
-  // Update cache
-  FTranslationCounts.AddOrSetValue(Module, Result);
-end;
-
-procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
-begin
-  if (FTranslationCounts.ContainsKey(Module)) then
-    FTranslationCounts.AddOrSetValue(Module, -1);
-end;
-
-procedure TFormMain.RemoveTranslatedCount(Module: TLocalizerModule);
-begin
-  FTranslationCounts.Remove(Module);
+    TreeListItems.TopNode.Focused := True;
+  end;
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
