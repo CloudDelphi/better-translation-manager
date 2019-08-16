@@ -2027,8 +2027,13 @@ begin
 
     OldNameVisible := TreeListColumnValueName.Visible;
 
-    FLocalizerDataSource.Module := FocusedModule;
+    if (TreeListModules.SelectionCount = 1) then
+      FLocalizerDataSource.Module := FocusedModule
+    else
+      // Clear item treelist if more than one module is selected
+      FLocalizerDataSource.Module := nil;
 
+    // Hide property name column if module is resourcestrings
     NewNameVisible := (FLocalizerDataSource.Module = nil) or (FLocalizerDataSource.Module.Kind = mkForm);
     TreeListColumnValueName.Visible := NewNameVisible;
 
