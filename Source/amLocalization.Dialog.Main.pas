@@ -623,7 +623,7 @@ begin
         Exit(True);
       end;
 
-      if (Prop.Status <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
         Exit(True);
 
       if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
@@ -973,14 +973,17 @@ procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
+  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = ItemStatusDontTranslate) then
-      continue;
+    NeedReload := (Item.EffectiveStatus <> ItemStatusDontTranslate);
+
     Item.Status := ItemStatusDontTranslate;
-    LoadItem(Item, True);
+
+    if (NeedReload) then
+      LoadItem(Item, True);
   end;
 end;
 
@@ -995,14 +998,17 @@ procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
+  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = ItemStatusHold) then
-      continue;
+    NeedReload := (Item.EffectiveStatus <> ItemStatusHold);
+
     Item.Status := ItemStatusHold;
-    LoadItem(Item, True);
+
+    if (NeedReload) then
+      LoadItem(Item, True);
   end;
 end;
 
@@ -1017,14 +1023,17 @@ procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
+  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    if (Item.Status = ItemStatusTranslate) then
-      continue;
+    NeedReload := (Item.EffectiveStatus <> ItemStatusTranslate);
+
     Item.Status := ItemStatusTranslate;
-    LoadItem(Item, True);
+
+    if (NeedReload) then
+      LoadItem(Item, True);
   end;
 end;
 
@@ -1044,7 +1053,7 @@ var
 begin
   Prop := FocusedProperty;
 
-  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> ItemStateUnused) and (Prop.Status <> ItemStatusDontTranslate) and
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> ItemStateUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate) and
     ((not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or
      (Translation.Status <> tStatusObsolete));
 end;
@@ -1569,7 +1578,7 @@ begin
   try
 
     Node.Texts[TreeListColumnModuleName.ItemIndex] := Module.Name;
-    Node.Values[TreeListColumnModuleStatus.ItemIndex] := Ord(Module.Status);
+    Node.Values[TreeListColumnModuleStatus.ItemIndex] := Ord(Module.EffectiveStatus);
 
     if (Recurse) and (Node.Focused) then
       TreeListItems.FullRefresh;
@@ -1711,7 +1720,7 @@ begin
   Module.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
-      if (Prop.State <> ItemStateUnused) and (Prop.Status = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
+      if (Prop.State <> ItemStateUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
         Inc(Count);
       Result := True;
     end, False);
@@ -1824,7 +1833,7 @@ begin
   if (Prop.State = ItemStateUnused) then
     Exit(True);
 
-  if (Prop.Status <> ItemStatusTranslate) then
+  if (Prop.EffectiveStatus <> ItemStatusTranslate) then
     Exit(True);
 
   Text := Prop.TranslatedValue[TargetLanguage];
@@ -1983,13 +1992,13 @@ begin
   if (Prop.State = ItemStateUnused) then
     AIndex := 1
   else
-  if (Prop.State = ItemStateNew) and (Prop.Status = ItemStatusTranslate) and (Translation = nil) then
+  if (Prop.State = ItemStateNew) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Translation = nil) then
     AIndex := 0
   else
-  if (Prop.Status = ItemStatusDontTranslate) then
+  if (Prop.EffectiveStatus = ItemStatusDontTranslate) then
     AIndex := 2
   else
-  if (Prop.Status = ItemStatusHold) then
+  if (Prop.EffectiveStatus = ItemStatusHold) then
     AIndex := 5
   else
   if (Translation <> nil) and (Translation.Status <> tStatusPending) then
@@ -2072,7 +2081,7 @@ begin
   if (Module.State = ItemStateUnused) then
     AIndex := 1
   else
-  if (Module.Status = ItemStatusTranslate) then
+  if (Module.EffectiveStatus = ItemStatusTranslate) then
   begin
     TranslatedCount := GetTranslatedCount(Module);
     // Calculate completeness in %
@@ -2094,10 +2103,10 @@ begin
     else
       AIndex := 6;
   end else
-  if (Module.Status = ItemStatusDontTranslate) then
+  if (Module.EffectiveStatus = ItemStatusDontTranslate) then
     AIndex := 2
   else
-  if (Module.Status = ItemStatusHold) then
+  if (Module.EffectiveStatus = ItemStatusHold) then
     AIndex := 5
   else
     AIndex := -1;
@@ -2109,13 +2118,13 @@ var
 begin
   Module := TLocalizerModule(ANode.Data);
 
-  if (Module.State = ItemStateUnused) or (Module.Status = ItemStatusDontTranslate) then
+  if (Module.State = ItemStateUnused) or (Module.EffectiveStatus = ItemStatusDontTranslate) then
   begin
     AStyle := StyleDontTranslate;
     Exit;
   end;
 
-  if (Module.Status = ItemStatusHold) then
+  if (Module.EffectiveStatus = ItemStatusHold) then
   begin
     AStyle := StyleHold;
     Exit;
@@ -2245,7 +2254,7 @@ begin
       Result := Prop.Item.ResourceID;
 
     TreeItemIndexStatus:
-      Result := Ord(Prop.Status);
+      Result := Ord(Prop.EffectiveStatus);
 
     TreeItemIndexState:
       if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then

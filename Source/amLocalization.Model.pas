@@ -26,7 +26,7 @@ type
   TLocalizerTranslationDelegate = reference to function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean;
 
   TLocalizerItemState = (ItemStateNew, ItemStateExisting, ItemStateUnused);
-  TLocalizerItemStatus = (ItemStatusTranslate, ItemStatusDontTranslate, ItemStatusHold);
+  TLocalizerItemStatus = (ItemStatusTranslate, ItemStatusHold, ItemStatusDontTranslate);
 
   TLocalizerModuleKind = (mkOther, mkForm, mkString);
   TLocalizerModuleKinds = set of TLocalizerModuleKind;
@@ -171,15 +171,13 @@ type
     procedure SetState(const Value: TLocalizerItemState);
     procedure SetStatus(const Value: TLocalizerItemStatus);
     function GetState: TLocalizerItemState; virtual;
-    function GetStatus: TLocalizerItemStatus; virtual;
     function GetInheritParentState: boolean; virtual;
-    function GetInheritParentStatus: boolean; virtual;
+    function GetEffectiveStatus: TLocalizerItemStatus; virtual;
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
     function GetPropertyCount: integer;
   protected
     procedure Changed;
-    procedure UpdateStatusCountFromChild(Status: TLocalizerItemStatus; Delta: integer);
-    function EffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+    procedure UpdateStatusCountFromChild(Child: TCustomLocalizerItem; Delta: integer);
   public
     constructor Create(const AName: string);
 
@@ -192,9 +190,9 @@ type
     function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; virtual; abstract;
 
     property State: TLocalizerItemState read GetState write SetState;
-    property Status: TLocalizerItemStatus read GetStatus write SetStatus;
+    property Status: TLocalizerItemStatus read FStatus write SetStatus;
     property InheritParentState: boolean read GetInheritParentState;
-    property InheritParentStatus: boolean read GetInheritParentStatus;
+    property EffectiveStatus: TLocalizerItemStatus read GetEffectiveStatus;
 
     property StatusCount[Status: TLocalizerItemStatus]: integer read GetStatusCount;
     property PropertyCount: integer read GetPropertyCount;
@@ -214,9 +212,8 @@ type
     procedure DoChanged; override;
 
     function GetState: TLocalizerItemState; override;
-    function GetStatus: TLocalizerItemStatus; override;
     function GetInheritParentState: boolean; override;
-    function GetInheritParentStatus: boolean; override;
+    function GetEffectiveStatus: TLocalizerItemStatus; override;
   protected
     function GetParent: TParentClass;
     property Parent: TParentClass read GetParent;
@@ -487,19 +484,9 @@ begin
   Result := False;
 end;
 
-function TCustomLocalizerItem.GetInheritParentStatus: boolean;
-begin
-  Result := False;
-end;
-
 function TCustomLocalizerItem.GetState: TLocalizerItemState;
 begin
   Result := FState;
-end;
-
-function TCustomLocalizerItem.GetStatus: TLocalizerItemStatus;
-begin
-  Result := FStatus;
 end;
 
 procedure TCustomLocalizerItem.SetState(const Value: TLocalizerItemState);
@@ -625,29 +612,17 @@ begin
 end;
 
 
-procedure TCustomLocalizerItem.UpdateStatusCountFromChild(Status: TLocalizerItemStatus; Delta: integer);
+procedure TCustomLocalizerItem.UpdateStatusCountFromChild(Child: TCustomLocalizerItem; Delta: integer);
 begin
   if (Delta = 0) then
     Exit;
 
-  UpdateStatusCount(EffectiveStatus(Status), Delta);
+  UpdateStatusCount(Child.EffectiveStatus, Delta);
 end;
 
-function TCustomLocalizerItem.EffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+function TCustomLocalizerItem.GetEffectiveStatus: TLocalizerItemStatus;
 begin
-  // Translate status
-  case FStatus of
-    ItemStatusDontTranslate:
-      Result := ItemStatusDontTranslate;
-
-    ItemStatusHold:
-      if (ChildStatus = ItemStatusDontTranslate) then
-        Result := ItemStatusDontTranslate
-      else
-        Result := ItemStatusHold;
-  else // i.e. lItemStatusTranslate
-    Result := ChildStatus;
-  end;
+  Result := Status;
 end;
 
 // -----------------------------------------------------------------------------
@@ -670,15 +645,18 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TCustomLocalizerChildItem<TParentClass>.GetEffectiveStatus: TLocalizerItemStatus;
+begin
+  if (Status >= Parent.Status) then
+    Result := Status
+  else
+    Result := Parent.Status;
+end;
+
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
 begin
   //  If the parent is unused, the children are also unused
   Result := (Parent.State = ItemStateUnused);
-end;
-
-function TCustomLocalizerChildItem<TParentClass>.GetInheritParentStatus: boolean;
-begin
-  Result := (inherited GetStatus <> ItemStatusDontTranslate) and (Parent.Status <> ItemStatusTranslate);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetParent: TParentClass;
@@ -694,21 +672,12 @@ begin
     Result := inherited GetState;
 end;
 
-function TCustomLocalizerChildItem<TParentClass>.GetStatus: TLocalizerItemStatus;
-begin
-  if (InheritParentStatus) then
-    Result := Parent.Status
-  else
-    Result := inherited GetStatus;
-end;
-
-
 procedure TCustomLocalizerChildItem<TParentClass>.UpdateParentStatusCount(Status: TLocalizerItemStatus; Delta: integer);
 begin
   if (Delta = 0) then
     Exit;
 
-  FParent.UpdateStatusCountFromChild(Status, Delta);
+  FParent.UpdateStatusCountFromChild(Self, Delta);
 end;
 
 

@@ -20,7 +20,7 @@ type
       sModuleKind: array[TLocalizerModuleKind] of string = ('invalid', 'form', 'strings');
       sTranslationStatus: array[TTranslationStatus] of string = ('obsolete', 'pending', 'proposed', '');
       sItemState: array[TLocalizerItemState] of string = ('new', '', 'unused');
-      sItemStatus: array[TLocalizerItemStatus] of string = ('', 'skip', 'hold');
+      sItemStatus: array[TLocalizerItemStatus] of string = ('', 'hold', 'skip');
   public
     class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream);
     class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string);
@@ -257,7 +257,7 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
   procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem);
   begin
-    if (not Item.InheritParentStatus) and (Item.Status <> ItemStatusTranslate) then
+    if (Item.Status = ItemStatusTranslate) then
       Node.Attributes['status'] := sItemStatus[Item.Status];
   end;
 

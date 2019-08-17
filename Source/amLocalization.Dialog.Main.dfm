@@ -228,11 +228,11 @@ object FormMain: TFormMain
           Value = 0
         end
         item
-          Description = 'Don'#39't translate'
+          Description = 'Hold'
           Value = 1
         end
         item
-          Description = 'Hold'
+          Description = 'Don'#39't translate'
           Value = 2
         end>
       Properties.OnEditValueChanged = TreeListColumnStatusPropertiesEditValueChanged
@@ -394,11 +394,11 @@ object FormMain: TFormMain
           Value = 0
         end
         item
-          Description = 'Don'#39't translate'
+          Description = 'Hold'
           Value = 1
         end
         item
-          Description = 'Hold'
+          Description = 'Don'#39't translate'
           Value = 2
         end>
       Properties.OnEditValueChanged = TreeListColumnModuleStatusPropertiesEditValueChanged
