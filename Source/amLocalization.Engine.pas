@@ -832,6 +832,30 @@ begin
 end;
 
 procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; LocalizerProject: TLocalizerProject; Instance: HINST; Language: TTargetLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
+
+  procedure CopyVersionInfo;
+  var
+    SourceStream: TStream;
+    TargetStream: TMemoryStream;
+  begin
+    if (FindResource(Instance, PWideChar(1), RT_VERSION) = 0) then
+      Exit;
+
+    TargetStream := TMemoryStream.Create;
+    try
+      SourceStream := TResourceStream.CreateFromID(Instance, 1, RT_VERSION);
+      try
+        TargetStream.CopyFrom(SourceStream, 0);
+      finally
+        SourceStream.Free;
+      end;
+
+      ResourceWriter.CopyVersionInfo(TargetStream);
+    finally
+      TargetStream.Free;
+    end;
+  end;
+
 var
   LocalizerModule: TLocalizerModule;
   ModuleProcessor: TModuleResourceProcessor;
@@ -878,6 +902,9 @@ begin
             continue;
           end;
         end;
+
+        if (Action = liaTranslate) and (ResourceWriter <> nil) then
+          CopyVersionInfo;
 
         if (ResourceWriter <> nil) then
           ResourceWriter.EndWrite(True);

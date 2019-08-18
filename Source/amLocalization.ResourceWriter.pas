@@ -20,6 +20,7 @@ type
     procedure EndWrite(Commit: boolean);
 
     procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
+    procedure CopyVersionInfo(Stream: TMemoryStream);
   end;
 
 
@@ -36,6 +37,7 @@ type
     procedure BeginWrite;
     procedure EndWrite(Commit: boolean);
     procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
+    procedure CopyVersionInfo(Stream: TMemoryStream);
   end;
 
 
@@ -59,6 +61,7 @@ type
     procedure BeginWrite;
     procedure EndWrite(Commit: boolean);
     procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
+    procedure CopyVersionInfo(Stream: TMemoryStream);
   end;
 
 
@@ -141,6 +144,10 @@ procedure TResourceFileWriter.BeginWrite;
 begin
 end;
 
+procedure TResourceFileWriter.CopyVersionInfo(Stream: TMemoryStream);
+begin
+end;
+
 procedure TResourceFileWriter.EndWrite(Commit: boolean);
 begin
 end;
@@ -178,6 +185,13 @@ constructor TResourceModuleWriter.Create(const AFilename: string);
 begin
   inherited Create;
   FFilename := AFilename;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TResourceModuleWriter.CopyVersionInfo(Stream: TMemoryStream);
+begin
+  Win32Check(UpdateResource(FResourceHandle, RT_VERSION, PWideChar(1), MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), Stream.Memory, Stream.Size));
 end;
 
 // -----------------------------------------------------------------------------
@@ -228,12 +242,12 @@ end;
 
 procedure TResourceModuleWriter.WriteFormModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  Win32Check(UpdateResource(FResourceHandle, RT_RCDATA, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size));
+  Win32Check(UpdateResource(FResourceHandle, RT_RCDATA, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), Stream.Memory, Stream.Size));
 end;
 
 procedure TResourceModuleWriter.WriteStringModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
 begin
-  Win32Check(UpdateResource(FResourceHandle, RT_STRING, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Stream.Memory, Stream.Size));
+  Win32Check(UpdateResource(FResourceHandle, RT_STRING, ResourceID, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), Stream.Memory, Stream.Size));
 end;
 
 procedure TResourceModuleWriter.WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
