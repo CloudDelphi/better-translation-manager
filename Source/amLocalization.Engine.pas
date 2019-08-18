@@ -532,7 +532,8 @@ begin
       begin
         LocalizerProperty := LocalizerItem.AddProperty(PropertyName);
         LocalizerProperty.TranslatedValue[Language] := Value;
-      end;
+      end else
+        LocalizerProperty := nil;
 
       // Perform translation
       if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) then
@@ -714,7 +715,8 @@ begin
           begin
             LocalizerProperty := Item.AddProperty('');
             LocalizerProperty.TranslatedValue[Language] := Value;
-          end;
+          end else
+            LocalizerProperty := nil;
 
           // Perform translation
           if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) then
