@@ -1134,7 +1134,9 @@ begin
   else
     EffectiveChildStatus := Status;
 
-  FProject.UpdateStatusCount(EffectiveChildStatus, Delta);
+//  FProject.UpdateStatusCount(EffectiveChildStatus, Delta);
+
+  FProject.UpdateStatusCount(AStatus, Delta);
 end;
 
 // -----------------------------------------------------------------------------
