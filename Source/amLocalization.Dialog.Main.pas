@@ -2085,7 +2085,11 @@ begin
   begin
     TranslatedCount := GetTranslatedCount(Module);
     // Calculate completeness in %
-    Completeness := MulDiv(TranslatedCount, 100, Module.PropertyCount);
+    if (Module.PropertyCount <> 0) then
+      Completeness := MulDiv(TranslatedCount, 100, Module.PropertyCount)
+    else
+      Completeness := 100;
+
     if (Completeness = 100) then
       AIndex := 4 // 100% complete
     else
