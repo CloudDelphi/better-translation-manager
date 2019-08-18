@@ -729,7 +729,7 @@ begin
         end;
       end;
 
-      if (Action = liaUpdateSource) and (WriteStream <> nil) then
+      if (Action = liaTranslate) and (WriteStream <> nil) then
       begin
         Size := Length(Value);
         WriteStream.Write(Size, SizeOf(Size));
