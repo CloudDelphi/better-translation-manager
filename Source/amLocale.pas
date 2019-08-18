@@ -45,6 +45,7 @@ type
     function GetDisplayName: string;
     function GetISO3166Name: string;
     function GetLocaleName: string;
+    function GetLocaleSName: string;
     function GetCountryCode: integer;
     function GetAnsiCodePage: integer;
     function GetLanguageName: string;
@@ -66,6 +67,7 @@ type
     property ISO3166Name: string read GetISO3166Name;
     property ISO639_1Name: string read GetISO639_1Name;
     property LocaleName: string read GetLocaleName;
+    property LocaleSName: string read GetLocaleSName;
     property CountryCode: integer read GetCountryCode;
     property CountryName: string read GetCountryName;
     property AnsiCodePage: integer read GetAnsiCodePage;
@@ -893,6 +895,16 @@ function TLocaleItem.GetLocaleName: string;
 begin
   // en-us, da-dk, etc.
   Result := Format('%s-%s', [ISO639_1Name, ISO3166Name]);
+end;
+
+function TLocaleItem.GetLocaleSName: string;
+begin
+  (*
+  LOCALE_SNAME
+  A multi-part tag to uniquely identify the locale.
+  The tag is based on the language tagging conventions of RFC 4646..
+  *)
+  Result := GetLocaleDataW(Locale, LOCALE_SNAME);
 end;
 
 //------------------------------------------------------------------------------
