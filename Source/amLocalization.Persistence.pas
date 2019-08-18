@@ -257,7 +257,7 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
   procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem);
   begin
-    if (Item.Status = ItemStatusTranslate) then
+    if (Item.Status <> ItemStatusTranslate) then
       Node.Attributes['status'] := sItemStatus[Item.Status];
   end;
 
@@ -275,7 +275,7 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
 var
   XML: IXMLDocument;
-  RootNode: IXMLNode;
+  RootNode, Node: IXMLNode;
   ProjectNode: IXMLNode;
   LanguagesNode, LanguageNode: IXMLNode;
   ModulesNode, ModuleNode: IXMLNode;
@@ -293,7 +293,9 @@ begin
 
   RootNode := XML.AddChild('delphi_l10n');
 
-  RootNode.AddChild('meta').AddChild('created').Text := DateToISO8601(Now, False);
+  Node := RootNode.AddChild('meta');
+  Node.AddChild('version').Text := '1';
+  Node.AddChild('created').Text := DateToISO8601(Now, False);
 
   ProjectNode := RootNode.AddChild('project');
   ProjectNode.Attributes['name'] := Project.Name;
