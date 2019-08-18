@@ -118,7 +118,7 @@ type
     procedure Clear;
     function Purge: boolean;
 
-    function AddModule(const AName: string): TLocalizerModule;
+    function AddModule(const AName: string; Kind: TLocalizerModuleKind = mkOther): TLocalizerModule;
     function FindModule(const AName: string): TLocalizerModule;
 
     procedure BeginLoad(MarkUnused: boolean = False);
@@ -183,6 +183,7 @@ type
   protected
     procedure Changed;
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
+    function CalculateEffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
   public
     constructor Create(const AName: string);
 
@@ -591,6 +592,52 @@ begin
     UpdateParentStatusCount(ItemStatusDontTranslate, DeltaCount[ItemStatusDontTranslate]);
   if (DeltaCount[ItemStatusHold] <> 0) then
     UpdateParentStatusCount(ItemStatusHold, DeltaCount[ItemStatusHold]);
+
+(* Another way to do the above - perhaps easier to understand:
+
+  // Remove all counts belonging to this item from parent
+  UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
+  UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
+  UpdateParentStatusCount(ItemStatusDontTranslate, -FStatusCount[ItemStatusDontTranslate]);
+
+  FStatus := Value;
+
+  // Reapply all counts belonging to this item to parent
+  case FStatus of
+    ItemStatusTranslate:
+      begin
+        UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
+        UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
+        UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
+      end;
+
+    ItemStatusHold:
+      begin
+        UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusTranslate]+FStatusCount[ItemStatusHold]);
+        UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
+      end;
+
+    ItemStatusDontTranslate:
+      begin
+        UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusTranslate]+FStatusCount[ItemStatusHold]+FStatusCount[ItemStatusDontTranslate]);
+      end;
+  end;
+*)
+
+(* Another way - even more verbose:
+
+  // Remove all counts belonging to this item from parent
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusTranslate), -FStatusCount[ItemStatusTranslate]);
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusHold), -FStatusCount[ItemStatusHold]);
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusDontTranslate), -FStatusCount[ItemStatusDontTranslate]);
+
+  FStatus := Value;
+
+  // Reapply all counts belonging to this item to parent
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusTranslate), FStatusCount[ItemStatusTranslate]);
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusHold), FStatusCount[ItemStatusHold]);
+  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusDontTranslate), FStatusCount[ItemStatusDontTranslate]);
+*)
 end;
 
 procedure TCustomLocalizerItem.SetStatus(const Value: TLocalizerItemStatus);
@@ -633,12 +680,20 @@ begin
   Assert(FStatusCount[AStatus] >= 0);
 
   if (FState <> ItemStateUnused) then
-    UpdateParentStatusCount(AStatus, Delta);
+    UpdateParentStatusCount(CalculateEffectiveStatus(AStatus), Delta);
 end;
 
 function TCustomLocalizerItem.GetEffectiveStatus: TLocalizerItemStatus;
 begin
   Result := Status;
+end;
+
+function TCustomLocalizerItem.CalculateEffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+begin
+  if (ChildStatus >= Status) then
+    Result := ChildStatus
+  else
+    Result := Status;
 end;
 
 
@@ -664,10 +719,7 @@ end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetEffectiveStatus: TLocalizerItemStatus;
 begin
-  if (Status >= Parent.Status) then
-    Result := Status
-  else
-    Result := Parent.Status;
+  Result := Parent.CalculateEffectiveStatus(Status);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
@@ -990,11 +1042,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerProject.AddModule(const AName: string): TLocalizerModule;
+function TLocalizerProject.AddModule(const AName: string; Kind: TLocalizerModuleKind): TLocalizerModule;
 begin
   if (not FModules.TryGetValue(AName, Result)) then
-    Result := TLocalizerModule.Create(Self, AName)
-  else
+  begin
+    Result := TLocalizerModule.Create(Self, AName);
+    Result.Kind := Kind;
+  end else
   if (ProjectStateLoading in State) then
     Result.State := ItemStateExisting;
 end;
@@ -1030,7 +1084,6 @@ destructor TLocalizerModule.Destroy;
 begin
   BeginUpdate;
   try
-    State := ItemStateUnused;
     Clear;
     FProject.Modules.ExtractPair(Name);
     FItems.Free;
@@ -1122,21 +1175,12 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TLocalizerModule.UpdateParentStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
-var
-  EffectiveChildStatus: TLocalizerItemStatus;
 begin
   if (Delta = 0) then
     Exit;
 
-  // Calculate effective status
-  if (AStatus >= Status) then
-    EffectiveChildStatus := AStatus
-  else
-    EffectiveChildStatus := Status;
-
-//  FProject.UpdateStatusCount(EffectiveChildStatus, Delta);
-
-  FProject.UpdateStatusCount(AStatus, Delta);
+  if (State <> ItemStateUnused) then
+    FProject.UpdateStatusCount(AStatus, Delta);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1257,7 +1301,6 @@ destructor TLocalizerItem.Destroy;
 begin
   BeginUpdate;
   try
-    State := ItemStateUnused;
     Clear;
     Module.Items.ExtractPair(Name);
     FProperties.Free;
@@ -1400,11 +1443,9 @@ end;
 
 destructor TLocalizerProperty.Destroy;
 begin
-//  if (State <> ItemStateUnused) then
-//    UpdateParentStatusCount(Status, -1);
   BeginUpdate;
   try
-    State := ItemStateUnused; // Updates the parent StatusCount
+    UpdateStatusCount(Status, -1);
     Clear;
     Item.Properties.ExtractPair(Name);
     FTranslations.Free;
