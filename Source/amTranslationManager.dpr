@@ -12,7 +12,8 @@ uses
   amLocalization.Engine in 'amLocalization.Engine.pas',
   amLocalization.Dialog.TextEdit in 'amLocalization.Dialog.TextEdit.pas' {FormTextEditor},
   amLocalization.Dialog.Languages in 'amLocalization.Dialog.Languages.pas' {FormLanguages},
-  amLocalization.Data.Main in 'amLocalization.Data.Main.pas' {DataModuleMain: TDataModule};
+  amLocalization.Data.Main in 'amLocalization.Data.Main.pas' {DataModuleMain: TDataModule},
+  amLocalization.Translator.Microsoft.Version3 in 'amLocalization.Translator.Microsoft.Version3.pas' {DataModuleTranslatorMicrosoftV3: TDataModule};
 
 {$R *.res}
 

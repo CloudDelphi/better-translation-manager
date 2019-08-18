@@ -42,7 +42,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -72,6 +71,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -621,7 +621,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 329
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -966,11 +966,8 @@ object FormMain: TFormMain
       Category = 0
     end
     object dxBarLargeButton6: TdxBarLargeButton
-      Caption = 'Web lookup'
+      Action = ActionAutomationWebLookup
       Category = 0
-      Enabled = False
-      Hint = 'Web lookup'
-      Visible = ivAlways
       LargeGlyph.SourceDPI = 96
       LargeGlyph.Data = {
         89504E470D0A1A0A0000000D4948445200000020000000200806000000737A7A
@@ -3200,6 +3197,13 @@ object FormMain: TFormMain
       Hint = 'Import translated values from an external file'
       OnExecute = ActionImportFileTargetExecute
       OnUpdate = ActionHasProjectUpdate
+    end
+    object ActionAutomationWebLookup: TAction
+      Category = 'Automation'
+      Caption = 'Web lookup'
+      Hint = 'Perform automatic translation using a web service'
+      OnExecute = ActionAutomationWebLookupExecute
+      OnUpdate = ActionAutomationWebLookupUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

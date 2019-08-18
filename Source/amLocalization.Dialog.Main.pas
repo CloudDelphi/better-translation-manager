@@ -16,7 +16,8 @@ uses
   cxClasses, dxStatusBar, dxRibbonStatusBar, dxRibbon, cxTL, cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxMemo,
   cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
   cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData,
-  dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl;
+  dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
+  amLocalization.Translator.Microsoft.Version3;
 
 
 const
@@ -179,6 +180,7 @@ type
     LabelCountPending: TcxLabel;
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
+    ActionAutomationWebLookup: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -236,6 +238,8 @@ type
     procedure ActionImportFileTargetExecute(Sender: TObject);
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure ActionAutomationWebLookupExecute(Sender: TObject);
+    procedure ActionAutomationWebLookupUpdate(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -249,6 +253,7 @@ type
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
+    FTranslator: TDataModuleTranslatorMicrosoftV3;
   protected
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
@@ -424,6 +429,64 @@ begin
   TreeListModules.EndUpdate;
   Dec(FUpdateLockCount);
 end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
+var
+  SourceLocaleItem, TargetLanguageItem: TLocaleItem;
+  i: integer;
+  Item: TCustomLocalizerItem;
+  NeedReload: boolean;
+begin
+  if (FTranslator = nil) then
+    FTranslator := TDataModuleTranslatorMicrosoftV3.Create(Self);
+
+  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
+  TargetLanguageItem := TLocaleItems.FindLCID(TargetLanguageID);
+
+  NeedReload := False;
+
+  SaveCursor(crHourGlass);
+
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      var
+        Value, TranslatedValue: string;
+      begin
+        if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+          Exit(True);
+
+        TranslatedValue := Prop.TranslatedValue[TargetLanguage];
+
+        if (FTranslator.Translate(SourceLocaleItem, TargetLanguageItem, Prop.Value, Value)) and (Value <> TranslatedValue) then
+        begin
+          Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
+          NeedReload := True;
+        end;
+
+        Result := True;
+      end);
+
+    if (NeedReload) then
+      LoadItem(Item, True);
+  end;
+end;
+
+procedure TFormMain.ActionAutomationWebLookupUpdate(Sender: TObject);
+var
+  Item: TCustomLocalizerItem;
+begin
+  Item := FocusedItem;
+
+  TAction(Sender).Enabled := (Item <> nil) and (Item.State <> ItemStateUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate);
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionBuildExecute(Sender: TObject);
 var
