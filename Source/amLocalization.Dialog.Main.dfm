@@ -126,10 +126,197 @@ object FormMain: TFormMain
     Font.Name = 'Tahoma'
     Font.Style = []
   end
-  object TreeListItems: TcxVirtualTreeList
-    Left = 241
+  object SplitterTreeLists: TcxSplitter
+    Left = 240
     Top = 125
-    Width = 723
+    Width = 4
+    Height = 495
+    HotZoneClassName = 'TcxSimpleStyle'
+    ResizeUpdate = True
+    ExplicitLeft = 237
+  end
+  object PanelModules: TPanel
+    Left = 0
+    Top = 125
+    Width = 240
+    Height = 495
+    Align = alLeft
+    BevelOuter = bvNone
+    FullRepaint = False
+    ParentColor = True
+    ShowCaption = False
+    TabOrder = 3
+    ExplicitLeft = 237
+    object TreeListModules: TcxTreeList
+      Left = 0
+      Top = 0
+      Width = 240
+      Height = 436
+      Align = alClient
+      Bands = <
+        item
+          FixedKind = tlbfLeft
+          Options.Moving = False
+          Options.OnlyOwnColumns = True
+        end>
+      Images = ImageListTree
+      Navigator.Buttons.CustomButtons = <>
+      OptionsBehavior.CellHints = True
+      OptionsBehavior.RecordScrollMode = rsmByRecord
+      OptionsCustomizing.BandCustomizing = False
+      OptionsCustomizing.BandMoving = False
+      OptionsCustomizing.ColumnFiltering = bTrue
+      OptionsData.AnsiSort = True
+      OptionsData.CaseInsensitive = True
+      OptionsData.Deleting = False
+      OptionsSelection.CellSelect = False
+      OptionsSelection.MultiSelect = True
+      OptionsView.CellEndEllipsis = True
+      OptionsView.ColumnAutoWidth = True
+      OptionsView.DynamicIndent = True
+      OptionsView.FixedSeparatorWidth = 1
+      OptionsView.ShowColumnFilterButtons = sfbAlways
+      OptionsView.ShowRoot = False
+      OptionsView.TreeLineStyle = tllsNone
+      PopupMenu = PopupMenuTree
+      Styles.Inactive = StyleSelected
+      Styles.Selection = StyleSelected
+      Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
+      TabOrder = 0
+      OnEnter = TreeListModulesEnter
+      OnExit = TreeListModulesExit
+      OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
+      OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
+      ExplicitTop = 125
+      ExplicitWidth = 237
+      ExplicitHeight = 495
+      Data = {
+        00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
+        000000546378537472696E6756616C75655479706513000000546378496E7465
+        67657256616C75655479706504000000445855464D5400000400000078007800
+        7800780001445855464D54000004000000780078007800780001445855464D54
+        000101445855464D540001010100000000000000020801000000000000000000
+        0000FFFFFFFFFFFFFFFFFFFFFFFF010000001208020000000000000000000000
+        FFFFFFFFFFFFFFFFFFFFFFFF0200000008080000000000000000FFFFFFFFFFFF
+        FFFFFFFFFFFF0300000008080000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
+        0A0801000000}
+      object TreeListColumnModuleName: TcxTreeListColumn
+        Caption.AlignVert = vaTop
+        Caption.Text = 'Module'
+        DataBinding.ValueType = 'String'
+        Options.Editing = False
+        Options.Filtering = False
+        Width = 160
+        Position.ColIndex = 0
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        SortOrder = soAscending
+        SortIndex = 0
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
+      end
+      object TreeListColumnModuleStatus: TcxTreeListColumn
+        PropertiesClassName = 'TcxImageComboBoxProperties'
+        Properties.Items = <
+          item
+            Description = 'Translate'
+            ImageIndex = 0
+            Value = 0
+          end
+          item
+            Description = 'Hold'
+            Value = 1
+          end
+          item
+            Description = 'Don'#39't translate'
+            Value = 2
+          end>
+        Properties.OnEditValueChanged = TreeListColumnModuleStatusPropertiesEditValueChanged
+        Caption.Text = 'Status'
+        DataBinding.ValueType = 'Integer'
+        Width = 70
+        Position.ColIndex = 1
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
+      end
+    end
+    object LayoutControlModules: TdxLayoutControl
+      Left = 0
+      Top = 436
+      Width = 240
+      Height = 59
+      Align = alBottom
+      TabOrder = 1
+      AutoSize = True
+      LayoutLookAndFeel = LayoutSkinLookAndFeel
+      object LabelCountTranslated: TcxLabel
+        Left = 66
+        Top = 6
+        AutoSize = False
+        Caption = '0'
+        Style.HotTrack = False
+        Style.TransparentBorder = False
+        Properties.Alignment.Horz = taRightJustify
+        Properties.ShowAccelChar = False
+        Transparent = True
+        Height = 14
+        Width = 60
+        AnchorX = 126
+      end
+      object LabelCountPending: TcxLabel
+        Left = 66
+        Top = 26
+        AutoSize = False
+        Caption = '0'
+        Style.HotTrack = False
+        Style.TransparentBorder = False
+        Properties.Alignment.Horz = taRightJustify
+        Properties.ShowAccelChar = False
+        Transparent = True
+        Height = 14
+        Width = 60
+        AnchorX = 126
+      end
+      object LayoutControlModulesGroup_Root: TdxLayoutGroup
+        AlignHorz = ahClient
+        AlignVert = avTop
+        ButtonOptions.Buttons = <>
+        Hidden = True
+        ShowBorder = False
+        Index = -1
+      end
+      object dxLayoutItem2: TdxLayoutItem
+        Parent = LayoutControlModulesGroup_Root
+        AlignHorz = ahClient
+        CaptionOptions.ShowAccelChar = False
+        CaptionOptions.Text = 'Translated:'
+        Control = LabelCountTranslated
+        ControlOptions.AlignHorz = ahLeft
+        ControlOptions.OriginalHeight = 14
+        ControlOptions.OriginalWidth = 60
+        ControlOptions.ShowBorder = False
+        Index = 0
+      end
+      object dxLayoutItem1: TdxLayoutItem
+        Parent = LayoutControlModulesGroup_Root
+        AlignHorz = ahClient
+        CaptionOptions.ShowAccelChar = False
+        CaptionOptions.Text = 'Pending:'
+        Control = LabelCountPending
+        ControlOptions.AlignHorz = ahLeft
+        ControlOptions.OriginalHeight = 13
+        ControlOptions.OriginalWidth = 60
+        ControlOptions.ShowBorder = False
+        Index = 1
+      end
+    end
+  end
+  object TreeListItems: TcxVirtualTreeList
+    Left = 244
+    Top = 125
+    Width = 720
     Height = 495
     Align = alClient
     Bands = <
@@ -154,12 +341,15 @@ object FormMain: TFormMain
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
     Styles.Selection = StyleSelected
-    TabOrder = 2
+    TabOrder = 4
     OnEditing = TreeListItemsEditing
     OnEditValueChanged = TreeListItemsEditValueChanged
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
+    ExplicitLeft = 0
+    ExplicitTop = 0
+    ExplicitWidth = 240
     object TreeListColumnItemName: TcxTreeListColumn
       Caption.AlignVert = vaTop
       Caption.Text = 'Element'
@@ -312,106 +502,6 @@ object FormMain: TFormMain
       Summary.GroupFooterSummaryItems = <>
     end
   end
-  object SplitterTreeLists: TcxSplitter
-    Left = 237
-    Top = 125
-    Width = 4
-    Height = 495
-    HotZoneClassName = 'TcxSimpleStyle'
-    ResizeUpdate = True
-  end
-  object TreeListModules: TcxTreeList
-    Left = 0
-    Top = 125
-    Width = 237
-    Height = 495
-    Align = alLeft
-    Bands = <
-      item
-        FixedKind = tlbfLeft
-        Options.Moving = False
-        Options.OnlyOwnColumns = True
-      end>
-    Images = ImageListTree
-    Navigator.Buttons.CustomButtons = <>
-    OptionsBehavior.CellHints = True
-    OptionsBehavior.RecordScrollMode = rsmByRecord
-    OptionsCustomizing.BandCustomizing = False
-    OptionsCustomizing.BandMoving = False
-    OptionsCustomizing.ColumnFiltering = bTrue
-    OptionsData.AnsiSort = True
-    OptionsData.CaseInsensitive = True
-    OptionsData.Deleting = False
-    OptionsSelection.CellSelect = False
-    OptionsSelection.MultiSelect = True
-    OptionsView.CellEndEllipsis = True
-    OptionsView.ColumnAutoWidth = True
-    OptionsView.DynamicIndent = True
-    OptionsView.FixedSeparatorWidth = 1
-    OptionsView.ShowColumnFilterButtons = sfbAlways
-    OptionsView.ShowRoot = False
-    OptionsView.TreeLineStyle = tllsNone
-    PopupMenu = PopupMenuTree
-    Styles.Inactive = StyleSelected
-    Styles.Selection = StyleSelected
-    Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
-    TabOrder = 4
-    OnEnter = TreeListModulesEnter
-    OnExit = TreeListModulesExit
-    OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
-    OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
-    Data = {
-      00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
-      000000546378537472696E6756616C75655479706513000000546378496E7465
-      67657256616C75655479706504000000445855464D5400000400000078007800
-      7800780001445855464D54000004000000780078007800780001445855464D54
-      000101445855464D540001010100000000000000020801000000000000000000
-      0000FFFFFFFFFFFFFFFFFFFFFFFF010000001208020000000000000000000000
-      FFFFFFFFFFFFFFFFFFFFFFFF0200000008080000000000000000FFFFFFFFFFFF
-      FFFFFFFFFFFF0300000008080000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
-      0A0801000000}
-    object TreeListColumnModuleName: TcxTreeListColumn
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Module'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Width = 160
-      Position.ColIndex = 0
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      SortOrder = soAscending
-      SortIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnModuleStatus: TcxTreeListColumn
-      PropertiesClassName = 'TcxImageComboBoxProperties'
-      Properties.Items = <
-        item
-          Description = 'Translate'
-          ImageIndex = 0
-          Value = 0
-        end
-        item
-          Description = 'Hold'
-          Value = 1
-        end
-        item
-          Description = 'Don'#39't translate'
-          Value = 2
-        end>
-      Properties.OnEditValueChanged = TreeListColumnModuleStatusPropertiesEditValueChanged
-      Caption.Text = 'Status'
-      DataBinding.ValueType = 'Integer'
-      Width = 70
-      Position.ColIndex = 1
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-  end
   object BarManager: TdxBarManager
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -530,7 +620,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 329
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -3547,6 +3637,15 @@ object FormMain: TFormMain
       AssignedValues = [svColor, svTextColor]
       Color = clHighlight
       TextColor = clHighlightText
+    end
+  end
+  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
+    Left = 316
+    Top = 504
+    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
+      Offsets.RootItemsAreaOffsetHorz = 4
+      Offsets.RootItemsAreaOffsetVert = 4
+      PixelsPerInch = 96
     end
   end
 end

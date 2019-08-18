@@ -15,7 +15,8 @@ uses
   cxDBData, cxGridLevel, cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid, dxBar, dxSkinsForm,
   cxClasses, dxStatusBar, dxRibbonStatusBar, dxRibbon, cxTL, cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxMemo,
   cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
-  cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData;
+  cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData,
+  dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl;
 
 
 const
@@ -169,6 +170,15 @@ type
     dxBarButton23: TdxBarButton;
     dxBarButton24: TdxBarButton;
     StyleSelected: TcxStyle;
+    PanelModules: TPanel;
+    LayoutControlModulesGroup_Root: TdxLayoutGroup;
+    LayoutControlModules: TdxLayoutControl;
+    dxLayoutItem2: TdxLayoutItem;
+    LabelCountTranslated: TcxLabel;
+    dxLayoutItem1: TdxLayoutItem;
+    LabelCountPending: TcxLabel;
+    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
+    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -265,6 +275,7 @@ type
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
     procedure LoadFocusedPropertyNode;
     procedure ReloadNode(Node: TcxTreeListNode); overload;
+    procedure DisplayModuleStats;
   protected
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
@@ -1729,6 +1740,10 @@ begin
 
   // Update cache
   FTranslationCounts.AddOrSetValue(Module, Result);
+
+  // Current module stats has updated - refresh display
+  if (Module = FLocalizerDataSource.Module) then
+    DisplayModuleStats;
 end;
 
 procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
@@ -2063,6 +2078,26 @@ begin
     TreeListItems.TopNode.MakeVisible;
     TreeListItems.TopNode.Focused := True;
   end;
+
+  DisplayModuleStats;
+end;
+
+procedure TFormMain.DisplayModuleStats;
+var
+  TranslatedCount: integer;
+  PendingCount: integer;
+begin
+  if (FLocalizerDataSource.Module <> nil) then
+  begin
+    TranslatedCount := GetTranslatedCount(FLocalizerDataSource.Module);
+    PendingCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate] - TranslatedCount;
+  end else
+  begin
+    TranslatedCount := 0;
+    PendingCount := 0;
+  end;
+  LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
+  LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
