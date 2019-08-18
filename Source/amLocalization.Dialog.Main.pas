@@ -235,6 +235,7 @@ type
     procedure ActionImportFileSourceExecute(Sender: TObject);
     procedure ActionImportFileTargetExecute(Sender: TObject);
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -1348,6 +1349,18 @@ begin
   FLocalizerDataSource.Free;
   FLocalizerProject.Free;
   FTranslationCounts.Free;
+end;
+
+procedure TFormMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if (Key = VK_F12) and (ssAlt in Shift) then
+  begin
+    FLocalizerProject.Clear;
+    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
+    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
+    LoadProject(FLocalizerProject);
+    Key := 0;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

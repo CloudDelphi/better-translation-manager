@@ -16,6 +16,7 @@ object FormMain: TFormMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   PixelsPerInch = 96
   TextHeight = 13
   object RibbonMain: TdxRibbon
@@ -620,7 +621,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
