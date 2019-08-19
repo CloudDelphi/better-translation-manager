@@ -10,13 +10,13 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxClasses, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
   cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
-  cxGridDBTableView, dxLayoutLookAndFeels, System.Actions, Vcl.ActnList;
+  cxGridDBTableView, dxLayoutLookAndFeels, System.Actions, Vcl.ActnList, cxMRUEdit;
 
 type
   TFormNewProject = class(TForm)
     dxLayoutControl1Group_Root: TdxLayoutGroup;
     dxLayoutControl1: TdxLayoutControl;
-    EditSourceApplication: TcxButtonEdit;
+    EditSourceApplication: TcxMRUEdit;
     dxLayoutItem1: TdxLayoutItem;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
     dxLayoutItem2: TdxLayoutItem;
@@ -32,10 +32,10 @@ type
     ActionList1: TActionList;
     ActionOK: TAction;
     ActionCancel: TAction;
-    procedure EditSourceApplicationPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure ActionCancelExecute(Sender: TObject);
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionOKUpdate(Sender: TObject);
+    procedure EditSourceApplicationPropertiesButtonClick(Sender: TObject);
   private
     function GetSourceApplication: string;
     function GetSourceLanguageID: Word;
@@ -70,7 +70,7 @@ begin
   TAction(Sender).Enabled := (SourceApplication <> '') and (TFile.Exists(SourceApplication));
 end;
 
-procedure TFormNewProject.EditSourceApplicationPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
+procedure TFormNewProject.EditSourceApplicationPropertiesButtonClick(Sender: TObject);
 begin
   FileOpenDialogApplication.FileName := EditSourceApplication.Text;
   FileOpenDialogApplication.DefaultFolder := TPath.GetDirectoryName(EditSourceApplication.Text);
@@ -80,7 +80,15 @@ begin
 end;
 
 function TFormNewProject.Execute: boolean;
+//var
+//  i: integer;
 begin
+(*
+  EditSourceApplication.Properties.Items.Clear;
+  for i := 0 to FileOpenDialogApplication.FavoriteLinks.Count-1 do
+    EditSourceApplication.Properties.Items.Add(FileOpenDialogApplication.FavoriteLinks[i].Location);
+*)
+
   Result := (ShowModal = mrOK);
 end;
 
