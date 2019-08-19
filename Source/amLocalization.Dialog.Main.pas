@@ -822,6 +822,9 @@ begin
 end;
 
 procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
+var
+  BestLanguage: TTargetLanguage;
+  i: integer;
 begin
   if (not CheckSave) then
     exit;
@@ -840,7 +843,20 @@ begin
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
+  // Find language with most translations
+  BestLanguage := nil;
+  for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
+    if (BestLanguage = nil) or (FLocalizerProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
+      BestLanguage := FLocalizerProject.TargetLanguages[i];
+
   LoadProject(FLocalizerProject);
+
+  if (BestLanguage <> nil) then
+  begin
+    TargetLanguageID := BestLanguage.LanguageID;
+    FFilterTargetLanguages := True;
+  end else
+    FFilterTargetLanguages := False;
 end;
 
 procedure TFormMain.ActionProjectPurgeExecute(Sender: TObject);
@@ -854,7 +870,7 @@ var
   Node: TcxTreeListNode;
 resourcestring
   sLocalizerPurgeStatusTitle = 'Purge completed.';
-  sLocalizerPurgeStatus = 'The following items was removed from the project:'#13#13'Modules: %d'#13'Items: %d'#13'Properties: %d';
+  sLocalizerPurgeStatus = 'The following items has been removed from the project:'#13#13'Modules: %d'#13'Items: %d'#13'Properties: %d';
 begin
   SaveCursor(crHourGlass);
 
@@ -996,10 +1012,43 @@ begin
 end;
 
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
+var
+  Filename, TempFilename, BackupFilename: string;
+  i: integer;
 begin
   SaveCursor(crHourGlass);
 
-  TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.xml'));
+  Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.xml');
+  TempFilename := Filename;
+
+  // Save to temporary file if destination file already exist
+  if (TFile.Exists(Filename)) then
+  begin
+    i := 0;
+    repeat
+      TempFilename := Format('%s\savefile%.4X.xml', [TPath.GetDirectoryName(Filename), i]);
+      Inc(i);
+    until (not TFile.Exists(TempFilename));
+  end;
+
+  // Save file
+  TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TempFilename);
+
+  // Save existing file as backup
+  if (TFile.Exists(Filename)) then
+  begin
+    i := 0;
+    repeat
+      BackupFilename := Format('%s.$%.4X', [Filename, i]);
+      Inc(i);
+    until (not TFile.Exists(BackupFilename));
+
+    TFile.Move(Filename, BackupFilename);
+  end;
+
+  // Rename temporary file to final file
+  if (TempFilename <> Filename) then
+    TFile.Move(TempFilename, Filename);
 
   FLocalizerProject.Modified := False;
 
