@@ -21,6 +21,9 @@ type
       sTranslationStatus: array[TTranslationStatus] of string = ('obsolete', 'pending', 'proposed', '');
       sItemState: array[TLocalizerItemState] of string = ('new', '', 'unused');
       sItemStatus: array[TLocalizerItemStatus] of string = ('', 'hold', 'skip');
+  private
+    class function EncodeString(const Value: string): string;
+    class function DecodeString(const Value: string): string;
   public
     class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream);
     class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string);
@@ -50,6 +53,24 @@ uses
 // TLocalizationProjectFiler
 //
 // -----------------------------------------------------------------------------
+class function TLocalizationProjectFiler.DecodeString(const Value: string): string;
+begin
+  Result := StringReplace(Value, '##', '#', [rfReplaceAll]);
+  Result := StringReplace(Result, '#13', #13, [rfReplaceAll]);
+  Result := StringReplace(Result, '#10', #10, [rfReplaceAll]);
+  Result := StringReplace(Result, '#9', #9, [rfReplaceAll]);
+end;
+
+class function TLocalizationProjectFiler.EncodeString(const Value: string): string;
+begin
+  Result := StringReplace(Value, '#', '##', [rfReplaceAll]);
+  Result := StringReplace(Result, #13, '#13', [rfReplaceAll]);
+  Result := StringReplace(Result, #10, '#10', [rfReplaceAll]);
+  Result := StringReplace(Result, #9, '#9', [rfReplaceAll]);
+end;
+
+// -----------------------------------------------------------------------------
+
 class procedure TLocalizationProjectFiler.LoadFromFile(Project: TLocalizerProject; const Filename: string);
 var
   Stream: TStream;
@@ -117,6 +138,7 @@ var
 begin
   XML := TXMLDocument.Create(nil);
   XML.Options := XML.Options + [doAttrNull];
+  XML.ParseOptions := XML.ParseOptions + [poPreserveWhiteSpace];
   XML.LoadFromStream(Stream);
 
   RootNode := XML.ChildNodes['delphi_l10n'];
@@ -194,7 +216,10 @@ begin
                 begin
                   if (PropNode.NodeName = 'property') then
                   begin
-                    Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), VarToStr(PropNode.ChildValues['value']));
+                    s := VarToStr(PropNode.ChildValues['value']);
+                    // s := s.Replace(#10, #13);
+                    s := DecodeString(s);
+                    Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
                     Prop.State := StringToItemState(VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
 
@@ -210,7 +235,10 @@ begin
                           if (Language = nil) or (s <> CachedLanguage) then
                             Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
                           TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
-                          {Translation :=} Prop.Translations.AddOrUpdateTranslation(Language, XlatNode.Text, TranslationStatus);
+                          s := XlatNode.Text;
+                          // s := s.Replace(#10, #13);
+                          s := DecodeString(s);
+                          {Translation :=} Prop.Translations.AddOrUpdateTranslation(Language, s, TranslationStatus);
                         end;
                         XlatNode := XlatNode.NextSibling;
                       end;
@@ -341,7 +369,7 @@ begin
         WriteItemState(PropNode, Prop);
         WriteItemStatus(PropNode, Prop);
 
-        PropNode.AddChild('value').Text := Prop.Value;
+        PropNode.AddChild('value').Text := EncodeString(Prop.Value);
 
         XlatsNode := nil;
         Prop.Traverse(
@@ -354,7 +382,7 @@ begin
             XlatNode.Attributes['language'] := Translation.Language.LanguageID;
             if (Translation.Status <> tStatusTranslated) then
               XlatNode.Attributes['status'] := sTranslationStatus[Translation.Status];
-            XlatNode.Text := Translation.Value;
+            XlatNode.Text := EncodeString(Translation.Value);
             Result := True;
           end);
       end;
