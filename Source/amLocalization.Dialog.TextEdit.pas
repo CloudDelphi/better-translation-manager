@@ -9,6 +9,13 @@ uses
   Menus, ActnPopup, System.Actions, System.ImageList, cxGraphics, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxControls,
   cxContainer, cxEdit, cxTextEdit, cxMemo, cxRichEdit, cxButtons, cxSplitter, cxImageList;
 
+type
+  TEditDelete = class(StdActns.TEditDelete)
+  public
+    procedure ExecuteTarget(Target: TObject); override;
+    procedure UpdateTarget(Target: TObject); override;
+  end;
+
 //------------------------------------------------------------------------------
 //
 //      TFormTextEditor
@@ -134,6 +141,21 @@ end;
 procedure TFormTextEditor.SetText(const Value: string);
 begin
   EditText.Lines.Text := Value;
+end;
+
+{ TEditDelete }
+
+procedure TEditDelete.ExecuteTarget(Target: TObject);
+begin
+  if (GetControl(Target).SelLength > 0) then
+    inherited ExecuteTarget(Target)
+  else
+    SendMessage(GetControl(Target).Handle, WM_KEYDOWN, VK_DELETE, 0);
+end;
+
+procedure TEditDelete.UpdateTarget(Target: TObject);
+begin
+  Enabled := (not GetControl(Target).ReadOnly);
 end;
 
 end.
