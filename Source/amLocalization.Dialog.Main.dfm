@@ -167,6 +167,8 @@ object FormMain: TFormMain
       OptionsCustomizing.BandCustomizing = False
       OptionsCustomizing.BandMoving = False
       OptionsCustomizing.ColumnFiltering = bTrue
+      OptionsCustomizing.ColumnVertSizing = False
+      OptionsCustomizing.StackedColumns = False
       OptionsData.AnsiSort = True
       OptionsData.CaseInsensitive = True
       OptionsData.Deleting = False
@@ -188,9 +190,6 @@ object FormMain: TFormMain
       OnExit = TreeListModulesExit
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
-      ExplicitTop = 125
-      ExplicitWidth = 237
-      ExplicitHeight = 495
       Data = {
         00000500060100000F00000044617461436F6E74726F6C6C6572310200000012
         000000546378537472696E6756616C75655479706513000000546378496E7465
@@ -202,6 +201,7 @@ object FormMain: TFormMain
         FFFFFFFFFFFF0300000008080000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
         0A0801000000}
       object TreeListColumnModuleName: TcxTreeListColumn
+        BestFitMaxWidth = 200
         Caption.AlignVert = vaTop
         Caption.Text = 'Module'
         DataBinding.ValueType = 'String'
@@ -330,6 +330,8 @@ object FormMain: TFormMain
     OptionsCustomizing.BandCustomizing = False
     OptionsCustomizing.BandMoving = False
     OptionsCustomizing.ColumnFiltering = bTrue
+    OptionsCustomizing.ColumnVertSizing = False
+    OptionsCustomizing.StackedColumns = False
     OptionsData.AnsiSort = True
     OptionsData.CaseInsensitive = True
     OptionsData.Deleting = False
@@ -348,10 +350,8 @@ object FormMain: TFormMain
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
-    ExplicitLeft = 0
-    ExplicitTop = 0
-    ExplicitWidth = 240
     object TreeListColumnItemName: TcxTreeListColumn
+      BestFitMaxWidth = 300
       Caption.AlignVert = vaTop
       Caption.Text = 'Element'
       DataBinding.ValueType = 'String'
@@ -368,6 +368,7 @@ object FormMain: TFormMain
     end
     object TreeListColumnType: TcxTreeListColumn
       Visible = False
+      BestFitMaxWidth = 200
       Caption.AlignVert = vaTop
       Caption.Text = 'Type'
       DataBinding.ValueType = 'String'
@@ -380,6 +381,7 @@ object FormMain: TFormMain
       Summary.GroupFooterSummaryItems = <>
     end
     object TreeListColumnValueName: TcxTreeListColumn
+      BestFitMaxWidth = 200
       Caption.AlignVert = vaTop
       Caption.Text = 'Name'
       DataBinding.ValueType = 'String'
@@ -470,6 +472,7 @@ object FormMain: TFormMain
     end
     object TreeListColumnSource: TcxTreeListColumn
       PropertiesClassName = 'TcxMemoProperties'
+      BestFitMaxWidth = 400
       Caption.AlignVert = vaTop
       Caption.Text = 'Source value'
       DataBinding.ValueType = 'String'
@@ -491,6 +494,7 @@ object FormMain: TFormMain
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = TreeListColumnTargetPropertiesButtonClick
+      BestFitMaxWidth = 400
       Caption.AlignVert = vaTop
       Caption.Text = 'Target value'
       DataBinding.ValueType = 'String'
