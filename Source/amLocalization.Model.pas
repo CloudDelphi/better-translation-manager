@@ -314,6 +314,18 @@ type
     // Take this into consideration if adding values or changing the order.
     // See GetIsTranslated and SetStatus.
 
+  TTranslationFlag = (
+    tFlagWhatEver
+  );
+  TTranslationFlags = set of TTranslationFlag;
+
+  TTranslationWarning = (
+    tWarningAccelerator,        // Translation has incorrect number of accelerators
+    tWarningFormatSpecifier,    // Translation has incorrect number of format specifiers
+    tWarningLineBreak           // Translation has incorrect number of linebreaks
+  );
+  TTranslationWarnings = set of TTranslationWarning;
+
   TLocalizerTranslation = class
   strict private
     FValue: string;
@@ -322,6 +334,7 @@ type
     FOwner: TLocalizerProperty;
     FUpdateCount: integer;
     FChanged: boolean;
+    FWarnings: TTranslationWarnings;
   strict protected
     function GetIsTranslated: boolean;
     procedure SetStatus(const Value: TTranslationStatus);
@@ -337,11 +350,13 @@ type
     property Owner: TLocalizerProperty read FOwner;
 
     procedure Update(const AValue: string; AStatus: TTranslationStatus);
+    procedure UpdateWarnings;
 
     property Value: string read FValue write SetValue;
     property Language: TTargetLanguage read FLanguage;
     property Status: TTranslationStatus read FStatus write SetStatus;
     property IsTranslated: boolean read GetIsTranslated;
+    property Warnings: TTranslationWarnings read FWarnings write FWarnings;
   end;
 
   TLocalizerTranslations = class
@@ -1625,7 +1640,10 @@ begin
       Inc(FLanguage.FTranslatedCount)
     else
     if (OldStatus > tStatusPending) and (Value <= tStatusPending) then
+    begin
       Dec(FLanguage.FTranslatedCount);
+      FWarnings := [];
+    end;
 
     Changed;
 
@@ -1640,6 +1658,8 @@ begin
     Exit;
 
   FValue := Value;
+  UpdateWarnings;
+
   Changed;
 end;
 
@@ -1661,6 +1681,206 @@ begin
   end;
 end;
 
+
+type
+  TAcceleratorState = (asNone, asStart);
+  TFormatState = (fsNone, fsStart, fsNumber, fsIndex, fsJustification, fsWidth, fsDot, fsPrecision, fsType);
+
+procedure TLocalizerTranslation.UpdateWarnings;
+
+  procedure Count(const Value: string; var CountAccelerator, CountFormat, CountLineBreak: integer);
+  const
+    cHotkeyPrefix = '&'; // From menus.pas
+  var
+    i: integer;
+    c, LastChar: Char;
+    SkipAccelerator, SkipFormat: boolean;
+    AcceleratorState: TAcceleratorState;
+    FormatState: TFormatState;
+  begin
+    CountAccelerator := 0;
+    CountFormat := 0;
+    CountLineBreak := 0;
+
+    LastChar := #0;
+    SkipAccelerator := False;
+    SkipFormat := False;
+    AcceleratorState := asNone;
+    FormatState := fsNone;
+
+    for i := 1 to Length(Value) do
+    begin
+      c := Value[i];
+      if (IsLeadChar(c)) then
+      begin
+        LastChar := c;
+        continue;
+      end;
+
+      if (c = #13) then
+      begin
+        Inc(CountLineBreak);
+        SkipAccelerator := True;
+      end else
+      if (c = #10) then
+      begin
+        if (LastChar <> #13) then
+          Inc(CountLineBreak);
+        SkipAccelerator := True;
+      end;
+
+      if (not SkipAccelerator) then
+      begin
+        if (c = cHotkeyPrefix) then
+        begin
+          case AcceleratorState of
+            asNone:
+              AcceleratorState := asStart;
+            asStart:
+              AcceleratorState := asNone; // Escaped &&
+          end;
+        end else
+        if (AcceleratorState = asStart) then
+        begin
+          AcceleratorState := asNone;
+          if (c = ' ') then
+            SkipAccelerator := True // Very common to have a space after & but highly unlikely that space is an accelerator key
+          else
+          if (CountAccelerator = 0) then
+            Inc(CountAccelerator) // Only one allowed per caption
+          else
+            SkipAccelerator := True;
+        end;
+      end;
+
+      if (not SkipFormat) then
+      begin
+        // Format string state machine
+        case c of
+          '%':
+            case FormatState of
+              fsNone:
+                FormatState := fsStart;
+              fsStart:
+                FormatState := fsNone;          // Escaped: %%
+            else
+              SkipFormat := True;
+            end;
+
+          '0'..'9':
+            case FormatState of
+              fsNone:
+                ; // skip
+              fsStart,
+              fsNumber:
+                FormatState := fsNumber;
+              fsIndex,
+              fsWidth,
+              fsJustification:
+                FormatState := fsWidth;
+              fsDot:
+                FormatState := fsPrecision;
+            else
+              SkipFormat := True;
+            end;
+
+          ':':
+            case FormatState of
+              fsNone:
+                ; // skip
+              fsNumber:
+                FormatState := fsIndex;
+            else
+              SkipFormat := True; // Invalid
+            end;
+
+          '-':
+            case FormatState of
+              fsNone:
+                ; // skip
+              fsStart,
+              fsIndex:
+                FormatState := fsJustification;
+            else
+              SkipFormat := True; // Invalid
+            end;
+
+          '.':
+            case FormatState of
+              fsNone:
+                ; // skip
+              fsStart,
+              fsIndex,
+              fsJustification,
+              fsWidth:
+                FormatState := fsDot;
+            else
+              SkipFormat := True; // Invalid
+            end;
+
+          'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x':
+            case FormatState of
+              fsNone:
+                ; // skip
+              fsStart,
+              fsIndex,
+              fsJustification,
+              fsWidth,
+              fsPrecision:
+                begin
+                  Inc(CountFormat);
+                  FormatState := fsNone; // Got one - Start over
+                end
+            else
+              SkipFormat := True; // Invalid
+            end;
+        else
+          case FormatState of
+            fsNone:
+              ;
+          else
+            SkipFormat := True;
+          end;
+        end;
+      end;
+
+      LastChar := c;
+    end;
+
+    if (AcceleratorState <> asNone) then
+      // & but no chars left for accelerator key
+      SkipAccelerator := True;
+
+    if (FormatState <> fsNone) then
+      SkipFormat := True;
+
+    if (SkipAccelerator) then
+      CountAccelerator := 0;
+
+    if (SkipFormat) then
+      CountFormat := 0;
+  end;
+
+var
+  SourceCountAccelerator, TargetCountAccelerator: integer;
+  SourceCountFormat, TargetCountFormat: integer;
+  SourceCountLineBreak, TargetCountLineBreak: integer;
+begin
+  FWarnings := [];
+
+  if (Value = Owner.Value) then
+    Exit;
+
+  Count(Value, TargetCountAccelerator, TargetCountFormat, TargetCountLineBreak);
+  Count(Owner.Value, SourceCountAccelerator, SourceCountFormat, SourceCountLineBreak);
+
+  if (SourceCountAccelerator <> TargetCountAccelerator) then
+    Include(FWarnings, tWarningAccelerator);
+  if (SourceCountFormat <> TargetCountFormat) then
+    Include(FWarnings, tWarningFormatSpecifier);
+  if (SourceCountLineBreak <> TargetCountLineBreak) then
+    Include(FWarnings, tWarningLineBreak);
+end;
 
 // -----------------------------------------------------------------------------
 //

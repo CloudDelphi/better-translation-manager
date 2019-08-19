@@ -181,6 +181,7 @@ type
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     ActionAutomationWebLookup: TAction;
+    ImageListState: TcxImageList;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -482,6 +483,8 @@ begin
 
     if (NeedReload) then
       LoadItem(Item, True);
+
+    Update;
   end;
 end;
 
@@ -2117,6 +2120,8 @@ begin
 end;
 
 procedure TFormMain.TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
+var
+  Translation: TLocalizerTranslation;
 begin
   if (AColumn = TreeListColumnTarget) then
   begin
@@ -2126,7 +2131,8 @@ begin
     LockUpdates;
     try
 
-      FocusedProperty.TranslatedValue[TargetLanguage] := VarToStr(Sender.InplaceEditor.EditValue);
+      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguage, VarToStr(Sender.InplaceEditor.EditValue));
+      Translation.UpdateWarnings;
 
       LoadFocusedPropertyNode;
     finally
@@ -2143,13 +2149,32 @@ var
 begin
   AIndex := -1;
 
-  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
+  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex, tlitStateIndex])) then
     Exit;
 
   Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
 
   if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
     Translation := nil;
+
+  if (AIndexType = tlitStateIndex) then
+  begin
+    if (Translation = nil) or (Translation.Warnings = []) then
+      Exit;
+
+    if (tWarningAccelerator in Translation.Warnings) then
+      AIndex := 0
+    else
+    if (tWarningFormatSpecifier in Translation.Warnings) then
+      AIndex := 1
+    else
+    if (tWarningLineBreak in Translation.Warnings) then
+      AIndex := 2
+    else
+      AIndex := 3;
+
+    Exit;
+  end;
 
   if (Prop.State = ItemStateUnused) then
     AIndex := 1
