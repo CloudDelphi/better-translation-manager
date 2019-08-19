@@ -312,6 +312,7 @@ type
     // Note:
     // Status > tStatusPending is considered "translated".
     // Take this into consideration if adding values or changing the order.
+    // See GetIsTranslated and SetStatus.
 
   TLocalizerTranslation = class
   strict private
@@ -322,6 +323,7 @@ type
     FUpdateCount: integer;
     FChanged: boolean;
   strict protected
+    function GetIsTranslated: boolean;
     procedure SetStatus(const Value: TTranslationStatus);
     procedure SetValue(const Value: string);
     procedure Changed;
@@ -339,6 +341,7 @@ type
     property Value: string read FValue write SetValue;
     property Language: TTargetLanguage read FLanguage;
     property Status: TTranslationStatus read FStatus write SetStatus;
+    property IsTranslated: boolean read GetIsTranslated;
   end;
 
   TLocalizerTranslations = class
@@ -1515,12 +1518,12 @@ begin
   BeginUpdate;
   try
 
-    FValue := Value;
-
     // If value changes then all existing translations are obsolete
     for Translation in FTranslations.Translations do
-      if (Translation.Value.Status in [tStatusProposed, tStatusTranslated]) then
+      if (Translation.Value.IsTranslated) then
         Translation.Value.Status := tStatusObsolete;
+
+    FValue := Value;
 
     Changed;
 
@@ -1565,10 +1568,17 @@ destructor TLocalizerTranslation.Destroy;
 begin
 //  FLanguage.Translations.Remove(Self);
 
-  if (FStatus > tStatusPending) then
+  if (IsTranslated) then
     Dec(FLanguage.FTranslatedCount);
 
   inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TLocalizerTranslation.GetIsTranslated: boolean;
+begin
+  Result := (FStatus > tStatusPending);
 end;
 
 // -----------------------------------------------------------------------------
