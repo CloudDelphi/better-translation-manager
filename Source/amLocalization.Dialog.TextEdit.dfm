@@ -9,11 +9,7 @@ object FormTextEditor: TFormTextEditor
   ClientWidth = 664
   Color = clBtnFace
   DoubleBuffered = True
-  Font.Charset = DEFAULT_CHARSET
-  Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'Tahoma'
-  Font.Style = []
+  ParentFont = True
   KeyPreview = True
   OldCreateOrder = False
   Position = poOwnerFormCenter
@@ -31,8 +27,6 @@ object FormTextEditor: TFormTextEditor
     BevelOuter = bvNone
     FullRepaint = False
     TabOrder = 0
-    ExplicitTop = 240
-    ExplicitWidth = 434
     DesignSize = (
       664
       36)
@@ -46,7 +40,6 @@ object FormTextEditor: TFormTextEditor
       Default = True
       ModalResult = 1
       TabOrder = 0
-      ExplicitLeft = 268
     end
     object ButtonCancel: TcxButton
       Left = 579
@@ -58,7 +51,6 @@ object FormTextEditor: TFormTextEditor
       Caption = 'Cancel'
       ModalResult = 2
       TabOrder = 1
-      ExplicitLeft = 349
     end
   end
   object EditText: TcxRichEdit
@@ -70,13 +62,11 @@ object FormTextEditor: TFormTextEditor
     Margins.Right = 4
     Margins.Bottom = 0
     Align = alClient
-    ParentFont = False
     PopupMenu = PopupActionBar1
+    Properties.MemoMode = True
     Properties.PlainText = True
+    Properties.ScrollBars = ssVertical
     TabOrder = 1
-    ExplicitLeft = 217
-    ExplicitWidth = 213
-    ExplicitHeight = 208
     Height = 267
     Width = 330
   end
@@ -100,7 +90,6 @@ object FormTextEditor: TFormTextEditor
     Font.Style = []
     ParentFont = False
     Spacing = 0
-    ExplicitWidth = 434
   end
   object EditSourceText: TcxRichEdit
     AlignWithMargins = True
@@ -111,10 +100,11 @@ object FormTextEditor: TFormTextEditor
     Margins.Right = 0
     Margins.Bottom = 0
     Align = alLeft
-    ParentFont = False
     PopupMenu = PopupActionBar1
+    Properties.MemoMode = True
     Properties.PlainText = True
     Properties.ReadOnly = True
+    Properties.ScrollBars = ssVertical
     Style.TextColor = clGrayText
     TabOrder = 3
     Height = 267
@@ -128,8 +118,6 @@ object FormTextEditor: TFormTextEditor
     HotZoneClassName = 'TcxSimpleStyle'
     AutoSnap = True
     ResizeUpdate = True
-    ExplicitLeft = 213
-    ExplicitHeight = 212
   end
   object ImageListNormal: TcxImageList
     SourceDPI = 96

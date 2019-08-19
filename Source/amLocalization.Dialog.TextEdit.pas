@@ -123,24 +123,24 @@ end;
 
 function TFormTextEditor.GetSourceText: string;
 begin
-  Result := EditSourceText.Lines.Text;
+  Result := EditSourceText.Text;
 end;
 
-function TFormTextEditor.GetText: string;
+procedure TFormTextEditor.SetSourceText(const Value: string);
 begin
-  Result := EditText.Lines.Text;
+  EditSourceText.Text := Value;
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TFormTextEditor.SetSourceText(const Value: string);
+function TFormTextEditor.GetText: string;
 begin
-  EditSourceText.Lines.Text := Value;
+  Result := EditText.Text;
 end;
 
 procedure TFormTextEditor.SetText(const Value: string);
 begin
-  EditText.Lines.Text := Value;
+  EditText.Text := Value;
 end;
 
 { TEditDelete }
