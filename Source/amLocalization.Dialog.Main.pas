@@ -7,16 +7,16 @@ uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
-  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes,
-  amLocalization.Model,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
   dxRibbonForm,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
-  dxRibbonCustomizationForm, cxStyles, cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges, Data.DB,
+  dxRibbonCustomizationForm, cxStyles, cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges,
   cxDBData, cxGridLevel, cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid, dxBar, dxSkinsForm,
   cxClasses, dxStatusBar, dxRibbonStatusBar, dxRibbon, cxTL, cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxMemo,
   cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
   cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
+  amLocalization.Model,
   amLocalization.Translator.Microsoft.Version3;
 
 
@@ -339,6 +339,9 @@ uses
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.Languages;
 
+resourcestring
+  sLocalizerFindNoMore = 'No more found';
+
 // -----------------------------------------------------------------------------
 
 type
@@ -456,15 +459,20 @@ begin
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       var
-        Value, TranslatedValue: string;
+        Value, SourceValue, TranslatedValue: string;
       begin
         if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
           Exit(True);
 
-        TranslatedValue := Prop.TranslatedValue[TargetLanguage];
+        TranslatedValue := SanitizeSpellCheckText(Prop.TranslatedValue[TargetLanguage]);
+        SourceValue := SanitizeSpellCheckText(Prop.Value);
 
-        if (FTranslator.Translate(SourceLocaleItem, TargetLanguageItem, Prop.Value, Value)) and (Value <> TranslatedValue) then
+        if (FTranslator.Translate(SourceLocaleItem, TargetLanguageItem, SourceValue, Value)) and (Value <> TranslatedValue) then
         begin
+          // Handle accelerator keys
+          if (SourceValue <> Prop.Value) and (Prop.Value.Contains('&')) and (not SourceValue.Contains('&')) then
+            Value := '&'+Value;
+
           Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
           NeedReload := True;
         end;
@@ -494,6 +502,9 @@ var
   ResourceWriter: IResourceWriter;
   Filename, Path: string;
   LocaleItem: TLocaleItem;
+resourcestring
+  sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
+  sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
 begin
   Filename := FLocalizerProject.SourceFilename;
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
@@ -506,7 +517,7 @@ begin
   Path := TPath.GetDirectoryName(Filename);
   Filename := TPath.GetFileName(Filename);
 
-  if (not PromptForFileName(Filename, '', '', 'Enter filename of resource module', Path)) then
+  if (not PromptForFileName(Filename, '', '', sLocalizerResourceModuleFilenamePrompt, Path)) then
     Exit;
 
   SaveCursor(crHourGlass);
@@ -532,7 +543,7 @@ begin
     ProjectProcessor.Free;
   end;
 
-  ShowMessage(Format('Resource module built:'#13'%s', [Filename]));
+  ShowMessage(Format(sLocalizerResourceModuleBuilt, [Filename]));
 
   LoadProject(FLocalizerProject, False);
 end;
@@ -597,6 +608,9 @@ procedure TFormMain.ActionImportFileSourceExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
   SaveFilename: string;
+resourcestring
+  sLocalizerSwitchSourceModuleTitle = 'Update project?';
+  sLocalizerSwitchSourceModule = 'Do you want to update the project to use this module as the source file?';
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
@@ -623,7 +637,7 @@ begin
 
     StatusBar.Panels[0].Text := 'Updated';
 
-    if (TaskMessageDlg('Update project?', 'Do you want to update the project to use this module as the source file?',
+    if (TaskMessageDlg(sLocalizerSwitchSourceModuleTitle, sLocalizerSwitchSourceModule,
       mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
     begin
       FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
@@ -729,7 +743,7 @@ begin
     end, False);
 
   if (not Found) then
-    ShowMessage('No more untranslated items found');
+    ShowMessage(sLocalizerFindNoMore);
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -838,6 +852,9 @@ var
   NeedReload: boolean;
   CountModule, CountItem, CountProp: integer;
   Node: TcxTreeListNode;
+resourcestring
+  sLocalizerPurgeStatusTitle = 'Purge completed.';
+  sLocalizerPurgeStatus = 'The following items was removed from the project:'#13#13'Modules: %d'#13'Items: %d'#13'Properties: %d';
 begin
   SaveCursor(crHourGlass);
 
@@ -970,7 +987,7 @@ begin
     TreeListItems.EndUpdate;
   end;
 
-  StatusBar.Panels[1].Text := Format('Purged %d modules, %d items, %d properties', [CountModule, CountItem, CountProp]);
+  TaskMessageDlg(sLocalizerPurgeStatusTitle, Format(sLocalizerPurgeStatus, [CountModule, CountItem, CountProp]), mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
@@ -1348,10 +1365,13 @@ end;
 function TFormMain.CheckSave: boolean;
 var
   Res: integer;
+resourcestring
+  sLocalizerSavePromptTitle = 'Project has not been saved';
+  sLocalizerSavePrompt = 'Your changes has not been saved.'#13#13'Do you want to save them now?';
 begin
   if (FLocalizerProject.Modified) then
   begin
-    Res := TaskMessageDlg('Project has not been saved', 'Your changes has not been saved.'#13#13'Do you want to save them now?',
+    Res := TaskMessageDlg(sLocalizerSavePromptTitle, sLocalizerSavePrompt,
       mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
 
     if (Res = mrCancel) then
@@ -1772,9 +1792,11 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
+resourcestring
+  sLocalizerStatusCount = 'Translate: %d, Ignore: %d, Hold: %d';
 begin
   StatusBar.Panels[0].Text := 'Modified';
-  StatusBar.Panels[2].Text := Format('Translate: %d, Ignore: %d, Hold: %d',
+  StatusBar.Panels[2].Text := Format(sLocalizerStatusCount,
     [FLocalizerProject.StatusCount[ItemStatusTranslate], FLocalizerProject.StatusCount[ItemStatusDontTranslate], FLocalizerProject.StatusCount[ItemStatusHold]]);
 end;
 
