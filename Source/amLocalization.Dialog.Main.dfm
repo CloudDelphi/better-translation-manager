@@ -6,11 +6,7 @@ object FormMain: TFormMain
   ClientHeight = 643
   ClientWidth = 964
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
-  Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'Tahoma'
-  Font.Style = []
+  ParentFont = True
   OldCreateOrder = False
   OnClick = ActionMainExecute
   OnCloseQuery = FormCloseQuery
@@ -42,6 +38,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -71,7 +68,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -345,6 +341,7 @@ object FormMain: TFormMain
     PopupMenu = PopupMenuTree
     StateImages = ImageListState
     Styles.Selection = StyleSelected
+    Styles.OnGetContentStyle = TreeListItemsStylesGetContentStyle
     TabOrder = 4
     OnEditing = TreeListItemsEditing
     OnEditValueChanged = TreeListItemsEditValueChanged
@@ -3667,8 +3664,6 @@ object FormMain: TFormMain
       TextColor = 16742656
     end
     object StyleNeedTranslation: TcxStyle
-      AssignedValues = [svColor]
-      Color = 15654911
     end
     object StyleDontTranslate: TcxStyle
       AssignedValues = [svColor, svTextColor]

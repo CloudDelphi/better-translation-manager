@@ -241,6 +241,7 @@ type
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure ActionAutomationWebLookupExecute(Sender: TObject);
     procedure ActionAutomationWebLookupUpdate(Sender: TObject);
+    procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -840,6 +841,7 @@ begin
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
   ClearTargetLanguage;
+  FTranslationCounts.Clear;
 
   TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
   FLocalizerProject.Modified := False;
@@ -852,14 +854,14 @@ begin
     if (BestLanguage = nil) or (FLocalizerProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
       BestLanguage := FLocalizerProject.TargetLanguages[i];
 
-  LoadProject(FLocalizerProject);
-
   if (BestLanguage <> nil) then
   begin
     TargetLanguageID := BestLanguage.LanguageID;
     FFilterTargetLanguages := True;
   end else
     FFilterTargetLanguages := False;
+
+  LoadProject(FLocalizerProject);
 end;
 
 procedure TFormMain.ActionProjectPurgeExecute(Sender: TObject);
@@ -2202,6 +2204,34 @@ begin
       AIndex := -1; // Should never happen
   end else
     AIndex := 6;
+end;
+
+procedure TFormMain.TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+begin
+  Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
+
+  if (Prop.State = ItemStateUnused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
+  begin
+    AStyle := StyleDontTranslate;
+    Exit;
+  end;
+
+  if (Prop.EffectiveStatus = ItemStatusHold) then
+  begin
+    AStyle := StyleHold;
+    Exit;
+  end;
+
+  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+    Translation := nil;
+
+  if (Translation <> nil) and (Translation.IsTranslated) then
+    AStyle := StyleComplete
+  else
+    AStyle := StyleNeedTranslation;
 end;
 
 procedure TFormMain.TreeListModulesEnter(Sender: TObject);
