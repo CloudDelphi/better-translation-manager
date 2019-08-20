@@ -182,6 +182,9 @@ type
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     ActionAutomationWebLookup: TAction;
     ImageListState: TcxImageList;
+    ActionAutomationMemory: TAction;
+    ActionAutomationMemoryAdd: TAction;
+    ActionAutomationMemoryTranslate: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -681,13 +684,86 @@ begin
 end;
 
 procedure TFormMain.ActionFindNextUntranslatedExecute(Sender: TObject);
+
+  function CheckProperty(Prop: TLocalizerProperty): boolean;
+  var
+    Translation: TLocalizerTranslation;
+  begin
+    if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+      Exit(False);
+
+    Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
+  end;
+
 var
-  CurrentModule: TLocalizerModule;
-  CurrentProp: TLocalizerProperty;
-  Found: boolean;
+  Module: TLocalizerModule;
+  Prop: TLocalizerProperty;
+  ModuleNode: TcxTreeListNode;
+  PropNode: TcxTreeListNode;
 begin
   SaveCursor(crHourGlass);
 
+  ModuleNode := TreeListModules.FocusedNode;
+  PropNode := TreeListItems.FocusedNode;
+
+  while (ModuleNode <> nil) do
+  begin
+    if (PropNode <> nil) then
+    begin
+      // Check next prop
+      PropNode := PropNode.GetNextSiblingVisible;
+    end else
+    begin
+      // Determine if module has any valid properties.
+      // If so we load the property list and find the first node
+      Module := TLocalizerModule(ModuleNode.Data);
+      if (not Module.Traverse(
+        function(Prop: TLocalizerProperty): boolean
+        var
+          Translation: TLocalizerTranslation;
+        begin
+          if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+            Exit(True);
+
+          Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Status <> tStatusPending);
+        end, False)) then
+      begin
+        // Select module node - this loads the property nodes
+        ModuleNode.MakeVisible;
+        ModuleNode.Focused := True;
+
+        // Start with the top item
+        PropNode := TreeListItems.Root.GetFirstChildVisible;
+      end;
+    end;
+
+    while (PropNode <> nil) do
+    begin
+      Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
+
+      if (CheckProperty(Prop)) then
+      begin
+        // Select property tree node
+        PropNode.MakeVisible;
+        PropNode.Focused := True;
+
+        TreeListItems.SetFocus;
+
+        Exit;
+      end;
+
+      // Check next prop
+      PropNode := PropNode.GetNextSiblingVisible;
+    end;
+
+    ModuleNode := ModuleNode.GetNextSiblingVisible;
+    PropNode := nil;
+  end;
+
+  // The following finds the next untranslated in physical order.
+  // Since this probably differ from the logical order due to the trees being sorted,
+  // it makes the search order appear random to the user.
+(*
   CurrentModule := FocusedModule;
   CurrentProp := FocusedProperty;
 
@@ -727,16 +803,19 @@ begin
         if (ModuleNode = nil) or (ModuleNode.IsHidden) then
           Exit(True); // ModuleNode might have been hidden by a filter
 
+        // Select module node - this loads the property nodes
+        ModuleNode.MakeVisible;
+        ModuleNode.Focused := True;
+
         // Select property tree node
         PropNode := TreeListItems.NodeFromHandle(Prop);
         if (PropNode = nil) or (PropNode.IsHidden) then
           Exit(True); // PropNode might have been hidden by a filter
 
-        ModuleNode.MakeVisible;
-        ModuleNode.Focused := True;
-
         PropNode.MakeVisible;
         PropNode.Focused := True;
+
+        TreeListItems.SetFocus;
 
         // Done
         Found := True;
@@ -747,7 +826,8 @@ begin
     end, False);
 
   if (not Found) then
-    ShowMessage(sLocalizerFindNoMore);
+*)
+  ShowMessage(sLocalizerFindNoMore);
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -842,6 +922,8 @@ begin
 
   ClearTargetLanguage;
   FTranslationCounts.Clear;
+  TreeListItems.Clear;
+  TreeListModules.Clear;
 
   TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
   FLocalizerProject.Modified := False;
