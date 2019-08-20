@@ -53,7 +53,7 @@ object FormNewProject: TFormNewProject
     end
     object ComboBoxSourceLanguage: TcxExtLookupComboBox
       Left = 106
-      Top = 37
+      Top = 38
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
       Style.HotTrack = False
@@ -62,7 +62,7 @@ object FormNewProject: TFormNewProject
     end
     object ButtonOK: TcxButton
       Left = 276
-      Top = 76
+      Top = 93
       Width = 75
       Height = 25
       Action = ActionOK
@@ -72,7 +72,7 @@ object FormNewProject: TFormNewProject
     end
     object ButtonCancel: TcxButton
       Left = 357
-      Top = 76
+      Top = 93
       Width = 75
       Height = 25
       Action = ActionCancel
@@ -85,7 +85,7 @@ object FormNewProject: TFormNewProject
       AlignVert = avTop
       ButtonOptions.Buttons = <>
       Hidden = True
-      ItemIndex = 3
+      ItemIndex = 2
       ShowBorder = False
       Index = -1
     end
@@ -94,7 +94,7 @@ object FormNewProject: TFormNewProject
       CaptionOptions.Text = 'Source application:'
       Control = EditSourceApplication
       ControlOptions.AlignHorz = ahLeft
-      ControlOptions.OriginalHeight = 21
+      ControlOptions.OriginalHeight = 22
       ControlOptions.OriginalWidth = 326
       ControlOptions.ShowBorder = False
       Index = 0
@@ -136,11 +136,18 @@ object FormNewProject: TFormNewProject
       ButtonOptions.Buttons = <>
       LayoutDirection = ldHorizontal
       ShowBorder = False
-      Index = 3
+      Index = 4
     end
     object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
       Parent = dxLayoutControl1Group_Root
       CaptionOptions.Text = 'Separator'
+      Index = 3
+    end
+    object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
+      Parent = dxLayoutControl1Group_Root
+      CaptionOptions.Text = 'Empty Space Item'
+      SizeOptions.Height = 10
+      SizeOptions.Width = 10
       Index = 2
     end
   end

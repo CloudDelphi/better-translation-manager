@@ -29,6 +29,7 @@ type
     dxLayoutItem5: TdxLayoutItem;
     ActionList1: TActionList;
     ActionApplyFilter: TAction;
+    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure ActionApplyFilterExecute(Sender: TObject);

@@ -58,7 +58,7 @@ object FormLanguages: TFormLanguages
       Left = 103
       Top = 37
       Width = 488
-      Height = 256
+      Height = 238
       Columns = 2
       EditValueFormat = cvfIndices
       Items = <
@@ -79,7 +79,7 @@ object FormLanguages: TFormLanguages
     end
     object CheckBoxApplyFilter: TcxCheckBox
       Left = 103
-      Top = 299
+      Top = 281
       Action = ActionApplyFilter
       Style.HotTrack = False
       TabOrder = 2
@@ -90,7 +90,7 @@ object FormLanguages: TFormLanguages
       AlignVert = avClient
       ButtonOptions.Buttons = <>
       Hidden = True
-      ItemIndex = 1
+      ItemIndex = 3
       ShowBorder = False
       Index = -1
     end
@@ -132,13 +132,13 @@ object FormLanguages: TFormLanguages
       ButtonOptions.Buttons = <>
       LayoutDirection = ldHorizontal
       ShowBorder = False
-      Index = 4
+      Index = 5
     end
     object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
       Parent = LayoutControlGroup_Root
       AlignVert = avBottom
       CaptionOptions.Text = 'Separator'
-      Index = 3
+      Index = 4
     end
     object dxLayoutItem1: TdxLayoutItem
       Parent = LayoutControlGroup_Root
@@ -157,10 +157,17 @@ object FormLanguages: TFormLanguages
       CaptionOptions.ShowAccelChar = False
       CaptionOptions.Text = ' '
       Control = CheckBoxApplyFilter
-      ControlOptions.OriginalHeight = 19
+      ControlOptions.OriginalHeight = 21
       ControlOptions.OriginalWidth = 85
       ControlOptions.ShowBorder = False
       Index = 2
+    end
+    object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
+      Parent = LayoutControlGroup_Root
+      CaptionOptions.Text = 'Empty Space Item'
+      SizeOptions.Height = 10
+      SizeOptions.Width = 10
+      Index = 3
     end
   end
   object LayoutLookAndFeelList: TdxLayoutLookAndFeelList

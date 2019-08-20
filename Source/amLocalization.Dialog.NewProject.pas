@@ -32,6 +32,7 @@ type
     ActionList1: TActionList;
     ActionOK: TAction;
     ActionCancel: TAction;
+    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
     procedure ActionCancelExecute(Sender: TObject);
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionOKUpdate(Sender: TObject);
