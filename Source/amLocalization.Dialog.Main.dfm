@@ -38,7 +38,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -54,6 +53,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -245,7 +245,7 @@ object FormMain: TFormMain
       Align = alBottom
       TabOrder = 1
       AutoSize = True
-      LayoutLookAndFeel = LayoutSkinLookAndFeel
+      LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
       object LabelCountTranslated: TcxLabel
         Left = 66
         Top = 6
@@ -705,7 +705,7 @@ object FormMain: TFormMain
           Hint = 'Settings'
           OnClick = BarManagerBarProofingCaptionButtons0Click
         end>
-      DockedLeft = 241
+      DockedLeft = 355
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -771,6 +771,10 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton13'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton25'
         end
         item
           Visible = True
@@ -1059,6 +1063,10 @@ object FormMain: TFormMain
     end
     object dxBarButton24: TdxBarButton
       Action = ActionAutomationMemoryTranslate
+      Category = 0
+    end
+    object dxBarButton25: TdxBarButton
+      Action = ActionFindNext
       Category = 0
     end
   end
@@ -3465,6 +3473,7 @@ object FormMain: TFormMain
       Caption = 'Find and replace'
       Hint = 'Find and replace text'
       ImageIndex = 19
+      Visible = False
       OnUpdate = ActionHasModulesUpdate
     end
     object ActionMain: TAction
@@ -3530,6 +3539,12 @@ object FormMain: TFormMain
       Caption = 'Translate from dictionary'
       Hint = 'Translate the selected items from translation memory'
       ImageIndex = 25
+    end
+    object ActionFindNext: TAction
+      Category = 'Find'
+      Caption = 'Find next'
+      OnExecute = ActionFindNextExecute
+      OnUpdate = ActionFindNextUpdate
     end
   end
   object OpenDialogProject: TOpenDialog
@@ -3883,12 +3898,6 @@ object FormMain: TFormMain
     Left = 552
     Top = 376
   end
-  object FindDialog: TFindDialog
-    Options = [frDown, frHideUpDown]
-    OnFind = FindDialogFind
-    Left = 72
-    Top = 352
-  end
   object ReplaceDialog: TReplaceDialog
     Left = 164
     Top = 380
@@ -3966,15 +3975,6 @@ object FormMain: TFormMain
       AssignedValues = [svColor, svTextColor]
       Color = clHighlight
       TextColor = clHighlightText
-    end
-  end
-  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
-    Left = 316
-    Top = 504
-    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
-      Offsets.RootItemsAreaOffsetHorz = 4
-      Offsets.RootItemsAreaOffsetVert = 4
-      PixelsPerInch = 96
     end
   end
   object ImageListState: TcxImageList

@@ -5,14 +5,12 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxClasses,
-  dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, Vcl.Menus, dxLayoutcxEditAdapters,
+  dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, Vcl.Menus, dxLayoutcxEditAdapters,
   dxLayoutControlAdapters, cxCheckBox, cxCustomListBox, cxCheckListBox, cxGroupBox, dxCheckGroupBox, Vcl.StdCtrls, cxButtons,
   cxTextEdit, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox, System.Actions, Vcl.ActnList;
 
 type
   TFormLanguages = class(TForm)
-    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
-    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     LayoutControl: TdxLayoutControl;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
     ButtonOK: TcxButton;

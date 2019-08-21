@@ -93,4 +93,13 @@ object DataModuleMain: TDataModuleMain
       end
     end
   end
+  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
+    Left = 192
+    Top = 17
+    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
+      Offsets.RootItemsAreaOffsetHorz = 4
+      Offsets.RootItemsAreaOffsetVert = 4
+      PixelsPerInch = 96
+    end
+  end
 end

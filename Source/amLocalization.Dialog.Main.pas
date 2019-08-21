@@ -17,7 +17,8 @@ uses
   cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
   amLocalization.Model,
-  amLocalization.Translator.Microsoft.Version3;
+  amLocalization.Translator.Microsoft.Version3,
+  amLocalization.Dialog.Search;
 
 
 const
@@ -59,7 +60,7 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TFormMain = class(TdxRibbonForm)
+  TFormMain = class(TdxRibbonForm, ILocalizerSearchHost)
     OpenDialogXLIFF: TOpenDialog;
     BarManager: TdxBarManager;
     RibbonMain: TdxRibbon;
@@ -137,7 +138,6 @@ type
     ActionFindReplace: TAction;
     dxBarButton13: TdxBarButton;
     dxBarButton14: TdxBarButton;
-    FindDialog: TFindDialog;
     ReplaceDialog: TReplaceDialog;
     PopupMenuTree: TdxRibbonPopupMenu;
     SplitterTreeLists: TcxSplitter;
@@ -178,13 +178,13 @@ type
     LabelCountTranslated: TcxLabel;
     dxLayoutItem1: TdxLayoutItem;
     LabelCountPending: TcxLabel;
-    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
-    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     ActionAutomationWebLookup: TAction;
     ImageListState: TcxImageList;
     ActionAutomationMemory: TAction;
     ActionAutomationMemoryAdd: TAction;
     ActionAutomationMemoryTranslate: TAction;
+    dxBarButton25: TdxBarButton;
+    ActionFindNext: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -220,7 +220,6 @@ type
     procedure ActionHasItemFocusedUpdate(Sender: TObject);
     procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
     procedure ActionFindSearchExecute(Sender: TObject);
-    procedure FindDialogFind(Sender: TObject);
     procedure ActionProjectSaveUpdate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure ActionHasProjectUpdate(Sender: TObject);
@@ -245,6 +244,8 @@ type
     procedure ActionAutomationWebLookupExecute(Sender: TObject);
     procedure ActionAutomationWebLookupUpdate(Sender: TObject);
     procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
+    procedure ActionFindNextExecute(Sender: TObject);
+    procedure ActionFindNextUpdate(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -253,12 +254,12 @@ type
     FSpellCheckingWord: boolean;
     FSpellCheckingString: boolean;
     FSpellCheckingStringResult: boolean;
-    FFindFirst: boolean;
     FLocalizerDataSource: TLocalizerDataSource;
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
     FTranslator: TDataModuleTranslatorMicrosoftV3;
+    FSearchProvider: ILocalizerSearchProvider;
   protected
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
@@ -287,6 +288,7 @@ type
     procedure LoadFocusedPropertyNode;
     procedure ReloadNode(Node: TcxTreeListNode); overload;
     procedure DisplayModuleStats;
+    procedure ViewProperty(Prop: TLocalizerProperty);
   protected
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
@@ -297,10 +299,16 @@ type
     procedure UnlockUpdates;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
     function CheckSave: boolean;
+    procedure ClearDependents;
   protected
     function GetTranslatedCount(Module: TLocalizerModule): integer;
     procedure InvalidateTranslatedCount(Module: TLocalizerModule);
     procedure RemoveTranslatedCount(Module: TLocalizerModule);
+  protected
+    // ILocalizerSearchHost
+    function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
+    function ILocalizerSearchHost.GetTargetLanguage = GetTargetLanguage;
+    procedure ILocalizerSearchHost.ViewItem = ViewProperty;
   public
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
@@ -555,57 +563,6 @@ begin
   LoadProject(FLocalizerProject, False);
 end;
 
-procedure TFormMain.FindDialogFind(Sender: TObject);
-var
-  Node: TcxTreeListNode;
-  Value: string;
-  StringSearchOptions: TStringSearchOptions;
-begin
-  SaveCursor(crAppStart);
-
-(*
-  if (FFindFirst) or (TreeList.FocusedNode = nil) then
-    Node := TreeList.Root
-  else
-    // Skip current node
-    Node := TreeList.FocusedNode.GetNext;
-
-  while (Node <> nil) do
-  begin
-    if (Node.Data <> nil) and (TObject(Node.Data) is TLocalizerProperty) then
-    begin
-      Value := TLocalizerProperty(Node.Data).Value;
-
-      StringSearchOptions := [soDown];
-      if (frMatchCase in FindDialog.Options) then
-        Include(StringSearchOptions, soMatchCase);
-      if (frHideWholeWord in FindDialog.Options) then
-        Include(StringSearchOptions, soWholeWord);
-
-      if (SearchBuf(PChar(Value), Length(Value), 0, 0, FindDialog.FindText, StringSearchOptions) <> nil) then
-        break;
-    end;
-
-    Node := Node.GetNext;
-  end;
-
-  if (Node <> nil) then
-  begin
-    Node.MakeVisible;
-    Node.Focused := True;
-  end else
-  begin
-    if (FFindFirst) then
-      ShowMessage('Not found')
-    else
-      ShowMessage('No more found');
-  end;
-
-  FFindFirst := False;
-  FindDialog.Options := FindDialog.Options + [frfindNext];
-*)
-end;
-
 procedure TFormMain.ActionImportFileExecute(Sender: TObject);
 begin
 //
@@ -832,9 +789,20 @@ end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
 begin
-  FFindFirst := True;
-  FindDialog.Options := FindDialog.Options - [frfindNext]; // Bug: frfindNext always visible regardless of option
-  FindDialog.Execute(Handle);
+  if (FSearchProvider = nil) then
+    FSearchProvider := TFormSearch.Create(Self);
+
+  FSearchProvider.Show;
+end;
+
+procedure TFormMain.ActionFindNextExecute(Sender: TObject);
+begin
+  FSearchProvider.SelectNextResult;
+end;
+
+procedure TFormMain.ActionFindNextUpdate(Sender: TObject);
+begin
+  TAction(sender).Enabled := (FSearchProvider <> nil) and (FSearchProvider.CanSelectNextResult);
 end;
 
 procedure TFormMain.ActionImportXLIFFExecute(Sender: TObject);
@@ -920,6 +888,7 @@ begin
 
   OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
+  ClearDependents;
   ClearTargetLanguage;
   FTranslationCounts.Clear;
   TreeListItems.Clear;
@@ -1455,7 +1424,10 @@ begin
         begin
           // If we delete current target language we must clear references to it in the GUI
           if (Language = FTargetLanguage) then
+          begin
+            ClearDependents;
             ClearTargetLanguage;
+          end;
 
           // Delete translations
           FLocalizerProject.Traverse(
@@ -1664,6 +1636,7 @@ end;
 
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
 begin
+  ClearDependents;
   ClearTargetLanguage;
 
   BarEditItemTargetLanguage.EditValue := Value;
@@ -1673,8 +1646,17 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.ClearDependents;
+begin
+  if (FSearchProvider <> nil) then
+    FSearchProvider.Clear;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
 begin
+  ClearDependents;
   TreeListModules.Clear;
   ClearTargetLanguage;
 
@@ -1867,6 +1849,7 @@ var
   FilenameDic, FilenameAff: string;
   SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
 begin
+  ClearDependents;
   ClearTargetLanguage;
 
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
@@ -2002,7 +1985,6 @@ end;
 procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
 var
   SanitizedWord: string;
-  Node: TcxTreeListNode;
   i: integer;
   HasLetters: boolean;
 begin
@@ -2048,25 +2030,7 @@ begin
   AHandled := True;
 
   if (not AValid) and (FSpellCheckProp <> nil) then
-  begin
-    // Find and select module
-    Node := TreeListModules.Find(FSpellCheckProp.Item.Module, nil, False, True, TreeListFindFilter);
-
-    if (Node <> nil) then
-    begin
-      Node.MakeVisible;
-      Node.Focused := True;
-
-      // Find and select property node
-      Node := TreeListItems.NodeFromHandle(FSpellCheckProp);
-      if (Node <> nil) then
-      begin
-        Node.MakeVisible;
-        Node.Focused := True;
-      end;
-      Application.ProcessMessages;
-    end;
-  end;
+    ViewProperty(FSpellCheckProp);
 end;
 
 procedure TFormMain.SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
@@ -2121,6 +2085,32 @@ begin
   end;
 
   Result := (TdxSpellCheckerCracker(SpellChecker).LastDialogResult = mrOK);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ViewProperty(Prop: TLocalizerProperty);
+var
+  Node: TcxTreeListNode;
+begin
+  // Find and select module
+  Node := TreeListModules.Find(Prop.Item.Module, nil, False, True, TreeListFindFilter);
+
+  if (Node <> nil) then
+  begin
+    Node.MakeVisible;
+    Node.Focused := True;
+
+    // Find and select property node
+    Node := TreeListItems.NodeFromHandle(Prop);
+
+    if (Node <> nil) then
+    begin
+      Node.MakeVisible;
+      Node.Focused := True;
+      TreeListItems.SetFocus;
+    end;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

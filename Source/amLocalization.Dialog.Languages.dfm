@@ -21,10 +21,10 @@ object FormLanguages: TFormLanguages
     Align = alClient
     TabOrder = 0
     AutoSize = True
-    LayoutLookAndFeel = LayoutSkinLookAndFeel
+    LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
     object ComboBoxSourceLanguage: TcxExtLookupComboBox
-      Left = 103
-      Top = 10
+      Left = 99
+      Top = 6
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
       Properties.View = DataModuleMain.GridTableViewLanguages
@@ -35,8 +35,8 @@ object FormLanguages: TFormLanguages
       Width = 145
     end
     object ButtonOK: TcxButton
-      Left = 435
-      Top = 336
+      Left = 439
+      Top = 340
       Width = 75
       Height = 25
       Caption = 'OK'
@@ -45,8 +45,8 @@ object FormLanguages: TFormLanguages
       TabOrder = 3
     end
     object ButtonCancel: TcxButton
-      Left = 516
-      Top = 336
+      Left = 520
+      Top = 340
       Width = 75
       Height = 25
       Cancel = True
@@ -55,10 +55,10 @@ object FormLanguages: TFormLanguages
       TabOrder = 4
     end
     object CheckListBoxLanguages: TcxCheckListBox
-      Left = 103
-      Top = 37
-      Width = 488
-      Height = 238
+      Left = 99
+      Top = 33
+      Width = 496
+      Height = 248
       Columns = 2
       EditValueFormat = cvfIndices
       Items = <
@@ -78,8 +78,8 @@ object FormLanguages: TFormLanguages
       TabOrder = 1
     end
     object CheckBoxApplyFilter: TcxCheckBox
-      Left = 103
-      Top = 281
+      Left = 99
+      Top = 287
       Action = ActionApplyFilter
       Style.HotTrack = False
       TabOrder = 2
@@ -157,7 +157,7 @@ object FormLanguages: TFormLanguages
       CaptionOptions.ShowAccelChar = False
       CaptionOptions.Text = ' '
       Control = CheckBoxApplyFilter
-      ControlOptions.OriginalHeight = 21
+      ControlOptions.OriginalHeight = 19
       ControlOptions.OriginalWidth = 85
       ControlOptions.ShowBorder = False
       Index = 2
@@ -168,14 +168,6 @@ object FormLanguages: TFormLanguages
       SizeOptions.Height = 10
       SizeOptions.Width = 10
       Index = 3
-    end
-  end
-  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
-    Left = 68
-    Top = 96
-    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
-      LookAndFeel.NativeStyle = False
-      PixelsPerInch = 96
     end
   end
   object ActionList1: TActionList

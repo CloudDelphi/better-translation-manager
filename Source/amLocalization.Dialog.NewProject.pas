@@ -10,12 +10,12 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxClasses, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
   cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
-  cxGridDBTableView, dxLayoutLookAndFeels, System.Actions, Vcl.ActnList, cxMRUEdit;
+  cxGridDBTableView, System.Actions, Vcl.ActnList, cxMRUEdit;
 
 type
   TFormNewProject = class(TForm)
-    dxLayoutControl1Group_Root: TdxLayoutGroup;
-    dxLayoutControl1: TdxLayoutControl;
+    LayoutControlGroup_Root: TdxLayoutGroup;
+    LayoutControl: TdxLayoutControl;
     EditSourceApplication: TcxMRUEdit;
     dxLayoutItem1: TdxLayoutItem;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
@@ -27,8 +27,6 @@ type
     dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     FileOpenDialogApplication: TFileOpenDialog;
-    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
-    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     ActionList1: TActionList;
     ActionOK: TAction;
     ActionCancel: TAction;
@@ -54,7 +52,8 @@ implementation
 {$R *.dfm}
 
 uses
-  IOUtils;
+  IOUtils,
+  amLocalization.Data.Main;
 
 procedure TFormNewProject.ActionCancelExecute(Sender: TObject);
 begin

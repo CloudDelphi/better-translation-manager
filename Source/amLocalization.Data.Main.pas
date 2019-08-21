@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, Data.DB, Datasnap.DBClient, cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid,
-  amLocalization.Model;
+  amLocalization.Model, dxLayoutLookAndFeels;
 
 type
   TDataModuleMain = class(TDataModule)
@@ -27,6 +27,8 @@ type
     GridTableViewTargetLanguagesLocaleName: TcxGridDBColumn;
     GridTableViewTargetLanguagesLanguageName: TcxGridDBColumn;
     GridTableViewTargetLanguagesCountryName: TcxGridDBColumn;
+    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
+    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);

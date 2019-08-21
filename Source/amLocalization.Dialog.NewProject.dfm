@@ -12,17 +12,17 @@ object FormNewProject: TFormNewProject
   Position = poMainFormCenter
   PixelsPerInch = 96
   TextHeight = 13
-  object dxLayoutControl1: TdxLayoutControl
+  object LayoutControl: TdxLayoutControl
     Left = 0
     Top = 0
     Width = 471
     Height = 193
     TabOrder = 0
     AutoSize = True
-    LayoutLookAndFeel = LayoutSkinLookAndFeel
+    LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
     object EditSourceApplication: TcxMRUEdit
-      Left = 106
-      Top = 10
+      Left = 102
+      Top = 6
       Properties.ButtonGlyph.SourceDPI = 96
       Properties.ButtonGlyph.Data = {
         89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
@@ -52,8 +52,8 @@ object FormNewProject: TFormNewProject
       Width = 326
     end
     object ComboBoxSourceLanguage: TcxExtLookupComboBox
-      Left = 106
-      Top = 38
+      Left = 102
+      Top = 33
       Properties.DropDownAutoSize = True
       Properties.DropDownSizeable = True
       Style.HotTrack = False
@@ -61,8 +61,8 @@ object FormNewProject: TFormNewProject
       Width = 145
     end
     object ButtonOK: TcxButton
-      Left = 276
-      Top = 93
+      Left = 272
+      Top = 88
       Width = 75
       Height = 25
       Action = ActionOK
@@ -71,8 +71,8 @@ object FormNewProject: TFormNewProject
       TabOrder = 2
     end
     object ButtonCancel: TcxButton
-      Left = 357
-      Top = 93
+      Left = 353
+      Top = 88
       Width = 75
       Height = 25
       Action = ActionCancel
@@ -80,7 +80,7 @@ object FormNewProject: TFormNewProject
       ModalResult = 2
       TabOrder = 3
     end
-    object dxLayoutControl1Group_Root: TdxLayoutGroup
+    object LayoutControlGroup_Root: TdxLayoutGroup
       AlignHorz = ahLeft
       AlignVert = avTop
       ButtonOptions.Buttons = <>
@@ -90,17 +90,17 @@ object FormNewProject: TFormNewProject
       Index = -1
     end
     object dxLayoutItem1: TdxLayoutItem
-      Parent = dxLayoutControl1Group_Root
+      Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'Source application:'
       Control = EditSourceApplication
       ControlOptions.AlignHorz = ahLeft
-      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalHeight = 21
       ControlOptions.OriginalWidth = 326
       ControlOptions.ShowBorder = False
       Index = 0
     end
     object dxLayoutItem2: TdxLayoutItem
-      Parent = dxLayoutControl1Group_Root
+      Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'Source language:'
       Control = ComboBoxSourceLanguage
       ControlOptions.AlignHorz = ahLeft
@@ -131,7 +131,7 @@ object FormNewProject: TFormNewProject
       Index = 1
     end
     object dxLayoutGroup1: TdxLayoutGroup
-      Parent = dxLayoutControl1Group_Root
+      Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'New Group'
       ButtonOptions.Buttons = <>
       LayoutDirection = ldHorizontal
@@ -139,12 +139,12 @@ object FormNewProject: TFormNewProject
       Index = 4
     end
     object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
-      Parent = dxLayoutControl1Group_Root
+      Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'Separator'
       Index = 3
     end
     object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
-      Parent = dxLayoutControl1Group_Root
+      Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'Empty Space Item'
       SizeOptions.Height = 10
       SizeOptions.Width = 10
@@ -169,14 +169,6 @@ object FormNewProject: TFormNewProject
     Options = [fdoPathMustExist, fdoFileMustExist]
     Left = 176
     Top = 128
-  end
-  object LayoutLookAndFeelList: TdxLayoutLookAndFeelList
-    Left = 68
-    Top = 96
-    object LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel
-      LookAndFeel.NativeStyle = False
-      PixelsPerInch = 96
-    end
   end
   object ActionList1: TActionList
     Left = 268
