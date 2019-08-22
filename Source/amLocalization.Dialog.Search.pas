@@ -140,6 +140,7 @@ uses
   RegularExpressionsCore,
   dxMessages,
   amCursorService,
+  amShell,
   amLocalization.Data.Main;
 
 resourcestring
@@ -568,7 +569,7 @@ begin
 
   RegExHelpURL := Format('https://regex101.com/?regex=%s&options=%s', [EditSearchText.Text, s]);
 
-//  DisplayURL(RegExHelpURL, Self);
+  Shell.DisplayURL(RegExHelpURL, Self);
 end;
 
 // -----------------------------------------------------------------------------
