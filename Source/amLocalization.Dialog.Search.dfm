@@ -3,9 +3,11 @@ object FormSearch: TFormSearch
   Top = 0
   BorderIcons = [biSystemMenu]
   Caption = 'Find'
-  ClientHeight = 345
-  ClientWidth = 635
+  ClientHeight = 349
+  ClientWidth = 717
   Color = clBtnFace
+  Constraints.MinHeight = 300
+  Constraints.MinWidth = 500
   ParentFont = True
   OldCreateOrder = False
   Position = poMainFormCenter
@@ -16,27 +18,27 @@ object FormSearch: TFormSearch
   object LayoutControl: TdxLayoutControl
     Left = 0
     Top = 0
-    Width = 635
-    Height = 345
+    Width = 717
+    Height = 349
     Align = alClient
     TabOrder = 0
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitWidth = 645
-    ExplicitHeight = 391
+    ExplicitWidth = 635
+    ExplicitHeight = 345
     DesignSize = (
-      635
-      345)
+      717
+      349)
     object EditSearchText: TcxTextEdit
       Left = 35
       Top = 6
       Anchors = [akLeft, akTop, akRight]
       Style.HotTrack = False
       TabOrder = 0
-      Width = 296
+      Width = 393
     end
     object ComboBoxSearchScope: TcxCheckComboBox
-      Left = 350
-      Top = 6
+      Left = 35
+      Top = 33
       Anchors = [akTop, akRight]
       Properties.Items = <
         item
@@ -60,34 +62,34 @@ object FormSearch: TFormSearch
       Width = 121
     end
     object CheckBoxSearchAll: TcxCheckBox
-      Left = 489
+      Left = 446
       Top = 6
-      Action = ActionGlobal
+      Action = ActionOptionGlobal
       Style.HotTrack = False
       TabOrder = 2
       Transparent = True
     end
     object CheckBoxCaseSensitive: TcxCheckBox
-      Left = 489
-      Top = 31
-      Action = ActionCaseSensitive
+      Left = 446
+      Top = 25
+      Action = ActionOptionCaseSensitive
       Style.HotTrack = False
       Style.TransparentBorder = True
       TabOrder = 3
       Transparent = True
     end
     object CheckBoxRegExp: TcxCheckBox
-      Left = 489
-      Top = 81
-      Action = ActionRegExp
+      Left = 446
+      Top = 44
+      Action = ActionOptionRegExp
       Style.HotTrack = False
       Style.TransparentBorder = True
-      TabOrder = 5
+      TabOrder = 4
       Transparent = True
     end
     object ButtonRegExHelp: TcxButton
-      Left = 608
-      Top = 81
+      Left = 565
+      Top = 44
       Width = 21
       Height = 21
       Cursor = crHandPoint
@@ -131,35 +133,35 @@ object FormSearch: TFormSearch
       SpeedButtonOptions.CanBeFocused = False
       SpeedButtonOptions.Flat = True
       SpeedButtonOptions.Transparent = True
-      TabOrder = 6
+      TabOrder = 5
       OnClick = ButtonRegExHelpClick
     end
     object ButtonSearch: TcxButton
-      Left = 473
-      Top = 316
+      Left = 555
+      Top = 320
       Width = 75
       Height = 23
       Action = ActionSearch
       Anchors = [akTop, akRight]
       Default = True
-      TabOrder = 9
+      TabOrder = 12
     end
     object ButtonClose: TcxButton
-      Left = 554
-      Top = 316
+      Left = 636
+      Top = 320
       Width = 75
       Height = 23
       Action = ActionClose
       Anchors = [akTop, akRight]
       Cancel = True
       ModalResult = 2
-      TabOrder = 10
+      TabOrder = 13
     end
     object ListViewResult: TcxListView
       Left = 6
-      Top = 108
-      Width = 623
-      Height = 190
+      Top = 71
+      Width = 705
+      Height = 231
       ColumnClick = False
       Columns = <
         item
@@ -194,7 +196,7 @@ object FormSearch: TFormSearch
         end>
       ReadOnly = True
       RowSelect = True
-      TabOrder = 7
+      TabOrder = 9
       ViewStyle = vsReport
       OnDblClick = ListViewResultDblClick
       OnEnter = ListViewResultEnter
@@ -202,23 +204,55 @@ object FormSearch: TFormSearch
     end
     object ButtonGoto: TcxButton
       Left = 6
-      Top = 316
+      Top = 320
       Width = 75
       Height = 23
       Action = ActionGoTo
       Anchors = [akTop, akRight]
       Cancel = True
-      ModalResult = 2
-      TabOrder = 8
+      TabOrder = 11
     end
     object CheckBoxIgnoreAccelerator: TcxCheckBox
-      Left = 489
-      Top = 56
-      Action = ActionIgnoreAccelerator
+      Left = 592
+      Top = 6
+      Action = ActionOptionIgnoreAccelerator
       Style.HotTrack = False
       Style.TransparentBorder = True
-      TabOrder = 4
+      TabOrder = 6
       Transparent = True
+    end
+    object cxCheckBox1: TcxCheckBox
+      Left = 592
+      Top = 25
+      Action = ActionOptionFuzzy
+      Style.HotTrack = False
+      Style.TransparentBorder = True
+      TabOrder = 7
+      Transparent = True
+    end
+    object SpinEditFuzzy: TcxSpinEdit
+      Left = 666
+      Top = 44
+      Properties.Alignment.Horz = taRightJustify
+      Properties.LargeIncrement = 1.000000000000000000
+      Properties.MaxValue = 5.000000000000000000
+      Properties.MinValue = 1.000000000000000000
+      Properties.UseLeftAlignmentOnEditing = False
+      Properties.OnChange = SpinEditFuzzyPropertiesChange
+      Style.HotTrack = False
+      TabOrder = 8
+      Value = 1
+      Width = 45
+    end
+    object ButtonAbort: TcxButton
+      Left = 474
+      Top = 320
+      Width = 75
+      Height = 23
+      Action = ActionAbort
+      Anchors = [akTop, akRight]
+      Cancel = True
+      TabOrder = 10
     end
     object LayoutControlGroup_Root: TdxLayoutGroup
       AlignHorz = ahClient
@@ -229,7 +263,7 @@ object FormSearch: TFormSearch
       Index = -1
     end
     object dxLayoutItem1: TdxLayoutItem
-      Parent = dxLayoutGroup2
+      Parent = dxLayoutGroup7
       AlignHorz = ahClient
       CaptionOptions.Text = '&Find:'
       Control = EditSearchText
@@ -239,7 +273,8 @@ object FormSearch: TFormSearch
       Index = 0
     end
     object dxLayoutItem2: TdxLayoutItem
-      Parent = dxLayoutGroup2
+      Parent = dxLayoutGroup7
+      AlignHorz = ahLeft
       CaptionOptions.Text = 'in'
       Control = ComboBoxSearchScope
       ControlOptions.OriginalHeight = 21
@@ -251,7 +286,7 @@ object FormSearch: TFormSearch
       Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'New Group'
       ButtonOptions.Buttons = <>
-      ItemIndex = 3
+      ItemIndex = 2
       LayoutDirection = ldHorizontal
       ShowBorder = False
       Index = 0
@@ -298,17 +333,17 @@ object FormSearch: TFormSearch
       Index = 1
     end
     object dxLayoutGroup3: TdxLayoutGroup
-      Parent = dxLayoutGroup2
+      Parent = dxLayoutGroup1
       CaptionOptions.Text = 'New Group'
       ButtonOptions.Buttons = <>
-      ItemIndex = 2
       ShowBorder = False
-      Index = 3
+      UseIndent = False
+      Index = 0
     end
     object dxLayoutSeparatorItem2: TdxLayoutSeparatorItem
       Parent = dxLayoutGroup2
       CaptionOptions.Text = 'Separator'
-      Index = 2
+      Index = 1
     end
     object dxLayoutGroup4: TdxLayoutGroup
       Parent = dxLayoutGroup3
@@ -317,9 +352,9 @@ object FormSearch: TFormSearch
       ItemIndex = 1
       LayoutDirection = ldHorizontal
       ShowBorder = False
-      Index = 3
+      Index = 2
     end
-    object dxLayoutItem8: TdxLayoutItem
+    object LayoutItemSearch: TdxLayoutItem
       Parent = dxLayoutGroup5
       AlignHorz = ahRight
       CaptionOptions.Visible = False
@@ -327,7 +362,7 @@ object FormSearch: TFormSearch
       ControlOptions.OriginalHeight = 23
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
-      Index = 2
+      Index = 3
     end
     object dxLayoutItem9: TdxLayoutItem
       Parent = dxLayoutGroup5
@@ -337,7 +372,7 @@ object FormSearch: TFormSearch
       ControlOptions.OriginalHeight = 23
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
-      Index = 3
+      Index = 4
     end
     object dxLayoutGroup5: TdxLayoutGroup
       Parent = LayoutControlGroup_Root
@@ -361,7 +396,7 @@ object FormSearch: TFormSearch
       AlignHorz = ahClient
       AlignVert = avCenter
       CaptionOptions.ShowAccelChar = False
-      Index = 1
+      Index = 2
     end
     object dxLayoutItem10: TdxLayoutItem
       Parent = dxLayoutGroup5
@@ -370,16 +405,76 @@ object FormSearch: TFormSearch
       ControlOptions.OriginalHeight = 23
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
-      Index = 0
+      Index = 1
     end
     object dxLayoutItem11: TdxLayoutItem
-      Parent = dxLayoutGroup3
+      Parent = dxLayoutGroup6
       CaptionOptions.Visible = False
       Control = CheckBoxIgnoreAccelerator
       ControlOptions.OriginalHeight = 19
       ControlOptions.OriginalWidth = 90
       ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutGroup1: TdxLayoutGroup
+      Parent = dxLayoutGroup2
+      CaptionOptions.Visible = False
+      ButtonOptions.Buttons = <>
+      ItemIndex = 1
+      LayoutDirection = ldHorizontal
+      ShowBorder = False
       Index = 2
+    end
+    object dxLayoutGroup6: TdxLayoutGroup
+      Parent = dxLayoutGroup1
+      CaptionOptions.Visible = False
+      ButtonOptions.Buttons = <>
+      ItemIndex = 1
+      ShowBorder = False
+      UseIndent = False
+      Index = 1
+    end
+    object dxLayoutGroup7: TdxLayoutGroup
+      Parent = dxLayoutGroup2
+      AlignHorz = ahClient
+      CaptionOptions.Visible = False
+      ButtonOptions.Buttons = <>
+      ItemIndex = 1
+      ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutItem12: TdxLayoutItem
+      Parent = dxLayoutGroup6
+      CaptionOptions.Visible = False
+      Control = cxCheckBox1
+      ControlOptions.OriginalHeight = 19
+      ControlOptions.OriginalWidth = 85
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object dxLayoutItem13: TdxLayoutItem
+      Parent = dxLayoutGroup6
+      AlignHorz = ahLeft
+      CaptionOptions.Text = 'Threshold:'
+      Padding.Left = 18
+      Padding.AssignedValues = [lpavLeft]
+      Control = SpinEditFuzzy
+      ControlOptions.OriginalHeight = 21
+      ControlOptions.OriginalWidth = 45
+      ControlOptions.ShowBorder = False
+      Index = 2
+    end
+    object LayoutItemAbort: TdxLayoutItem
+      Parent = dxLayoutGroup5
+      AlignHorz = ahRight
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Visible = False
+      Control = ButtonAbort
+      ControlOptions.OriginalHeight = 23
+      ControlOptions.OriginalWidth = 75
+      ControlOptions.ShowBorder = False
+      Index = 0
     end
   end
   object ActionListDialog: TActionList
@@ -402,26 +497,46 @@ object FormSearch: TFormSearch
       OnExecute = ActionGoToExecute
       OnUpdate = ActionGoToUpdate
     end
-    object ActionRegExp: TAction
+    object ActionOptionRegExp: TAction
+      Category = 'Options'
       AutoCheck = True
       Caption = '&Regular Expression'
-      OnExecute = ActionRegExpExecute
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionOptionRegExpUpdate
     end
-    object ActionCaseSensitive: TAction
+    object ActionOptionCaseSensitive: TAction
+      Category = 'Options'
       AutoCheck = True
       Caption = '&Case sensitive'
       OnExecute = ActionDummyExecute
     end
-    object ActionGlobal: TAction
+    object ActionOptionGlobal: TAction
+      Category = 'Options'
       AutoCheck = True
       Caption = 'Se&arch entire project'
       Checked = True
       OnExecute = ActionDummyExecute
     end
-    object ActionIgnoreAccelerator: TAction
+    object ActionOptionIgnoreAccelerator: TAction
+      Category = 'Options'
+      AutoCheck = True
       Caption = 'Strip accelerators'
       Checked = True
       OnExecute = ActionDummyExecute
+    end
+    object ActionOptionFuzzy: TAction
+      Category = 'Options'
+      AutoCheck = True
+      Caption = 'Fuzzy match:'
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionOptionFuzzyUpdate
+    end
+    object ActionAbort: TAction
+      Category = 'Buttons'
+      Caption = 'Abort'
+      ShortCut = 27
+      Visible = False
+      OnExecute = ActionAbortExecute
     end
   end
 end

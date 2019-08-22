@@ -792,6 +792,10 @@ begin
   if (FSearchProvider = nil) then
     FSearchProvider := TFormSearch.Create(Self);
 
+  // Make sure we have a module selected or the search dialog will burn
+  if (FocusedModule = nil) then
+    TreeListModules.Root.GetFirstChildVisible.Focused := True;
+
   FSearchProvider.Show;
 end;
 

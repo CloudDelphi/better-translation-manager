@@ -6,11 +6,11 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus,
   System.Actions, Vcl.ActnList, Vcl.ComCtrls, Vcl.StdCtrls,
-  RegularExpressions,
+  RegularExpressions, Diagnostics,
 
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore,
   cxClasses, dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, dxLayoutcxEditAdapters, dxLayoutControlAdapters, cxButtons,
-  cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxListView, cxCheckComboBox,
+  cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit,
 
   amLocalization.Model;
 
@@ -58,7 +58,7 @@ type
     dxLayoutGroup3: TdxLayoutGroup;
     dxLayoutSeparatorItem2: TdxLayoutSeparatorItem;
     dxLayoutGroup4: TdxLayoutGroup;
-    dxLayoutItem8: TdxLayoutItem;
+    LayoutItemSearch: TdxLayoutItem;
     ButtonSearch: TcxButton;
     dxLayoutItem9: TdxLayoutItem;
     ButtonClose: TcxButton;
@@ -69,15 +69,26 @@ type
     dxLayoutItem7: TdxLayoutItem;
     ListViewResult: TcxListView;
     ActionGoTo: TAction;
-    ActionRegExp: TAction;
+    ActionOptionRegExp: TAction;
     LayoutItemStatus: TdxLayoutLabeledItem;
-    ActionCaseSensitive: TAction;
-    ActionGlobal: TAction;
+    ActionOptionCaseSensitive: TAction;
+    ActionOptionGlobal: TAction;
     dxLayoutItem10: TdxLayoutItem;
     ButtonGoto: TcxButton;
     dxLayoutItem11: TdxLayoutItem;
     CheckBoxIgnoreAccelerator: TcxCheckBox;
-    ActionIgnoreAccelerator: TAction;
+    ActionOptionIgnoreAccelerator: TAction;
+    dxLayoutGroup1: TdxLayoutGroup;
+    dxLayoutGroup6: TdxLayoutGroup;
+    dxLayoutGroup7: TdxLayoutGroup;
+    dxLayoutItem12: TdxLayoutItem;
+    cxCheckBox1: TcxCheckBox;
+    ActionOptionFuzzy: TAction;
+    SpinEditFuzzy: TcxSpinEdit;
+    dxLayoutItem13: TdxLayoutItem;
+    LayoutItemAbort: TdxLayoutItem;
+    ButtonAbort: TcxButton;
+    ActionAbort: TAction;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -87,22 +98,29 @@ type
     procedure ActionCloseExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
     procedure ActionSearchUpdate(Sender: TObject);
-    procedure ActionRegExpExecute(Sender: TObject);
     procedure ListViewResultEnter(Sender: TObject);
     procedure ListViewResultExit(Sender: TObject);
     procedure ComboBoxSearchScopePropertiesChange(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
+    procedure ActionOptionFuzzyUpdate(Sender: TObject);
+    procedure ActionOptionRegExpUpdate(Sender: TObject);
+    procedure SpinEditFuzzyPropertiesChange(Sender: TObject);
+    procedure ActionAbortExecute(Sender: TObject);
   private
     FSearchText: string;
-    FRegExpMode: boolean;
     FRegExp: TRegEx;
     FSearchScope: TSearchScopes;
     FSearchHost: ILocalizerSearchHost;
+    FFuzzyThreshold: integer;
+    FLastMessagePump: TStopwatch;
+    FAbort: boolean;
+    FSearchInProgress: boolean;
   protected
     procedure ViewItem(Item: TLocalizerProperty);
     function SearchItem(Prop: TLocalizerProperty): boolean;
     procedure DoSearch(const SearchString: string);
     procedure SetStatusText(const Msg: string);
+    procedure ProcessMessages;
 
     // ILocalizerSearchProvider
     procedure Show;
@@ -118,12 +136,22 @@ implementation
 {$R *.dfm}
 
 uses
+  Math,
   RegularExpressionsCore,
+  dxMessages,
   amCursorService,
   amLocalization.Data.Main;
 
 resourcestring
   sSearchResultItems = 'Found: %d items';
+
+const
+  UpdateRate = 100; // mS
+  MessagePumpRate = 50; // mS
+
+var
+  ProgressDeferTime: integer = 500; // mS
+  ProgressUpdateFactor: integer = 1;
 
 // -----------------------------------------------------------------------------
 
@@ -132,6 +160,8 @@ begin
   inherited Create(Application);
   FSearchHost := ASearchHost;
   FSearchScope := [ssTarget];
+  FFuzzyThreshold := 1;
+  FLastMessagePump := TStopwatch.StartNew;
 end;
 
 // -----------------------------------------------------------------------------
@@ -142,6 +172,13 @@ begin
   SetFocus;
   EditSearchText.SetFocus;
   EditSearchText.SelectAll;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.SpinEditFuzzyPropertiesChange(Sender: TObject);
+begin
+  FFuzzyThreshold := SpinEditFuzzy.Value;
 end;
 
 // -----------------------------------------------------------------------------
@@ -222,9 +259,50 @@ end;
 
 function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
 
+  // Based on: https://stackoverflow.com/a/10593797/2249664
+  function LevenshteinDistance(const ValueA, ValueB: string): integer;
+  var
+    LengthA, LengthB: integer;
+    Costs: array of array of integer;
+    i, j: integer;
+  begin
+    LengthA := Length(ValueA);
+    LengthB := Length(ValueB);
+
+    if (LengthA = 0) then
+      Exit(LengthB);
+    if (LengthB = 0) then
+      Exit(LengthA);
+
+    SetLength(Costs, LengthA+1, LengthB+1);
+    for i := 0 to LengthA do
+      Costs[i, 0] := i;
+    for j := 0 to LengthB do
+      Costs[0, j] := j;
+
+    for i := 1 to LengthA do
+      for j := 1 to LengthB do
+        Costs[i,j] :=
+          Min(Min(Costs[i-1, j]  +1,                            // Deletion
+                  Costs[i,   j-1]+1),                           // Insertion
+                  Costs[i-1, j-1]+Ord(ValueA[i] <> ValueB[j])); // Substitution
+
+    Result := Costs[LengthA, LengthB];
+  end;
+
+  function FuzzyMatch(const Value: string): boolean;
+  var
+    i: integer;
+  begin
+    for i := 1 to Length(Value)-Length(FSearchText)+FFuzzyThreshold+1 do
+      if (LevenshteinDistance(FSearchText, Copy(Value, i, Length(FSearchText)+FFuzzyThreshold)) <= FFuzzyThreshold) then
+        Exit(True);
+    Result := False;
+  end;
+
   function Match(Value: string): boolean;
   begin
-    if (FRegExpMode) then
+    if (ActionOptionRegExp.Checked) then
     begin
       Result := FRegExp.IsMatch(Value);
       Exit;
@@ -233,13 +311,16 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
     if (Value = '') then
       Exit(False);
 
-    if (not ActionCaseSensitive.Checked) then
+    if (not ActionOptionCaseSensitive.Checked) then
       Value := AnsiUpperCase(Value);
 
-    if (ActionIgnoreAccelerator.Checked) then
+    if (ActionOptionIgnoreAccelerator.Checked) then
       Value := StripHotkey(Value);
 
-    Result := Value.Contains(FSearchText);
+    if (ActionOptionFuzzy.Checked) then
+      Result := FuzzyMatch(Value)
+    else
+      Result := Value.Contains(FSearchText);
   end;
 
 var
@@ -322,7 +403,8 @@ begin
     SetStatusText(Format(sSearchResultItems, [ListViewResult.Items.Count]));
   end;
 
-  Result := True;
+  ProcessMessages;
+  Result := (not FAbort);
 end;
 
 procedure TFormSearch.DoSearch(const SearchString: string);
@@ -338,15 +420,15 @@ begin
 
   FSearchText := Trim(SearchString);
 
-  if (ActionGlobal.Checked) then
+  if (ActionOptionGlobal.Checked) then
     SearchRoot := FSearchHost.SelectedModule.Project
   else
     SearchRoot := FSearchHost.SelectedModule;
 
-  if (FRegExpMode) then
+  if (ActionOptionRegExp.Checked) then
   begin
     RegExOptions := [roCompiled];
-    if (not ActionCaseSensitive.Checked) then
+    if (not ActionOptionCaseSensitive.Checked) then
       Include(RegExOptions, roIgnoreCase);
 
     try
@@ -362,13 +444,27 @@ begin
       end;
     end;
   end else
-  if (not ActionCaseSensitive.Checked) then
+  if (not ActionOptionCaseSensitive.Checked) then
     FSearchText := AnsiUpperCase(FSearchText);
 
   ListViewResult.Items.BeginUpdate;
   try
 
-    SearchRoot.Traverse(SearchItem);
+    FAbort := False;
+
+    LayoutItemSearch.Visible := False;
+    LayoutItemAbort.Visible := True;
+    ActionAbort.Enabled := True;
+    FSearchInProgress := True;
+    try
+
+      SearchRoot.Traverse(SearchItem);
+
+    finally
+      FSearchInProgress := False;
+      LayoutItemAbort.Visible := False;
+      LayoutItemSearch.Visible := True;
+    end;
 
   finally
     ListViewResult.Items.EndUpdate;
@@ -377,6 +473,9 @@ begin
 
   SetStatusText(Format(sSearchResultItems, [ListViewResult.Items.Count]));
 
+  if (FAbort) then
+    ShowMessage('Search aborted')
+  else
   if (ListViewResult.Items.Count = 0) then
     ShowMessage('No results found');
 end;
@@ -397,6 +496,14 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormSearch.ActionAbortExecute(Sender: TObject);
+begin
+  FAbort := True;
+  TAction(Sender).Enabled := False;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormSearch.ActionGoToExecute(Sender: TObject);
 begin
   ViewItem(TLocalizerProperty(ListViewResult.Selected.Data));
@@ -409,15 +516,25 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormSearch.ActionRegExpExecute(Sender: TObject);
+procedure TFormSearch.ActionOptionRegExpUpdate(Sender: TObject);
 begin
-  FRegExpMode := TAction(Sender).Checked;;
+  TAction(Sender).Enabled := (not ActionOptionFuzzy.Checked);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ActionOptionFuzzyUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not ActionOptionRegExp.Checked);
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormSearch.ActionSearchExecute(Sender: TObject);
 begin
+  if (ActionOptionFuzzy.Checked) then
+    SpinEditFuzzy.Value := Max(1, Min(SpinEditFuzzy.Value, Length(EditSearchText.Text)-1));
+
   DoSearch(EditSearchText.Text);
 
   if (ListViewResult.Items.Count > 0) then
@@ -451,14 +568,17 @@ begin
 
   RegExHelpURL := Format('https://regex101.com/?regex=%s&options=%s', [EditSearchText.Text, s]);
 
-//  SigmaHelp.DisplayURL(RegExHelpURL, Self);
+//  DisplayURL(RegExHelpURL, Self);
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormSearch.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  Action := caHide;
+  if (FSearchInProgress) then
+    Action := caNone
+  else
+    Action := caHide;
 end;
 
 // -----------------------------------------------------------------------------
@@ -491,6 +611,125 @@ begin
   // Make Search button default so the user can just press [Enter] to search
   ButtonSearch.Default := True;
   ButtonGoto.Default := False;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ProcessMessages;
+var
+  Msg: TMsg;
+begin
+  if (FLastMessagePump.ElapsedMilliseconds < MessagePumpRate * ProgressUpdateFactor) then
+    exit;
+
+{$ifdef MADEXCEPT}
+  // Indicate to MadExcept freeze detection that we're not frozen
+  IndicateApplicationNotFrozen;
+{$endif MADEXCEPT}
+
+//  BeginUpdate;
+  try
+    // Allow threads to synchronize to avoid deadlock (e.g. busy loop showing progress waiting for thread to complete (e.g. spell check dictionary load)).
+    CheckSynchronize;
+
+    Msg.message := 0;
+    try
+      // Process mouse messages for Abort Button so user can press it
+      while (PeekMessage(Msg, ButtonAbort.Handle, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        TranslateMessage(Msg);
+        DispatchMessage(Msg);
+      end;
+
+      // Process mouse hover/enter/exit messages for this window so button state will be updated
+      while (PeekMessage(Msg, Handle, WM_NCMOUSEHOVER, WM_MOUSELEAVE, PM_REMOVE)) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        TranslateMessage(Msg);
+        DispatchMessage(Msg);
+      end;
+
+      // Process cursor update messages for this window so cursor stays responsive
+      while (PeekMessage(Msg, Handle, WM_SETCURSOR, WM_SETCURSOR, PM_REMOVE)) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        DispatchMessage(Msg);
+      end;
+
+      // Process NC mouse messages for this window so we can move the window
+      // Supposedly WM_NCMOUSEMOVE causes the WM_NCHITTEST message
+      // Unfortunately this open up for the user to click the Close button. We handle that
+      // in the form OnClose handler.
+      while (PeekMessage(Msg, Handle, WM_NCMOUSEMOVE, WM_NCXBUTTONDBLCLK, PM_REMOVE)) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        DispatchMessage(Msg);
+      end;
+
+      // Process NC hit test messages for this window so we can move the window
+      while (PeekMessage(Msg, Handle, WM_NCHITTEST, WM_NCHITTEST, PM_REMOVE)) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        DispatchMessage(Msg);
+      end;
+
+(*
+      // Process progress bar messages - This includes WM_TIMER and WM_PAINT used for progress bar animation
+      while PeekMessage(Msg, ProgressBar.Handle, 0, 0, PM_REMOVE) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        DispatchMessage(Msg);
+      end;
+*)
+
+      // Process paint messages for all windows so UI can repaint itself
+      while PeekMessage(Msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_ERASEBKGND, WM_ERASEBKGND, PM_REMOVE) or
+        PeekMessage(Msg, Handle, DXM_SKINS_POSTREDRAW, DXM_SKINS_POSTREDRAW, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_SIZE, WM_SIZE, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_SIZING, WM_SIZING, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_MOVE, WM_MOVE, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_MOVING, WM_MOVING, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_WINDOWPOSCHANGING, WM_WINDOWPOSCHANGED, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_PRINT, WM_PRINT, PM_REMOVE) or
+        PeekMessage(Msg, 0, WM_PRINTCLIENT, WM_PRINTCLIENT, PM_REMOVE) do
+      begin
+        if (Msg.message = WM_QUIT) then
+          exit;
+
+        DispatchMessage(Msg);
+      end;
+
+      PeekMessage(Msg, 0, WM_NULL, WM_NULL, PM_NOREMOVE); // Avoid window ghosting due to unresponsiveness on Vista+
+
+    finally
+      if (Msg.message = WM_QUIT) then
+      begin
+        PostQuitMessage(Msg.wParam);
+        Abort;
+      end;
+    end;
+
+    if (Msg.message = 0) then
+      FLastMessagePump.Reset;
+
+  finally
+    FLastMessagePump.Start;
+//    EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
