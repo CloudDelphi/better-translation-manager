@@ -695,52 +695,56 @@ begin
 
   while (ModuleNode <> nil) do
   begin
-    if (PropNode <> nil) then
+    Module := TLocalizerModule(ModuleNode.Data);
+
+    if (Module.Status = ItemStatusTranslate) then
     begin
-      // Check next prop
-      PropNode := PropNode.GetNextSiblingVisible;
-    end else
-    begin
-      // Determine if module has any valid properties.
-      // If so we load the property list and find the first node
-      Module := TLocalizerModule(ModuleNode.Data);
-      if (not Module.Traverse(
-        function(Prop: TLocalizerProperty): boolean
-        var
-          Translation: TLocalizerTranslation;
+      if (PropNode <> nil) then
+      begin
+        // Check next prop
+        PropNode := PropNode.GetNextSiblingVisible;
+      end else
+      begin
+        // Determine if module has any valid properties.
+        // If so we load the property list and find the first node
+        if (not Module.Traverse(
+          function(Prop: TLocalizerProperty): boolean
+          var
+            Translation: TLocalizerTranslation;
+          begin
+            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+              Exit(True);
+
+            Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Status <> tStatusPending);
+          end, False)) then
         begin
-          if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-            Exit(True);
+          // Select module node - this loads the property nodes
+          ModuleNode.MakeVisible;
+          ModuleNode.Focused := True;
 
-          Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Status <> tStatusPending);
-        end, False)) then
-      begin
-        // Select module node - this loads the property nodes
-        ModuleNode.MakeVisible;
-        ModuleNode.Focused := True;
-
-        // Start with the top item
-        PropNode := TreeListItems.Root.GetFirstChildVisible;
-      end;
-    end;
-
-    while (PropNode <> nil) do
-    begin
-      Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
-
-      if (CheckProperty(Prop)) then
-      begin
-        // Select property tree node
-        PropNode.MakeVisible;
-        PropNode.Focused := True;
-
-        TreeListItems.SetFocus;
-
-        Exit;
+          // Start with the top item
+          PropNode := TreeListItems.Root.GetFirstChildVisible;
+        end;
       end;
 
-      // Check next prop
-      PropNode := PropNode.GetNextSiblingVisible;
+      while (PropNode <> nil) do
+      begin
+        Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
+
+        if (CheckProperty(Prop)) then
+        begin
+          // Select property tree node
+          PropNode.MakeVisible;
+          PropNode.Focused := True;
+
+          TreeListItems.SetFocus;
+
+          Exit;
+        end;
+
+        // Check next prop
+        PropNode := PropNode.GetNextSiblingVisible;
+      end;
     end;
 
     ModuleNode := ModuleNode.GetNextSiblingVisible;
@@ -2265,7 +2269,7 @@ begin
 
   Msg := GetNodeValidationMessage(TreeListItems.HitTest.HitNode);
   if (Msg <> '') then
-    ShowMessage(Msg);
+    MessageDlg(Msg, mtWarning, [mbOK], 0);
 end;
 
 procedure TFormMain.TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
@@ -2455,19 +2459,26 @@ end;
 
 procedure TFormMain.dxBarButton26Click(Sender: TObject);
 var
+  WarningCount, NewWarningCount: integer;
   NeedRefresh: boolean;
   CurrentModule: TLocalizerModule;
+resourcestring
+  sLocalizerWarningsNone = 'No validation problems found';
+  sLocalizerWarnings = 'Validation found %d problems in the project. Of these %d are new';
 begin
   SaveCursor(crHourGlass);
 
   CurrentModule := FocusedModule;
   NeedRefresh := False;
+  WarningCount := 0;
+  NewWarningCount := 0;
 
   FLocalizerProject.Traverse(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
       OldWarnings: TTranslationWarnings;
+      Warning: TTranslationWarning;
     begin
       if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.State <> ItemStateUnused) then
       begin
@@ -2476,9 +2487,18 @@ begin
           OldWarnings := Translation.Warnings;
           Translation.UpdateWarnings;
 
-          // Refresh if warnings changed and translation belongs to current module
-          if (not NeedRefresh) and (Translation.Warnings <> OldWarnings) and (Prop.Item.Module = CurrentModule) then
-            NeedRefresh := True;
+          for Warning in Translation.Warnings do
+            Inc(WarningCount);
+
+          if (Translation.Warnings <> OldWarnings) then
+          begin
+            for Warning in Translation.Warnings-OldWarnings do
+              Inc(NewWarningCount);
+
+            // Refresh if warnings changed and translation belongs to current module
+            if (Prop.Item.Module = CurrentModule) then
+              NeedRefresh := True;
+          end;
         end;
       end;
 
@@ -2488,6 +2508,11 @@ begin
   // Update node state images
   if (NeedRefresh) then
     TreeListItems.FullRefresh;
+
+  if (WarningCount = 0) then
+    MessageDlg(sLocalizerWarningsNone, mtInformation, [mbOK], 0)
+  else
+    MessageDlg(Format(sLocalizerWarnings, [WarningCount, NewWarningCount]), mtWarning, [mbOK], 0);
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
