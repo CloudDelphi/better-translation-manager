@@ -148,9 +148,9 @@ type
     BarManagerBarLookup: TdxBar;
     dxBarLargeButton6: TdxBarLargeButton;
     dxBarButton15: TdxBarButton;
-    dxBarButton16: TdxBarButton;
+    BarButtonGotoNext: TdxBarSubItem;
     ActionMain: TAction;
-    ActionFindNextUntranslated: TAction;
+    ActionGotoNextUntranslated: TAction;
     OpenDialogEXE: TOpenDialog;
     ActionImportFile: TAction;
     StyleRepository: TcxStyleRepository;
@@ -187,6 +187,12 @@ type
     dxBarButton25: TdxBarButton;
     ActionFindNext: TAction;
     dxBarButton26: TdxBarButton;
+    ActionGotoNext: TAction;
+    ActionGotoNextWarning: TAction;
+    ActionGotoNextBookmark: TAction;
+    dxBarButton16: TdxBarButton;
+    dxBarButton27: TdxBarButton;
+    dxBarSubItem2: TdxBarSubItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -236,7 +242,7 @@ type
     procedure ActionMainExecute(Sender: TObject);
     procedure ActionMainUpdate(Sender: TObject);
     procedure ActionImportFileExecute(Sender: TObject);
-    procedure ActionFindNextUntranslatedExecute(Sender: TObject);
+    procedure ActionGotoNextUntranslatedExecute(Sender: TObject);
     procedure TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
     procedure ActionImportFileSourceExecute(Sender: TObject);
@@ -252,6 +258,8 @@ type
     procedure TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
     procedure dxBarButton26Click(Sender: TObject);
     procedure TreeListItemsClick(Sender: TObject);
+    procedure ActionDummyExecute(Sender: TObject);
+    procedure ActionGotoNextWarningExecute(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -308,6 +316,7 @@ type
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
     function CheckSave: boolean;
     procedure ClearDependents;
+    function GotoNext(Predicate: TLocalizerPropertyDelegate): boolean;
   protected
     function GetTranslatedCount(Module: TLocalizerModule): integer;
     procedure InvalidateTranslatedCount(Module: TLocalizerModule);
@@ -670,155 +679,39 @@ begin
   StatusBar.Panels[0].Text := 'Imported';
 end;
 
-procedure TFormMain.ActionFindNextUntranslatedExecute(Sender: TObject);
-
-  function CheckProperty(Prop: TLocalizerProperty): boolean;
-  var
-    Translation: TLocalizerTranslation;
-  begin
-    if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-      Exit(False);
-
-    Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
-  end;
-
-var
-  Module: TLocalizerModule;
-  Prop: TLocalizerProperty;
-  ModuleNode: TcxTreeListNode;
-  PropNode: TcxTreeListNode;
+procedure TFormMain.ActionDummyExecute(Sender: TObject);
 begin
-  SaveCursor(crHourGlass);
+//
+end;
 
-  ModuleNode := TreeListModules.FocusedNode;
-  PropNode := TreeListItems.FocusedNode;
-
-  while (ModuleNode <> nil) do
-  begin
-    Module := TLocalizerModule(ModuleNode.Data);
-
-    if (Module.Status = ItemStatusTranslate) then
-    begin
-      if (PropNode <> nil) then
-      begin
-        // Check next prop
-        PropNode := PropNode.GetNextSiblingVisible;
-      end else
-      begin
-        // Determine if module has any valid properties.
-        // If so we load the property list and find the first node
-        if (not Module.Traverse(
-          function(Prop: TLocalizerProperty): boolean
-          var
-            Translation: TLocalizerTranslation;
-          begin
-            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-              Exit(True);
-
-            Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Status <> tStatusPending);
-          end, False)) then
-        begin
-          // Select module node - this loads the property nodes
-          ModuleNode.MakeVisible;
-          ModuleNode.Focused := True;
-
-          // Start with the top item
-          PropNode := TreeListItems.Root.GetFirstChildVisible;
-        end;
-      end;
-
-      while (PropNode <> nil) do
-      begin
-        Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
-
-        if (CheckProperty(Prop)) then
-        begin
-          // Select property tree node
-          PropNode.MakeVisible;
-          PropNode.Focused := True;
-
-          TreeListItems.SetFocus;
-
-          Exit;
-        end;
-
-        // Check next prop
-        PropNode := PropNode.GetNextSiblingVisible;
-      end;
-    end;
-
-    ModuleNode := ModuleNode.GetNextSiblingVisible;
-    PropNode := nil;
-  end;
-
-  // The following finds the next untranslated in physical order.
-  // Since this probably differ from the logical order due to the trees being sorted,
-  // it makes the search order appear random to the user.
-(*
-  CurrentModule := FocusedModule;
-  CurrentProp := FocusedProperty;
-
-  Found := False;
-
-  FLocalizerProject.Traverse(
+procedure TFormMain.ActionGotoNextUntranslatedExecute(Sender: TObject);
+begin
+  if (not GotoNext(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
-      ModuleNode, PropNode: TcxTreeListNode;
     begin
-      // Skip until we reach the current module
-      if (CurrentModule <> nil) then
-      begin
-        if (Prop.Item.Module = CurrentModule) then
-          CurrentModule := nil
-        else
-          Exit(True);
-      end;
-
-      // Skip until we reach the current property
-      if (CurrentProp <> nil) then
-      begin
-        if (Prop = CurrentProp) then
-          CurrentProp := nil; // Skip current one but check next one
-        Exit(True);
-      end;
-
       if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-        Exit(True);
-
-      if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
-      begin
-        // Found - find treelist nodes
-        // Select module tree node
-        ModuleNode := TreeListModules.Find(Prop.Item.Module, TreeListModules.Root, False, True, TreeListFindFilter);
-        if (ModuleNode = nil) or (ModuleNode.IsHidden) then
-          Exit(True); // ModuleNode might have been hidden by a filter
-
-        // Select module node - this loads the property nodes
-        ModuleNode.MakeVisible;
-        ModuleNode.Focused := True;
-
-        // Select property tree node
-        PropNode := TreeListItems.NodeFromHandle(Prop);
-        if (PropNode = nil) or (PropNode.IsHidden) then
-          Exit(True); // PropNode might have been hidden by a filter
-
-        PropNode.MakeVisible;
-        PropNode.Focused := True;
-
-        TreeListItems.SetFocus;
-
-        // Done
-        Found := True;
         Exit(False);
-      end;
 
-      Result := True;
-    end, False);
+      Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
+    end)) then
+    ShowMessage(sLocalizerFindNoMore);
+end;
 
-  if (not Found) then
-*)
-  ShowMessage(sLocalizerFindNoMore);
+procedure TFormMain.ActionGotoNextWarningExecute(Sender: TObject);
+begin
+  if (not GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+    begin
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+        Exit(False);
+
+      Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
+    end)) then
+    ShowMessage(sLocalizerFindNoMore);
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -2045,6 +1938,150 @@ end;
 procedure TFormMain.RemoveTranslatedCount(Module: TLocalizerModule);
 begin
   FTranslationCounts.Remove(Module);
+end;
+
+// -----------------------------------------------------------------------------
+
+function TFormMain.GotoNext(Predicate: TLocalizerPropertyDelegate): boolean;
+var
+  Module: TLocalizerModule;
+  Prop: TLocalizerProperty;
+  ModuleNode: TcxTreeListNode;
+  PropNode: TcxTreeListNode;
+begin
+  SaveCursor(crHourGlass);
+
+  Result := False;
+
+  ModuleNode := TreeListModules.FocusedNode;
+  if (ModuleNode <> nil) then
+    PropNode := TreeListItems.FocusedNode
+  else
+  begin
+    ModuleNode := TreeListModules.Root.GetFirstChildVisible;
+    PropNode := nil;
+  end;
+
+  while (ModuleNode <> nil) do
+  begin
+    Module := TLocalizerModule(ModuleNode.Data);
+
+    if (Module.Status = ItemStatusTranslate) then
+    begin
+      if (PropNode <> nil) then
+      begin
+        // Check next prop
+        PropNode := PropNode.GetNextSiblingVisible;
+      end else
+      begin
+        // Determine if module has any valid properties.
+        // If so we load the property list and find the first node
+        if (not Module.Traverse(
+          function(Prop: TLocalizerProperty): boolean
+          begin
+            Result := not Predicate(Prop);
+          end, False)) then
+        begin
+          // Select module node - this loads the property nodes
+          ModuleNode.MakeVisible;
+          ModuleNode.Focused := True;
+
+          // Start with the top item
+          PropNode := TreeListItems.Root.GetFirstChildVisible;
+        end;
+      end;
+
+      while (PropNode <> nil) do
+      begin
+        Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
+
+        if (Predicate(Prop)) then
+        begin
+          // Select property tree node
+          PropNode.MakeVisible;
+          PropNode.Focused := True;
+
+          TreeListItems.SetFocus;
+
+          Exit(True);
+        end;
+
+        // Check next prop
+        PropNode := PropNode.GetNextSiblingVisible;
+      end;
+    end;
+
+    ModuleNode := ModuleNode.GetNextSiblingVisible;
+    PropNode := nil;
+  end;
+
+  // The following finds the next untranslated in physical order.
+  // Since this probably differ from the logical order due to the trees being sorted,
+  // it makes the search order appear random to the user.
+(*
+  CurrentModule := FocusedModule;
+  CurrentProp := FocusedProperty;
+
+  Found := False;
+
+  FLocalizerProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+      ModuleNode, PropNode: TcxTreeListNode;
+    begin
+      // Skip until we reach the current module
+      if (CurrentModule <> nil) then
+      begin
+        if (Prop.Item.Module = CurrentModule) then
+          CurrentModule := nil
+        else
+          Exit(True);
+      end;
+
+      // Skip until we reach the current property
+      if (CurrentProp <> nil) then
+      begin
+        if (Prop = CurrentProp) then
+          CurrentProp := nil; // Skip current one but check next one
+        Exit(True);
+      end;
+
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+        Exit(True);
+
+      if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
+      begin
+        // Found - find treelist nodes
+        // Select module tree node
+        ModuleNode := TreeListModules.Find(Prop.Item.Module, TreeListModules.Root, False, True, TreeListFindFilter);
+        if (ModuleNode = nil) or (ModuleNode.IsHidden) then
+          Exit(True); // ModuleNode might have been hidden by a filter
+
+        // Select module node - this loads the property nodes
+        ModuleNode.MakeVisible;
+        ModuleNode.Focused := True;
+
+        // Select property tree node
+        PropNode := TreeListItems.NodeFromHandle(Prop);
+        if (PropNode = nil) or (PropNode.IsHidden) then
+          Exit(True); // PropNode might have been hidden by a filter
+
+        PropNode.MakeVisible;
+        PropNode.Focused := True;
+
+        TreeListItems.SetFocus;
+
+        // Done
+        Found := True;
+        Exit(False);
+      end;
+
+      Result := True;
+    end, False);
+
+  if (not Found) then
+*)
 end;
 
 // -----------------------------------------------------------------------------

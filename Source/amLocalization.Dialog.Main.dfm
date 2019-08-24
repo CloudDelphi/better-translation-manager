@@ -38,7 +38,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -54,6 +53,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -707,7 +707,7 @@ object FormMain: TFormMain
           Hint = 'Settings'
           OnClick = BarManagerBarProofingCaptionButtons0Click
         end>
-      DockedLeft = 355
+      DockedLeft = 291
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -789,7 +789,7 @@ object FormMain: TFormMain
         end
         item
           Visible = True
-          ItemName = 'dxBarButton16'
+          ItemName = 'BarButtonGotoNext'
         end>
       OneOnRow = False
       Row = 0
@@ -985,9 +985,22 @@ object FormMain: TFormMain
       Category = 0
       ButtonStyle = bsChecked
     end
-    object dxBarButton16: TdxBarButton
-      Action = ActionFindNextUntranslated
+    object BarButtonGotoNext: TdxBarSubItem
+      Action = ActionGotoNext
       Category = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton16'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton27'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarSubItem2'
+        end>
     end
     object dxBarSubItem1: TdxBarSubItem
       Action = ActionImportFile
@@ -1056,6 +1069,19 @@ object FormMain: TFormMain
       Hint = 'Validate all'
       Visible = ivAlways
       OnClick = dxBarButton26Click
+    end
+    object dxBarButton16: TdxBarButton
+      Action = ActionGotoNextUntranslated
+      Category = 0
+    end
+    object dxBarButton27: TdxBarButton
+      Action = ActionGotoNextWarning
+      Category = 0
+    end
+    object dxBarSubItem2: TdxBarSubItem
+      Action = ActionGotoNextBookmark
+      Category = 0
+      ItemLinks = <>
     end
   end
   object SkinController: TdxSkinController
@@ -3555,15 +3581,6 @@ object FormMain: TFormMain
       OnExecute = ActionMainExecute
       OnUpdate = ActionMainUpdate
     end
-    object ActionFindNextUntranslated: TAction
-      Category = 'Find'
-      Caption = 'Next untranslated'
-      Hint = 'Find the next untranslated item'
-      ImageIndex = 20
-      ShortCut = 16462
-      OnExecute = ActionFindNextUntranslatedExecute
-      OnUpdate = ActionHasModulesUpdate
-    end
     object ActionImportFile: TAction
       Category = 'Import'
       Caption = 'Import application'
@@ -3621,6 +3638,35 @@ object FormMain: TFormMain
       ImageIndex = 26
       OnExecute = ActionFindNextExecute
       OnUpdate = ActionFindNextUpdate
+    end
+    object ActionGotoNext: TAction
+      Category = 'Find'
+      Caption = 'Goto next...'
+      ImageIndex = 20
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextUntranslated: TAction
+      Category = 'Find'
+      Caption = 'Next untranslated'
+      Hint = 'Find the next untranslated item'
+      ShortCut = 16462
+      OnExecute = ActionGotoNextUntranslatedExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextWarning: TAction
+      Category = 'Find'
+      Caption = 'Next warning'
+      Hint = 'Find next item that has validation warnings'
+      ShortCut = 16471
+      OnExecute = ActionGotoNextWarningExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextBookmark: TAction
+      Category = 'Find'
+      Caption = 'Next bookmark...'
+      Enabled = False
+      Hint = 'Find next bookmarked item'
     end
   end
   object OpenDialogProject: TOpenDialog
