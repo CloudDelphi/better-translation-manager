@@ -3,10 +3,12 @@ unit amLocalization.Data.Main;
 interface
 
 uses
-  System.SysUtils, System.Classes, Data.DB, Datasnap.DBClient, cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
+  System.SysUtils, System.Classes, Data.DB,
+  Datasnap.DBClient,
+  cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
-  cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid,
-  amLocalization.Model, dxLayoutLookAndFeels;
+  cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels,
+  amLocalization.Model;
 
 type
   TDataModuleMain = class(TDataModule)

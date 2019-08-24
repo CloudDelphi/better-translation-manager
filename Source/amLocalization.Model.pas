@@ -424,6 +424,18 @@ type
 
 
 // -----------------------------------------------------------------------------
+//
+// TTextComparer
+//
+// -----------------------------------------------------------------------------
+type
+  TTextComparer = class(TEqualityComparer<string>)
+  public
+    function GetHashCode(const Value: String): Integer; override;
+    function Equals(const Left, Right: string): Boolean; override;
+  end;
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -444,15 +456,6 @@ uses
 // TTextComparer
 //
 // -----------------------------------------------------------------------------
-type
-  TTextComparer = class(TEqualityComparer<string>)
-  public
-    function GetHashCode(const Value: String): Integer; override;
-    function Equals(const Left, Right: string): Boolean; override;
-  end;
-
-// -----------------------------------------------------------------------------
-
 function TTextComparer.Equals(const Left, Right: string): Boolean;
 begin
   Result := (Length(Left) = Length(Right)) and (AnsiSameText(Left, Right));

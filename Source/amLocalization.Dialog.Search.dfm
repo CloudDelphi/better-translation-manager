@@ -23,8 +23,6 @@ object FormSearch: TFormSearch
     Align = alClient
     TabOrder = 0
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitWidth = 635
-    ExplicitHeight = 345
     DesignSize = (
       717
       349)
@@ -48,18 +46,18 @@ object FormSearch: TFormSearch
           Description = 'Name'
         end
         item
-          Description = 'Source value'
+          Description = 'Source text'
           ShortDescription = 'Source'
         end
         item
-          Description = 'Target value'
-          ShortDescription = 'Target'
+          Description = 'Translated text'
+          ShortDescription = 'Translation'
         end>
       Properties.OnChange = ComboBoxSearchScopePropertiesChange
       EditValue = 8
       Style.HotTrack = False
       TabOrder = 1
-      Width = 121
+      Width = 393
     end
     object CheckBoxSearchAll: TcxCheckBox
       Left = 446
@@ -183,7 +181,7 @@ object FormSearch: TFormSearch
           Width = 100
         end
         item
-          Caption = 'Value'
+          Caption = 'Text'
           MaxWidth = 400
           MinWidth = 50
           Width = 150
@@ -274,11 +272,11 @@ object FormSearch: TFormSearch
     end
     object dxLayoutItem2: TdxLayoutItem
       Parent = dxLayoutGroup7
-      AlignHorz = ahLeft
+      AlignHorz = ahClient
       CaptionOptions.Text = 'in'
       Control = ComboBoxSearchScope
       ControlOptions.OriginalHeight = 21
-      ControlOptions.OriginalWidth = 121
+      ControlOptions.OriginalWidth = 393
       ControlOptions.ShowBorder = False
       Index = 1
     end

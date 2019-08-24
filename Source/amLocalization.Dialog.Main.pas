@@ -18,7 +18,8 @@ uses
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
   amLocalization.Model,
   amLocalization.Translator.Microsoft.Version3,
-  amLocalization.Dialog.Search;
+  amLocalization.Dialog.Search,
+  amLocalization.Data.TranslationMemory;
 
 
 const
@@ -246,6 +247,7 @@ type
     procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
+    procedure ActionAutomationMemoryExecute(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -260,6 +262,7 @@ type
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
     FTranslator: TDataModuleTranslatorMicrosoftV3;
     FSearchProvider: ILocalizerSearchProvider;
+    FDataModuleTranslationMemory: TDataModuleTranslationMemory;
   protected
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
@@ -350,10 +353,13 @@ uses
   amLocalization.Data.Main,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
+  amLocalization.Dialog.TranslationMemory,
   amLocalization.Dialog.Languages;
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
+  sLocalizerSourceFileNotFound = 'The source application file specified in the project does not exist.'#13#13+
+    'Filename: %s';
 
 // -----------------------------------------------------------------------------
 
@@ -448,6 +454,22 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.ActionAutomationMemoryExecute(Sender: TObject);
+var
+  FormTranslationMemory: TFormTranslationMemory;
+begin
+  FormTranslationMemory := TFormTranslationMemory.Create(nil);
+  try
+
+    FormTranslationMemory.Execute(FDataModuleTranslationMemory);
+
+  finally
+    FormTranslationMemory.Free;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
 var
   SourceLocaleItem, TargetLanguageItem: TLocaleItem;
@@ -522,6 +544,9 @@ resourcestring
   sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
 begin
   Filename := FLocalizerProject.SourceFilename;
+  if (not TFile.Exists(Filename)) then
+    ShowMessageFmt(sLocalizerSourceFileNotFound, [Filename]);
+
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
 
   if (LocaleItem <> nil) then
@@ -558,7 +583,7 @@ begin
     ProjectProcessor.Free;
   end;
 
-  ShowMessage(Format(sLocalizerResourceModuleBuilt, [Filename]));
+  ShowMessageFmt(sLocalizerResourceModuleBuilt, [Filename]);
 
   LoadProject(FLocalizerProject, False);
 end;
@@ -574,7 +599,7 @@ var
   SaveFilename: string;
 resourcestring
   sLocalizerSwitchSourceModuleTitle = 'Update project?';
-  sLocalizerSwitchSourceModule = 'Do you want to update the project to use this module as the source file?';
+  sLocalizerSwitchSourceModule = 'Do you want to update the project to use this file as the source file?';
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
@@ -917,6 +942,9 @@ begin
     FFilterTargetLanguages := False;
 
   LoadProject(FLocalizerProject);
+
+  if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
+    ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
 end;
 
 procedure TFormMain.ActionProjectPurgeExecute(Sender: TObject);
@@ -1124,6 +1152,9 @@ procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
 begin
+  if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
+    ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
+
   SaveCursor(crHourGlass);
 
   ProjectProcessor := TProjectResourceProcessor.Create;
@@ -1249,14 +1280,11 @@ end;
 
 procedure TFormMain.ActionTranslationStateUpdate(Sender: TObject);
 var
-  Translation: TLocalizerTranslation;
   Prop: TLocalizerProperty;
 begin
   Prop := FocusedProperty;
 
-  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> ItemStateUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate) and
-    ((not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or
-     (Translation.Status <> tStatusObsolete));
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.State <> ItemStateUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate);
 end;
 
 procedure TFormMain.ActionTranslationStateAcceptExecute(Sender: TObject);
@@ -1527,6 +1555,7 @@ begin
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
   DataModuleMain := TDataModuleMain.Create(Self);
+  FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
 
   RibbonTabMain.Active := True;
 
