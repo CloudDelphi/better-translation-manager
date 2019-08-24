@@ -16,7 +16,8 @@ uses
   amLocalization.Translator.Microsoft.Version3 in 'amLocalization.Translator.Microsoft.Version3.pas' {DataModuleTranslatorMicrosoftV3: TDataModule},
   amLocalization.Dialog.Search in 'amLocalization.Dialog.Search.pas' {FormSearch},
   amLocalization.Dialog.TranslationMemory in 'amLocalization.Dialog.TranslationMemory.pas' {FormTranslationMemory},
-  amLocalization.Data.TranslationMemory in 'amLocalization.Data.TranslationMemory.pas' {DataModuleTranslationMemory: TDataModule};
+  amLocalization.Data.TranslationMemory in 'amLocalization.Data.TranslationMemory.pas' {DataModuleTranslationMemory: TDataModule},
+  amLocalization.Utils in 'amLocalization.Utils.pas';
 
 {$R *.res}
 

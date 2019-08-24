@@ -141,6 +141,7 @@ uses
   dxMessages,
   amCursorService,
   amShell,
+  amLocalization.Utils,
   amLocalization.Data.Main;
 
 resourcestring
@@ -316,7 +317,7 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
       Value := AnsiUpperCase(Value);
 
     if (ActionOptionIgnoreAccelerator.Checked) then
-      Value := StripHotkey(Value);
+      Value := StripAccelerator(Value);
 
     if (ActionOptionFuzzy.Checked) then
       Result := FuzzyMatch(Value)

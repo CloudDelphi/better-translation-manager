@@ -327,9 +327,13 @@ type
   TTranslationFlags = set of TTranslationFlag;
 
   TTranslationWarning = (
-    tWarningAccelerator,        // Translation has incorrect number of accelerators
-    tWarningFormatSpecifier,    // Translation has incorrect number of format specifiers
-    tWarningLineBreak           // Translation has incorrect number of linebreaks
+    tWarningEmptyness,          // Source or translation is empty and the other is not
+    tWarningAccelerator,        // Accelerator count mismatch
+    tWarningFormatSpecifier,    // Format specifier count mismatch
+    tWarningLineBreak,          // Linebreak count mismatch
+    tWarningLeadSpace,          // Leading space count mismatch
+    tWarningTrailSpace,         // Trailing space count mismatch
+    tWarningTerminator          // Translation is terminated differently than source
   );
   TTranslationWarnings = set of TTranslationWarning;
 
@@ -444,11 +448,13 @@ implementation
 uses
   IOUtils,
   Variants,
+  System.Character,
   System.SysUtils,
   System.Hash,
   TypInfo,
   XMLDoc, XMLIntf,
-  amLocale;
+  amLocale,
+  amLocalization.Utils;
 
 
 // -----------------------------------------------------------------------------
@@ -1690,25 +1696,27 @@ type
 
 procedure TLocalizerTranslation.UpdateWarnings;
 
-  procedure Count(const Value: string; var CountAccelerator, CountFormat, CountLineBreak: integer);
-  const
-    cHotkeyPrefix = '&'; // From menus.pas
+  procedure Count(const Value: string; var CountAccelerator, CountFormat, CountLineBreak, CountLeadSpace, CountTrailSpace: integer);
   var
     i: integer;
     c, LastChar: Char;
     SkipAccelerator, SkipFormat: boolean;
     AcceleratorState: TAcceleratorState;
     FormatState: TFormatState;
+    IsLeadIn: boolean;
   begin
     CountAccelerator := 0;
     CountFormat := 0;
     CountLineBreak := 0;
+    CountLeadSpace := 0;
+    CountTrailSpace := 0;
 
     LastChar := #0;
     SkipAccelerator := False;
     SkipFormat := False;
     AcceleratorState := asNone;
     FormatState := fsNone;
+    IsLeadIn := True;
 
     for i := 1 to Length(Value) do
     begin
@@ -1716,24 +1724,36 @@ procedure TLocalizerTranslation.UpdateWarnings;
       if (IsLeadChar(c)) then
       begin
         LastChar := c;
-        continue;
+        continue; // TODO : We should skip the next char
       end;
 
-      if (c = #13) then
+      if (c = ' ') then
       begin
-        Inc(CountLineBreak);
-        SkipAccelerator := True;
+        if (IsLeadIn) then
+          Inc(CountLeadSpace)
+        else
+          Inc(CountTrailSpace)
       end else
-      if (c = #10) then
       begin
-        if (LastChar <> #13) then
+        IsLeadIn := False;
+        CountTrailSpace := 0;
+
+        if (c = #13) then
+        begin
           Inc(CountLineBreak);
-        SkipAccelerator := True;
+          SkipAccelerator := True;
+        end else
+        if (c = #10) then
+        begin
+          if (LastChar <> #13) then
+            Inc(CountLineBreak);
+          SkipAccelerator := True;
+        end;
       end;
 
       if (not SkipAccelerator) then
       begin
-        if (c = cHotkeyPrefix) then
+        if (c = cAcceleratorPrefix) then
         begin
           case AcceleratorState of
             asNone:
@@ -1867,21 +1887,43 @@ var
   SourceCountAccelerator, TargetCountAccelerator: integer;
   SourceCountFormat, TargetCountFormat: integer;
   SourceCountLineBreak, TargetCountLineBreak: integer;
+  SourceCountLeadSpace, TargetCountLeadSpace: integer;
+  SourceCountTrailSpace, TargetCountTrailSpace: integer;
 begin
   FWarnings := [];
 
   if (Value = Owner.Value) then
     Exit;
 
-  Count(Value, TargetCountAccelerator, TargetCountFormat, TargetCountLineBreak);
-  Count(Owner.Value, SourceCountAccelerator, SourceCountFormat, SourceCountLineBreak);
+  if (Value.IsEmpty <> Owner.Value.IsEmpty) then
+  begin
+    Include(FWarnings, tWarningEmptyness);
+    // None of the other tests makes sense
+    Exit;
+  end;
 
-  if (SourceCountAccelerator <> TargetCountAccelerator) then
+  Count(Value, TargetCountAccelerator, TargetCountFormat, TargetCountLineBreak, TargetCountLeadSpace, TargetCountTrailSpace);
+  Count(Owner.Value, SourceCountAccelerator, SourceCountFormat, SourceCountLineBreak, SourceCountLeadSpace, SourceCountTrailSpace);
+
+  // Only consider target accelerators if source has them.
+  // If source doesn't have them then any & in the target probably isn't accelerators.
+  if (SourceCountAccelerator > 0) and (SourceCountAccelerator <> TargetCountAccelerator) then
     Include(FWarnings, tWarningAccelerator);
+
   if (SourceCountFormat <> TargetCountFormat) then
     Include(FWarnings, tWarningFormatSpecifier);
+
   if (SourceCountLineBreak <> TargetCountLineBreak) then
     Include(FWarnings, tWarningLineBreak);
+
+  if (SourceCountLeadSpace <> TargetCountLeadSpace) then
+    Include(FWarnings, tWarningLeadSpace);
+
+  if (SourceCountTrailSpace <> TargetCountTrailSpace) then
+    Include(FWarnings, tWarningTrailSpace);
+
+  if (Value[Value.Length].IsPunctuation <> Owner.Value[Owner.Value.Length].IsPunctuation) then
+    Include(FWarnings, tWarningTerminator);
 end;
 
 // -----------------------------------------------------------------------------

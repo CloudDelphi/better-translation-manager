@@ -186,6 +186,7 @@ type
     ActionAutomationMemoryTranslate: TAction;
     dxBarButton25: TdxBarButton;
     ActionFindNext: TAction;
+    dxBarButton26: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -248,6 +249,9 @@ type
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
     procedure ActionAutomationMemoryExecute(Sender: TObject);
+    procedure TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
+    procedure dxBarButton26Click(Sender: TObject);
+    procedure TreeListItemsClick(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -282,6 +286,7 @@ type
     property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
 
     function NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
+    function GetNodeValidationMessage(Node: TcxTreeListNode): string;
   protected
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
     procedure LoadItem(Item: TCustomLocalizerItem; Recurse: boolean = False);
@@ -334,7 +339,6 @@ uses
   StrUtils,
   Generics.Defaults,
   System.Character,
-  Menus,
   msxmldom,
 
   // DevExpress skins
@@ -351,6 +355,7 @@ uses
   amLocalization.Persistence,
   amLocalization.Import.XLIFF,
   amLocalization.Data.Main,
+  amLocalization.Utils,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -373,7 +378,7 @@ var
   n: integer;
 begin
   // Handle & accelerator chars
-  Result := StripHotkey(Value);
+  Result := StripAccelerator(Value);
 
   // Handle Format strings
   if (Result = Value) then
@@ -1629,6 +1634,37 @@ begin
     Result := nil;
 end;
 
+function TFormMain.GetNodeValidationMessage(Node: TcxTreeListNode): string;
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+  Warning: TTranslationWarning;
+const
+  sTranslationValidationWarnings: array[TTranslationWarning] of string = (
+    'Source or translation is empty and the other is not',
+    'Accelerator count mismatch',
+    'Format specifier count mismatch',
+    'Linebreak count mismatch',
+    'Leading space count mismatch',
+    'Trailing space count mismatch',
+    'Translation is terminated differently than source');
+begin
+  Result := '';
+
+  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
+
+  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+    Exit;
+
+  if (Translation <> nil) and (Translation.Warnings <> []) then
+  begin
+    Result := 'Translation has validation warnings:';
+
+    for Warning in Translation.Warnings do
+      Result := Result + #13 + '- ' + sTranslationValidationWarnings[Warning];
+  end;
+end;
+
 // -----------------------------------------------------------------------------
 
 function TFormMain.GetSourceLanguageID: Word;
@@ -2220,6 +2256,18 @@ begin
   end;
 end;
 
+procedure TFormMain.TreeListItemsClick(Sender: TObject);
+var
+  Msg: string;
+begin
+  if (not TreeListItems.HitTest.HitAtStateImage) then
+    Exit;
+
+  Msg := GetNodeValidationMessage(TreeListItems.HitTest.HitNode);
+  if (Msg <> '') then
+    ShowMessage(Msg);
+end;
+
 procedure TFormMain.TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
 begin
   // Only allow inline editing of property nodes
@@ -2248,6 +2296,15 @@ begin
   end;
 end;
 
+procedure TFormMain.TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
+begin
+  if (not (ACell is TcxTreeListIndentCellViewInfo)) or (TcxTreeListIndentCellViewInfo(ACell).Kind <> nikState) then
+    Exit;
+
+  AText := GetNodeValidationMessage(TcxTreeListIndentCellViewInfo(ACell).Node);
+  ANeedShow := (AText <> '');
+end;
+
 procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode;
   AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
 var
@@ -2266,19 +2323,8 @@ begin
 
   if (AIndexType = tlitStateIndex) then
   begin
-    if (Translation = nil) or (Translation.Warnings = []) then
-      Exit;
-
-    if (tWarningAccelerator in Translation.Warnings) then
-      AIndex := 0
-    else
-    if (tWarningFormatSpecifier in Translation.Warnings) then
-      AIndex := 1
-    else
-    if (tWarningLineBreak in Translation.Warnings) then
-      AIndex := 2
-    else
-      AIndex := 3;
+    if (Translation <> nil) and (Translation.Warnings <> []) then
+      AIndex := 0;
 
     Exit;
   end;
@@ -2405,6 +2451,43 @@ begin
   end;
   LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
   LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
+end;
+
+procedure TFormMain.dxBarButton26Click(Sender: TObject);
+var
+  NeedRefresh: boolean;
+  CurrentModule: TLocalizerModule;
+begin
+  SaveCursor(crHourGlass);
+
+  CurrentModule := FocusedModule;
+  NeedRefresh := False;
+
+  FLocalizerProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+      OldWarnings: TTranslationWarnings;
+    begin
+      if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.State <> ItemStateUnused) then
+      begin
+        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+        begin
+          OldWarnings := Translation.Warnings;
+          Translation.UpdateWarnings;
+
+          // Refresh if warnings changed and translation belongs to current module
+          if (not NeedRefresh) and (Translation.Warnings <> OldWarnings) and (Prop.Item.Module = CurrentModule) then
+            NeedRefresh := True;
+        end;
+      end;
+
+      Result := True;
+    end, False);
+
+  // Update node state images
+  if (NeedRefresh) then
+    TreeListItems.FullRefresh;
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
