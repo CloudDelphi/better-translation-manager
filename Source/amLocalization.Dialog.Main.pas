@@ -574,8 +574,7 @@ procedure TFormMain.ActionBookmarkExecute(Sender: TObject);
 var
   Node: TcxTreeListNode;
   Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-  Flag: TTranslationFlag;
+  Flag: TPropertyFlag;
   Props: TArray<TLocalizerProperty>;
   i: integer;
   DoSet: boolean;
@@ -583,7 +582,7 @@ begin
   if (FocusedProperty = nil) then
     exit;
 
-  Flag := TTranslationFlag(TAction(Sender).Tag);
+  Flag := TPropertyFlag(TAction(Sender).Tag);
 
   FLastBookmark := Ord(Flag);
 
@@ -593,11 +592,9 @@ begin
   begin
     if (not GotoNext(
       function(Prop: TLocalizerProperty): boolean
-      var
-        Translation: TLocalizerTranslation;
       begin
-        Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Flag in Translation.Flags);
-      end, Flag in [tFlagBookmark0..tFlagBookmark9])) then
+        Result := (Flag in Prop.Flags);
+      end, Flag in [FlagBookmark0..FlagBookmark9])) then
       ShowMessage(sLocalizerFindNoMore);
   end else
   begin
@@ -605,18 +602,15 @@ begin
     ActionEditMark.ImageIndex := TAction(Sender).ImageIndex;
     ActionEditMark.Tag := TAction(Sender).Tag;
 
-    if (Flag in [tFlagBookmark0..tFlagBookmark9]) then
+    if (Flag in [FlagBookmark0..FlagBookmark9]) then
     begin
       // Operate on focused node
       Prop := FocusedProperty;
 
-      if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-        Exit;
-
       // Setting bookmark on (single) item that already has same bookmark, clears the bookmark
-      if (Flag in Translation.Flags) then
+      if (Flag in Prop.Flags) then
       begin
-        Translation.ClearFlag(Flag);
+        Prop.ClearFlag(Flag);
         TreeListItems.FocusedNode.Repaint(True);
         Exit;
       end;
@@ -624,13 +618,11 @@ begin
       // Clear existing bookmark...
       FLocalizerProject.Traverse(
         function(Prop: TLocalizerProperty): boolean
-        var
-          Translation: TLocalizerTranslation;
         begin
           Result := True;
-          if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Flag in Translation.Flags) then
+          if (Flag in Prop.Flags) then
           begin
-            Translation.ClearFlag(Flag);
+            Prop.ClearFlag(Flag);
             Result := False;
             Node := TreeListItems.NodeFromHandle(Prop);
             if (Node <> nil) then
@@ -639,7 +631,7 @@ begin
         end, False);
 
       // ...Then set new (on single item)
-      Translation.SetFlag(Flag);
+      Prop.SetFlag(Flag);
       TreeListItems.FocusedNode.Repaint(True);
     end else
     begin
@@ -652,7 +644,7 @@ begin
       DoSet := False;
       for Prop in Props do
       begin
-        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (not (Flag in Translation.Flags)) then
+        if (not (Flag in Prop.Flags)) then
         begin
           DoSet := True;
           break;
@@ -662,13 +654,10 @@ begin
       // Set on selected items
       for Prop in Props do
       begin
-        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-        begin
-          if (DoSet) then
-            Translation.SetFlag(Flag)
-          else
-            Translation.ClearFlag(Flag);
-        end;
+        if (DoSet) then
+          Prop.SetFlag(Flag)
+        else
+          Prop.ClearFlag(Flag);
       end;
 
       for i := 0 to TreeListItems.SelectionCount-1 do
@@ -822,7 +811,7 @@ var
 begin
   // Default to BookmarkA
   if (TAction(Sender).Tag = -1) then
-    TAction(Sender).Tag := Ord(tFlagBookmarkA);
+    TAction(Sender).Tag := Ord(FlagBookmarkA);
 
   // Disable ActionGotoBookmarkAny
   // This also signals OnActionBookmarkExecute that we are setting a bookmark as opposed to navigating to one.
@@ -853,13 +842,10 @@ begin
 end;
 
 procedure TFormMain.ActionEditMarkUpdate(Sender: TObject);
-var
-  Translation: TLocalizerTranslation;
 begin
   TAction(Sender).Enabled := (FocusedProperty <> nil);
 
-  TAction(Sender).Checked := TAction(Sender).Enabled and
-    (FocusedProperty.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Flags * [tFlagBookmark0..tFlagBookmarkF] <> []);
+  TAction(Sender).Checked := TAction(Sender).Enabled and (FocusedProperty.Flags * [FlagBookmark0..FlagBookmarkF] <> []);
   // We have to manually sync the button because bsChecked always behave like AutoCheck=True (and DevExpress won't admit they've got it wrong)
   ButtonItemBookmark.Down := TAction(Sender).Checked;
 end;
@@ -869,10 +855,8 @@ begin
   FLastBookmark := -1;
   if (not GotoNext(
     function(Prop: TLocalizerProperty): boolean
-    var
-      Translation: TLocalizerTranslation;
     begin
-      Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Flags * [tFlagBookmark0..tFlagBookmarkF] <> []);
+      Result := (Prop.Flags * [FlagBookmark0..FlagBookmarkF] <> []);
     end)) then
     ShowMessage(sLocalizerFindNoMore);
 end;
@@ -1657,7 +1641,7 @@ procedure TFormMain.FormCreate(Sender: TObject);
 
   procedure CreateBookmarkMenu;
   var
-    Flag: TTranslationFlag;
+    Flag: TPropertyFlag;
     Action: TAction;
     ItemLink: TdxBarItemLink;
     Separator: TdxBarSeparator;
@@ -1665,9 +1649,9 @@ procedure TFormMain.FormCreate(Sender: TObject);
     sMenuCaptionBookmark = 'Bookmark &%.1X';
   begin
     FLastBookmark := -1;
-    for Flag := tFlagBookmark0 to tFlagBookmarkF do
+    for Flag := FlagBookmark0 to FlagBookmarkF do
     begin
-      if (Flag = tFlagBookmarkA) then
+      if (Flag = FlagBookmarkA) then
       begin
         ItemLink := PopupMenuBookmark.ItemLinks.AddItem(TdxBarSeparator);
         Separator := TdxBarSeparator(ItemLink.Item);
@@ -1676,8 +1660,8 @@ procedure TFormMain.FormCreate(Sender: TObject);
 
       Action := TAction.Create(ActionList);
       Action.Tag := Ord(Flag);
-      Action.Caption := Format(sMenuCaptionBookmark, [Action.Tag - Ord(tFlagBookmark0)]);
-      Action.ImageIndex := ImageIndexBookmark0 + Ord(Flag) - Ord(tFlagBookmark0);
+      Action.Caption := Format(sMenuCaptionBookmark, [Action.Tag - Ord(FlagBookmark0)]);
+      Action.ImageIndex := ImageIndexBookmark0 + Ord(Flag) - Ord(FlagBookmark0);
       Action.OnExecute := ActionBookmarkExecute;
 
       ItemLink := PopupMenuBookmark.ItemLinks.AddButton;
@@ -2461,10 +2445,9 @@ var
   BarControl: TCustomdxBarControl;
   BarItemLink: TdxBarItemLink;
   i, j: integer;
-  Flag: TTranslationFlag;
+  Flag: TPropertyFlag;
   AllSet: boolean;
   Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
   Props: TArray<TLocalizerProperty>;
 begin
   // If menu is dropped by a click on a dropdown button, we can determine the kind of action goto/set bookmark here.
@@ -2494,7 +2477,7 @@ begin
   for i := 0 to PopupMenuBookmark.ItemLinks.Count-1 do
     if (PopupMenuBookmark.ItemLinks[i].Item.Action <> nil) then
     begin
-      Flag := TTranslationFlag(TAction(PopupMenuBookmark.ItemLinks[i].Item.Action).Tag);
+      Flag := TPropertyFlag(TAction(PopupMenuBookmark.ItemLinks[i].Item.Action).Tag);
 
       // Preselect last used bookmark
       if (Ord(Flag) = FLastBookmark) then
@@ -2507,7 +2490,7 @@ begin
       AllSet := True;
       for Prop in Props do
       begin
-        if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (not (Flag in Translation.Flags)) then
+        if (not (Flag in Prop.Flags)) then
         begin
           AllSet := False;
           break;
@@ -2637,8 +2620,7 @@ procedure TFormMain.TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeLi
 var
   r: TRect;
   Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-  Flag: TTranslationFlag;
+  Flag: TPropertyFlag;
   ImageIndex: integer;
   s: string;
 const
@@ -2665,21 +2647,21 @@ begin
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(AViewInfo.Node));
 
-  if (Prop <> nil) and (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+  if (Prop <> nil) then
   begin
 
     r.Top := (AViewInfo.BoundsRect.Top + AViewInfo.BoundsRect.Bottom - ImageListSmall.Height) div 2;
     r.Left := AViewInfo.BoundsRect.Right - ImageListSmall.Width;
 
-    for Flag := tFlagBookmark9 downto tFlagBookmark0 do
+    for Flag := FlagBookmark9 downto FlagBookmark0 do
     begin
       // Draw indicator for numeric bookmarks
       if (r.Left < AViewInfo.BoundsRect.Left) then
         break;
 
-      if (Flag in Translation.Flags) then
+      if (Flag in Prop.Flags) then
       begin
-        ImageIndex := ImageIndexBookmark0 + Ord(Flag)-Ord(tFlagBookmark0);
+        ImageIndex := ImageIndexBookmark0 + Ord(Flag)-Ord(FlagBookmark0);
 
         ACanvas.DrawImage(ImageListSmall, r.Left, r.Top, ImageIndex);
 
@@ -2687,15 +2669,15 @@ begin
       end;
     end;
 
-    for Flag := tFlagBookmarkA to tFlagBookmarkF do
+    for Flag := FlagBookmarkA to FlagBookmarkF do
     begin
       // Draw indicator for flag bookmarks
       if (r.Left < AViewInfo.BoundsRect.Left) then
         break;
 
-      if (Flag in Translation.Flags) then
+      if (Flag in Prop.Flags) then
       begin
-        ImageIndex := ImageIndexBookmarkA + Ord(Flag)-Ord(tFlagBookmarkA);
+        ImageIndex := ImageIndexBookmarkA + Ord(Flag)-Ord(FlagBookmarkA);
 
         ACanvas.DrawImage(ImageListSmall, r.Left, r.Top, ImageIndex);
 
