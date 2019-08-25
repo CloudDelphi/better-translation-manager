@@ -136,6 +136,7 @@ implementation
 {$R *.dfm}
 
 uses
+  UITypes,
   Math,
   RegularExpressionsCore,
   dxMessages,
