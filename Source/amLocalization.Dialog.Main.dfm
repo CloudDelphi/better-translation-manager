@@ -4526,7 +4526,7 @@ object FormMain: TFormMain
     end
   end
   object OpenDialogProject: TOpenDialog
-    Filter = 'Translation projects (*.xml)|*.xml|All files (*.*)|*.*'
+    Filter = 'Translation projects (*.xlat)|*.xlat|All files (*.*)|*.*'
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 448
     Top = 364

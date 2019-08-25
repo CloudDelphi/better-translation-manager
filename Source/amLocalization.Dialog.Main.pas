@@ -351,9 +351,18 @@ type
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
     procedure UpdateProjectModifiedIndicator;
+  private type
+    TCounts = record
+      CountModule, CountItem, CountProperty: integer;
+      UnusedModule, UnusedItem, UnusedProperty: integer;
+      ObsoleteTranslation: integer;
+    end;
+  private
+    function CountStuff: TCounts;
   protected
     function GetTranslatedCount(Module: TLocalizerModule): integer;
     procedure InvalidateTranslatedCount(Module: TLocalizerModule);
+    procedure InvalidateTranslatedCounts;
     procedure RemoveTranslatedCount(Module: TLocalizerModule);
   protected
     // ILocalizerSearchHost
@@ -1088,20 +1097,20 @@ var
   Item, LoopItem: TLocalizerItem;
   Prop: TLocalizerProperty;
   NeedReload: boolean;
-  CountModule, CountItem, CountProp: integer;
+  CountBefore, CountAfter: TCounts;
   Node: TcxTreeListNode;
+  Msg: string;
 resourcestring
   sLocalizerPurgeStatusTitle = 'Purge completed.';
-  sLocalizerPurgeStatus = 'The following items has been removed from the project:'#13#13'Modules: %d'#13'Items: %d'#13'Properties: %d';
+  sLocalizerPurgeStatus = 'The following was removed from the project:'#13#13+
+    'Modules: %.0n'#13'Items: %.0n'#13'Properties: %.0n';
 begin
   SaveCursor(crHourGlass);
 
   NeedReload := False;
   CurrentModule := FocusedModule;
 
-  CountModule := 0;
-  CountItem := 0;
-  CountProp := 0;
+  CountBefore := CountStuff;
 
   TreeListItems.BeginUpdate;
   try
@@ -1118,14 +1127,12 @@ begin
             if (Module = CurrentModule) then
             begin
               FLocalizerDataSource.Module := nil;
-  //            TreeListItems.Clear;
               CurrentModule := nil;
             end;
             Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
             Node.Free;
             RemoveTranslatedCount(Module);
             FreeAndNil(Module);
-            Inc(CountModule);
             continue;
           end;
 
@@ -1140,11 +1147,9 @@ begin
                 if (Module = CurrentModule) then
                 begin
                   FLocalizerDataSource.Module := nil;
-    //              TreeListItems.Clear;
                   CurrentModule := nil;
                 end;
                 FreeAndNil(Item);
-                Inc(CountItem);
                 continue;
               end;
 
@@ -1161,11 +1166,9 @@ begin
                     else
                     begin
                       FLocalizerDataSource.Module := nil;
-    //                  TreeListItems.Clear;
                       CurrentModule := nil;
                     end;
                   end;
-                  Inc(CountProp);
                   Prop.Free;
                 end;
 
@@ -1175,11 +1178,9 @@ begin
                 if (Module = CurrentModule) then
                 begin
                   FLocalizerDataSource.Module := nil;
-    //              TreeListItems.Clear;
                   CurrentModule := nil;
                 end;
                 FreeAndNil(Item);
-                Inc(CountItem);
               end;
 
             finally
@@ -1201,7 +1202,6 @@ begin
             Node.Free;
             RemoveTranslatedCount(Module);
             FreeAndNil(Module);
-            Inc(CountModule);
           end;
 
         finally
@@ -1225,7 +1225,15 @@ begin
     TreeListItems.EndUpdate;
   end;
 
-  TaskMessageDlg(sLocalizerPurgeStatusTitle, Format(sLocalizerPurgeStatus, [CountModule, CountItem, CountProp]), mtInformation, [mbOK], 0);
+  CountAfter := CountStuff;
+
+  Msg := Format(sLocalizerPurgeStatus,
+    [
+    1.0*(CountBefore.CountModule-CountAfter.CountModule),
+    1.0*(CountBefore.CountItem-CountAfter.CountItem),
+    1.0*(CountBefore.CountProperty-CountAfter.CountProperty)
+    ]);
+  TaskMessageDlg(sLocalizerPurgeStatusTitle, Msg, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
@@ -1240,7 +1248,7 @@ var
 begin
   SaveCursor(crHourGlass);
 
-  Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.xml');
+  Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, sLocalizationFiletype);
   TempFilename := Filename;
 
   // Save to temporary file if destination file already exist
@@ -1248,7 +1256,7 @@ begin
   begin
     i := 0;
     repeat
-      TempFilename := Format('%s\savefile%.4X.xml', [TPath.GetDirectoryName(Filename), i]);
+      TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, sLocalizationFiletype]);
       Inc(i);
     until (not TFile.Exists(TempFilename));
   end;
@@ -1286,14 +1294,31 @@ end;
 procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
+  CountBefore, CountAfter: TCounts;
+  Msg: string;
+//  SaveModified: boolean;
+  WasModified: boolean;
 resourcestring
-  sLocalizerUpdateComplete = 'Update completed.';
+  sLocalizerProjectUpdatedTitle = 'Project updated';
+  sLocalizerProjectUpdated = 'Update completed with the following changes:'#13#13+
+    'Modules: %.0n added, %.0n unused'#13+
+    'Items: %.0n added, %.0n unused'#13+
+    'Properties: %.0n added, %.0n unused'#13+
+    'Translations obsoleted: %.0n';
+  sLocalizerProjectUpdatedNothing = 'Update completed without any changes.';
 begin
   if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
     ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
 
   SaveCursor(crHourGlass);
 
+  CountBefore := CountStuff;
+
+  (*
+  SaveModified := FLocalizerProject.Modified;
+  FLocalizerProject.Modified := False;
+  *)
+  
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
@@ -1303,10 +1328,30 @@ begin
     ProjectProcessor.Free;
   end;
 
+  // This method of detecting if any changes were made doesn't work as the setting 
+  // and clearing of ItemStateUnused during load will be detected as a change.
+  WasModified := FLocalizerProject.Modified;
+  (*
+  FLocalizerProject.Modified := SaveModified;
+  *)
+  
+  CountAfter := CountStuff;
+
   LoadProject(FLocalizerProject, False);
 
-  // TODO : Display update statistics
-  ShowMessage(sLocalizerUpdateComplete);
+  // Display update statistics
+  if (WasModified) then
+  begin
+    Msg := Format(sLocalizerProjectUpdated,
+      [
+      1.0*(CountAfter.CountModule-CountBefore.CountModule), 1.0*(CountAfter.UnusedModule-CountBefore.UnusedModule),
+      1.0*(CountAfter.CountItem-CountBefore.CountItem), 1.0*(CountAfter.UnusedItem-CountBefore.UnusedItem),
+      1.0*(CountAfter.CountProperty-CountBefore.CountProperty), 1.0*(CountAfter.UnusedProperty-CountBefore.UnusedProperty),
+      1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
+      ]);
+    TaskMessageDlg(sLocalizerProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
+  end else
+    TaskMessageDlg(sLocalizerProjectUpdatedTitle, sLocalizerProjectUpdatedNothing, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
@@ -1882,6 +1927,50 @@ begin
   FLocalizerDataSource.TargetLanguage := nil;
 end;
 
+function TFormMain.CountStuff: TCounts;
+var
+  Counts: TCounts;
+begin
+  ZeroMemory(@Counts, SizeOf(Counts));
+  
+  FLocalizerProject.Traverse(
+    function(Module: TLocalizerModule): boolean
+    begin
+      Inc(Counts.CountModule);
+      if (Module.State = ItemStateUnused) then
+        Inc(Counts.UnusedModule);
+
+      Module.Traverse(
+        function(Item: TLocalizerItem): boolean
+        begin
+          Inc(Counts.CountItem);
+          if (Item.State = ItemStateUnused) then
+            Inc(Counts.UnusedItem);
+
+          Item.Traverse(
+            function(Prop: TLocalizerProperty): boolean
+            var
+              i: integer;
+            begin
+              Inc(Counts.CountProperty);
+              if (Prop.State = ItemStateUnused) then
+                Inc(Counts.UnusedProperty);
+              for i := 0 to Prop.Translations.Count-1 do
+                if (Prop.Translations[i].Status = tStatusObsolete) then
+                  Inc(Counts.ObsoleteTranslation);
+
+              Result := True;
+            end, False);
+
+          Result := True;
+        end, False);
+
+      Result := True;
+    end, False);
+
+  Result := Counts;
+end;
+
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
 begin
   ClearDependents;
@@ -2099,7 +2188,8 @@ var
 begin
   ClearDependents;
   ClearTargetLanguage;
-
+  InvalidateTranslatedCounts;
+  
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
 
   TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
@@ -2153,6 +2243,8 @@ begin
 
   // Reload project
   FLocalizerDataSource.TargetLanguage := TargetLanguage;
+  TreeListModules.FullRefresh;
+  DisplayModuleStats;
 //  LoadProject(FLocalizerProject, False);
 end;
 
@@ -2336,6 +2428,14 @@ procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
 begin
   if (FTranslationCounts.ContainsKey(Module)) then
     FTranslationCounts.AddOrSetValue(Module, -1);
+end;
+
+procedure TFormMain.InvalidateTranslatedCounts;
+var
+  i: integer;
+begin
+  for i := 0 to FTranslationCounts.Count-1 do
+    FTranslationCounts.AddOrSetValue(FTranslationCounts.Keys.ToArray[i], -1);
 end;
 
 procedure TFormMain.RemoveTranslatedCount(Module: TLocalizerModule);
