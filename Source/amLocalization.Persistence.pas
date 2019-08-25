@@ -32,6 +32,9 @@ type
     class procedure SaveToFile(Project: TLocalizerProject; const Filename: string);
   end;
 
+const
+  sLocalizationFileformatRoot = 'xlat';
+  sLocalizationFiletype = '.xlat';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -141,9 +144,13 @@ begin
   XML.ParseOptions := XML.ParseOptions + [poPreserveWhiteSpace];
   XML.LoadFromStream(Stream);
 
-  RootNode := XML.ChildNodes['delphi_l10n'];
+  RootNode := XML.ChildNodes[sLocalizationFileformatRoot];
+  if (RootNode = nil) then
+    raise Exception.CreateFmt('Malformed project file. Root element not found: %s', [sLocalizationFileformatRoot]);
 
   ProjectNode := RootNode.ChildNodes['project'];
+  if (ProjectNode = nil) then
+    raise Exception.CreateFmt('Malformed project file. Project element not found: %s', ['project']);
 
   Language := nil;
   CachedLanguage := '';
@@ -319,7 +326,7 @@ begin
   XML.Options := [doNodeAutoIndent];
   XML.Active := True;
 
-  RootNode := XML.AddChild('delphi_l10n');
+  RootNode := XML.AddChild(sLocalizationFileformatRoot);
 
   Node := RootNode.AddChild('meta');
   Node.AddChild('version').Text := '1';
