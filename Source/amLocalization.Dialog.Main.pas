@@ -6,7 +6,7 @@ interface
 uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
+  Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
   Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
   dxRibbonForm,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
@@ -202,6 +202,9 @@ type
     BarManagerBarMark: TdxBar;
     ButtonItemBookmark: TdxBarButton;
     StyleFocused: TcxStyle;
+    dxLayoutItem3: TdxLayoutItem;
+    LabelCountTranslatedPercent: TcxLabel;
+    dxLayoutGroup1: TdxLayoutGroup;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -277,6 +280,8 @@ type
     procedure ActionEditMarkExecute(Sender: TObject);
     procedure ActionEditMarkUpdate(Sender: TObject);
     procedure ActionGotoNextBookmarkExecute(Sender: TObject);
+    procedure StatusBarMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -293,6 +298,16 @@ type
     FSearchProvider: ILocalizerSearchProvider;
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FLastBookmark: integer;
+  private
+    // Hints
+    // Status bar panel hint needs custom handling.
+    // See: DevPress ticket DS31900
+    // http://www.devexpress.com/Support/Center/Question/Details/DS31900
+    FStatusBarPanel: TdxStatusBarPanel;
+    FStatusBarPanelHint: array of string;
+    procedure DoShowHint(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
+    procedure ShowHint(Sender: TObject); { updates statusbar with hints }
+    procedure SetInfoText(const Msg: string);
   protected
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
@@ -335,6 +350,7 @@ type
     function CheckSave: boolean;
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
+    procedure UpdateProjectModifiedIndicator;
   protected
     function GetTranslatedCount(Module: TLocalizerModule): integer;
     procedure InvalidateTranslatedCount(Module: TLocalizerModule);
@@ -397,6 +413,13 @@ resourcestring
 const
   ImageIndexBookmark0 = 27;
   ImageIndexBookmarkA = 37;
+  ImageIndexModified = 44;
+  ImageIndexNotModified = -1;
+
+const
+  StatusBarPanelHint = 0;
+  StatusBarPanelModified = 1;
+  StatusBarPanelStats = 2;
 
 // -----------------------------------------------------------------------------
 
@@ -759,14 +782,13 @@ begin
 
     LoadProject(FLocalizerProject, False);
 
-    StatusBar.Panels[0].Text := 'Updated';
-
     if (TaskMessageDlg(sLocalizerSwitchSourceModuleTitle, sLocalizerSwitchSourceModule,
       mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
     begin
       FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
       SaveFilename := '';
       RibbonMain.DocumentName := FLocalizerProject.Name;
+      FLocalizerProject.Changed;
     end;
 
   finally
@@ -778,6 +800,8 @@ end;
 procedure TFormMain.ActionImportFileTargetExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
+resourcestring
+  sLocalizerImportComplete = 'Import completed.';
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
@@ -797,7 +821,7 @@ begin
 
   LoadProject(FLocalizerProject, False);
 
-  StatusBar.Panels[0].Text := 'Imported';
+  ShowMessage(sLocalizerImportComplete);
 end;
 
 procedure TFormMain.ActionDummyExecute(Sender: TObject);
@@ -1024,8 +1048,17 @@ begin
   TreeListItems.Clear;
   TreeListModules.Clear;
 
-  TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
-  FLocalizerProject.Modified := False;
+  FLocalizerProject.BeginUpdate;
+  try
+
+    TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
+    FLocalizerProject.Modified := False;
+
+  finally
+    FLocalizerProject.EndUpdate;
+  end;
+
+  UpdateProjectModifiedIndicator;
 
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
@@ -1241,7 +1274,8 @@ begin
 
   FLocalizerProject.Modified := False;
 
-  StatusBar.Panels[0].Text := 'Saved';
+  SetInfoText('Saved');
+  UpdateProjectModifiedIndicator;
 end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
@@ -1252,6 +1286,8 @@ end;
 procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
+resourcestring
+  sLocalizerUpdateComplete = 'Update completed.';
 begin
   if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
     ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
@@ -1269,7 +1305,8 @@ begin
 
   LoadProject(FLocalizerProject, False);
 
-  StatusBar.Panels[0].Text := 'Updated';
+  // TODO : Display update statistics
+  ShowMessage(sLocalizerUpdateComplete);
 end;
 
 procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
@@ -1446,7 +1483,7 @@ end;
 procedure TFormMain.BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
   FLocalizerProject.Modified := True;
-  StatusBar.Panels[0].Text := 'Modified';
+  UpdateProjectModifiedIndicator;
   PostMessage(Handle, MSG_SOURCE_CHANGED, 0, 0);
 end;
 
@@ -1670,6 +1707,8 @@ procedure TFormMain.FormCreate(Sender: TObject);
     end;
   end;
 
+var
+  i: integer;
 begin
   DisableAero := True;
 
@@ -1690,6 +1729,13 @@ begin
   DataModuleMain := TDataModuleMain.Create(Self);
   FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
 
+  for i := 0 to StatusBar.Panels.Count-1 do
+    StatusBar.Panels[i].Text := '';
+  SetLength(FStatusBarPanelHint, StatusBar.Panels.Count);
+
+  Application.OnHint := ShowHint;
+  Application.OnShowHint := DoShowHint;
+
   RibbonTabMain.Active := True;
 
   InitializeProject('', GetUserDefaultUILanguage);
@@ -1699,6 +1745,9 @@ end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
+  Application.OnHint := nil;
+  Application.OnShowHint := nil;
+
   // Block notifications
   FLocalizerProject.BeginUpdate;
 
@@ -1876,6 +1925,8 @@ begin
     FLocalizerProject.EndUpdate;
   end;
 
+  UpdateProjectModifiedIndicator;
+
   RibbonMain.DocumentName := FLocalizerProject.Name;
 
   SourceLanguageID := FLocalizerProject.BaseLocaleID;
@@ -1961,10 +2012,8 @@ begin
   finally
     UnlockUpdates;
   end;
-  if (FLocalizerProject.Modified) then
-    StatusBar.Panels[0].Text := 'Modified'
-  else
-    StatusBar.Panels[0].Text := '';
+
+  UpdateProjectModifiedIndicator;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2110,12 +2159,8 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.OnProjectChanged(Sender: TObject);
-resourcestring
-  sLocalizerStatusCount = 'Translate: %d, Ignore: %d, Hold: %d';
 begin
-  StatusBar.Panels[0].Text := 'Modified';
-  StatusBar.Panels[2].Text := Format(sLocalizerStatusCount,
-    [FLocalizerProject.StatusCount[ItemStatusTranslate], FLocalizerProject.StatusCount[ItemStatusDontTranslate], FLocalizerProject.StatusCount[ItemStatusHold]]);
+  UpdateProjectModifiedIndicator;
 end;
 
 procedure TFormMain.OnModuleChanged(Module: TLocalizerModule);
@@ -2129,6 +2174,131 @@ begin
   if (Node <> nil) then
     // Refresh node colors and images
     Node.Repaint(True);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.SetInfoText(const Msg: string);
+var
+  s: string;
+  Sep: integer;
+begin
+  s := Msg;
+
+  Sep := Pos('|', s);
+
+  // Remove ImageIndex from BallonHint s string
+  if (Sep <> 0) then
+    s := Copy(s, 1, Sep-1);
+
+  StatusBar.Panels[StatusBarPanelHint].Text := s;
+  StatusBar.Update;
+end;
+
+procedure TFormMain.ShowHint(Sender: TObject);
+begin
+  SetInfoText(Application.Hint);
+end;
+
+procedure TFormMain.DoShowHint(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
+var
+  s: string;
+begin
+  if (HintInfo.HintControl = StatusBar) and (FStatusBarPanel <> nil) then
+  begin
+    s := FStatusBarPanelHint[FStatusBarPanel.Index];
+    if (s <> '') then
+      HintStr := s;
+  end;
+end;
+
+procedure TFormMain.StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+(*
+var
+  Panel: TdxStatusBarPanel;
+  p: TPoint;
+*)
+begin
+(*
+  if (Button <> mbRight) or  (ssDouble in Shift) then
+    exit;
+
+  Panel := StatusBar.GetPanelAt(X, Y);
+
+  if (Panel = StatusBar.Panels[StatusBarPanelModified]) then
+  begin
+    p := StatusBar.ClientToScreen(Point(X, Y));
+    PopupMenuModified.Popup(p.X, p.Y);
+  end;
+*)
+end;
+
+procedure TFormMain.StatusBarMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+begin
+  // Determine which status bar panel the mouse is over so we can display a hint for the panel
+  // See: DevPress ticket DS31900
+  // http://www.devexpress.com/Support/Center/Question/Details/DS31900
+  FStatusBarPanel := StatusBar.GetPanelAt(X, Y);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.UpdateProjectModifiedIndicator;
+resourcestring
+  sLocalizerStatusCount = 'Translate: %d, Ignore: %d, Hold: %d';
+  sLocalizerProjectModified = 'Project has been modified since it was last saved';
+  sLocalizerProjectBackupTimestamp = 'Last autosave: %s';
+  sLocalizerProjectBackupTimestampModified = 'Last autosave: %s'+#13+'Project has been modified since last autosave.';
+  sLocalizerProjectBackupNone = 'Project has not yet been autosaved.';
+  sLocalizerProjectBackupAutoSaveDisabled = 'Autosave has been temporarily disabled.';
+  sLocalizerProjectBackupAutoSaveDisabledProject = 'Autosave has been temporarily disabled for this project.';
+  sLocalizerProjectBackupAutoSaveDisabledGlobal = 'Autosave is not enabled.';
+var
+//  s: string;
+  ImageIndex: integer;
+begin
+  if (FLocalizerProject.Modified) then
+  begin
+    FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectModified;
+    ImageIndex := ImageIndexModified;
+
+(*
+    if (not FSettings.Backup.IntervalBackup) then
+      FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectBackupAutoSaveDisabledGlobal
+    else
+    if (not FAutoSaveEnabled) then
+      FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectBackupAutoSaveDisabled
+    else
+      FStatusBarPanelHint[cStatusBarPanelModified] := sLocalizerProjectBackupAutoSaveDisabledProject
+    else
+    if (FLocalizerProject.BackupTimestamp <> 0) then
+    begin
+      if (FLocalizerProject.NeedBackup) then
+        s := sLocalizerProjectBackupTimestampModified
+      else
+      begin
+        s := sLocalizerProjectBackupTimestamp;
+        ImageIndex := ImageIndexFileSaveProtected;
+      end;
+
+      FStatusBarPanelHint[StatusBarPanelModified] := Format(s, [TimeToStr(FLocalizerProject.BackupTimestamp)]);
+    end else
+      FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectBackupNone;
+
+    if (psBackup in FLocalizerProject.State) then
+      ImageIndex := ImageIndexFileSaveWorking;
+*)
+  end else
+  begin
+    ImageIndex := ImageIndexNotModified;
+    FStatusBarPanelHint[StatusBarPanelModified] := '';
+  end;
+  TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelModified].PanelStyle).ImageIndex := ImageIndex;
+
+  StatusBar.Panels[StatusBarPanelStats].Text := Format(sLocalizerStatusCount,
+    [FLocalizerProject.StatusCount[ItemStatusTranslate], FLocalizerProject.StatusCount[ItemStatusDontTranslate], FLocalizerProject.StatusCount[ItemStatusHold]]);
+
+  StatusBar.Update;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2871,19 +3041,26 @@ end;
 procedure TFormMain.DisplayModuleStats;
 var
   TranslatedCount: integer;
+  TranslatableCount: integer;
   PendingCount: integer;
 begin
   if (FLocalizerDataSource.Module <> nil) then
   begin
     TranslatedCount := GetTranslatedCount(FLocalizerDataSource.Module);
-    PendingCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate] - TranslatedCount;
+    TranslatableCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate];
   end else
   begin
     TranslatedCount := 0;
-    PendingCount := 0;
+    TranslatableCount := 0;
   end;
+  PendingCount := TranslatableCount - TranslatedCount;
+
   LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
   LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
+  if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
+    LabelCountTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
+  else
+    LabelCountTranslatedPercent.Caption := '';
 end;
 
 procedure TFormMain.dxBarButton26Click(Sender: TObject);

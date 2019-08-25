@@ -89,6 +89,7 @@ type
   strict protected
     procedure SetName(const Value: string); virtual;
     procedure DoChanged; virtual; abstract;
+    procedure ClearChanged;
   protected
   public
     constructor Create(const AName: string);
@@ -131,6 +132,7 @@ type
     FOnChanged: TNotifyEvent;
     FOnModuleChanged: TLocalizerModuleEvent;
   strict protected
+    procedure SetModified(const Value: boolean);
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
     procedure SetItemStateRecursive(State: TLocalizerItemState);
   protected
@@ -161,7 +163,7 @@ type
     property BaseLocaleID: LCID read FBaseLocaleID write FBaseLocaleID;
     property TargetLanguages: TTargetLanguageList read FTargetLanguages;
     property Modules: TLocalizerModules read FModules;
-    property Modified: boolean read FModified write FModified;
+    property Modified: boolean read FModified write SetModified;
 
     // Total number of properties with State<>lItemStateUnused
     property PropertyCount: integer read FPropertyCount;
@@ -200,7 +202,7 @@ type
     function GetPropertyCount: integer;
   protected
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
-    function CalculateEffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+    function CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
   public
     property State: TLocalizerItemState read GetState write SetState;
     property Status: TLocalizerItemStatus read FStatus write SetStatus;
@@ -529,7 +531,7 @@ begin
   if (FChanged) and (FUpdateCount = 0) then
   begin
     DoChanged;
-    FChanged := False;
+    ClearChanged;
   end;
 end;
 
@@ -540,6 +542,11 @@ begin
   BeginUpdate;
   FChanged := True;
   EndUpdate;
+end;
+
+procedure TBaseLocalizerItem.ClearChanged;
+begin
+  FChanged := False;
 end;
 
 
@@ -559,24 +566,32 @@ begin
 end;
 
 procedure TCustomLocalizerItem.SetState(const Value: TLocalizerItemState);
+var
+  OldState: TLocalizerItemState;
 begin
   if (FState = Value) then
     Exit;
 
-  if (FState = ItemStateUnused) then
+  // Note: We must call UpdateParentStatusCount before ItemStateUnused state is set
+  // as UpdateParentStatusCount will not propagate if State=ItemStateUnused.
+  OldState := FState;
+
+  if (Value = ItemStateUnused) then
   begin
-    UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
-    UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
-    UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
+    // Item is being disabled - Remove stats from parent
+    UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
+    UpdateParentStatusCount(ItemStatusDontTranslate, -FStatusCount[ItemStatusDontTranslate]);
+    UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
   end;
 
   FState := Value;
 
-  if (FState = ItemStateUnused) then
+  if (OldState = ItemStateUnused) then
   begin
-    UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
-    UpdateParentStatusCount(ItemStatusDontTranslate, -FStatusCount[ItemStatusDontTranslate]);
-    UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
+    // Item is being enabled - Add stats back to parent
+    UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
+    UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
+    UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
   end;
 
   Changed;
@@ -689,16 +704,16 @@ begin
 (* Another way - even more verbose:
 
   // Remove all counts belonging to this item from parent
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusTranslate), -FStatusCount[ItemStatusTranslate]);
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusHold), -FStatusCount[ItemStatusHold]);
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusDontTranslate), -FStatusCount[ItemStatusDontTranslate]);
+  UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
+  UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
+  UpdateParentStatusCount(ItemStatusDontTranslate, -FStatusCount[ItemStatusDontTranslate]);
 
   FStatus := Value;
 
   // Reapply all counts belonging to this item to parent
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusTranslate), FStatusCount[ItemStatusTranslate]);
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusHold), FStatusCount[ItemStatusHold]);
-  UpdateParentStatusCount(CalculateEffectiveStatus(ItemStatusDontTranslate), FStatusCount[ItemStatusDontTranslate]);
+  UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
+  UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
+  UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
 *)
 end;
 
@@ -742,7 +757,7 @@ begin
   Assert(FStatusCount[AStatus] >= 0);
 
   if (FState <> ItemStateUnused) then
-    UpdateParentStatusCount(CalculateEffectiveStatus(AStatus), Delta);
+    UpdateParentStatusCount(AStatus, Delta);
 end;
 
 function TCustomLocalizerItem.GetEffectiveStatus: TLocalizerItemStatus;
@@ -750,11 +765,11 @@ begin
   Result := Status;
 end;
 
-function TCustomLocalizerItem.CalculateEffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+function TCustomLocalizerItem.CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
 begin
   Result := EffectiveStatus;
-  if (ChildStatus >= Result) then
-    Result := ChildStatus;
+  if (AStatus >= Result) then
+    Result := AStatus;
 end;
 
 
@@ -908,6 +923,13 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TLocalizerProject.SetModified(const Value: boolean);
+begin
+  FModified := Value;
+  if (not FModified) then
+    ClearChanged;
+end;
 
 procedure TLocalizerProject.DoChanged;
 begin
@@ -1226,7 +1248,8 @@ begin
     Exit;
 
   if (State <> ItemStateUnused) then
-    FProject.UpdateStatusCount(AStatus, Delta);
+    // Update project with the effective status
+    FProject.UpdateStatusCount(CalculateEffectiveStatus(AStatus), Delta);
 end;
 
 // -----------------------------------------------------------------------------
