@@ -731,10 +731,9 @@ end;
 
 function TCustomLocalizerItem.CalculateEffectiveStatus(ChildStatus: TLocalizerItemStatus): TLocalizerItemStatus;
 begin
-  if (ChildStatus >= Status) then
-    Result := ChildStatus
-  else
-    Result := Status;
+  Result := EffectiveStatus;
+  if (ChildStatus >= Result) then
+    Result := ChildStatus;
 end;
 
 
