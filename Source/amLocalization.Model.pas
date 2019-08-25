@@ -322,7 +322,22 @@ type
     // See GetIsTranslated and SetStatus.
 
   TTranslationFlag = (
-    tFlagWhatEver
+    tFlagBookmark0,
+    tFlagBookmark1,
+    tFlagBookmark2,
+    tFlagBookmark3,
+    tFlagBookmark4,
+    tFlagBookmark5,
+    tFlagBookmark6,
+    tFlagBookmark7,
+    tFlagBookmark8,
+    tFlagBookmark9,
+    tFlagBookmarkA,
+    tFlagBookmarkB,
+    tFlagBookmarkC,
+    tFlagBookmarkD,
+    tFlagBookmarkE,
+    tFlagBookmarkF
   );
   TTranslationFlags = set of TTranslationFlag;
 
@@ -346,7 +361,9 @@ type
     FUpdateCount: integer;
     FChanged: boolean;
     FWarnings: TTranslationWarnings;
+    FFlags: TTranslationFlags;
   strict protected
+    procedure SetFlags(const Value: TTranslationFlags);
     function GetIsTranslated: boolean;
     procedure SetStatus(const Value: TTranslationStatus);
     procedure SetValue(const Value: string);
@@ -362,11 +379,14 @@ type
 
     procedure Update(const AValue: string; AStatus: TTranslationStatus);
     procedure UpdateWarnings;
+    procedure SetFlag(const Value: TTranslationFlag);
+    procedure ClearFlag(const Value: TTranslationFlag);
 
     property Value: string read FValue write SetValue;
     property Language: TTargetLanguage read FLanguage;
     property Status: TTranslationStatus read FStatus write SetStatus;
     property IsTranslated: boolean read GetIsTranslated;
+    property Flags: TTranslationFlags read FFlags write SetFlags;
     property Warnings: TTranslationWarnings read FWarnings write FWarnings;
   end;
 
@@ -1625,6 +1645,41 @@ begin
   BeginUpdate;
   FChanged := True;
   EndUpdate;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerTranslation.SetFlags(const Value: TTranslationFlags);
+begin
+  if (FFlags = Value) then
+    Exit;
+
+  FFlags := Value;
+
+  Owner.Changed;
+end;
+
+procedure TLocalizerTranslation.SetFlag(const Value: TTranslationFlag);
+begin
+  if (Value in FFlags) then
+    Exit;
+
+  if (Value in [tFlagBookmark0..tFlagBookmark9]) then
+    FFlags := FFlags - [tFlagBookmark0..tFlagBookmark9] + [Value]
+  else
+    Include(FFlags, Value);
+
+  Owner.Changed;
+end;
+
+procedure TLocalizerTranslation.ClearFlag(const Value: TTranslationFlag);
+begin
+  if (not (Value in FFlags)) then
+    Exit;
+
+  Exclude(FFlags, Value);
+
+  Owner.Changed;
 end;
 
 // -----------------------------------------------------------------------------
