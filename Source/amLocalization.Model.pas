@@ -371,8 +371,11 @@ type
   strict private
     FTranslations: TDictionary<TTargetLanguage, TLocalizerTranslation>;
     FOwner: TLocalizerProperty;
-  strict protected
-    function GetItem(Language: TTargetLanguage): TLocalizerTranslation;
+  strict
+  private
+    function GetCount: integer; protected
+    function GetItem(Language: TTargetLanguage): TLocalizerTranslation; overload;
+    function GetItem(Index: integer): TLocalizerTranslation; overload;
   protected
     property Translations: TDictionary<TTargetLanguage, TLocalizerTranslation> read FTranslations;
   public
@@ -388,6 +391,8 @@ type
 
     property Owner: TLocalizerProperty read FOwner;
     property Items[Language: TTargetLanguage]: TLocalizerTranslation read GetItem; default;
+    property Items[Index: integer]: TLocalizerTranslation read GetItem; default;
+    property Count: integer read GetCount;
   end;
 
 
@@ -927,6 +932,7 @@ end;
 procedure TLocalizerProject.SetModified(const Value: boolean);
 begin
   FModified := Value;
+
   if (not FModified) then
     ClearChanged;
 end;
@@ -2055,6 +2061,16 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+function TLocalizerTranslations.GetCount: integer;
+begin
+  Result := FTranslations.Count;
+end;
+
+function TLocalizerTranslations.GetItem(Index: integer): TLocalizerTranslation;
+begin
+  Result := FTranslations.Values.ToArray[Index];
+end;
 
 function TLocalizerTranslations.GetItem(Language: TTargetLanguage): TLocalizerTranslation;
 begin
