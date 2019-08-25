@@ -122,6 +122,25 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
     Result := Low(Result);
   end;
 
+  function StringToPropFlags(const Value: string): TPropertyFlags;
+  var
+    c: Char;
+    n: integer;
+  begin
+    Result := [];
+    if (Value = '') then
+      Exit;
+    for c in Uppercase(Value) do
+    begin
+      if (c in ['0'..'9']) then
+        n := Ord(c)-Ord('0')
+      else
+        n := 10+Ord(c)-Ord('A');
+      if (n >= Ord(Low(TPropertyFlag))) and (n <= Ord(High(TPropertyFlag))) then
+        Include(Result, TPropertyFlag(n));
+    end;
+  end;
+
 var
   XML: IXMLDocument;
   RootNode, ProjectNode: IXMLNode;
@@ -229,6 +248,7 @@ begin
                     Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
                     Prop.State := StringToItemState(VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
+                    Prop.Flags := StringToPropFlags(VarToStr(PropNode.Attributes['flags']));
 
                     XlatsNode := PropNode.ChildNodes.FindNode('translations');
                     if (XlatsNode <> nil) then
@@ -308,6 +328,22 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
       Node.Attributes['id'] := ID;
   end;
 
+  procedure WritePropFlags(const Node: IXMLNode; Prop: TLocalizerProperty);
+  var
+    s: string;
+    Flag: TPropertyFlag;
+  begin
+    if (Prop.Flags = []) then
+      Exit;
+    s := '';
+    for Flag in Prop.Flags do
+      if (Flag in [FlagBookmark0..FlagBookmark9]) then
+        s := s + Char(Ord('0') + Ord(Flag) - Ord(FlagBookmark0))
+      else
+        s := s + Char(Ord('A') + Ord(Flag) - Ord(FlagBookmarkA));
+    Node.Attributes['flags'] := s;
+  end;
+
 var
   XML: IXMLDocument;
   RootNode, Node: IXMLNode;
@@ -375,6 +411,7 @@ begin
         WriteItemName(PropNode, Prop);
         WriteItemState(PropNode, Prop);
         WriteItemStatus(PropNode, Prop);
+        WritePropFlags(PropNode, Prop);
 
         PropNode.AddChild('value').Text := EncodeString(Prop.Value);
 
