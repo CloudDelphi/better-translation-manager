@@ -978,8 +978,14 @@ begin
   if (FCharset = -1) then
   begin
     ALocale := Locale;
-    Win32Check(TranslateCharsetInfo(ALocale, CharsetInfo, TCI_SRCLOCALE));
-    FCharset := CharsetInfo.ciCharset;
+    if (not TranslateCharsetInfo(ALocale, CharsetInfo, TCI_SRCLOCALE)) then
+    begin
+      // For some strage reason TranslateCharsetInfo fails on some locales
+      if (GetLastError <> ERROR_INVALID_PARAMETER) then
+        RaiseLastOSError;
+      FCharset := DEFAULT_CHARSET;
+    end else
+      FCharset := CharsetInfo.ciCharset;
   end;
   Result := FCharset;
 end;
