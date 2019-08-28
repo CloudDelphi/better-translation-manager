@@ -1,4 +1,4 @@
-unit amLocalization.Data.TranslationMemory;
+unit amLocalization.Translator.TM;
 
 interface
 

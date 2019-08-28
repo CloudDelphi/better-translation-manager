@@ -12,7 +12,7 @@ uses
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
   cxGridDBTableView, cxGrid, cxEditRepositoryItems,
 
-  amLocalization.Data.TranslationMemory;
+  amLocalization.Translator.TM;
 
 type
   TFormTranslationMemory = class(TForm)

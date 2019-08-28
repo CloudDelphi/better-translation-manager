@@ -23,7 +23,7 @@ uses
   amLocalization.Model,
   amLocalization.Translator,
   amLocalization.Dialog.Search,
-  amLocalization.Data.TranslationMemory;
+  amLocalization.Translator.TM;
 
 
 const
@@ -638,7 +638,7 @@ begin
     else
       ElegibleWarning :=  '';
 
-    if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.TranslatorName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
+    if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.ServiceName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
       mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
       Exit;
 
@@ -647,7 +647,7 @@ begin
     Count := 0;
 
     SaveCursor(crHourGlass);
-    Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.TranslatorName]));
+    Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.ServiceName]));
     Progress.EnableAbort := True;
 
     FLocalizerProject.BeginUpdate;

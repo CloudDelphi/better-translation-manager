@@ -156,7 +156,7 @@
             <Form>FormTranslationMemory</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="amLocalization.Data.TranslationMemory.pas">
+        <DCCReference Include="amLocalization.Translator.TM.pas">
             <Form>DataModuleTranslationMemory</Form>
             <FormType>dfm</FormType>
             <DesignClass>TDataModule</DesignClass>
