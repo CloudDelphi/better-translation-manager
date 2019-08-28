@@ -1,6 +1,5 @@
 object DataModuleTranslatorMicrosoftV3: TDataModuleTranslatorMicrosoftV3
   OldCreateOrder = False
-  OnCreate = DataModuleCreate
   Height = 309
   Width = 411
   object RESTRequestTranslate: TRESTRequest

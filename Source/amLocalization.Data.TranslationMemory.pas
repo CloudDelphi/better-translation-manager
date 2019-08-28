@@ -10,10 +10,12 @@ uses
 
   amLocale,
   amLocalization.Model,
+  amLocalization.Translator,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
 
+
 type
-  TDataModuleTranslationMemory = class(TDataModule)
+  TDataModuleTranslationMemory = class(TDataModule, ITranslationService)
     TableTranslationMemory: TdxMemData;
     DataSourceTranslationMemory: TDataSource;
     procedure TableTranslationMemoryAfterDelete(DataSet: TDataSet);
@@ -32,11 +34,15 @@ type
     function FindField(LocaleItem: TLocaleItem): TField;
     function GetHasData: boolean;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
-  public
-    procedure Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string);
+
+  protected
+    // ITranslationService
     procedure BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
     procedure EndLookup;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function GetServiceName: string;
+  public
+    procedure Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string);
 
     procedure LoadTranslationMemory(const Filename: string);
     procedure SaveTranslationMemory(const Filename: string);
@@ -124,6 +130,13 @@ begin
   Result := (TableTranslationMemory.Active) and (TableTranslationMemory.RecordCount > 0);
 end;
 
+function TDataModuleTranslationMemory.GetServiceName: string;
+resourcestring
+  sTranslatorNameTM = 'Translation Memory';
+begin
+  Result := sTranslatorNameTM;
+end;
+
 procedure TDataModuleTranslationMemory.Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string);
 
   function AddField(LocaleItem: TLocaleItem): TField;
@@ -157,6 +170,9 @@ begin
   TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguage);
   Assert(SourceLocaleItem <> nil);
   Assert(TargetLocaleItem <> nil);
+
+  if (not FLoaded) then
+    LoadTranslationMemory(FFilename);
 
   SourceField := FindField(SourceLocaleItem);
   TargetField := FindField(TargetLocaleItem);
@@ -490,6 +506,8 @@ begin
 
     if (FLookupIndex.TryGetValue(AnsiUppercase(SourceValue), List)) then
     begin
+      Result := True;
+
       if (List.Count > 1) then
         Duplicates := TStringList.Create;
 
@@ -574,38 +592,40 @@ begin
   FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues]);
   FConflictResolution := TDictionary<string, string>.Create;
 
-  if (TableTranslationMemory.Active) then
+  if (not FLoaded) then
+    LoadTranslationMemory(FFilename);
+
+  if (not TableTranslationMemory.Active) then
+    Exit;
+
+  SourceField := FindField(SourceLanguage);
+  TargetField := FindField(TargetLanguage);
+
+  if (SourceField = nil) or (TargetField = nil) then
+    // One or both languages doesn't exist in TM
+    Exit;
+
+  // Create dictionary of source terms
+  TableTranslationMemory.First;
+  RecordIndex := 0;
+  while (not TableTranslationMemory.EOF) do
   begin
-    SourceField := FindField(SourceLanguage);
-    TargetField := FindField(TargetLanguage);
-
-    if (SourceField = nil) or (TargetField = nil) then
-      // One or both languages doesn't exist in TM
-      Exit;
-
-    // Create dictionary of source terms
-    TableTranslationMemory.First;
-    RecordIndex := 0;
-    while (not TableTranslationMemory.EOF) do
+    if (not TargetField.IsNull) and (not SourceField.IsNull) then
     begin
-      if (not TargetField.IsNull) and (not SourceField.IsNull) then
+      SourceValue := AnsiUppercase(SanitizeText(SourceField.AsString));
+
+      if (not FLookupIndex.TryGetValue(SourceValue, List)) then
       begin
-        SourceValue := AnsiUppercase(SanitizeText(SourceField.AsString));
-
-        if (not FLookupIndex.TryGetValue(SourceValue, List)) then
-        begin
-          List := TList<integer>.Create;
-          FLookupIndex.Add(SourceValue, List);
-        end;
-        List.Add(RecordIndex);
+        List := TList<integer>.Create;
+        FLookupIndex.Add(SourceValue, List);
       end;
-
-      Inc(RecordIndex);
-
-      TableTranslationMemory.Next;
+      List.Add(RecordIndex);
     end;
-  end;
 
+    Inc(RecordIndex);
+
+    TableTranslationMemory.Next;
+  end;
 end;
 
 procedure TDataModuleTranslationMemory.DataModuleCreate(Sender: TObject);

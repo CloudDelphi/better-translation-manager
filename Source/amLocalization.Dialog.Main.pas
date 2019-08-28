@@ -19,8 +19,9 @@ uses
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
 
   amLocale,
+  amProgressForm,
   amLocalization.Model,
-  amLocalization.Translator.Microsoft.Version3,
+  amLocalization.Translator,
   amLocalization.Dialog.Search,
   amLocalization.Data.TranslationMemory;
 
@@ -319,7 +320,6 @@ type
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
-    FTranslator: TDataModuleTranslatorMicrosoftV3;
     FSearchProvider: ILocalizerSearchProvider;
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FLastBookmark: integer;
@@ -378,9 +378,7 @@ type
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
     procedure UpdateProjectModifiedIndicator;
   private
-    type TTranslateFunction = function(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean of object;
-
-    procedure TranslateSelected(TranslateFunction: TTranslateFunction; const TranslatorName: string);
+    procedure TranslateSelected(const TranslationService: ITranslationService);
   private type
     TCounts = record
       CountModule, CountItem, CountProperty: integer;
@@ -438,6 +436,7 @@ uses
   amLocalization.Import.XLIFF,
   amLocalization.Data.Main,
   amLocalization.Utils,
+  amLocalization.Translator.Microsoft.Version3,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -595,8 +594,9 @@ begin
   end;
 end;
 
-procedure TFormMain.TranslateSelected(TranslateFunction: TTranslateFunction; const TranslatorName: string);
+procedure TFormMain.TranslateSelected(const TranslationService: ITranslationService);
 var
+  Progress: IProgress;
   SourceLocaleItem, TargetLocaleItem: TLocaleItem;
   i: integer;
   Item: TCustomLocalizerItem;
@@ -604,6 +604,7 @@ var
   TranslatedCount, UpdatedCount: integer;
   ElegibleWarning: string;
 resourcestring
+  sTranslateAutoProgress = 'Translating using %s...';
   sTranslateAutoPromptTitle = 'Translate using %s?';
   sTranslateAutoPrompt = 'Do you want to perform automated translation on the selected %d values?%s';
   sTranslateAutoResultTitle = 'Automated translation completed.';
@@ -615,101 +616,120 @@ begin
   if (SourceLocaleItem = TargetLocaleItem) then
     Exit;
 
-  Count := 0;
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    Item.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      begin
-        Inc(Count);
-        if (Prop.EffectiveStatus = ItemStatusTranslate) then
-          Inc(ElegibleCount);
-        Result := True;
-      end, False);
-  end;
-
-  if (ElegibleCount < Count) then
-    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
-  else
-    ElegibleWarning :=  '';
-
-  if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslatorName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
-    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
-    Exit;
-
-  TranslatedCount := 0;
-  UpdatedCount := 0;
-
-  SaveCursor(crHourGlass);
-
-  FLocalizerProject.BeginUpdate;
+  TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem);
   try
 
+    Count := 0;
     for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
     begin
       Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-
       Item.Traverse(
         function(Prop: TLocalizerProperty): boolean
-        var
-          Value, SourceValue, TranslatedValue: string;
         begin
-          if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-            Exit(True);
-
-          SourceValue := SanitizeText(Prop.Value);
-          if (Prop.HasTranslation(TargetLanguage)) then
-            TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
-          else
-            TranslatedValue := SourceValue;
-
-          // Perform translation
-          // Note: It is the responsibility of the translation function to return True/False to indicate
-          // if SourceValue=TargetValue is in fact a translation.
-          if (TranslateFunction(Prop, SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
-          begin
-            if (not Value.IsEmpty) then
-            begin
-              // If source is all UPPERCASE the target should also be so
-              if (IsUppercase(SourceValue)) then
-                Value := AnsiUpperCase(Value)
-              else
-              // If source starts with an Uppercase letter the target should also do so
-              if (StartsWithUppercase(SourceValue)) then
-                Value := Value[1].ToUpper+Copy(Value, 2, MaxInt);
-
-              // Handle accelerator keys
-              if (HasAccelerator(Prop.Value)) then
-              begin
-                if (not HasAccelerator(Value)) then
-                  // If source had an accelerator then make sure the target also has one
-                  Value := AddAccelerator(EscapeAccelerators(Value));
-              end else
-              begin
-                if (HasAccelerator(Value)) then
-                  // If source doesn't have an accelerator then make sure the target also doesn't have one
-                  Value := SanitizeText(Value, [skAccelerator]);
-              end;
-            end;
-
-            Inc(TranslatedCount);
-
-            if (Prop.HasTranslation(TargetLanguage)) and (Prop.TranslatedValue[TargetLanguage] <> Value) then
-              Inc(UpdatedCount);
-
-            // Set value regardless of current value so we get the correct Status set
-            Prop.TranslatedValue[TargetLanguage] := Value;
-
-            ReloadProperty(Prop);
-          end;
+          Inc(Count);
+          if (Prop.EffectiveStatus = ItemStatusTranslate) then
+            Inc(ElegibleCount);
           Result := True;
         end, False);
     end;
 
+    if (ElegibleCount < Count) then
+      ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+    else
+      ElegibleWarning :=  '';
+
+    if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.TranslatorName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
+      mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+      Exit;
+
+    TranslatedCount := 0;
+    UpdatedCount := 0;
+    Count := 0;
+
+    SaveCursor(crHourGlass);
+    Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.TranslatorName]));
+    Progress.EnableAbort := True;
+
+    FLocalizerProject.BeginUpdate;
+    try
+
+      for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+      begin
+        Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+
+        Item.Traverse(
+          function(Prop: TLocalizerProperty): boolean
+          var
+            Value, SourceValue, TranslatedValue: string;
+          begin
+            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+              Exit(True);
+
+            Inc(Count);
+
+            SourceValue := SanitizeText(Prop.Value);
+            if (Prop.HasTranslation(TargetLanguage)) then
+              TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
+            else
+              TranslatedValue := SourceValue;
+
+            Progress.Progress(psProgress, Count, ElegibleCount, Copy(SourceValue, 1, 40));
+            if (Progress.Aborted) then
+              Exit(False);
+
+            // Perform translation
+            // Note: It is the responsibility of the translation function to return True/False to indicate
+            // if SourceValue=TargetValue is in fact a translation.
+            if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
+            begin
+              if (not Value.IsEmpty) then
+              begin
+                // If source is all UPPERCASE the target should also be so
+                if (IsUppercase(SourceValue)) then
+                  Value := AnsiUpperCase(Value)
+                else
+                // If source starts with an Uppercase letter the target should also do so
+                if (StartsWithUppercase(SourceValue)) then
+                  Value := Value[1].ToUpper+Copy(Value, 2, MaxInt);
+
+                // Handle accelerator keys
+                if (HasAccelerator(Prop.Value)) then
+                begin
+                  if (not HasAccelerator(Value)) then
+                    // If source had an accelerator then make sure the target also has one
+                    Value := AddAccelerator(EscapeAccelerators(Value));
+                end else
+                begin
+                  if (HasAccelerator(Value)) then
+                    // If source doesn't have an accelerator then make sure the target also doesn't have one
+                    Value := SanitizeText(Value, [skAccelerator]);
+                end;
+              end;
+
+              Inc(TranslatedCount);
+
+              if (Prop.HasTranslation(TargetLanguage)) and (Prop.TranslatedValue[TargetLanguage] <> Value) then
+                Inc(UpdatedCount);
+
+              // Set value regardless of current value so we get the correct Status set
+              Prop.TranslatedValue[TargetLanguage] := Value;
+
+              ReloadProperty(Prop);
+            end;
+            Result := True;
+          end, False);
+      end;
+
+    finally
+      FLocalizerProject.EndUpdate;
+    end;
+
   finally
-    FLocalizerProject.EndUpdate;
+    TranslationService.EndLookup;
   end;
+
+  Progress.Hide;
+  Progress := nil;
 
   TaskMessageDlg(sTranslateAutoResultTitle, Format(sTranslateAutoResult, [TranslatedCount, UpdatedCount, ElegibleCount-TranslatedCount]),
     mtInformation, [mbOK], 0);
@@ -717,19 +737,11 @@ end;
 
 procedure TFormMain.ActionAutomationMemoryTranslateExecute(Sender: TObject);
 var
-  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
-resourcestring
-  sTranslateAutoTM = 'Translation Memory';
+  TranslationService: ITranslationService;
 begin
-  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
-  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+  TranslationService := FDataModuleTranslationMemory as ITranslationService;
 
-  FDataModuleTranslationMemory.BeginLookup(SourceLocaleItem, TargetLocaleItem);
-  try
-    TranslateSelected(FDataModuleTranslationMemory.Lookup, sTranslateAutoTM);
-  finally
-    FDataModuleTranslationMemory.EndLookup;
-  end;
+  TranslateSelected(TranslationService);
 end;
 
 procedure TFormMain.ActionAutomationMemoryTranslateUpdate(Sender: TObject);
@@ -745,13 +757,12 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
-resourcestring
-  sTranslateAutoWeb = 'Web Service';
+var
+  TranslationService: ITranslationService;
 begin
-  if (FTranslator = nil) then
-    FTranslator := TDataModuleTranslatorMicrosoftV3.Create(Self);
+  TranslationService := TDataModuleTranslatorMicrosoftV3.Create(nil);
 
-  TranslateSelected(FTranslator.Translate, sTranslateAutoWeb);
+  TranslateSelected(TranslationService);
 end;
 
 procedure TFormMain.ActionAutomationWebLookupUpdate(Sender: TObject);
@@ -1207,6 +1218,9 @@ procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
 var
   BestLanguage: TTargetLanguage;
   i: integer;
+  Progress: IProgress;
+resourcestring
+  sProgressProjectLoading = 'Loading project...';
 begin
   if (not CheckSave) then
     exit;
@@ -1224,34 +1238,43 @@ begin
   TreeListItems.Clear;
   TreeListModules.Clear;
 
-  FLocalizerProject.BeginUpdate;
+  Progress := ShowProgress(sProgressProjectLoading);
   try
+    Progress.Marquee := True;
 
-    TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
-    FLocalizerProject.Modified := False;
+    FLocalizerProject.BeginUpdate;
+    try
+
+      TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
+      FLocalizerProject.Modified := False;
+
+    finally
+      FLocalizerProject.EndUpdate;
+    end;
+
+    UpdateProjectModifiedIndicator;
+
+    RibbonMain.DocumentName := FLocalizerProject.Name;
+
+    // Find language with most translations
+    BestLanguage := nil;
+    for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
+      if (BestLanguage = nil) or (FLocalizerProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
+        BestLanguage := FLocalizerProject.TargetLanguages[i];
+
+    if (BestLanguage <> nil) then
+    begin
+      TargetLanguageID := BestLanguage.LanguageID;
+      FFilterTargetLanguages := True;
+    end else
+      FFilterTargetLanguages := False;
+
+    LoadProject(FLocalizerProject);
 
   finally
-    FLocalizerProject.EndUpdate;
+    Progress.Hide;
+    Progress := nil;
   end;
-
-  UpdateProjectModifiedIndicator;
-
-  RibbonMain.DocumentName := FLocalizerProject.Name;
-
-  // Find language with most translations
-  BestLanguage := nil;
-  for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
-    if (BestLanguage = nil) or (FLocalizerProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
-      BestLanguage := FLocalizerProject.TargetLanguages[i];
-
-  if (BestLanguage <> nil) then
-  begin
-    TargetLanguageID := BestLanguage.LanguageID;
-    FFilterTargetLanguages := True;
-  end else
-    FFilterTargetLanguages := False;
-
-  LoadProject(FLocalizerProject);
 
   if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
     ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
@@ -1407,44 +1430,55 @@ procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 var
   Filename, TempFilename, BackupFilename: string;
   i: integer;
+  Progress: IProgress;
+resourcestring
+  sProgressProjectLoading = 'Loading project...';
+  sProgressProjectSaving = 'Saving project...';
 begin
   SaveCursor(crHourGlass);
 
-  Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, sLocalizationFiletype);
-  TempFilename := Filename;
+  Progress := ShowProgress(sProgressProjectSaving);
+  try
+    Progress.Marquee := True;
 
-  // Save to temporary file if destination file already exist
-  if (TFile.Exists(Filename)) then
-  begin
-    i := 0;
-    repeat
-      TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, sLocalizationFiletype]);
-      Inc(i);
-    until (not TFile.Exists(TempFilename));
+    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, sLocalizationFiletype);
+    TempFilename := Filename;
+
+    // Save to temporary file if destination file already exist
+    if (TFile.Exists(Filename)) then
+    begin
+      i := 0;
+      repeat
+        TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, sLocalizationFiletype]);
+        Inc(i);
+      until (not TFile.Exists(TempFilename));
+    end;
+
+    // Save file
+    TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TempFilename);
+
+    // Save existing file as backup
+    if (TempFilename <> Filename) then
+    begin
+      i := 0;
+      repeat
+        BackupFilename := Format('%s.$%.4X', [Filename, i]);
+        Inc(i);
+      until (not TFile.Exists(BackupFilename));
+
+      TFile.Move(Filename, BackupFilename);
+
+      // Rename temporary file to final file
+      TFile.Move(TempFilename, Filename);
+    end;
+
+    FLocalizerProject.Modified := False;
+
+    SetInfoText('Saved');
+    UpdateProjectModifiedIndicator;
+  finally
+    Progress := nil;
   end;
-
-  // Save file
-  TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TempFilename);
-
-  // Save existing file as backup
-  if (TempFilename <> Filename) then
-  begin
-    i := 0;
-    repeat
-      BackupFilename := Format('%s.$%.4X', [Filename, i]);
-      Inc(i);
-    until (not TFile.Exists(BackupFilename));
-
-    TFile.Move(Filename, BackupFilename);
-
-    // Rename temporary file to final file
-    TFile.Move(TempFilename, Filename);
-  end;
-
-  FLocalizerProject.Modified := False;
-
-  SetInfoText('Saved');
-  UpdateProjectModifiedIndicator;
 end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);

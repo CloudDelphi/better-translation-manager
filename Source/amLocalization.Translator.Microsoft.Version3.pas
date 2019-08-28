@@ -7,17 +7,22 @@ uses
   IPPeerClient, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope,
 
   amLocale,
-  amLocalization.Model;
+  amLocalization.Model,
+  amLocalization.Translator;
 
 type
-  TDataModuleTranslatorMicrosoftV3 = class(TDataModule)
+  TDataModuleTranslatorMicrosoftV3 = class(TDataModule, ITranslationService)
     RESTRequestTranslate: TRESTRequest;
     RESTResponseResult: TRESTResponse;
     RESTClient: TRESTClient;
-    procedure DataModuleCreate(Sender: TObject);
   private
+  protected
+    // ITranslationService
+    procedure BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
+    procedure EndLookup;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function GetServiceName: string;
   public
-    function Translate(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
   end;
 
 const
@@ -38,12 +43,24 @@ uses
 
 { TDataModule1 }
 
-procedure TDataModuleTranslatorMicrosoftV3.DataModuleCreate(Sender: TObject);
+procedure TDataModuleTranslatorMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
 begin
   RESTClient.Params[0].Value := sMicrosoftTranslatorV3_APIKEY;
 end;
 
-function TDataModuleTranslatorMicrosoftV3.Translate(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string;
+procedure TDataModuleTranslatorMicrosoftV3.EndLookup;
+begin
+//
+end;
+
+function TDataModuleTranslatorMicrosoftV3.GetServiceName: string;
+resourcestring
+  sTranslatorNameMS = 'Microsoft Translation Service';
+begin
+  Result := sTranslatorNameMS;
+end;
+
+function TDataModuleTranslatorMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string;
   var TargetValue: string): boolean;
 var
   JsonResultArray: TJsonArray;
