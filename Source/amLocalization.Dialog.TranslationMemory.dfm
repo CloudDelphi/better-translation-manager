@@ -35,17 +35,13 @@ object FormTranslationMemory: TFormTranslationMemory
         OptionsBehavior.FocusCellOnTab = True
         OptionsBehavior.GoToNextCellOnEnter = True
         OptionsBehavior.IncSearch = True
+        OptionsCustomize.ColumnFiltering = False
         OptionsCustomize.ColumnHiding = True
         OptionsCustomize.ColumnsQuickCustomization = True
         OptionsView.CellEndEllipsis = True
         OptionsView.GroupByBox = False
         OptionsView.HeaderEndEllipsis = True
         OptionsView.Indicator = True
-        object GridTMDBTableViewRecId: TcxGridDBColumn
-          DataBinding.FieldName = 'RecId'
-          Visible = False
-          VisibleForCustomization = False
-        end
       end
       object GridTMLevel: TcxGridLevel
         GridView = GridTMDBTableView

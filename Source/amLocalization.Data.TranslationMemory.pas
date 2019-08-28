@@ -479,6 +479,7 @@ begin
   TargetField := FindField(TargetLanguage);
 
   if (SourceField = nil) or (TargetField = nil) then
+    // One or both languages doesn't exist in TM
     Exit;
 
   Duplicates := nil;
@@ -533,8 +534,6 @@ begin
 
     if (Duplicates <> nil) then
     begin
-      Duplicates.Add(TargetValue);
-
       if (FFormSelectDuplicate = nil) then
         FFormSelectDuplicate := TFormSelectDuplicate.Create(nil);
 
@@ -569,6 +568,11 @@ begin
     SourceField := FindField(SourceLanguage);
     TargetField := FindField(TargetLanguage);
 
+    if (SourceField = nil) or (TargetField = nil) then
+      // One or both languages doesn't exist in TM
+      Exit;
+
+    // Create dictionary of source terms
     TableTranslationMemory.First;
     RecordIndex := 0;
     while (not TableTranslationMemory.EOF) do
