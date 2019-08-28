@@ -61,7 +61,7 @@ type
     function GetSourceText: string;
     procedure SetSourceText(const Value: string);
   public
-    function Execute: boolean;
+    function Execute(ShowSourceValue: boolean = True): boolean;
     property Text: string read GetText write SetText;
     property SourceText: string read GetSourceText write SetSourceText;
   end;
@@ -79,8 +79,14 @@ uses
 //
 //------------------------------------------------------------------------------
 
-function TFormTextEditor.Execute: boolean;
+function TFormTextEditor.Execute(ShowSourceValue: boolean): boolean;
 begin
+  if (not ShowSourceValue) then
+  begin
+    EditSourceText.Visible := False;
+    Splitter.Visible := False;
+  end;
+
   Result := (ShowModal = mrOK);
 end;
 

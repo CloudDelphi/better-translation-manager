@@ -162,6 +162,10 @@
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <DCCReference Include="amLocalization.Utils.pas"/>
+        <DCCReference Include="amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas">
+            <Form>FormSelectDuplicate</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

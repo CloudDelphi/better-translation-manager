@@ -102,4 +102,19 @@ object DataModuleMain: TDataModuleMain
       PixelsPerInch = 96
     end
   end
+  object EditRepository: TcxEditRepository
+    Left = 196
+    Top = 108
+    PixelsPerInch = 96
+    object EditRepositoryTextItem: TcxEditRepositoryButtonItem
+      Properties.Buttons = <
+        item
+          Default = True
+          Hint = 'Open in text editor'
+          Kind = bkEllipsis
+        end>
+      Properties.ClearKey = 16392
+      Properties.OnButtonClick = EditRepositoryTextItemPropertiesButtonClick
+    end
+  end
 end

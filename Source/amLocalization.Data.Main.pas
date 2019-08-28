@@ -7,7 +7,7 @@ uses
   Datasnap.DBClient,
   cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
-  cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels,
+  cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels, cxEditRepositoryItems,
   amLocalization.Model;
 
 type
@@ -31,9 +31,12 @@ type
     GridTableViewTargetLanguagesCountryName: TcxGridDBColumn;
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
+    EditRepository: TcxEditRepository;
+    EditRepositoryTextItem: TcxEditRepositoryButtonItem;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
+    procedure EditRepositoryTextItemPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
   private
     FFilterTargetLanguages: boolean;
     FLocalizerProject: TLocalizerProject;
@@ -52,7 +55,9 @@ implementation
 {$R *.dfm}
 
 uses
-  amLocale;
+  cxButtonEdit,
+  amLocale,
+  amLocalization.Dialog.TextEdit;
 
 type
   TcxCustomGridViewCracker = class(TcxCustomGridView);
@@ -84,6 +89,29 @@ begin
       ClientDataSetLanguages.Cancel;
       raise;
     end;
+  end;
+end;
+
+type
+  TcxCustomEditCracker = class(TcxCustomEdit);
+
+procedure TDataModuleMain.EditRepositoryTextItemPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
+var
+  TextEditor: TFormTextEditor;
+begin
+  TextEditor := TFormTextEditor.Create(nil);
+  try
+//    TextEditor.SourceText := FocusedProperty.Value;
+    TextEditor.Text := TcxButtonEdit(Sender).EditingText;// FocusedProperty.TranslatedValue[TargetLanguage];
+
+    if (TextEditor.Execute(False)) then
+    begin
+      // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
+      TcxCustomEditCracker(Sender).InnerEdit.EditValue := TextEditor.Text;
+      TcxCustomEdit(Sender).ModifiedAfterEnter := True;
+    end;
+  finally
+    TextEditor.Free;
   end;
 end;
 

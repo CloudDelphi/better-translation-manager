@@ -19,10 +19,6 @@ object FormTranslationMemory: TFormTranslationMemory
     Height = 446
     Align = alClient
     TabOrder = 0
-    ExplicitLeft = 156
-    ExplicitTop = 88
-    ExplicitWidth = 300
-    ExplicitHeight = 250
     object GridTM: TcxGrid
       Left = 10
       Top = 10
@@ -32,7 +28,6 @@ object FormTranslationMemory: TFormTranslationMemory
       object GridTMDBTableView: TcxGridDBTableView
         Navigator.Buttons.CustomButtons = <>
         OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
-        DataController.DataSource = DataModuleMain.DataSourceTranslationMemory
         DataController.Summary.DefaultGroupSummaryItems = <>
         DataController.Summary.FooterSummaryItems = <>
         DataController.Summary.SummaryGroups = <>
@@ -46,6 +41,11 @@ object FormTranslationMemory: TFormTranslationMemory
         OptionsView.GroupByBox = False
         OptionsView.HeaderEndEllipsis = True
         OptionsView.Indicator = True
+        object GridTMDBTableViewRecId: TcxGridDBColumn
+          DataBinding.FieldName = 'RecId'
+          Visible = False
+          VisibleForCustomization = False
+        end
       end
       object GridTMLevel: TcxGridLevel
         GridView = GridTMDBTableView
@@ -56,7 +56,7 @@ object FormTranslationMemory: TFormTranslationMemory
       Top = 411
       Width = 75
       Height = 25
-      Caption = 'Load TM'
+      Caption = 'Load TM...'
       TabOrder = 1
       OnClick = ButtonLoadClick
     end
@@ -68,8 +68,16 @@ object FormTranslationMemory: TFormTranslationMemory
       Cancel = True
       Caption = 'Close'
       ModalResult = 8
+      TabOrder = 3
+    end
+    object ButtonSaveAs: TcxButton
+      Left = 91
+      Top = 411
+      Width = 75
+      Height = 25
+      Caption = 'Save as...'
       TabOrder = 2
-      OnClick = ButtonLoadClick
+      OnClick = ButtonSaveAsClick
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
       AlignHorz = ahClient
@@ -124,7 +132,30 @@ object FormTranslationMemory: TFormTranslationMemory
       ControlOptions.OriginalHeight = 25
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
+      Index = 2
+    end
+    object dxLayoutItem4: TdxLayoutItem
+      Parent = dxLayoutGroup1
+      CaptionOptions.Visible = False
+      Control = ButtonSaveAs
+      ControlOptions.OriginalHeight = 25
+      ControlOptions.OriginalWidth = 75
+      ControlOptions.ShowBorder = False
       Index = 1
     end
+  end
+  object OpenDialogTMX: TOpenDialog
+    Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
+    FilterIndex = 4
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Left = 120
+    Top = 224
+  end
+  object SaveDialogTMX: TSaveDialog
+    Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
+    FilterIndex = 4
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
+    Left = 232
+    Top = 224
   end
 end

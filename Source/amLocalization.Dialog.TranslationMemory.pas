@@ -12,7 +12,7 @@ uses
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
   cxGridDBTableView, cxGrid,
 
-  amLocalization.Data.TranslationMemory;
+  amLocalization.Data.TranslationMemory, cxEditRepositoryItems;
 
 type
   TFormTranslationMemory = class(TForm)
@@ -28,10 +28,16 @@ type
     dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     dxLayoutItem3: TdxLayoutItem;
     ButtonClose: TcxButton;
+    GridTMDBTableViewRecId: TcxGridDBColumn;
+    OpenDialogTMX: TOpenDialog;
+    dxLayoutItem4: TdxLayoutItem;
+    ButtonSaveAs: TcxButton;
+    SaveDialogTMX: TSaveDialog;
     procedure ButtonLoadClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure ButtonSaveAsClick(Sender: TObject);
   private
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
   public
@@ -48,10 +54,26 @@ uses
   amLocalization.Data.Main;
 
 function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
+var
+  i: integer;
 begin
   FDataModuleTranslationMemory := ADataModuleTranslationMemory;
 
-  GridTMDBTableView.DataController.DataSource := FDataModuleTranslationMemory.DataSourceTranslationMemory;
+  if (not FDataModuleTranslationMemory.IsLoaded) then
+  begin
+    SaveCursor(crHourGlass);
+    FDataModuleTranslationMemory.LoadTranslationMemory(FDataModuleTranslationMemory.Filename);
+  end;
+
+  GridTMDBTableView.BeginUpdate;
+  try
+    GridTMDBTableView.DataController.DataSource := FDataModuleTranslationMemory.DataSourceTranslationMemory;
+    GridTMDBTableView.DataController.CreateAllItems;
+    for i := 0 to GridTMDBTableView.ColumnCount-1 do
+      GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
+  finally
+    GridTMDBTableView.EndUpdate;
+  end;
 
   ShowModal;
 
@@ -59,17 +81,43 @@ begin
 end;
 
 procedure TFormTranslationMemory.ButtonLoadClick(Sender: TObject);
+var
+  i: integer;
 begin
+  if (not FDataModuleTranslationMemory.CheckSave) then
+    Exit;
+
+  OpenDialogTMX.FileName := FDataModuleTranslationMemory.Filename;
+
+  if (not OpenDialogTMX.Execute(Handle)) then
+    Exit;
+
   SaveCursor(crHourGlass);
 
   GridTMDBTableView.BeginUpdate;
   try
-    FDataModuleTranslationMemory.LoadTranslationMemory(TPath.ChangeExtension(Application.ExeName, '.tmx'));
+    FDataModuleTranslationMemory.LoadTranslationMemory(OpenDialogTMX.FileName);
+    FDataModuleTranslationMemory.Filename := OpenDialogTMX.FileName;
 
     GridTMDBTableView.DataController.CreateAllItems;
+
+    for i := 0 to GridTMDBTableView.ColumnCount-1 do
+      GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
   finally
     GridTMDBTableView.EndUpdate;
   end;
+end;
+
+procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);
+begin
+  SaveDialogTMX.FileName := FDataModuleTranslationMemory.Filename;
+
+  if (not SaveDialogTMX.Execute(Handle)) then
+    Exit;
+
+  SaveCursor(crHourGlass);
+
+  FDataModuleTranslationMemory.SaveTranslationMemory(SaveDialogTMX.FileName);
 end;
 
 procedure TFormTranslationMemory.FormCreate(Sender: TObject);

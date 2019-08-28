@@ -17,7 +17,8 @@ uses
   amLocalization.Dialog.Search in 'amLocalization.Dialog.Search.pas' {FormSearch},
   amLocalization.Dialog.TranslationMemory in 'amLocalization.Dialog.TranslationMemory.pas' {FormTranslationMemory},
   amLocalization.Data.TranslationMemory in 'amLocalization.Data.TranslationMemory.pas' {DataModuleTranslationMemory: TDataModule},
-  amLocalization.Utils in 'amLocalization.Utils.pas';
+  amLocalization.Utils in 'amLocalization.Utils.pas',
+  amLocalization.Dialog.TranslationMemory.SelectDuplicate in 'amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas' {FormSelectDuplicate};
 
 {$R *.res}
 

@@ -75,7 +75,7 @@ begin
     JsonTranslationItemArray := JsonTranslationItem.GetValue('translations') as TJsonArray;
     TargetValue :=  JsonTranslationItemArray.Items[0].GetValue<string>('text');
 
-    Result := True;
+    Result := (not AnsiSameText(SourceValue, TargetValue));
   end;
 end;
 

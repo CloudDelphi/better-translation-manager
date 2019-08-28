@@ -39,7 +39,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -72,6 +71,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -560,6 +560,7 @@ object FormMain: TFormMain
     ImageOptions.LargeImages = ImageListLarge
     ImageOptions.UseLargeImagesForLargeIcons = True
     ImageOptions.UseLeftBottomPixelAsTransparent = False
+    MenusShowRecentItemsFirst = False
     PopupMenuLinks = <>
     UseSystemFont = True
     Left = 824
@@ -746,7 +747,7 @@ object FormMain: TFormMain
           Hint = 'Settings'
           OnClick = BarManagerBarProofingCaptionButtons0Click
         end>
-      DockedLeft = 282
+      DockedLeft = 286
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -807,7 +808,7 @@ object FormMain: TFormMain
     object BarManagerBarFind: TdxBar
       Caption = 'Find'
       CaptionButtons = <>
-      DockedLeft = 108
+      DockedLeft = 110
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -899,7 +900,7 @@ object FormMain: TFormMain
     object BarManagerBarMark: TdxBar
       Caption = 'Mark'
       CaptionButtons = <>
-      DockedLeft = 517
+      DockedLeft = 567
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1042,7 +1043,6 @@ object FormMain: TFormMain
     object dxBarButton15: TdxBarButton
       Action = ActionAutomationMemory
       Category = 0
-      ButtonStyle = bsChecked
     end
     object BarButtonGotoNext: TdxBarSubItem
       Action = ActionGotoNext
@@ -1055,6 +1055,14 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton27'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarSubItem2'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarSubItem3'
         end
         item
           Visible = True
@@ -1123,11 +1131,8 @@ object FormMain: TFormMain
       Category = 0
     end
     object dxBarButton26: TdxBarButton
-      Caption = '&Validate all'
+      Action = ActionValidate
       Category = 0
-      Hint = 'Validate all'
-      Visible = ivAlways
-      OnClick = dxBarButton26Click
     end
     object dxBarButton16: TdxBarButton
       Action = ActionGotoNextUntranslated
@@ -1144,12 +1149,6 @@ object FormMain: TFormMain
       ButtonStyle = bsDropDown
       DropDownMenu = PopupMenuBookmark
     end
-    object dxBarButton28: TdxBarButton
-      Action = ActionBookmark
-      Category = 0
-      ButtonStyle = bsDropDown
-      DropDownMenu = PopupMenuBookmark
-    end
     object ButtonItemBookmarkAny: TdxBarButton
       Action = ActionGotoBookmarkAny
       Category = 0
@@ -1159,6 +1158,64 @@ object FormMain: TFormMain
       Category = 0
       ButtonStyle = bsCheckedDropDown
       DropDownMenu = PopupMenuBookmark
+    end
+    object dxBarSubItem2: TdxBarSubItem
+      Action = ActionGotoNextStatus
+      Category = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton28'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton29'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton30'
+        end>
+    end
+    object dxBarSubItem3: TdxBarSubItem
+      Action = ActionGotoNextState
+      Category = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton31'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton33'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton32'
+        end>
+    end
+    object dxBarButton28: TdxBarButton
+      Action = ActionGotoNextStatusTranslate
+      Category = 0
+    end
+    object dxBarButton29: TdxBarButton
+      Action = ActionGotoNextStatusHold
+      Category = 0
+    end
+    object dxBarButton30: TdxBarButton
+      Action = ActionGotoNextStatusDontTranslate
+      Category = 0
+    end
+    object dxBarButton31: TdxBarButton
+      Action = ActionGotoNextStateNew
+      Category = 0
+    end
+    object dxBarButton32: TdxBarButton
+      Action = ActionGotoNextStateUnused
+      Category = 0
+    end
+    object dxBarButton33: TdxBarButton
+      Action = ActionGotoNextStateExisting
+      Category = 0
     end
   end
   object SkinController: TdxSkinController
@@ -2700,6 +2757,93 @@ object FormMain: TFormMain
           FDFFCEF2FBFFBDEDF9FFAAE7F5FF91D8EFFF8EDEF2FF3A9ECDFF000000000000
           00000000000000000000000000000000000000000000000000003B92BDF5B2DB
           EDFF2C6F8FD508415FB406405DB320688BD579C1DFFF2487B8F5}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
+          00097048597300000EC300000EC301C76FA864000001BA49444154384FAD914B
+          2F03511886FB3F2875D9100B2CC4026523117FC02F4094A8957BDB7424D894C4
+          C2AD2C48DC139A4888C4E547D8B0425CC6ADDACE94B9B4F3FACEE93062CA42BC
+          C9BB3AF33C67BEEF38FE2D6333FB6015A6767987433BBCBD635BBCDEE02A7A82
+          6B2DE6E7F630F8B730812F14F959F25D601806D2542D6540D5D35C707695FC59
+          323ABD67A25698444F5B82AF35312B81C9888959F910282490D514A2B28A0B31
+          06AF7FD130312B81896D13CB848F40301B21AEBCA16EA3069E130FA2AF29740D
+          85B3FC812960E007AC132C290ADC9BB5683E2A47A1E0C233093A87E6ED027F28
+          23104EBDA88A54E0555339DCB0E546D37105F20527442989A7A40E4F36C1C0F8
+          261794AE17A3F1B010656B2568D820F8B012AE11821332DDAEE3810BE6EC82BE
+          D1752EB895A2285A71A27A2F17F507A5C813727027491C7E2458944930386B17
+          7803CB5C105752B88C3DA260D90957300F37B1049E4CF89EE05B4943C7401641
+          B77F890BD89232D5F9BC0C7C205094084E68B88A6B68EF9FB10B5A7BE7B9E05E
+          D63E2BD26D7754065E1378F1A2E2FC59415BFFB45DC036DBE55BA086AD0E87D1
+          496567AC1DB4BC769A3FEB2BFC2D0EC73B02D5155B8641533A0000000049454E
+          44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000000734944415478DA63FCFFFF3F0325801166407A7A3A983173E64CC6BA
+          BABA078C8C8C0D8D8D8D0BC832A0BEBEFEBF828202C3FDFBF71F123208A70140
+          4D0CDBB76F6778F1E2055E83F01A0003F80C22CA0064834E9C38C100D473B0A9
+          A9C981F62EA0280C288A058AD301214DA306E030805C00007F69CDE1F8BB91C9
+          0000000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000002B44944415478DA95536D485351187ECFBDFBB4E9DACCA196B3E9B45C
+          AEC034FA202CB5267E402041A1D18F2286E49FA218062D09A21F8942840499F4
+          23C10821B1C414A18C0CC1E16E6998D24A9BE4D7862E75DBBDF7DCCE590AD10A
+          ECBD5CCEE1DCF779DEE77DEF73902449400391A08BBDB1DBB249B3F90C8B6485
+          C0B01908B008A2E81130DFE7F37A9A5AEA2ABF923C2CAD01115D29D85C5CAC28
+          2B77DE566B626AB2D275AC215E0D097A3550DA395F106617566174623EE09B5F
+          B872FF72510BC1F294245295828BCB9DCFD28D7A5BD141238804151225E0C94B
+          13E432040A06811816A06F600A3E4FCE76B637D79C9AE1B815FA9DB537BC6A30
+          9B0C35B67C134C2FF2441F44054308080F246A15D0F3DA03DCC897FA870E5B2D
+          AAB8DABA2B3935DD7DB6229BF5F8C2C0324C24F96F0458C2641C00DBF50A78FC
+          94E34787067251E5CDEEA682FD66BB2651072181C861016432268A0001259008
+          018E90F1BE4578FED2D5884ED7F50E579459F7CC86A3ABFE2B68912D4A044FDA
+          8746D04967EF7C6989357E6659D83801695317C34257E7B01F9DA8ED5ECA3F66
+          895D16FE43C1DA40DFF6707E5472A9833B70D462C532E586C01279A8023E1886
+          C1BE61372AB8D07ACF9AB7A35AB72D61C30A2889DFEB0757FFE01D642D73E66C
+          CDCC7D9777245B2EFEB23499723408210630C6402D82050CDC9B8FC2A7818E5C
+          DAB86A5F55737D8AD9549DB5370DC2D47D4802C51FBF5220E7986E88CB26B849
+          F08C7CB8EB6ABBE8A0048C569B1A97517AA32D292DE5B825C70412199246298B
+          58989A5DE0312C054552598489F793F06DCCF3C2D576BE926097D62F13ABD51A
+          E38C858E5BB13AC3B994CC24B92159072A8D32227975390473A4E7A971EF8ACF
+          3B7E7DACEBDA0372FC836045F4DB75A69A55A987ECBB63F43BABE4AAD8C312C3
+          26916E8883F9EFE160A03F30E56E9E763F1A2379C1F5EBFC13749B22D6ED599B
+          F50000000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          61000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
+          00097048597300000EC300000EC301C76FA8640000026549444154384F6D93DB
+          52D3501486D3A280380E374A4FA4074A9AA64DD3A63934699BB4F4900AA505AC
+          8882E70BDF89C7C00B9171780266BCF125A4EA03E8CD72AD9D7012D7CC3FBBC9
+          5EDFBFD6DE59E5AE45081516F5DE58D2FA8792E69D1575EF37FE3E13D5DE61AE
+          D2DEC2FD9920EF568492792796AFF68F94DA06586BBBE07807D01ABC02A7BF0F
+          B5F6532899EB90AB748F78B11EA77C1FF3232496D64449F7CEF5E60EB803025F
+          82EB910E9881D3DB8766EF39A8F511E4D4EEF76C51E789F3F1426156543B5F0D
+          D7871D0F01849AFD170C6AA0EA5DD21ED43B7BCC44909D8F48DE61BC5069BF91
+          8DC7981C002CF93AF40C6C141DCB6AEFB2E3E4D52EA4F3D66BC4C39C50723FEB
+          CDED2B3000EC351F228064B6481330DD0994F19E329275820677B955D9FD6161
+          824D1502809E6B1740EB09182ECAD9019D691B547B4C1D9CA3C12C1A38084D6E
+          5609201DEF8581D8A1466A6C41B54E1A414AACFD4183792E5368FC2457F3B28A
+          9F4C50F51218E3E58D195841D1A74E0AFA140DE6B894689C94F01259055605C1
+          002240AD6F42C51E41D91E42D942D586EC1297B3EA17768444B6FA212B370380
+          2A216423646DFA004A41483137709848EB90166B1049C9EFD1802633B6C0AF6A
+          DF24B5730511806D96CC210398B04B127E3588274BC7ECFCC130859712396539
+          5B9DD2A60F10EC033423456300B23E80956203E26965FAE06142208E600A7299
+          598CA4D2F18CF229291890535A50A8F6A1A80D40C255905BC0673588F0F2F1E2
+          527285F219F94F90E37C8417DF4679F9349A927FC5520AD01AE58BA78FE2E23B
+          DCBF87FA2F7C11D40DCDF81C6A01753F58E9BCF4FEC6BF90E338EE2F55193229
+          700A35F90000000049454E44AE426082}
       end>
   end
   object ImageListLarge: TcxImageList
@@ -4242,7 +4386,7 @@ object FormMain: TFormMain
     Left = 384
     Top = 232
     object ActionProofingCheck: TAction
-      Category = 'Proofing'
+      Category = 'Validation'
       Caption = 'Spell check'
       Hint = 'Perform spell check on the whole project'
       ImageIndex = 13
@@ -4259,7 +4403,7 @@ object FormMain: TFormMain
       OnExecute = ActionProjectOpenExecute
     end
     object ActionProofingCheckSelected: TAction
-      Category = 'Proofing'
+      Category = 'Validation'
       Caption = 'Check selected'
       Hint = 'Perform spell check on the selected items'
       ImageIndex = 13
@@ -4362,7 +4506,7 @@ object FormMain: TFormMain
       OnUpdate = ActionStatusHoldUpdate
     end
     object ActionProofingLiveCheck: TAction
-      Category = 'Proofing'
+      Category = 'Validation'
       AutoCheck = True
       Caption = 'Live check'
       Hint = 'Enable or disable check-as-you-type spell check'
@@ -4454,12 +4598,16 @@ object FormMain: TFormMain
       Caption = 'Add to dictionary'
       Hint = 'Add the selected translations to the translation memory'
       ImageIndex = 24
+      OnExecute = ActionAutomationMemoryAddExecute
+      OnUpdate = ActionAutomationMemoryAddUpdate
     end
     object ActionAutomationMemoryTranslate: TAction
       Category = 'Automation'
       Caption = 'Translate from dictionary'
       Hint = 'Translate the selected items from translation memory'
       ImageIndex = 25
+      OnExecute = ActionAutomationMemoryTranslateExecute
+      OnUpdate = ActionAutomationMemoryTranslateUpdate
     end
     object ActionFindNext: TAction
       Category = 'Find'
@@ -4501,28 +4649,82 @@ object FormMain: TFormMain
       ShortCut = 115
       OnExecute = ActionGotoNextBookmarkExecute
     end
-    object ActionBookmark: TAction
-      Tag = -1
-      Category = 'Bookmark'
-      Caption = 'Bookmark...'
-      ImageIndex = 37
-      OnExecute = ActionDummyExecute
-    end
     object ActionGotoBookmarkAny: TAction
       Tag = -1
       Category = 'Bookmark'
       Caption = 'A&ny bookmark'
+      ImageIndex = 49
       OnExecute = ActionGotoBookmarkAnyExecute
     end
     object ActionEditMark: TAction
       Tag = -1
       Category = 'Bookmark'
       Caption = 'Set bookmark'
+      ImageIndex = 37
       SecondaryShortCuts.Strings = (
         'Shift+Ctrl+B')
       ShortCut = 16450
       OnExecute = ActionEditMarkExecute
       OnUpdate = ActionEditMarkUpdate
+    end
+    object ActionValidate: TAction
+      Category = 'Validation'
+      Caption = '&Validate project'
+      ImageIndex = 48
+      OnExecute = ActionValidateExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextStatus: TAction
+      Category = 'Find'
+      Caption = 'Next with Status...'
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextStatusTranslate: TAction
+      Category = 'Find'
+      Caption = 'Translate'
+      ImageIndex = 8
+      OnExecute = ActionGotoNextStatusExecute
+    end
+    object ActionGotoNextStatusHold: TAction
+      Tag = 1
+      Category = 'Find'
+      Caption = 'Hold'
+      ImageIndex = 11
+      OnExecute = ActionGotoNextStatusExecute
+    end
+    object ActionGotoNextStatusDontTranslate: TAction
+      Tag = 2
+      Category = 'Find'
+      Caption = 'Don'#39't translate'
+      ImageIndex = 9
+      OnExecute = ActionGotoNextStatusExecute
+    end
+    object ActionGotoNextState: TAction
+      Category = 'Find'
+      Caption = 'Next with State...'
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoNextStateNew: TAction
+      Category = 'Find'
+      Caption = 'New'
+      ImageIndex = 10
+      OnExecute = ActionGotoNextStateExecute
+    end
+    object ActionGotoNextStateExisting: TAction
+      Tag = 1
+      Category = 'Find'
+      Caption = 'Existing'
+      ImageIndex = 50
+      OnExecute = ActionGotoNextStateExecute
+    end
+    object ActionGotoNextStateUnused: TAction
+      Tag = 2
+      Category = 'Find'
+      Caption = 'Unused'
+      ImageIndex = 51
+      OnExecute = ActionGotoNextStateExecute
     end
   end
   object OpenDialogProject: TOpenDialog
@@ -4912,10 +5114,6 @@ object FormMain: TFormMain
         BeginGroup = True
         Visible = True
         ItemName = 'dxBarButton10'
-      end
-      item
-        Visible = True
-        ItemName = 'dxBarButton28'
       end>
     Ribbon = RibbonMain
     UseOwnFont = False
@@ -4925,8 +5123,9 @@ object FormMain: TFormMain
   end
   object OpenDialogEXE: TOpenDialog
     Filter = 
-      'Applications (*.exe)|*.exe|Library modules (*.dll)|*.dll|All mod' +
-      'ules (*.exe, *.dll)|*.exe;*.dll|All files (*.*)|*.*'
+      'Applications (*.exe)|*.exe|Library modules (*.dll)|*.dll|Delphi ' +
+      'package (*.bpl)|*.bpl|All modules (*.exe, *.dll, *.bpl)|*.exe;*.' +
+      'dll;*.bpl|All files (*.*)|*.*'
     FilterIndex = 3
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 448

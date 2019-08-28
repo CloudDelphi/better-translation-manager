@@ -8,6 +8,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
   Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
+
   dxRibbonForm,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
   dxRibbonCustomizationForm, cxStyles, cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges,
@@ -16,6 +17,8 @@ uses
   cxImageComboBox, cxSplitter, cxContainer, cxTreeView, cxTextEdit, cxBlobEdit, cxImageList, cxDBExtLookupComboBox, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit,
   cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit, dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
+
+  amLocale,
   amLocalization.Model,
   amLocalization.Translator.Microsoft.Version3,
   amLocalization.Dialog.Search,
@@ -194,9 +197,7 @@ type
     dxBarButton27: TdxBarButton;
     ButtonGotoBookmark: TdxBarButton;
     PopupMenuBookmark: TdxRibbonPopupMenu;
-    dxBarButton28: TdxBarButton;
     ButtonItemBookmarkAny: TdxBarButton;
-    ActionBookmark: TAction;
     ActionGotoBookmarkAny: TAction;
     ActionEditMark: TAction;
     BarManagerBarMark: TdxBar;
@@ -205,6 +206,23 @@ type
     dxLayoutItem3: TdxLayoutItem;
     LabelCountTranslatedPercent: TcxLabel;
     dxLayoutGroup1: TdxLayoutGroup;
+    ActionValidate: TAction;
+    ActionGotoNextStatus: TAction;
+    ActionGotoNextState: TAction;
+    dxBarSubItem2: TdxBarSubItem;
+    dxBarSubItem3: TdxBarSubItem;
+    dxBarButton28: TdxBarButton;
+    dxBarButton29: TdxBarButton;
+    dxBarButton30: TdxBarButton;
+    ActionGotoNextStatusTranslate: TAction;
+    ActionGotoNextStatusHold: TAction;
+    ActionGotoNextStatusDontTranslate: TAction;
+    ActionGotoNextStateNew: TAction;
+    ActionGotoNextStateExisting: TAction;
+    ActionGotoNextStateUnused: TAction;
+    dxBarButton31: TdxBarButton;
+    dxBarButton32: TdxBarButton;
+    dxBarButton33: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -268,7 +286,6 @@ type
     procedure ActionFindNextUpdate(Sender: TObject);
     procedure ActionAutomationMemoryExecute(Sender: TObject);
     procedure TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
-    procedure dxBarButton26Click(Sender: TObject);
     procedure TreeListItemsClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionGotoNextWarningExecute(Sender: TObject);
@@ -282,6 +299,14 @@ type
     procedure ActionGotoNextBookmarkExecute(Sender: TObject);
     procedure StatusBarMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ActionValidateExecute(Sender: TObject);
+    procedure ActionAutomationMemoryAddExecute(Sender: TObject);
+    procedure ActionHasPropertyFocusedUpdate(Sender: TObject);
+    procedure ActionAutomationMemoryTranslateExecute(Sender: TObject);
+    procedure ActionGotoNextStatusExecute(Sender: TObject);
+    procedure ActionGotoNextStateExecute(Sender: TObject);
+    procedure ActionAutomationMemoryTranslateUpdate(Sender: TObject);
+    procedure ActionAutomationMemoryAddUpdate(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -335,7 +360,8 @@ type
     procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
     procedure LoadFocusedPropertyNode;
-    procedure ReloadNode(Node: TcxTreeListNode); overload;
+    procedure ReloadNode(Node: TcxTreeListNode);
+    procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure DisplayModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
   protected
@@ -351,6 +377,10 @@ type
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
     procedure UpdateProjectModifiedIndicator;
+  private
+    type TTranslateFunction = function(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean of object;
+
+    procedure TranslateSelected(TranslateFunction: TTranslateFunction; const TranslatorName: string);
   private type
     TCounts = record
       CountModule, CountItem, CountProperty: integer;
@@ -402,7 +432,6 @@ uses
 
   amCursorService,
 
-  amLocale,
   amLocalization.Engine,
   amLocalization.ResourceWriter,
   amLocalization.Persistence,
@@ -418,6 +447,7 @@ resourcestring
   sLocalizerFindNoMore = 'No more found';
   sLocalizerSourceFileNotFound = 'The source application file specified in the project does not exist.'#13#13+
     'Filename: %s';
+  sTranslateEligibleWarning = #13#13'Note: %d of the selected values are not elegible for translation.';
 
 const
   ImageIndexBookmark0 = 27;
@@ -434,68 +464,6 @@ const
 
 type
   TdxSpellCheckerCracker = class(TdxCustomSpellChecker);
-
-// -----------------------------------------------------------------------------
-
-function SanitizeSpellCheckText(const Value: string): string;
-var
-  n: integer;
-begin
-  // Handle & accelerator chars
-  Result := StripAccelerator(Value);
-
-  // Handle Format strings
-  if (Result = Value) then
-  begin
-    // Find first format specifier
-    n := PosEx('%', Result, 1);
-
-    while (n > 0) and (n < Length(Result)) do
-    begin
-      Inc(n);
-
-      if (Result[n] = '%') then
-      begin
-        // Escaped % - ignore
-        Delete(Result, n, 1);
-      end else
-      if (Result[n] in ['0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
-      begin
-        Result[n-1] := ' '; // Replace %... with space
-
-        // Remove chars until end of format specifier
-        while (Result[n] in ['0'..'9']) do
-          Delete(Result, n, 1);
-
-        if (Result[n] = ':') then
-          Delete(Result, n, 1);
-
-        if (Result[n] = '-') then
-          Delete(Result, n, 1);
-
-        while (Result[n] in ['0'..'9']) do
-          Delete(Result, n, 1);
-
-        if (Result[n] = '.') then
-          Delete(Result, n, 1);
-
-        while (Result[n] in ['0'..'9']) do
-          Delete(Result, n, 1);
-
-        if (Result[n] in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
-          Delete(Result, n, 1)
-        else
-          // Not a format string - undo
-          Exit(Value);
-      end else
-        // Not a format string - undo
-        Exit(Value);
-
-      // Find next format specifier
-      n := PosEx('%', Result, n);
-    end;
-  end;
-end;
 
 // -----------------------------------------------------------------------------
 
@@ -523,6 +491,96 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.ActionMainExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFormMain.ActionMainUpdate(Sender: TObject);
+begin
+  BarEditItemSourceLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  BarEditItemTargetLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  BarManagerBarLanguage.CaptionButtons[0].Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+end;
+
+procedure TFormMain.ActionDummyExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+end;
+
+procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FLocalizerProject.Modules.Count > 0);
+end;
+
+procedure TFormMain.ActionHasItemFocusedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FocusedItem <> nil);
+end;
+
+procedure TFormMain.ActionHasPropertyFocusedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FocusedProperty <> nil);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionAutomationMemoryAddExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
+  Count, ElegibleCount: integer;
+  ElegibleWarning: string;
+resourcestring
+  sAddToDictionaryPromptTitle = 'Add to Translation Memory?';
+  sAddToDictionaryPrompt = 'Do you want to add the selected %d values to the Translation Memory?%s';
+begin
+  Count := 0;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Inc(Count);
+        if (Prop.EffectiveStatus = ItemStatusTranslate) then
+          Inc(ElegibleCount);
+        Result := True;
+      end, False);
+  end;
+
+  if (ElegibleCount < Count) then
+    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+  else
+    ElegibleWarning :=  '';
+
+  if (TaskMessageDlg(sAddToDictionaryPromptTitle, Format(sAddToDictionaryPrompt, [ElegibleCount, ElegibleWarning]),
+    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        if (Prop.EffectiveStatus = ItemStatusTranslate) then
+          FDataModuleTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage]);
+        Result := True;
+      end, False);
+  end;
+end;
+
+procedure TFormMain.ActionAutomationMemoryAddUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FocusedItem <> nil) and (SourceLanguageID <> TargetLanguageID);
+end;
+
 procedure TFormMain.ActionAutomationMemoryExecute(Sender: TObject);
 var
   FormTranslationMemory: TFormTranslationMemory;
@@ -537,58 +595,163 @@ begin
   end;
 end;
 
+procedure TFormMain.TranslateSelected(TranslateFunction: TTranslateFunction; const TranslatorName: string);
+var
+  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
+  i: integer;
+  Item: TCustomLocalizerItem;
+  Count, ElegibleCount: integer;
+  TranslatedCount, UpdatedCount: integer;
+  ElegibleWarning: string;
+resourcestring
+  sTranslateAutoPromptTitle = 'Translate using %s?';
+  sTranslateAutoPrompt = 'Do you want to perform automated translation on the selected %d values?%s';
+  sTranslateAutoResultTitle = 'Automated translation completed.';
+  sTranslateAutoResult = 'Translated: %d'#13'Updated: %d'#13'Not found: %d';
+begin
+  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
+  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+
+  if (SourceLocaleItem = TargetLocaleItem) then
+    Exit;
+
+  Count := 0;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Inc(Count);
+        if (Prop.EffectiveStatus = ItemStatusTranslate) then
+          Inc(ElegibleCount);
+        Result := True;
+      end, False);
+  end;
+
+  if (ElegibleCount < Count) then
+    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+  else
+    ElegibleWarning :=  '';
+
+  if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslatorName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
+    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  TranslatedCount := 0;
+  UpdatedCount := 0;
+
+  SaveCursor(crHourGlass);
+
+  FLocalizerProject.BeginUpdate;
+  try
+
+    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    begin
+      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+
+      Item.Traverse(
+        function(Prop: TLocalizerProperty): boolean
+        var
+          Value, SourceValue, TranslatedValue: string;
+        begin
+          if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
+            Exit(True);
+
+          SourceValue := SanitizeText(Prop.Value);
+          if (Prop.HasTranslation(TargetLanguage)) then
+            TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
+          else
+            TranslatedValue := SourceValue;
+
+          // Perform translation
+          // Note: It is the responsibility of the translation function to return True/False to indicate
+          // if SourceValue=TargetValue is in fact a translation.
+          if (TranslateFunction(SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
+          begin
+            if (not Value.IsEmpty) then
+            begin
+              // If source is all UPPERCASE the target should also be so
+              if (IsUppercase(SourceValue)) then
+                Value := AnsiUpperCase(Value)
+              else
+              // If source starts with an Uppercase letter the target should also do so
+              if (StartsWithUppercase(SourceValue)) then
+                Value := Value[1].ToUpper+Copy(Value, 2, MaxInt);
+
+              // Handle accelerator keys
+              if (HasAccelerator(Prop.Value)) then
+              begin
+                if (not HasAccelerator(Value)) then
+                  // If source had an accelerator then make sure the target also has one
+                  Value := AddAccelerator(EscapeAccelerators(Value));
+              end else
+              begin
+                if (HasAccelerator(Value)) then
+                  // If source doesn't have an accelerator then make sure the target also doesn't have one
+                  Value := SanitizeText(Value, [skAccelerator]);
+              end;
+            end;
+
+            Inc(TranslatedCount);
+
+            if (Prop.HasTranslation(TargetLanguage)) and (Prop.TranslatedValue[TargetLanguage] <> Value) then
+              Inc(UpdatedCount);
+
+            // Set value regardless of current value so we get the correct Status set
+            Prop.TranslatedValue[TargetLanguage] := Value;
+
+            ReloadProperty(Prop);
+          end;
+          Result := True;
+        end, False);
+    end;
+
+  finally
+    FLocalizerProject.EndUpdate;
+  end;
+
+  TaskMessageDlg(sTranslateAutoResultTitle, Format(sTranslateAutoResult, [TranslatedCount, UpdatedCount, ElegibleCount-TranslatedCount]),
+    mtInformation, [mbOK], 0);
+end;
+
+procedure TFormMain.ActionAutomationMemoryTranslateExecute(Sender: TObject);
+var
+  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
+resourcestring
+  sTranslateAutoTM = 'Translation Memory';
+begin
+  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
+  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+
+  FDataModuleTranslationMemory.BeginLookup(SourceLocaleItem, TargetLocaleItem);
+  try
+    TranslateSelected(FDataModuleTranslationMemory.Lookup, sTranslateAutoTM);
+  finally
+    FDataModuleTranslationMemory.EndLookup;
+  end;
+end;
+
+procedure TFormMain.ActionAutomationMemoryTranslateUpdate(Sender: TObject);
+var
+  Item: TCustomLocalizerItem;
+begin
+  Item := FocusedItem;
+
+  TAction(Sender).Enabled := (Item <> nil) and (Item.State <> ItemStateUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
+    (FDataModuleTranslationMemory.HasData) and (SourceLanguageID <> TargetLanguageID);
+end;
+
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
-var
-  SourceLocaleItem, TargetLanguageItem: TLocaleItem;
-  i: integer;
-  Item: TCustomLocalizerItem;
-  NeedReload: boolean;
+resourcestring
+  sTranslateAutoWeb = 'Web Service';
 begin
   if (FTranslator = nil) then
     FTranslator := TDataModuleTranslatorMicrosoftV3.Create(Self);
 
-  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
-  TargetLanguageItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-  NeedReload := False;
-
-  SaveCursor(crHourGlass);
-
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-
-    Item.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      var
-        Value, SourceValue, TranslatedValue: string;
-      begin
-        if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-          Exit(True);
-
-        TranslatedValue := SanitizeSpellCheckText(Prop.TranslatedValue[TargetLanguage]);
-        SourceValue := SanitizeSpellCheckText(Prop.Value);
-
-        if (FTranslator.Translate(SourceLocaleItem, TargetLanguageItem, SourceValue, Value)) and (Value <> TranslatedValue) then
-        begin
-          // Handle accelerator keys
-          if (SourceValue <> Prop.Value) and (Prop.Value.Contains('&')) and (not SourceValue.Contains('&')) then
-            Value := '&'+Value;
-
-          Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
-          NeedReload := True;
-        end;
-
-        Result := True;
-      end);
-
-    if (NeedReload) then
-      LoadItem(Item, True);
-
-    Update;
-  end;
+  TranslateSelected(FTranslator.Translate, sTranslateAutoWeb);
 end;
 
 procedure TFormMain.ActionAutomationWebLookupUpdate(Sender: TObject);
@@ -597,7 +760,8 @@ var
 begin
   Item := FocusedItem;
 
-  TAction(Sender).Enabled := (Item <> nil) and (Item.State <> ItemStateUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate);
+  TAction(Sender).Enabled := (Item <> nil) and (Item.State <> ItemStateUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
+    (SourceLanguageID <> TargetLanguageID);
 end;
 
 // -----------------------------------------------------------------------------
@@ -833,11 +997,6 @@ begin
   ShowMessage(sLocalizerImportComplete);
 end;
 
-procedure TFormMain.ActionDummyExecute(Sender: TObject);
-begin
-//
-end;
-
 procedure TFormMain.ActionEditMarkExecute(Sender: TObject);
 var
   p: TPoint;
@@ -916,6 +1075,26 @@ begin
   end;
 end;
 
+procedure TFormMain.ActionGotoNextStateExecute(Sender: TObject);
+begin
+  if (not GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := (Prop.State = TLocalizerItemState(TAction(Sender).Tag));
+    end)) then
+    ShowMessage(sLocalizerFindNoMore);
+end;
+
+procedure TFormMain.ActionGotoNextStatusExecute(Sender: TObject);
+begin
+  if (not GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := (Prop.EffectiveStatus = TLocalizerItemStatus(TAction(Sender).Tag));
+    end)) then
+    ShowMessage(sLocalizerFindNoMore);
+end;
+
 procedure TFormMain.ActionGotoNextUntranslatedExecute(Sender: TObject);
 begin
   if (not GotoNext(
@@ -989,18 +1168,6 @@ begin
   FLocalizerProject.Modified := True;
 
   LoadProject(FLocalizerProject, False);
-end;
-
-procedure TFormMain.ActionMainExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFormMain.ActionMainUpdate(Sender: TObject);
-begin
-  BarEditItemSourceLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
-  BarEditItemTargetLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
-  BarManagerBarLanguage.CaptionButtons[0].Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
@@ -1236,11 +1403,6 @@ begin
   TaskMessageDlg(sLocalizerPurgeStatusTitle, Msg, mtInformation, [mbOK], 0);
 end;
 
-procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
-begin
-  TAction(Sender).Enabled := (FLocalizerProject.Modules.Count > 0);
-end;
-
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 var
   Filename, TempFilename, BackupFilename: string;
@@ -1265,7 +1427,7 @@ begin
   TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TempFilename);
 
   // Save existing file as backup
-  if (TFile.Exists(Filename)) then
+  if (TempFilename <> Filename) then
   begin
     i := 0;
     repeat
@@ -1274,11 +1436,10 @@ begin
     until (not TFile.Exists(BackupFilename));
 
     TFile.Move(Filename, BackupFilename);
-  end;
 
-  // Rename temporary file to final file
-  if (TempFilename <> Filename) then
+    // Rename temporary file to final file
     TFile.Move(TempFilename, Filename);
+  end;
 
   FLocalizerProject.Modified := False;
 
@@ -1352,11 +1513,6 @@ begin
     TaskMessageDlg(sLocalizerProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
   end else
     TaskMessageDlg(sLocalizerProjectUpdatedTitle, sLocalizerProjectUpdatedNothing, mtInformation, [mbOK], 0);
-end;
-
-procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
-begin
-  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProofingLiveCheckExecute(Sender: TObject);
@@ -1457,6 +1613,66 @@ begin
   TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (FocusedItem.State <> ItemStateUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusTranslate);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionValidateExecute(Sender: TObject);
+var
+  WarningCount, NewWarningCount: integer;
+  NeedRefresh: boolean;
+  CurrentModule: TLocalizerModule;
+resourcestring
+  sLocalizerWarningsNone = 'No validation problems found';
+  sLocalizerWarnings = 'Validation found %d problems in the project. Of these %d are new';
+begin
+  SaveCursor(crHourGlass);
+
+  CurrentModule := FocusedModule;
+  NeedRefresh := False;
+  WarningCount := 0;
+  NewWarningCount := 0;
+
+  FLocalizerProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+      OldWarnings: TTranslationWarnings;
+      Warning: TTranslationWarning;
+    begin
+      if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.State <> ItemStateUnused) then
+      begin
+        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+        begin
+          OldWarnings := Translation.Warnings;
+          Translation.UpdateWarnings;
+
+          for Warning in Translation.Warnings do
+            Inc(WarningCount);
+
+          if (Translation.Warnings <> OldWarnings) then
+          begin
+            for Warning in Translation.Warnings-OldWarnings do
+              Inc(NewWarningCount);
+
+            // Refresh if warnings changed and translation belongs to current module
+            if (Prop.Item.Module = CurrentModule) then
+              NeedRefresh := True;
+          end;
+        end;
+      end;
+
+      Result := True;
+    end, False);
+
+  // Update node state images
+  if (NeedRefresh) then
+    TreeListItems.FullRefresh;
+
+  if (WarningCount = 0) then
+    MessageDlg(sLocalizerWarningsNone, mtInformation, [mbOK], 0)
+  else
+    MessageDlg(Format(sLocalizerWarnings, [WarningCount, NewWarningCount]), mtWarning, [mbOK], 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1714,7 +1930,7 @@ end;
 
 procedure TFormMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  CanClose := CheckSave;
+  CanClose := CheckSave and FDataModuleTranslationMemory.CheckSave;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2118,9 +2334,7 @@ var
 begin
   if (Item is TLocalizerProperty) then
   begin
-    Node := TreeListItems.NodeFromHandle(Item);
-    if (Node <> nil) then
-      ReloadNode(Node);
+    ReloadProperty(TLocalizerProperty(Item));
   end else
   if (Item is TLocalizerModule) then
   begin
@@ -2611,7 +2825,7 @@ begin
   if (FSpellCheckingString) then
     SanitizedWord := AWord
   else
-    SanitizedWord := SanitizeSpellCheckText(AWord);
+    SanitizedWord := SanitizeText(AWord);
 
   FSpellCheckingWord := True;
   try
@@ -2677,7 +2891,7 @@ begin
     FSpellCheckingStringResult := True;
     FSpellCheckingString := True;
     try
-      CheckedText := SanitizeSpellCheckText(Text);
+      CheckedText := SanitizeText(Text);
       SpellChecker.Check(CheckedText);
     finally
       FSpellCheckingString := False;
@@ -2809,6 +3023,17 @@ begin
   // Hack to reload a single tree node
   Exclude(TcxTreeListNodeCracker(Node).State, nsValuesAssigned);
   Node.TreeList.LayoutChanged;
+end;
+
+procedure TFormMain.ReloadProperty(Prop: TLocalizerProperty);
+var
+  Node: TcxTreeListNode;
+begin
+  if (Prop.Item.Module <> FocusedModule) then
+    Exit;
+  Node := TreeListItems.NodeFromHandle(Prop);
+  if (Node <> nil) then
+    ReloadNode(Node);
 end;
 
 // -----------------------------------------------------------------------------
@@ -3163,64 +3388,6 @@ begin
     LabelCountTranslatedPercent.Caption := '';
 end;
 
-procedure TFormMain.dxBarButton26Click(Sender: TObject);
-var
-  WarningCount, NewWarningCount: integer;
-  NeedRefresh: boolean;
-  CurrentModule: TLocalizerModule;
-resourcestring
-  sLocalizerWarningsNone = 'No validation problems found';
-  sLocalizerWarnings = 'Validation found %d problems in the project. Of these %d are new';
-begin
-  SaveCursor(crHourGlass);
-
-  CurrentModule := FocusedModule;
-  NeedRefresh := False;
-  WarningCount := 0;
-  NewWarningCount := 0;
-
-  FLocalizerProject.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    var
-      Translation: TLocalizerTranslation;
-      OldWarnings: TTranslationWarnings;
-      Warning: TTranslationWarning;
-    begin
-      if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.State <> ItemStateUnused) then
-      begin
-        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-        begin
-          OldWarnings := Translation.Warnings;
-          Translation.UpdateWarnings;
-
-          for Warning in Translation.Warnings do
-            Inc(WarningCount);
-
-          if (Translation.Warnings <> OldWarnings) then
-          begin
-            for Warning in Translation.Warnings-OldWarnings do
-              Inc(NewWarningCount);
-
-            // Refresh if warnings changed and translation belongs to current module
-            if (Prop.Item.Module = CurrentModule) then
-              NeedRefresh := True;
-          end;
-        end;
-      end;
-
-      Result := True;
-    end, False);
-
-  // Update node state images
-  if (NeedRefresh) then
-    TreeListItems.FullRefresh;
-
-  if (WarningCount = 0) then
-    MessageDlg(sLocalizerWarningsNone, mtInformation, [mbOK], 0)
-  else
-    MessageDlg(Format(sLocalizerWarnings, [WarningCount, NewWarningCount]), mtWarning, [mbOK], 0);
-end;
-
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
 var
   Module: TLocalizerModule;
@@ -3329,11 +3496,6 @@ begin
   end;
 
   SpellChecker.ShowSpellingCompleteMessage;
-end;
-
-procedure TFormMain.ActionHasItemFocusedUpdate(Sender: TObject);
-begin
-  TAction(Sender).Enabled := (FocusedItem <> nil);
 end;
 
 // -----------------------------------------------------------------------------
