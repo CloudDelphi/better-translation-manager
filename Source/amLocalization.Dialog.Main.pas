@@ -378,7 +378,7 @@ type
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
     procedure UpdateProjectModifiedIndicator;
   private
-    type TTranslateFunction = function(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean of object;
+    type TTranslateFunction = function(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean of object;
 
     procedure TranslateSelected(TranslateFunction: TTranslateFunction; const TranslatorName: string);
   private type
@@ -667,7 +667,7 @@ begin
           // Perform translation
           // Note: It is the responsibility of the translation function to return True/False to indicate
           // if SourceValue=TargetValue is in fact a translation.
-          if (TranslateFunction(SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
+          if (TranslateFunction(Prop, SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
           begin
             if (not Value.IsEmpty) then
             begin

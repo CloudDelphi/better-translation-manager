@@ -3,8 +3,11 @@ unit amLocalization.Translator.Microsoft.Version3;
 interface
 
 uses
-  System.SysUtils, System.Classes, IPPeerClient, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope,
-  amLocale;
+  System.SysUtils, System.Classes,
+  IPPeerClient, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope,
+
+  amLocale,
+  amLocalization.Model;
 
 type
   TDataModuleTranslatorMicrosoftV3 = class(TDataModule)
@@ -14,7 +17,7 @@ type
     procedure DataModuleCreate(Sender: TObject);
   private
   public
-    function Translate(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function Translate(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
   end;
 
 const
@@ -40,7 +43,7 @@ begin
   RESTClient.Params[0].Value := sMicrosoftTranslatorV3_APIKEY;
 end;
 
-function TDataModuleTranslatorMicrosoftV3.Translate(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string;
+function TDataModuleTranslatorMicrosoftV3.Translate(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string;
   var TargetValue: string): boolean;
 var
   JsonResultArray: TJsonArray;

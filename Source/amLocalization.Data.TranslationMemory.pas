@@ -5,8 +5,11 @@ interface
 uses
   Generics.Collections,
   System.SysUtils, System.Classes, Data.DB,
+
   dxmdaset,
+
   amLocale,
+  amLocalization.Model,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
 
 type
@@ -23,6 +26,7 @@ type
     FFormSelectDuplicate: TFormSelectDuplicate;
     FDuplicateAction: TDuplicateAction;
     FLookupIndex: TDictionary<string, TList<integer>>;
+    FConflictResolution: TDictionary<string, string>;
     FModified: boolean;
     FCreateDate: TDateTime;
     function FindField(LocaleItem: TLocaleItem): TField;
@@ -32,7 +36,7 @@ type
     procedure Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string);
     procedure BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
     procedure EndLookup;
-    function Lookup(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
 
     procedure LoadTranslationMemory(const Filename: string);
     procedure SaveTranslationMemory(const Filename: string);
@@ -62,7 +66,6 @@ uses
   XMLDoc, XMLIntf,
   Forms,
   amCursorService,
-  amLocalization.Model,
   amLocalization.Utils;
 
 type
@@ -458,7 +461,7 @@ begin
   FModified := True;
 end;
 
-function TDataModuleTranslationMemory.Lookup(SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
 var
   SourceField: TField;
   TargetField: TField;
@@ -534,15 +537,22 @@ begin
 
     if (Duplicates <> nil) then
     begin
+      // Attempt to resolve using previously resolved conflicts
+      if (FConflictResolution.TryGetValue(Prop.Value, TargetValue)) then
+        Exit(True);
+
       if (FFormSelectDuplicate = nil) then
         FFormSelectDuplicate := TFormSelectDuplicate.Create(nil);
 
       FFormSelectDuplicate.DuplicateAction := FDuplicateAction;
 
-      if (not FFormSelectDuplicate.SelectDuplicate(SourceValue, Duplicates, TargetValue)) then
+      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Duplicates, TargetValue)) then
         Abort;
 
       FDuplicateAction := FFormSelectDuplicate.DuplicateAction;
+
+      if (FFormSelectDuplicate.ApplyToIdentical) then
+        FConflictResolution.Add(Prop.Value, TargetValue);
 
       Result := (not (FDuplicateAction in [daSkip, daSkipAll]));
     end;
@@ -562,6 +572,7 @@ var
 begin
   FDuplicateAction := daPrompt;
   FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues]);
+  FConflictResolution := TDictionary<string, string>.Create;
 
   if (TableTranslationMemory.Active) then
   begin
@@ -606,6 +617,7 @@ procedure TDataModuleTranslationMemory.EndLookup;
 begin
   FreeAndNil(FFormSelectDuplicate);
   FreeAndNil(FLookupIndex);
+  FreeAndNil(FConflictResolution);
 end;
 
 end.

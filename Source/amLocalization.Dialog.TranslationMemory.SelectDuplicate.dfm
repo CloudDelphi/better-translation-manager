@@ -3,8 +3,8 @@ object FormSelectDuplicate: TFormSelectDuplicate
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Duplicate translations found'
-  ClientHeight = 314
-  ClientWidth = 598
+  ClientHeight = 355
+  ClientWidth = 502
   Color = clBtnFace
   ParentFont = True
   OldCreateOrder = False
@@ -15,18 +15,16 @@ object FormSelectDuplicate: TFormSelectDuplicate
   object LayoutControl: TdxLayoutControl
     Left = 0
     Top = 0
-    Width = 598
-    Height = 314
+    Width = 502
+    Height = 355
     Align = alClient
     TabOrder = 0
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitLeft = 140
-    ExplicitTop = 64
-    ExplicitWidth = 300
-    ExplicitHeight = 250
+    ExplicitWidth = 598
+    ExplicitHeight = 349
     object LabelSourceValue: TcxLabel
       Left = 73
-      Top = 85
+      Top = 108
       Caption = '-'
       Style.HotTrack = False
       Properties.ShowAccelChar = False
@@ -35,9 +33,9 @@ object FormSelectDuplicate: TFormSelectDuplicate
     end
     object ListViewDuplicates: TcxListView
       Left = 73
-      Top = 108
-      Width = 519
-      Height = 156
+      Top = 131
+      Width = 423
+      Height = 150
       ColumnClick = False
       Columns = <
         item
@@ -47,24 +45,25 @@ object FormSelectDuplicate: TFormSelectDuplicate
       ReadOnly = True
       RowSelect = True
       ShowColumnHeaders = False
-      TabOrder = 3
+      TabOrder = 4
       ViewStyle = vsReport
+      OnDblClick = ListViewDuplicatesDblClick
     end
     object cxButton1: TcxButton
-      Left = 436
-      Top = 282
+      Left = 340
+      Top = 324
       Width = 75
       Height = 25
       Action = ActionOK
-      TabOrder = 4
+      TabOrder = 6
     end
     object cxButton2: TcxButton
-      Left = 517
-      Top = 282
+      Left = 421
+      Top = 324
       Width = 75
       Height = 25
       Action = ActionCancel
-      TabOrder = 5
+      TabOrder = 7
     end
     object CheckBoxAll: TcxCheckBox
       Left = 287
@@ -89,12 +88,28 @@ object FormSelectDuplicate: TFormSelectDuplicate
       Text = 'Use the translation I select'
       Width = 192
     end
+    object LabelContext: TcxLabel
+      Left = 73
+      Top = 85
+      Caption = '-'
+      Style.HotTrack = False
+      Properties.ShowAccelChar = False
+      Properties.ShowEndEllipsis = True
+      Transparent = True
+    end
+    object CheckBoxApplyToIdentical: TcxCheckBox
+      Left = 73
+      Top = 287
+      Caption = 'Use this translation for identical conflicts'
+      Style.HotTrack = False
+      TabOrder = 5
+    end
     object LayoutControlGroup_Root: TdxLayoutGroup
       AlignHorz = ahClient
-      AlignVert = avTop
+      AlignVert = avClient
       ButtonOptions.Buttons = <>
       Hidden = True
-      ItemIndex = 2
+      ItemIndex = 7
       ShowBorder = False
       Index = -1
     end
@@ -111,17 +126,18 @@ object FormSelectDuplicate: TFormSelectDuplicate
       ControlOptions.OriginalHeight = 17
       ControlOptions.OriginalWidth = 46
       ControlOptions.ShowBorder = False
-      Index = 4
+      Index = 5
     end
     object dxLayoutItem2: TdxLayoutItem
       Parent = LayoutControlGroup_Root
+      AlignVert = avClient
       CaptionOptions.AlignVert = tavTop
       CaptionOptions.Text = 'Translations:'
       Control = ListViewDuplicates
       ControlOptions.OriginalHeight = 156
       ControlOptions.OriginalWidth = 121
       ControlOptions.ShowBorder = False
-      Index = 5
+      Index = 6
     end
     object dxLayoutItem3: TdxLayoutItem
       Parent = dxLayoutGroup1
@@ -139,12 +155,12 @@ object FormSelectDuplicate: TFormSelectDuplicate
       ButtonOptions.Buttons = <>
       LayoutDirection = ldHorizontal
       ShowBorder = False
-      Index = 7
+      Index = 9
     end
     object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
       Parent = LayoutControlGroup_Root
       CaptionOptions.Text = 'Separator'
-      Index = 6
+      Index = 8
     end
     object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
       Parent = LayoutControlGroup_Root
@@ -205,6 +221,24 @@ object FormSelectDuplicate: TFormSelectDuplicate
       SizeOptions.Height = 10
       SizeOptions.Width = 10
       Index = 1
+    end
+    object dxLayoutItem7: TdxLayoutItem
+      Parent = LayoutControlGroup_Root
+      CaptionOptions.Text = 'Context:'
+      Control = LabelContext
+      ControlOptions.OriginalHeight = 17
+      ControlOptions.OriginalWidth = 8
+      ControlOptions.ShowBorder = False
+      Index = 4
+    end
+    object dxLayoutItem8: TdxLayoutItem
+      Parent = LayoutControlGroup_Root
+      CaptionOptions.Text = ' '
+      Control = CheckBoxApplyToIdentical
+      ControlOptions.OriginalHeight = 19
+      ControlOptions.OriginalWidth = 85
+      ControlOptions.ShowBorder = False
+      Index = 7
     end
   end
   object ActionList1: TActionList

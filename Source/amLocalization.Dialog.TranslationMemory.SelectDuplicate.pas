@@ -4,9 +4,14 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxContainer,
-  cxEdit, dxLayoutcxEditAdapters, dxLayoutContainer, dxLayoutControlAdapters, Vcl.ComCtrls, Vcl.Menus, Vcl.StdCtrls, cxButtons,
-  cxListView, cxLabel, cxClasses, dxLayoutControl, System.Actions, Vcl.ActnList, cxCheckBox, cxTextEdit, cxMaskEdit, cxDropDownEdit;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.Menus, Vcl.StdCtrls, System.Actions,
+  Vcl.ActnList,
+
+  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxContainer,
+  cxEdit, dxLayoutcxEditAdapters, dxLayoutContainer, dxLayoutControlAdapters, cxButtons,
+  cxListView, cxLabel, cxClasses, dxLayoutControl, cxCheckBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
+
+  amLocalization.Model;
 
 type
   TDuplicateAction = (daPrompt, daFirst, daFirstAll, daSkip, daSkipAll, daAbort);
@@ -36,16 +41,23 @@ type
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
     dxLayoutGroup2: TdxLayoutGroup;
     dxLayoutEmptySpaceItem3: TdxLayoutEmptySpaceItem;
+    dxLayoutItem7: TdxLayoutItem;
+    LabelContext: TcxLabel;
+    dxLayoutItem8: TdxLayoutItem;
+    CheckBoxApplyToIdentical: TcxCheckBox;
     procedure ActionCancelExecute(Sender: TObject);
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionOKUpdate(Sender: TObject);
     procedure ComboBoxActionPropertiesChange(Sender: TObject);
     procedure CheckBoxAllPropertiesChange(Sender: TObject);
+    procedure ListViewDuplicatesDblClick(Sender: TObject);
   private
     FDuplicateAction: TDuplicateAction;
+    function GetApplyToIdentical: boolean;
   public
-    function SelectDuplicate(const Source: string; Duplicates: TStrings; var Value: string): boolean;
+    function SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; var Value: string): boolean;
     property DuplicateAction: TDuplicateAction read FDuplicateAction write FDuplicateAction;
+    property ApplyToIdentical: boolean read GetApplyToIdentical;
   end;
 
 implementation
@@ -89,9 +101,21 @@ begin
 
   CheckBoxAll.Enabled := (FDuplicateAction <> daPrompt);
   CheckBoxAll.Checked := (FDuplicateAction in [daSkipAll, daFirstAll]);
+  CheckBoxApplyToIdentical.Enabled := (FDuplicateAction = daPrompt);
 end;
 
-function TFormSelectDuplicate.SelectDuplicate(const Source: string; Duplicates: TStrings; var Value: string): boolean;
+function TFormSelectDuplicate.GetApplyToIdentical: boolean;
+begin
+  Result := (FDuplicateAction = daPrompt) and (CheckBoxApplyToIdentical.Checked);
+end;
+
+procedure TFormSelectDuplicate.ListViewDuplicatesDblClick(Sender: TObject);
+begin
+  if (FDuplicateAction = daPrompt) and (ListViewDuplicates.Selected <> nil) then
+    ActionOK.Execute;
+end;
+
+function TFormSelectDuplicate.SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; var Value: string): boolean;
 var
   s: string;
 begin
@@ -100,8 +124,10 @@ begin
 
   if (not(FDuplicateAction in [daSkipAll, daFirstAll])) then
   begin
-    LabelSourceValue.Caption := Source;
+    LabelContext.Caption := Format('%s\%s\%s', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name]);
+    LabelSourceValue.Caption := Prop.Value;
     CheckBoxAll.Checked := (FDuplicateAction in [daSkipAll, daFirstAll]);
+    CheckBoxApplyToIdentical.Checked := True;
     case FDuplicateAction of
       daPrompt:
         ComboBoxAction.ItemIndex := 0;

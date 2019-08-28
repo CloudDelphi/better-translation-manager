@@ -10,9 +10,9 @@ uses
   cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges,
   cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, dxLayoutControlAdapters, dxLayoutContainer,
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
-  cxGridDBTableView, cxGrid,
+  cxGridDBTableView, cxGrid, cxEditRepositoryItems,
 
-  amLocalization.Data.TranslationMemory, cxEditRepositoryItems;
+  amLocalization.Data.TranslationMemory;
 
 type
   TFormTranslationMemory = class(TForm)
