@@ -3920,21 +3920,20 @@ end;
 
 function TLocalizerDataSource.GetRecordCount: Integer;
 var
-  i: integer;
+  Item: TLocalizerItem;
 begin
   Result := 0;
 
   if (FModule = nil) then
     Exit;
 
-  for i := 0 to FModule.Items.Count-1 do
-    Inc(Result, FModule.Items.Values.ToArray[i].Properties.Count);
+  for Item in FModule.Items.Values.ToArray do
+    Inc(Result, Item.Properties.Count);
 end;
 
 function TLocalizerDataSource.GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle;
 var
   Item: TLocalizerItem;
-  Props: TArray<TLocalizerProperty>;
 begin
   Result := nil;
 
@@ -3943,14 +3942,13 @@ begin
 
   for Item in FModule.Items.Values.ToArray do
   begin
-    Props := Item.Properties.Values.ToArray;
-    if (ARecordIndex > Length(Props)-1) then
+    if (ARecordIndex > Item.Properties.Count-1) then
     begin
-      Dec(ARecordIndex, Length(Props));
+      Dec(ARecordIndex, Item.Properties.Count);
       continue;
     end;
 
-    Exit(Props[ARecordIndex]);
+    Exit(Item.Properties.Values.ToArray[ARecordIndex]);
   end;
 end;
 
