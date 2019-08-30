@@ -78,7 +78,7 @@ type
   TETMTranslationStatus = (tsUntranslated, tsTranslated, tsAutoTranslated, tsUnused, tsNewlyTranslated, tsHold, tsDontTranslate, tsEgged, tsFinal, tsApproved, tsUnknown);
 
 const
-  TranslationStatusMap: array[TETMTranslationStatus]of TTranslationStatus = (
+  TranslationStatusMap: array[TETMTranslationStatus] of TTranslationStatus = (
     tStatusPending,             // tsUntranslated
     tStatusProposed,            // tsTranslated
     tStatusProposed,            // tsAutoTranslated
@@ -270,34 +270,261 @@ begin
 end;
 
 function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string): TLocalizerModule;
+type
+  TImportDelegate = reference to function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean;
+var
+  TargetLanguage: TTargetLanguage;
+
+  procedure ProcessNodes(const BodyNode: IXMLNode; Module: TLocalizerModule; Delegate: TImportDelegate);
+  var
+    Node, NextNode: IXMLNode;
+    Child: IXMLNode;
+    TargetNode: IXMLNode;
+    PropChild, NextPropChild: IXMLNode;
+
+    Localize: boolean;
+    TranslationStatus: TETMTranslationStatus;
+
+    s: string;
+    i: integer;
+    Value: string;
+
+    ItemName, ItemType, PropertyName: string;
+    SourceValue, TargetValue: string;
+    Prop: TLocalizerProperty;
+  begin
+    Node := BodyNode.ChildNodes.First;
+
+    while (Node <> nil) do
+    begin
+      Localize := True;
+      if (Node.NodeName = 'trans-unit') then
+      begin
+        TranslationStatus := tsUnknown;
+
+        if (Node.Attributes['translate'] = 'no') then
+          Localize := False;
+
+        s := VarToStr(Node.Attributes['resname']);
+        if (s = '') then
+          s := VarToStr(Node.Attributes['id']);
+        if (s <> '') then
+        begin
+          // Build a property path from the resname value.
+          // Old: I:FormSearch.I:PanelMain.O:PageControl.O:TabSheetTextSearch.O:TopPanel.O:Bevel1.Properties.LineOptions.Visible
+          // New: FormSearch\PanelMain\PageControl\TabSheetTextSearch\TopPanel\Bevel1.Properties.LineOptions.Visible
+          // Item name: FormSearch\PanelMain\PageControl\TabSheetTextSearch\TopPanel\Bevel1
+          // Property name: Properties.LineOptions.Visible
+          i := 1;
+          while (i < Length(s)-1) do
+          begin
+            if (s[i] = 'I') or (s[i] = 'O') then
+            begin
+              if (s[i+1] = ':') then
+              begin
+                if (i > 1) and (s[i-1] = '.') then
+                begin
+                  Dec(i);
+                  Delete(s, i, 1);
+                end;
+                Delete(s, i, 1);
+                s[i] := '\';
+              end;
+            end;
+            inc(i);
+          end;
+
+          // Property name starts at first '.'
+          i := Pos('.', s);
+          if (i > 0) then
+          begin
+            ItemName := Copy(s, 1, i-1);
+            PropertyName := Copy(s, i+1);
+          end else
+          begin
+            ItemName := s;
+            PropertyName := '';
+          end;
+          ItemType := '';
+
+          // Get Source value
+          Child := Node.ChildNodes.FindNode('source');
+          if (Child <> nil) then
+          begin
+            s := Child.Text;
+
+            // Only quoted strings are translated
+            if (Localize) then
+            begin
+              if ((not s.StartsWith('''')) or (not s.EndsWith(''''))) and
+                 ((not s.StartsWith('"'))  or (not s.EndsWith('"'))) then
+                Localize := False;
+            end;
+
+            SourceValue := Unescape(s);
+          end else
+            SourceValue := '';
+
+          // Get Target value
+          TranslationStatus := tsUnknown;
+          TargetNode := Node.ChildNodes.FindNode('target');
+          if (TargetNode <> nil) then
+          begin
+            s := TargetNode.Text;
+            TargetValue := Unescape(s);
+
+            Value := TargetNode.Attributes['state'];
+            if (Value = 'final') then
+              TranslationStatus := tsFinal
+            else
+            if (Value = 'translated') then
+              TranslationStatus := tsTranslated
+            else
+            if (Value = 'signed-off') then
+              TranslationStatus := tsApproved
+            else
+            if (Value = 'new') then
+              TranslationStatus := tsUntranslated
+            else
+            if (Value = 'x-ignore') then
+              TranslationStatus := tsDontTranslate
+            else
+            if (Value = 'x-unused') then
+              TranslationStatus := tsUnused
+            else
+            if (Value = 'x-hold') then
+              TranslationStatus := tsHold
+            else
+              TranslationStatus := tsUnknown;
+          end else
+            TargetValue := '';
+
+          Child := Node.ChildNodes.FindNode('prop-group');
+
+          if (Child <> nil) then
+          begin
+            PropChild := Child.ChildNodes.First;
+            while (PropChild <> nil) do
+            begin
+              NextPropChild := PropChild.NextSibling;
+              Value := PropChild.Attributes['prop-type'];
+              if (Value = 'Type') then
+              begin
+                ItemType := PropChild.Text;
+                if (ItemType.StartsWith('C:')) then
+                  Delete(ItemType, 1, 2);
+              end else
+              if (Value = 'Localize') then
+              begin
+                // Ignore item if Localize=0
+                if (PropChild.Text = '0') then
+                  Localize := False;
+              end else
+              if (Value = 'Status') and (TranslationStatus = tsUnknown) then
+              begin
+                TranslationStatus := TETMTranslationStatus(StrToIntDef(PropChild.Text, Ord(tsUnknown)));
+
+                // Change variations of Translated
+                (*
+                if (TranslationStatus in [tsAutoTranslated, tsNewlyTranslated]) then
+                begin
+                  TranslationStatus := tsTranslated;
+                end else
+                *)
+                // Change "Untranslated" to "Don't translate" for non-string values
+                // String in .dfn are ' delimited. Strings in .rcn are " delimited.
+                if (TranslationStatus = tsUntranslated) then
+                begin
+                  if (Length(SourceValue) < 2) or (not(SourceValue[1] in ['"', ''''])) then
+                    TranslationStatus := tsDontTranslate;
+                end;
+
+              end;
+              PropChild := NextPropChild;
+            end;
+
+          end;
+
+        end else
+          Localize := False;
+
+
+        if (Localize) then
+        begin
+          if (ItemName.StartsWith('\')) then
+            Delete(ItemName, 1, 1);
+          ItemName := ItemName.Replace('\', '.', [rfReplaceAll]);
+
+          if (not ItemType.IsEmpty) then
+          begin
+            i := Pos(' ', ItemType);
+            if (i > 0) then
+              SetLength(ItemType, i -1);
+          end;
+
+          // Sanity check - don't add if node is invalid
+          if (Localize) and (TranslationStatus in [tsEgged, tsUnknown]) then
+          begin
+            // Rescue "valid" translations without status or state
+            if (TranslationStatus <> tsUnknown) or (TargetValue.IsEmpty) or (TargetValue = SourceValue) then
+              Localize := False;
+          end;
+
+          if (Localize) then
+          begin
+            Prop := nil;
+            if (not Delegate(Module, ItemName, ItemType, PropertyName, SourceValue, Prop)) then
+              Exit;
+
+            if (Prop <> nil) then
+            begin
+              case TranslationStatus of
+                tsUnused:
+                  Prop.State := ItemStateUnused;
+
+                tsDontTranslate:
+                  Prop.Status := ItemStatusDontTranslate;
+
+                tsHold:
+                  Prop.Status := ItemStatusHold;
+              else
+                Prop.Status := ItemStatusTranslate;
+                end;
+
+              if (TargetNode <> nil) then
+                Prop.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus])
+              else
+              // Translation without target value (implicit: target=source)
+              if (TranslationStatusMap[TranslationStatus] in [tStatusProposed, tStatusTranslated]) then
+                Prop.Translations.AddOrUpdateTranslation(TargetLanguage, SourceValue, TranslationStatusMap[TranslationStatus]);
+            end;
+          end;
+        end;
+      end;
+
+      NextNode := Node.NextSibling;
+
+      Node := NextNode;
+    end;
+  end;
+
+  function FindModuleName(const FileNode: IXMLNode): string;
+  begin
+    Result := '';
+
+  end;
+
 var
   ModuleName: string;
   ModuleKind: TLocalizerModuleKind;
   SourceFilename: string;
-  NewModule: TLocalizerModule;
-  LocalizerItem: TLocalizerItem;
-  LocalizerProperty: TLocalizerProperty;
   XML: IXMLDocument;
-  Header, HeaderProps: IXMLNode;
+  Header: IXMLNode;
   Body: IXMLNode;
-  Node, NextNode: IXMLNode;
-  Child: IXMLNode;
-  TargetNode: IXMLNode;
-  PropChild, NextPropChild: IXMLNode;
-  s: string;
-  i: integer;
+  Node: IXMLNode;
   SourceLanguageName, TargetLanguageName: string;
   SourceLocaleID, TargetLocaleID: LCID;
-  TargetLanguage: TTargetLanguage;
   LocaleItem: TLocaleItem;
-//  Translation: TLocalizerTranslation;
-  SourceValue, TargetValue: string;
-  Value: string;
-  NewValue: string;
-  TranslationStatus: TETMTranslationStatus;
-  Localize: boolean;
-  RemoveNode: boolean;
-  ItemName, ItemType, PropertyName, PropertyValue: string;
 begin
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
@@ -312,16 +539,14 @@ begin
   if (Node = nil) then
     raise Exception.Create('xliff node not found: xliff\file');
 
-  if (Filename <> '') then
-    ModuleName := TPath.GetFileNameWithoutExtension(Filename)
-  else
-    ModuleName := '';
-
   SourceFilename := Node.Attributes['original'];
   if (SourceFilename = '') then
     SourceFilename := Node.Attributes['ts'];
+
   if (SourceFilename <> '') then
-    ModuleName := TPath.GetFileNameWithoutExtension(SourceFilename);
+    ModuleName := TPath.GetFileNameWithoutExtension(SourceFilename)
+  else
+    ModuleName := '';
 
   if (Node.Attributes['datatype'] ='delphiform') then
     ModuleKind := mkForm
@@ -339,6 +564,24 @@ begin
 
   if (ModuleKind = mkString) then
     ModuleName := sModuleNameResourcestrings;
+
+  Header := Node.ChildNodes.FindNode('header');
+
+  Body := Node.ChildNodes.FindNode('body');
+  if (Body = nil) then
+    raise Exception.Create('xliff node not found: xliff\file\body');
+
+  // If the XLIFF doesn't specify the module name (Delphi doesn't store the
+  // name for DFM XLIFFs) then we will have to search for a match between
+  // the items in the XLIFF and the existing items in the project.
+  // Another possibility would be to parse the item names and deduce the
+  // module name from that.
+  if (ModuleName = '') and (ModuleKind = mkForm) then
+    ModuleName := FindModuleName(Node);
+
+  // If we still haven't got a module name then we must ask the user for it.
+  if (ModuleName = '') then
+    ; // TODO
 
   Result := LocalizerProject.AddModule(ModuleName);
   if (Result.Kind = mkOther) then
@@ -386,220 +629,16 @@ begin
 
   // TODO : Validation that module languages matches project
 
-  Header := Node.ChildNodes.FindNode('header');
-
-  Body := Node.ChildNodes.FindNode('body');
-  if (Body = nil) then
-    raise Exception.Create('xliff node not found: xliff\file\body');
-
-  Node := Body.ChildNodes.First;
-  while (Node <> nil) do
-  begin
-    Localize := True;
-    if (Node.NodeName = 'trans-unit') then
+  ProcessNodes(Body, Result,
+    function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean
+    var
+      Item: TLocalizerItem;
     begin
-      TranslationStatus := tsUnknown;
+      Item := Module.AddItem(ItemName, ItemType);
+      Prop := Item.AddProperty(PropertyName, SourceValue);
 
-      if (Node.Attributes['translate'] = 'no') then
-        Localize := False;
-
-      s := VarToStr(Node.Attributes['resname']);
-      if (s = '') then
-        s := VarToStr(Node.Attributes['id']);
-      if (s <> '') then
-      begin
-        // Build a property path from the resname value.
-        // Old: I:FormSearch.I:PanelMain.O:PageControl.O:TabSheetTextSearch.O:TopPanel.O:Bevel1.Properties.LineOptions.Visible
-        // New: FormSearch\PanelMain\PageControl\TabSheetTextSearch\TopPanel\Bevel1.Properties.LineOptions.Visible
-        // Item name: FormSearch\PanelMain\PageControl\TabSheetTextSearch\TopPanel\Bevel1
-        // Property name: Properties.LineOptions.Visible
-        i := 1;
-        while (i < Length(s)-1) do
-        begin
-          if (s[i] = 'I') or (s[i] = 'O') then
-          begin
-            if (s[i+1] = ':') then
-            begin
-              if (i > 1) and (s[i-1] = '.') then
-              begin
-                Dec(i);
-                Delete(s, i, 1);
-              end;
-              Delete(s, i, 1);
-              s[i] := '\';
-            end;
-          end;
-          inc(i);
-        end;
-
-        // Property name starts at first '.'
-        i := Pos('.', s);
-        if (i > 0) then
-        begin
-          ItemName := Copy(s, 1, i-1);
-          PropertyName := Copy(s, i+1);
-        end else
-        begin
-          ItemName := s;
-          PropertyName := '';
-        end;
-        ItemType := '';
-
-        // Get Source value
-        Child := Node.ChildNodes.FindNode('source');
-        if (Child <> nil) then
-        begin
-          s := Child.Text;
-
-          // Only quoted strings are translated
-          if (Localize) then
-          begin
-            if ((not s.StartsWith('''')) or (not s.EndsWith(''''))) and
-               ((not s.StartsWith('"'))  or (not s.EndsWith('"'))) then
-              Localize := False;
-          end;
-
-          SourceValue := Unescape(s);
-        end else
-          SourceValue := '';
-
-        // Get Target value
-        TranslationStatus := tsUnknown;
-        TargetNode := Node.ChildNodes.FindNode('target');
-        if (TargetNode <> nil) then
-        begin
-          s := TargetNode.Text;
-          TargetValue := Unescape(s);
-
-          Value := TargetNode.Attributes['state'];
-          if (Value = 'final') then
-            TranslationStatus := tsFinal
-          else
-          if (Value = 'translated') then
-            TranslationStatus := tsTranslated
-          else
-          if (Value = 'signed-off') then
-            TranslationStatus := tsApproved
-          else
-          if (Value = 'new') then
-            TranslationStatus := tsUntranslated
-          else
-          if (Value = 'x-ignore') then
-            TranslationStatus := tsDontTranslate
-          else
-          if (Value = 'x-unused') then
-            TranslationStatus := tsUnused
-          else
-          if (Value = 'x-hold') then
-            TranslationStatus := tsHold
-          else
-            TranslationStatus := tsUnknown;
-        end else
-          TargetValue := '';
-
-        Child := Node.ChildNodes.FindNode('prop-group');
-
-        if (Child <> nil) then
-        begin
-          PropChild := Child.ChildNodes.First;
-          while (PropChild <> nil) do
-          begin
-            NextPropChild := PropChild.NextSibling;
-            Value := PropChild.Attributes['prop-type'];
-            if (Value = 'Type') then
-            begin
-              ItemType := PropChild.Text;
-              if (ItemType.StartsWith('C:')) then
-                Delete(ItemType, 1, 2);
-            end else
-            if (Value = 'Localize') then
-            begin
-              // Ignore item if Localize=0
-              if (PropChild.Text = '0') then
-                Localize := False;
-            end else
-            if (Value = 'Status') and (TranslationStatus = tsUnknown) then
-            begin
-              TranslationStatus := TETMTranslationStatus(StrToIntDef(PropChild.Text, Ord(tsUnknown)));
-
-              // Change variations of Translated
-              (*
-              if (TranslationStatus in [tsAutoTranslated, tsNewlyTranslated]) then
-              begin
-                TranslationStatus := tsTranslated;
-              end else
-              *)
-              // Change "Untranslated" to "Don't translate" for non-string values
-              // String in .dfn are ' delimited. Strings in .rcn are " delimited.
-              if (TranslationStatus = tsUntranslated) then
-              begin
-                if (Length(SourceValue) < 2) or (not(SourceValue[1] in ['"', ''''])) then
-                  TranslationStatus := tsDontTranslate;
-              end;
-
-            end;
-            PropChild := NextPropChild;
-          end;
-
-        end;
-
-      end else
-        Localize := False;
-
-
-      if (Localize) then
-      begin
-        if (ItemName.StartsWith('\')) then
-          Delete(ItemName, 1, 1);
-        ItemName := ItemName.Replace('\', '.', [rfReplaceAll]);
-
-        if (not ItemType.IsEmpty) then
-        begin
-          i := Pos(' ', ItemType);
-          if (i > 0) then
-            SetLength(ItemType, i -1);
-        end;
-
-        // Sanity check - don't add if node is invalid
-        if (Localize) and (TranslationStatus in [tsEgged, tsUnknown]) then
-        begin
-          // Rescue "valid" translations without status or state
-          if (TranslationStatus <> tsUnknown) or (TargetValue.IsEmpty) or (TargetValue = SourceValue) then
-            Localize := False;
-        end;
-
-        if (Localize) then
-        begin
-          LocalizerItem := Result.AddItem(ItemName, ItemType);
-
-          LocalizerProperty := LocalizerItem.AddProperty(PropertyName, SourceValue);
-          case TranslationStatus of
-            tsUnused:
-              LocalizerProperty.State := ItemStateUnused;
-
-            tsDontTranslate:
-              LocalizerProperty.Status := ItemStatusDontTranslate;
-
-            tsHold:
-              LocalizerProperty.Status := ItemStatusHold;
-          else
-            LocalizerProperty.Status := ItemStatusTranslate;
-          end;
-
-          if (TargetNode <> nil) then
-            {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus])
-          else
-          // Translation without target value (implicit: target=source)
-          if (TranslationStatusMap[TranslationStatus] in [tStatusProposed, tStatusTranslated]) then
-            {Translation := }LocalizerProperty.Translations.AddOrUpdateTranslation(TargetLanguage, SourceValue, TranslationStatusMap[TranslationStatus]);
-        end;
-      end;
-    end;
-
-    NextNode := Node.NextSibling;
-
-    Node := NextNode;
-  end;
+      Result := True;
+    end);
 end;
 
 // -----------------------------------------------------------------------------
