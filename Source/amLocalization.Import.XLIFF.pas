@@ -275,7 +275,7 @@ type
 var
   TargetLanguage: TTargetLanguage;
 
-  procedure ProcessNodes(const BodyNode: IXMLNode; Module: TLocalizerModule; Delegate: TImportDelegate);
+  function ProcessNodes(const BodyNode: IXMLNode; Module: TLocalizerModule; Delegate: TImportDelegate): boolean;
   var
     Node, NextNode: IXMLNode;
     Child: IXMLNode;
@@ -293,6 +293,7 @@ var
     SourceValue, TargetValue: string;
     Prop: TLocalizerProperty;
   begin
+    Result := True;
     Node := BodyNode.ChildNodes.First;
 
     while (Node <> nil) do
@@ -474,7 +475,7 @@ var
           begin
             Prop := nil;
             if (not Delegate(Module, ItemName, ItemType, PropertyName, SourceValue, Prop)) then
-              Exit;
+              Exit(False);
 
             if (Prop <> nil) then
             begin
@@ -508,10 +509,29 @@ var
     end;
   end;
 
-  function FindModuleName(const FileNode: IXMLNode): string;
+  function FindModule(const BodyNode: IXMLNode): TLocalizerModule;
+  var
+    Module: TLocalizerModule;
   begin
-    Result := '';
+    Module := nil;
 
+    if (not ProcessNodes(BodyNode, nil,
+      function(AModule: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean
+      begin
+        Result := LocalizerProject.Traverse(
+          function(Item: TLocalizerItem): boolean
+          begin
+            // Exit if we find an item name match
+            Result := not AnsiSameText(Item.Name, ItemName);
+            if (not Result) then
+             Module := Item.Module;
+          end, False);
+      end)) then
+    begin
+      Assert(Module <> nil);
+      Result := Module;
+    end else
+      Result := nil;
   end;
 
 var
@@ -543,11 +563,6 @@ begin
   if (SourceFilename = '') then
     SourceFilename := Node.Attributes['ts'];
 
-  if (SourceFilename <> '') then
-    ModuleName := TPath.GetFileNameWithoutExtension(SourceFilename)
-  else
-    ModuleName := '';
-
   if (Node.Attributes['datatype'] ='delphiform') then
     ModuleKind := mkForm
   else
@@ -563,7 +578,9 @@ begin
     ModuleKind := mkForm;
 
   if (ModuleKind = mkString) then
-    ModuleName := sModuleNameResourcestrings;
+    ModuleName := sModuleNameResourcestrings
+  else
+    ModuleName := '';
 
   Header := Node.ChildNodes.FindNode('header');
 
@@ -576,14 +593,17 @@ begin
   // the items in the XLIFF and the existing items in the project.
   // Another possibility would be to parse the item names and deduce the
   // module name from that.
-  if (ModuleName = '') and (ModuleKind = mkForm) then
-    ModuleName := FindModuleName(Node);
-
-  // If we still haven't got a module name then we must ask the user for it.
   if (ModuleName = '') then
-    ; // TODO
+  begin
+    Assert(ModuleKind = mkForm);
+    Result := FindModule(Body);
 
-  Result := LocalizerProject.AddModule(ModuleName);
+    // If we still haven't got a module name then we must ask the user for it.
+    if (Result = nil) then
+      raise Exception.Create('Module not found'); // TODO
+  end else
+    Result := LocalizerProject.AddModule(ModuleName);
+
   if (Result.Kind = mkOther) then
     Result.Kind := ModuleKind;
 
