@@ -133,6 +133,8 @@ object FormMain: TFormMain
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
+    ExplicitTop = 125
+    ExplicitHeight = 495
   end
   object PanelModules: TPanel
     Left = 0
@@ -410,7 +412,7 @@ object FormMain: TFormMain
       Options.Editing = False
       Options.Focusing = False
       Width = 100
-      Position.ColIndex = 6
+      Position.ColIndex = 7
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -444,7 +446,7 @@ object FormMain: TFormMain
       Options.Filtering = False
       Options.Focusing = False
       Width = 100
-      Position.ColIndex = 7
+      Position.ColIndex = 8
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -477,6 +479,35 @@ object FormMain: TFormMain
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
     end
+    object TreeListColumnEffectiveStatus: TcxTreeListColumn
+      PropertiesClassName = 'TcxImageComboBoxProperties'
+      Properties.Items = <
+        item
+          Description = 'Translate'
+          ImageIndex = 0
+          Value = 0
+        end
+        item
+          Description = 'Hold'
+          Value = 1
+        end
+        item
+          Description = 'Don'#39't translate'
+          Value = 2
+        end>
+      Properties.ReadOnly = True
+      Visible = False
+      Caption.AlignVert = vaTop
+      Caption.Text = 'Effective status'
+      DataBinding.ValueType = 'Integer'
+      Options.Focusing = False
+      Width = 90
+      Position.ColIndex = 3
+      Position.RowIndex = 0
+      Position.BandIndex = 0
+      Summary.FooterSummaryItems = <>
+      Summary.GroupFooterSummaryItems = <>
+    end
     object TreeListColumnState: TcxTreeListColumn
       PropertiesClassName = 'TcxImageComboBoxProperties'
       Properties.Items = <
@@ -502,7 +533,7 @@ object FormMain: TFormMain
       Caption.Text = 'State'
       DataBinding.ValueType = 'String'
       Width = 70
-      Position.ColIndex = 4
+      Position.ColIndex = 5
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -518,7 +549,7 @@ object FormMain: TFormMain
       Options.Filtering = False
       Options.Focusing = False
       Width = 120
-      Position.ColIndex = 3
+      Position.ColIndex = 4
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -539,7 +570,7 @@ object FormMain: TFormMain
       DataBinding.ValueType = 'String'
       Options.Filtering = False
       Width = 120
-      Position.ColIndex = 5
+      Position.ColIndex = 6
       Position.RowIndex = 0
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
@@ -667,7 +698,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 338
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2

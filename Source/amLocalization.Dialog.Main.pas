@@ -229,6 +229,7 @@ type
     BarManagerBarQuickAccess: TdxBar;
     ActionSettings: TAction;
     dxBarButton34: TdxBarButton;
+    TreeListColumnEffectiveStatus: TcxTreeListColumn;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -295,8 +296,7 @@ type
     procedure TreeListItemsClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionGotoNextWarningExecute(Sender: TObject);
-    procedure TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas;
-      AViewInfo: TcxTreeListIndicatorCellViewInfo; var ADone: Boolean);
+    procedure TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListIndicatorCellViewInfo; var ADone: Boolean);
     procedure ActionBookmarkExecute(Sender: TObject);
     procedure PopupMenuBookmarkPopup(Sender: TObject);
     procedure ActionGotoBookmarkAnyExecute(Sender: TObject);
@@ -726,11 +726,16 @@ procedure TFormMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftSta
 begin
   if (Key = VK_F12) and (ssAlt in Shift) then
   begin
-    FLocalizerProject.Clear;
-    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
-    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
-    LoadProject(FLocalizerProject);
     Key := 0;
+    if (not CheckSave) then
+      exit;
+
+    InitializeProject('test.xxx', SourceLanguageID);
+
+    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item1', 'TFooBar').AddProperty('Test1', 'value1');
+    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item2', 'TFooBar').AddProperty('Test2', 'value2');
+
+    LoadProject(FLocalizerProject, True);
   end;
 end;
 
@@ -3637,7 +3642,8 @@ begin
   if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex, tlitStateIndex])) then
     Exit;
 
-  Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
+  Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode));
+  Assert(Prop <> nil);
 
   if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
     Translation := nil;
@@ -3649,6 +3655,8 @@ begin
 
     Exit;
   end;
+
+  // Note: Image indicates effective status
 
   if (Prop.State = ItemStateUnused) then
     AIndex := 1
@@ -3964,9 +3972,10 @@ const
   TreeItemIndexValueName        = 2;
   TreeItemIndexID               = 3;
   TreeItemIndexStatus           = 4;
-  TreeItemIndexState            = 5;
-  TreeItemIndexSourceValue      = 6;
-  TreeItemIndexTargetValue      = 7;
+  TreeItemIndexEffectiveStatus  = 5;
+  TreeItemIndexState            = 6;
+  TreeItemIndexSourceValue      = 7;
+  TreeItemIndexTargetValue      = 8;
 var
   ItemIndex: integer;
   Prop: TLocalizerProperty;
@@ -3989,6 +3998,9 @@ begin
       Result := Prop.Item.ResourceID;
 
     TreeItemIndexStatus:
+      Result := Ord(Prop.Status);
+
+    TreeItemIndexEffectiveStatus:
       Result := Ord(Prop.EffectiveStatus);
 
     TreeItemIndexState:

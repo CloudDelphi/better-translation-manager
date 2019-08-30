@@ -621,66 +621,9 @@ begin
 end;
 
 procedure TCustomLocalizerItem.ApplyParentStatusChange(const Value: TLocalizerItemStatus);
-var
-  DeltaCount: array[TLocalizerItemStatus] of integer;
 begin
   if (FState = ItemStateUnused) then
     Exit;
-
-  // Apply change in logical status count
-  DeltaCount[ItemStatusTranslate] := 0;
-  DeltaCount[ItemStatusDontTranslate] := 0;
-  DeltaCount[ItemStatusHold] := 0;
-  // Update counts as if we are performing a temporary status change TO lItemStatusTranslate
-  case FStatus of
-    ItemStatusTranslate:
-      ;
-
-    ItemStatusDontTranslate:
-      begin
-        DeltaCount[ItemStatusTranslate] := FStatusCount[ItemStatusTranslate];
-        DeltaCount[ItemStatusDontTranslate] := -FStatusCount[ItemStatusTranslate]-FStatusCount[ItemStatusHold];
-        DeltaCount[ItemStatusHold] := FStatusCount[ItemStatusHold];
-      end;
-
-    ItemStatusHold:
-      begin
-        DeltaCount[ItemStatusTranslate] := FStatusCount[ItemStatusTranslate];
-        DeltaCount[ItemStatusDontTranslate] := 0;
-        DeltaCount[ItemStatusHold] := -FStatusCount[ItemStatusTranslate];
-      end;
-  end;
-
-  FStatus := Value;
-
-  // Update counts as if we are performing a temporary status change FROM lItemStatusTranslate
-  case FStatus of
-    ItemStatusTranslate:
-      ;
-
-    ItemStatusDontTranslate:
-      begin
-        Inc(DeltaCount[ItemStatusTranslate], -FStatusCount[ItemStatusTranslate]);
-        Inc(DeltaCount[ItemStatusDontTranslate], FStatusCount[ItemStatusTranslate]+FStatusCount[ItemStatusHold]);
-        Inc(DeltaCount[ItemStatusHold], -FStatusCount[ItemStatusHold]);
-      end;
-
-    ItemStatusHold:
-      begin
-        Inc(DeltaCount[ItemStatusTranslate], -FStatusCount[ItemStatusTranslate]);
-        Inc(DeltaCount[ItemStatusHold], FStatusCount[ItemStatusTranslate]);
-      end;
-  end;
-
-  // Apply change in count
-  if (DeltaCount[ItemStatusTranslate] <> 0) then
-    UpdateParentStatusCount(ItemStatusTranslate, DeltaCount[ItemStatusTranslate]);
-  if (DeltaCount[ItemStatusDontTranslate] <> 0) then
-    UpdateParentStatusCount(ItemStatusDontTranslate, DeltaCount[ItemStatusDontTranslate]);
-  if (DeltaCount[ItemStatusHold] <> 0) then
-    UpdateParentStatusCount(ItemStatusHold, DeltaCount[ItemStatusHold]);
-
-(* Another way to do the above - perhaps easier to understand:
 
   // Remove all counts belonging to this item from parent
   UpdateParentStatusCount(ItemStatusTranslate, -FStatusCount[ItemStatusTranslate]);
@@ -709,7 +652,6 @@ begin
         UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusTranslate]+FStatusCount[ItemStatusHold]+FStatusCount[ItemStatusDontTranslate]);
       end;
   end;
-*)
 
 (* Another way - even more verbose:
 
