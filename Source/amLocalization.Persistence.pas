@@ -49,7 +49,8 @@ uses
   Windows,
   Variants,
   XMLDoc, XMLIntf,
-  amLocale;
+  amLocale,
+  amPath;
 
 // -----------------------------------------------------------------------------
 //
@@ -185,6 +186,9 @@ begin
       Project.SourceFilename := Project.Name;
     if (TPath.GetExtension(Project.SourceFilename).IsEmpty) then
       Project.SourceFilename := Project.SourceFilename + '.exe';
+
+    // UI will handle if the symbol file doesn't exist
+    Project.StringSymbolFilename := VarToStr(ProjectNode.Attributes['stringsymbolfile']);
 
     Project.BaseLocaleID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
 
@@ -370,7 +374,9 @@ begin
 
   ProjectNode := RootNode.AddChild('project');
   ProjectNode.Attributes['name'] := Project.Name;
+  // TODO : Make paths relative to project file
   ProjectNode.Attributes['sourcefile'] := TPath.GetFileName(Project.SourceFilename);
+  ProjectNode.Attributes['stringsymbolfile'] := FilenameMakeRelative(TPath.GetDirectoryName(Project.SourceFilename), Project.StringSymbolFilename);
   ProjectNode.Attributes['language'] := Project.BaseLocaleID;
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');

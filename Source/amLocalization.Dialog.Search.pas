@@ -140,6 +140,9 @@ uses
   Math,
   RegularExpressionsCore,
   dxMessages,
+{$ifdef MADEXCEPT}
+  MadExcept,
+{$endif MADEXCEPT}
   amCursorService,
   amShell,
   amLocalization.Utils,
@@ -627,7 +630,7 @@ begin
 
 {$ifdef MADEXCEPT}
   // Indicate to MadExcept freeze detection that we're not frozen
-  IndicateApplicationNotFrozen;
+  MadExcept.ImNotFrozen;
 {$endif MADEXCEPT}
 
 //  BeginUpdate;

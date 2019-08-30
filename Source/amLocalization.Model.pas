@@ -120,6 +120,7 @@ type
   TLocalizerProject = class(TBaseLocalizerItem)
   strict private
     FSourceFilename: string;
+    FStringSymbolFilename: string;
     FModules: TLocalizerModules;
     FBaseLocaleID: LCID;
     FTargetLanguages: TTargetLanguageList;
@@ -160,9 +161,13 @@ type
     property State: TLocalizerProjectStates read FState;
 
     property SourceFilename: string read FSourceFilename write FSourceFilename;
+    property StringSymbolFilename: string read FStringSymbolFilename write FStringSymbolFilename;
+
     property BaseLocaleID: LCID read FBaseLocaleID write FBaseLocaleID;
     property TargetLanguages: TTargetLanguageList read FTargetLanguages;
+
     property Modules: TLocalizerModules read FModules;
+
     property Modified: boolean read FModified write SetModified;
 
     // Total number of properties with State<>lItemStateUnused
@@ -199,7 +204,6 @@ type
     function GetInheritParentState: boolean; virtual;
     function GetEffectiveStatus: TLocalizerItemStatus; virtual;
     function GetStatusCount(AStatus: TLocalizerItemStatus): integer;
-    function GetPropertyCount: integer;
   protected
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
     function CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
@@ -210,7 +214,6 @@ type
     property EffectiveStatus: TLocalizerItemStatus read GetEffectiveStatus;
 
     property StatusCount[AStatus: TLocalizerItemStatus]: integer read GetStatusCount;
-    property PropertyCount: integer read GetPropertyCount;
   end;
 
 
@@ -685,11 +688,6 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
-
-function TCustomLocalizerItem.GetPropertyCount: integer;
-begin
-  Result := FStatusCount[ItemStatusTranslate];
-end;
 
 function TCustomLocalizerItem.GetStatusCount(AStatus: TLocalizerItemStatus): integer;
 begin

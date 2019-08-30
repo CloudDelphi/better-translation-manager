@@ -84,7 +84,8 @@ begin
   if (not FDataModuleTranslationMemory.CheckSave) then
     Exit;
 
-  OpenDialogTMX.FileName := TranslationManagerSettings.Translators.TranslationMemory.Filename;
+  OpenDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  OpenDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
 
   if (not OpenDialogTMX.Execute(Handle)) then
     Exit;
@@ -104,7 +105,8 @@ end;
 
 procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);
 begin
-  SaveDialogTMX.FileName := TranslationManagerSettings.Translators.TranslationMemory.Filename;
+  SaveDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  SaveDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
 
   if (not SaveDialogTMX.Execute(Handle)) then
     Exit;

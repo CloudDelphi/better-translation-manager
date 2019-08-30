@@ -597,10 +597,8 @@ begin
     SetLength(Filename, Size);
   end;
 
-  Filename := TPath.ChangeExtension(Filename, '.drc');
-
-  if (TFile.Exists(Filename)) then
-    FSymbolMap.LoadFromFile(Filename);
+  if (TFile.Exists(LocalizerModule.Project.StringSymbolFilename)) then
+    FSymbolMap.LoadFromFile(LocalizerModule.Project.StringSymbolFilename);
 end;
 
 // -----------------------------------------------------------------------------

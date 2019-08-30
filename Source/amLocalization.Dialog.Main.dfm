@@ -5242,7 +5242,6 @@ object FormMain: TFormMain
       'Applications (*.exe)|*.exe|Library modules (*.dll)|*.dll|Delphi ' +
       'package (*.bpl)|*.bpl|All modules (*.exe, *.dll, *.bpl)|*.exe;*.' +
       'dll;*.bpl|All files (*.*)|*.*'
-    FilterIndex = 3
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 448
     Top = 412
@@ -5334,5 +5333,11 @@ object FormMain: TFormMain
     Left = 80
     Top = 177
     PixelsPerInch = 96
+  end
+  object OpenDialogDRC: TOpenDialog
+    Filter = 'Symbol files (*.drc)|*.drc|All files (*.*)|*.*'
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Left = 448
+    Top = 464
   end
 end

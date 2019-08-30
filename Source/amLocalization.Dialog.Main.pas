@@ -230,6 +230,7 @@ type
     ActionSettings: TAction;
     dxBarButton34: TdxBarButton;
     TreeListColumnEffectiveStatus: TcxTreeListColumn;
+    OpenDialogDRC: TOpenDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -397,6 +398,8 @@ type
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
     procedure UpdateProjectModifiedIndicator;
+    function CheckSourceFile: boolean;
+    function CheckStringsSymbolFile: boolean;
   private
     procedure TranslateSelected(const TranslationService: ITranslationService);
   private type
@@ -475,8 +478,6 @@ uses
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
-  sLocalizerSourceFileNotFound = 'The source application file specified in the project does not exist.'#13#13+
-    'Filename: %s';
   sTranslateEligibleWarning = #13#13'Note: %d of the selected values are not elegible for translation.';
 
 const
@@ -575,8 +576,8 @@ begin
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
 
-  OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(Application.ExeName);
-  OpenDialogProject.InitialDir := TPath.GetDirectoryName(Application.ExeName);
+  OpenDialogXLIFF.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
+  OpenDialogProject.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
 
   FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
@@ -1227,16 +1228,17 @@ resourcestring
   sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
   sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
 begin
-  Filename := FLocalizerProject.SourceFilename;
-  if (not TFile.Exists(Filename)) then
-    ShowMessageFmt(sLocalizerSourceFileNotFound, [Filename]);
+  if (not CheckSourceFile) then
+    Exit;
+
+  CheckStringsSymbolFile;
 
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
 
   if (LocaleItem <> nil) then
-    Filename := TPath.ChangeExtension(Filename, '.'+LocaleItem.LanguageShortName)
+    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.'+LocaleItem.LanguageShortName)
   else
-    Filename := TPath.ChangeExtension(Filename, '.dll');
+    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.dll');
 
   Path := TPath.GetDirectoryName(Filename);
   Filename := TPath.GetFileName(Filename);
@@ -1523,6 +1525,88 @@ begin
   LoadProject(FLocalizerProject, False);
 end;
 
+// -----------------------------------------------------------------------------
+
+function TFormMain.CheckStringsSymbolFile: boolean;
+var
+  Res: Word;
+  Filename: string;
+resourcestring
+  sStringSymbolsNotFoundTitle = 'Symbol file not found';
+  sStringSymbolsNotFound = 'The resourcestring symbol file does not exist in the same folder as the source application file.'+#13#13+
+    'The name of the file is expected to be: %s'+#13#13+
+    'The file is required for support of resourcestrings.'+#13#13+
+    'Do you want to locate the file now?';
+begin
+  Result := True;
+
+  if (FLocalizerProject.StringSymbolFilename = '') then
+    FLocalizerProject.StringSymbolFilename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.drc');
+
+  Filename := FLocalizerProject.StringSymbolFilename;
+  while (not TFile.Exists(Filename)) do
+  begin
+    Result := False;
+
+    // Symbol file does not exist. Try to locate it.
+    Res := TaskMessageDlg(sStringSymbolsNotFoundTitle, Format(sStringSymbolsNotFound, [FLocalizerProject.StringSymbolFilename]),
+      mtWarning, [mbYes, mbNo], 0, mbYes);
+    if (Res <> mrYes) then
+      Exit(False);
+
+    OpenDialogDRC.InitialDir := TPath.GetDirectoryName(Filename);
+    OpenDialogDRC.FileName := TPath.GetFileName(Filename);
+
+    if (not OpenDialogDRC.Execute(Handle)) then
+      Exit(False);
+
+    Filename := OpenDialogDRC.FileName;
+  end;
+
+  if (not Result) then
+    FLocalizerProject.StringSymbolFilename := Filename;
+
+  Result := True;
+end;
+
+function TFormMain.CheckSourceFile: boolean;
+var
+  Res: Word;
+  Filename: string;
+resourcestring
+  sSourceFileNotFoundTitle = 'Source file not found';
+  sSourceFileNotFound = 'The source application file specified in the project does not exist.'+#13#13+
+    'Filename: %s'+#13#13+
+    'Do you want to locate the file now?';
+begin
+  Result := True;
+
+  Filename := FLocalizerProject.SourceFilename;
+  while (not TFile.Exists(Filename)) do
+  begin
+    Result := False;
+
+    // Symbol file does not exist. Try to locate it.
+    Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [FLocalizerProject.SourceFilename]),
+      mtWarning, [mbYes, mbNo], 0, mbYes);
+    if (Res <> mrYes) then
+      Exit(False);
+
+    OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
+    OpenDialogEXE.FileName := TPath.GetFileName(Filename);
+
+    if (not OpenDialogEXE.Execute(Handle)) then
+      Exit(False);
+
+    Filename := OpenDialogEXE.FileName;
+  end;
+
+  if (not Result) then
+    FLocalizerProject.SourceFilename := Filename;
+
+  Result := True;
+end;
+
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
 var
   FormNewProject: TFormNewProject;
@@ -1555,6 +1639,8 @@ begin
   finally
     FormNewProject.Free;
   end;
+
+  CheckStringsSymbolFile;
 
   LoadProject(FLocalizerProject);
 end;
@@ -1618,8 +1704,8 @@ begin
 
   AddRecentFile(Filename);
 
-  if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
-    ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
+  if (CheckSourceFile) then
+    CheckStringsSymbolFile;
 end;
 
 procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
@@ -1861,8 +1947,10 @@ resourcestring
     'Translations obsoleted: %.0n';
   sLocalizerProjectUpdatedNothing = 'Update completed without any changes.';
 begin
-  if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
-    ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
+  if (not CheckSourceFile) then
+    Exit;
+
+  CheckStringsSymbolFile;
 
   SaveCursor(crHourGlass);
 
@@ -2351,8 +2439,6 @@ end;
 
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-
 function TFormMain.NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
 begin
   if (Node.TreeList = TreeListItems) then
@@ -2709,6 +2795,8 @@ begin
     FLocalizerProject.Clear;
 
     FLocalizerProject.SourceFilename := SourceFilename;
+    FLocalizerProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, '.drc');
+
     FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
     FLocalizerProject.BaseLocaleID := SourceLocaleID;
 
@@ -3820,8 +3908,8 @@ begin
   begin
     TranslatedCount := GetTranslatedCount(Module);
     // Calculate completeness in %
-    if (Module.PropertyCount <> 0) then
-      Completeness := MulDiv(TranslatedCount, 100, Module.PropertyCount)
+    if (Module.StatusCount[ItemStatusTranslate] <> 0) then
+      Completeness := MulDiv(TranslatedCount, 100, Module.StatusCount[ItemStatusTranslate])
     else
       Completeness := 100;
 
@@ -3880,7 +3968,7 @@ begin
     Exit;
   end;
 
-  if (GetTranslatedCount(Module) = Module.PropertyCount) then
+  if (GetTranslatedCount(Module) = Module.StatusCount[ItemStatusTranslate]) then
     AStyle := StyleComplete
   else
     AStyle := StyleNeedTranslation;
@@ -3934,6 +4022,9 @@ begin
 
   if (FModule = nil) then
     Exit;
+
+  // We can not just sum the status counts because these exclude items that are in the Unused state
+  // Result := FModule.StatusCount[ItemStatusTranslate]+FModule.StatusCount[ItemStatusHold]+FModule.StatusCount[ItemStatusDontTranslate];
 
   for Item in FModule.Items.Values.ToArray do
     Inc(Result, Item.Properties.Count);
