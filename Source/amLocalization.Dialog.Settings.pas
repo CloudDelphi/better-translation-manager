@@ -941,10 +941,8 @@ const
     SkinDetails.Name := dxSkinDetails.Name;
     SkinDetails.DisplayName := dxSkinDetails.DisplayName;
     SkinDetails.Group := dxSkinDetails.GroupName;
-    SkinDetails.GlyphSmall := TBitmap.Create;
-    SkinDetails.GlyphSmall.Assign(dxSkinDetails.Icons[sis16].GetAsBitmap);
-    SkinDetails.GlyphLarge := TBitmap.Create;
-    SkinDetails.GlyphLarge.Assign(dxSkinDetails.Icons[sis48].GetAsBitmap);
+    SkinDetails.GlyphSmall := dxSkinDetails.Icons[sis16].GetAsBitmap;
+    SkinDetails.GlyphLarge := dxSkinDetails.Icons[sis48].GetAsBitmap;
   end;
 
   procedure LoadExternalSkinDetails(const Filename: string);
@@ -1110,8 +1108,8 @@ begin
     for i := 0 to FSkinList.Count-1 do
     begin
       SkinDetails := FSkinList[i];
-      SkinDetails.GlyphSmall.Free;
-      SkinDetails.GlyphLarge.Free;
+      FreeAndNil(SkinDetails.GlyphSmall);
+      FreeAndNil(SkinDetails.GlyphLarge);
     end;
   end;
 end;
@@ -1129,7 +1127,7 @@ end;
 
 procedure TFormSettings.TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
 var
-  TranslationService: ITranslationServiceMS;
+  Translator: TDataModuleTranslatorMicrosoftV3;
   ErrorMessage: string;
 resourcestring
   sTranslatorMSAPIKeyValid = 'The API key has been validated.';
@@ -1137,14 +1135,19 @@ resourcestring
 begin
   EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 0;
 
-  TranslationService := TDataModuleTranslatorMicrosoftV3.Create(nil);
+  Translator := TDataModuleTranslatorMicrosoftV3.Create(nil);
+  try
 
-  if (TranslationService.ValidateAPIKey(EditTranslatorMSAPIKey.Text, ErrorMessage)) then
-  begin
-    EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 1;
-    MessageDlg(sTranslatorMSAPIKeyValid, mtInformation, [mbOK], 0);
-  end else
-    MessageDlg(Format(sTranslatorMSAPIKeyInvalid, [ErrorMessage]), mtWarning, [mbOK], 0);
+    if ((Translator as ITranslationServiceMS).ValidateAPIKey(EditTranslatorMSAPIKey.Text, ErrorMessage)) then
+    begin
+      EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 1;
+      MessageDlg(sTranslatorMSAPIKeyValid, mtInformation, [mbOK], 0);
+    end else
+      MessageDlg(Format(sTranslatorMSAPIKeyInvalid, [ErrorMessage]), mtWarning, [mbOK], 0);
+
+  finally
+    Translator.Free;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

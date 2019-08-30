@@ -1101,11 +1101,16 @@ end;
 
 procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
 var
-  TranslationService: ITranslationService;
+  Translator: TDataModuleTranslatorMicrosoftV3;
 begin
-  TranslationService := TDataModuleTranslatorMicrosoftV3.Create(nil);
+  Translator := TDataModuleTranslatorMicrosoftV3.Create(nil);
+  try
 
-  TranslateSelected(TranslationService);
+    TranslateSelected(Translator);
+
+  finally
+    Translator.Free;
+  end;
 end;
 
 procedure TFormMain.ActionAutomationWebLookupUpdate(Sender: TObject);
