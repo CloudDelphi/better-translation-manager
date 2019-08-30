@@ -1,6 +1,7 @@
 object FormSelectDuplicate: TFormSelectDuplicate
   Left = 0
   Top = 0
+  ActiveControl = ComboBoxAction
   BorderStyle = bsDialog
   Caption = 'Duplicate translations found'
   ClientHeight = 355
@@ -20,8 +21,6 @@ object FormSelectDuplicate: TFormSelectDuplicate
     Align = alClient
     TabOrder = 0
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitWidth = 598
-    ExplicitHeight = 349
     object LabelSourceValue: TcxLabel
       Left = 73
       Top = 108
@@ -49,7 +48,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
       ViewStyle = vsReport
       OnDblClick = ListViewDuplicatesDblClick
     end
-    object cxButton1: TcxButton
+    object ButtonOK: TcxButton
       Left = 340
       Top = 324
       Width = 75
@@ -57,7 +56,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
       Action = ActionOK
       TabOrder = 6
     end
-    object cxButton2: TcxButton
+    object ButtonCancel: TcxButton
       Left = 421
       Top = 324
       Width = 75
@@ -68,7 +67,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
     object CheckBoxAll: TcxCheckBox
       Left = 287
       Top = 42
-      Caption = 'Do this for all conflicts'
+      Caption = '&Do this for all conflicts'
       Enabled = False
       Properties.OnChange = CheckBoxAllPropertiesChange
       Style.HotTrack = False
@@ -100,7 +99,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
     object CheckBoxApplyToIdentical: TcxCheckBox
       Left = 73
       Top = 287
-      Caption = 'Use this translation for identical conflicts'
+      Caption = '&Use this translation for identical conflicts'
       Style.HotTrack = False
       TabOrder = 5
     end
@@ -132,7 +131,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
       Parent = LayoutControlGroup_Root
       AlignVert = avClient
       CaptionOptions.AlignVert = tavTop
-      CaptionOptions.Text = 'Translations:'
+      CaptionOptions.Text = '&Translations:'
       Control = ListViewDuplicates
       ControlOptions.OriginalHeight = 156
       ControlOptions.OriginalWidth = 121
@@ -143,7 +142,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
       Parent = dxLayoutGroup1
       AlignHorz = ahRight
       CaptionOptions.Visible = False
-      Control = cxButton1
+      Control = ButtonOK
       ControlOptions.OriginalHeight = 25
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
@@ -173,7 +172,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
       Parent = dxLayoutGroup1
       AlignHorz = ahRight
       CaptionOptions.Visible = False
-      Control = cxButton2
+      Control = ButtonCancel
       ControlOptions.OriginalHeight = 25
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
@@ -192,7 +191,7 @@ object FormSelectDuplicate: TFormSelectDuplicate
     end
     object dxLayoutItem6: TdxLayoutItem
       Parent = dxLayoutGroup2
-      CaptionOptions.Text = 'Action:'
+      CaptionOptions.Text = '&Action:'
       Control = ComboBoxAction
       ControlOptions.OriginalHeight = 21
       ControlOptions.OriginalWidth = 192

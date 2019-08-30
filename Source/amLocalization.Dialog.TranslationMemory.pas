@@ -52,6 +52,7 @@ implementation
 uses
   IOUtils,
   amCursorService,
+  amLocalization.Settings,
   amLocalization.Data.Main;
 
 function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
@@ -61,7 +62,7 @@ begin
   if (not FDataModuleTranslationMemory.IsLoaded) then
   begin
     SaveCursor(crHourGlass);
-    FDataModuleTranslationMemory.LoadTranslationMemory(FDataModuleTranslationMemory.Filename);
+    FDataModuleTranslationMemory.LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
   end;
 
   GridTMDBTableView.BeginUpdate;
@@ -83,7 +84,7 @@ begin
   if (not FDataModuleTranslationMemory.CheckSave) then
     Exit;
 
-  OpenDialogTMX.FileName := FDataModuleTranslationMemory.Filename;
+  OpenDialogTMX.FileName := TranslationManagerSettings.Translators.TranslationMemory.Filename;
 
   if (not OpenDialogTMX.Execute(Handle)) then
     Exit;
@@ -93,7 +94,7 @@ begin
   GridTMDBTableView.BeginUpdate;
   try
     FDataModuleTranslationMemory.LoadTranslationMemory(OpenDialogTMX.FileName);
-    FDataModuleTranslationMemory.Filename := OpenDialogTMX.FileName;
+    TranslationManagerSettings.Translators.TranslationMemory.Filename := OpenDialogTMX.FileName;
 
     CreateColumns;
   finally
@@ -103,7 +104,7 @@ end;
 
 procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);
 begin
-  SaveDialogTMX.FileName := FDataModuleTranslationMemory.Filename;
+  SaveDialogTMX.FileName := TranslationManagerSettings.Translators.TranslationMemory.Filename;
 
   if (not SaveDialogTMX.Execute(Handle)) then
     Exit;

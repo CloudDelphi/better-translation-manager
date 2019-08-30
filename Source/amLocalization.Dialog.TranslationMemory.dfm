@@ -80,7 +80,6 @@ object FormTranslationMemory: TFormTranslationMemory
       AlignVert = avClient
       ButtonOptions.Buttons = <>
       Hidden = True
-      ItemIndex = 2
       ShowBorder = False
       Index = -1
     end
@@ -100,7 +99,6 @@ object FormTranslationMemory: TFormTranslationMemory
       AlignVert = avBottom
       CaptionOptions.Visible = False
       ButtonOptions.Buttons = <>
-      ItemIndex = 1
       LayoutDirection = ldHorizontal
       ShowBorder = False
       Index = 2

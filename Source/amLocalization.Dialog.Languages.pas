@@ -78,7 +78,7 @@ begin
   for i := 0 to CheckListBoxLanguages.Items.Count-1 do
     if (CheckListBoxLanguages.Items[i].Checked) then
     begin
-      if (CheckListBoxLanguages.Items[i].Tag = SourceLanguageID) then
+      if (LCID(CheckListBoxLanguages.Items[i].Tag) = SourceLanguageID) then
         SourceEqualsTarget := True;
       Inc(CheckedCount);
     end;
@@ -181,7 +181,7 @@ begin
   Result := False;
 
   for i := 0 to CheckListBoxLanguages.Items.Count-1 do
-    if (CheckListBoxLanguages.Items[i].Tag = LanguageID) then
+    if (LCID(CheckListBoxLanguages.Items[i].Tag) = LanguageID) then
     begin
       CheckListBoxLanguages.Items[i].Checked := True;
       Result := True;

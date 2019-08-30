@@ -29,6 +29,7 @@ uses
 const
   MSG_SOURCE_CHANGED = WM_USER;
   MSG_TARGET_CHANGED = WM_USER+1;
+  MSG_FORM_MAXIMIZE = WM_USER+2;
 
 // -----------------------------------------------------------------------------
 //
@@ -224,6 +225,10 @@ type
     dxBarButton31: TdxBarButton;
     dxBarButton32: TdxBarButton;
     dxBarButton33: TdxBarButton;
+    PopupMenuRecentFiles: TdxRibbonPopupMenu;
+    BarManagerBarQuickAccess: TdxBar;
+    ActionSettings: TAction;
+    dxBarButton34: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -308,6 +313,8 @@ type
     procedure ActionGotoNextStateExecute(Sender: TObject);
     procedure ActionAutomationMemoryTranslateUpdate(Sender: TObject);
     procedure ActionAutomationMemoryAddUpdate(Sender: TObject);
+    procedure ButtonOpenRecentClick(Sender: TObject);
+    procedure ActionSettingsExecute(Sender: TObject);
   private
     FLocalizerProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -334,6 +341,22 @@ type
     procedure ShowHint(Sender: TObject); { updates statusbar with hints }
     procedure SetInfoText(const Msg: string);
   protected
+    procedure DoCreate; override;
+  private
+    // Message handlers
+    procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
+    procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
+    procedure MsgFormMaximize(var Msg: TMessage); message MSG_FORM_MAXIMIZE;
+  private
+    // Event handlers
+    procedure OnProjectChanged(Sender: TObject);
+    procedure OnModuleChanged(Module: TLocalizerModule);
+  private
+    // Recent files
+    procedure LoadRecentFiles;
+    procedure SaveRecentFiles;
+    procedure AddRecentFile(const Filename: string);
+  protected
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
     procedure SetSourceLanguageID(const Value: Word);
@@ -354,6 +377,7 @@ type
     function NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
     function GetNodeValidationMessage(Node: TcxTreeListNode): string;
   protected
+    procedure LoadFromFile(const FIlename: string);
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
     procedure LoadItem(Item: TCustomLocalizerItem; Recurse: boolean = False);
     procedure LoadFocusedItem(Recurse: boolean = False);
@@ -365,10 +389,6 @@ type
     procedure DisplayModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
   protected
-    procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
-    procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
-    procedure OnProjectChanged(Sender: TObject);
-    procedure OnModuleChanged(Module: TLocalizerModule);
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
@@ -397,6 +417,12 @@ type
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
     function ILocalizerSearchHost.GetTargetLanguage = GetTargetLanguage;
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
+  private
+    FSkin: string;
+    FColorSchemeAccent: integer;
+  protected
+    procedure SetSkin(const Value: string);
+    property Skin: string read FSkin write SetSkin;
   public
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
@@ -420,10 +446,13 @@ uses
   StrUtils,
   Generics.Defaults,
   System.Character,
-  msxmldom,
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
+
+  // Skin utils
+  dxSkinsDefaultPainters,
+  dxSkinsdxRibbonPainter,
 
   dxHunspellDictionary,
   dxSpellCheckerDialogs,
@@ -436,11 +465,13 @@ uses
   amLocalization.Import.XLIFF,
   amLocalization.Data.Main,
   amLocalization.Utils,
+  amLocalization.Settings,
   amLocalization.Translator.Microsoft.Version3,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
-  amLocalization.Dialog.Languages;
+  amLocalization.Dialog.Languages,
+  amLocalization.Dialog.Settings;
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
@@ -459,6 +490,9 @@ const
   StatusBarPanelModified = 1;
   StatusBarPanelStats = 2;
 
+const
+  sDefaultSkinName = 'Office2016Colorful';
+
 // -----------------------------------------------------------------------------
 
 type
@@ -469,6 +503,306 @@ type
 function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
 begin
   Result := (ANode.Data = AData);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.DoCreate;
+begin
+  inherited;
+
+  (*
+  ** Restore main window state
+  **
+  ** We must do this after TdxCustomRibbonForm.DoCreate has been executed
+  ** in order to avoid the "growing form syndrome". The growing form is caused
+  ** by TdxCustomRibbonForm.AdjustLayout (called from DoCreate).
+  *)
+  TranslationManagerSettings.Forms.Main.ApplySettings(Self);
+  if (TranslationManagerSettings.Forms.Main.Maximized) then
+    PostMessage(Handle, MSG_FORM_MAXIMIZE, 0, 0);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.FormCreate(Sender: TObject);
+
+  procedure CreateBookmarkMenu;
+  var
+    Flag: TPropertyFlag;
+    Action: TAction;
+    ItemLink: TdxBarItemLink;
+    Separator: TdxBarSeparator;
+  resourcestring
+    sMenuCaptionBookmark = 'Bookmark &%.1X';
+  begin
+    FLastBookmark := -1;
+    for Flag := FlagBookmark0 to FlagBookmarkF do
+    begin
+      if (Flag = FlagBookmarkA) then
+      begin
+        ItemLink := PopupMenuBookmark.ItemLinks.AddItem(TdxBarSeparator);
+        Separator := TdxBarSeparator(ItemLink.Item);
+        Separator.ShowCaption := False;
+        // Hide item from customization
+        ItemLink.Item.Visible := ivNotInCustomizing;
+      end;
+
+      Action := TAction.Create(ActionList);
+      Action.Tag := Ord(Flag);
+      Action.Caption := Format(sMenuCaptionBookmark, [Action.Tag - Ord(FlagBookmark0)]);
+      Action.ImageIndex := ImageIndexBookmark0 + Ord(Flag) - Ord(FlagBookmark0);
+      Action.OnExecute := ActionBookmarkExecute;
+
+      ItemLink := PopupMenuBookmark.ItemLinks.AddButton;
+      ItemLink.Item.Action := Action;
+      TdxBarButton(ItemLink.Item).ButtonStyle := bsChecked;
+      // Hide item from customization
+      ItemLink.Item.Visible := ivNotInCustomizing;
+    end;
+  end;
+
+var
+  i: integer;
+begin
+  DisableAero := True;
+
+  TranslationManagerSettings.ReadConfig;
+  TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
+  LoadRecentFiles;
+  if (TranslationManagerSettings.System.UseProposedStatus) then
+    TLocalizerTranslations.DefaultStatus := tStatusProposed
+  else
+    TLocalizerTranslations.DefaultStatus := tStatusTranslated;
+
+  OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(Application.ExeName);
+  OpenDialogProject.InitialDir := TPath.GetDirectoryName(Application.ExeName);
+
+  FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
+  FLocalizerProject.OnChanged := OnProjectChanged;
+  FLocalizerProject.OnModuleChanged := OnModuleChanged;
+
+  FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
+
+  FLocalizerDataSource := TLocalizerDataSource.Create(nil);
+  TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
+
+  DataModuleMain := TDataModuleMain.Create(Self);
+  FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
+
+  for i := 0 to StatusBar.Panels.Count-1 do
+    StatusBar.Panels[i].Text := '';
+  SetLength(FStatusBarPanelHint, StatusBar.Panels.Count);
+
+  Application.OnHint := ShowHint;
+  Application.OnShowHint := DoShowHint;
+
+  RibbonTabMain.Active := True;
+
+  InitializeProject('', GetUserDefaultUILanguage);
+
+  CreateBookmarkMenu;
+
+  FSkin := '';
+  FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
+
+  SetSkin(TranslationManagerSettings.System.Skin);
+end;
+
+procedure TFormMain.FormDestroy(Sender: TObject);
+begin
+  SaveRecentFiles;
+
+  TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
+  TranslationManagerSettings.WriteConfig;
+  TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+
+  TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
+  SpellChecker.Dictionaries[0].Unload;
+
+  Application.OnHint := nil;
+  Application.OnShowHint := nil;
+
+  // Block notifications
+  FLocalizerProject.BeginUpdate;
+
+  FTranslationCounts.Clear;
+  FLocalizerProject.Clear;
+
+  FLocalizerDataSource.Free;
+  FLocalizerProject.Free;
+  FTranslationCounts.Free;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.MsgFormMaximize(var Msg: TMessage);
+begin
+  WindowState := wsMaximized;
+end;
+
+procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
+begin
+  FLocalizerProject.BaseLocaleID := BarEditItemSourceLanguage.EditValue;
+  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
+end;
+
+procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
+var
+  LocaleItem: TLocaleItem;
+  i: integer;
+  Found: boolean;
+  AnyFound: boolean;
+  FilenameDic, FilenameAff: string;
+  SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
+begin
+  ClearDependents;
+  ClearTargetLanguage;
+  InvalidateTranslatedCounts;
+
+  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+
+  TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
+
+  (*
+  ** Load spell check dictionary for new language
+  *)
+
+  // Unload old custom dictionary
+  Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
+  SpellChecker.Dictionaries[0].Enabled := False;
+  // Make sure folder exist before we save
+  TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
+  SpellChecker.Dictionaries[0].Unload;
+  // Load new custom dictionary
+  TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := TranslationManagerSettings.Folders.FolderUserSpellCheck+Format('user-%s.dic', [LocaleItem.LanguageShortName]);
+  SpellChecker.Dictionaries[0].Enabled := True;
+  SpellChecker.Dictionaries[0].Load;
+  SpellChecker.Dictionaries[0].Language := LocaleItem.Locale;
+
+  // Deactivate all existing dictionaries except ones that match new language
+  AnyFound := False;
+  for i := 1 to SpellChecker.DictionaryCount-1 do
+  begin
+    Found := (SpellChecker.Dictionaries[i].Language = LocaleItem.Locale);
+
+//    if (SpellChecker.Dictionaries[i].Enabled) and (not Found) then
+//      SpellChecker.Dictionaries[i].Unload;
+
+    SpellChecker.Dictionaries[i].Enabled := Found;
+    AnyFound := AnyFound or Found;
+  end;
+
+  // Add and load new dictionary
+  if (not AnyFound) then
+  begin
+    FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [LocaleItem.LanguageShortName]);
+    FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [LocaleItem.LanguageShortName]);
+    if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
+    begin
+      // AnyFound := True;
+      SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
+      SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
+      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := LocaleItem.Locale;
+      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
+      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
+      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
+      SpellCheckerDictionaryItem.DictionaryType.Load;
+    end;
+
+    // TODO : Add support for other formats here...
+  end;
+
+  // Reload project
+  FLocalizerDataSource.TargetLanguage := TargetLanguage;
+  TreeListModules.FullRefresh;
+  DisplayModuleStats;
+//  LoadProject(FLocalizerProject, False);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if (Key = VK_F12) and (ssAlt in Shift) then
+  begin
+    FLocalizerProject.Clear;
+    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
+    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
+    LoadProject(FLocalizerProject);
+    Key := 0;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.LoadRecentFiles;
+var
+  ShortCut: Char;
+
+  procedure AddRecentFile(const Filename: string);
+  var
+    Item: TdxBarItem;
+  begin
+    Item := PopupMenuRecentFiles.ItemLinks.AddButton.Item;
+    Item.Caption := Format('&%s %s', [ShortCut, cxGetStringAdjustedToWidth(0, 0, Filename, 300, mstPathEllipsis)]);
+    Item.Description := Filename;
+    Item.Hint := Filename;
+    Item.OnClick := ButtonOpenRecentClick;
+    // Hide item from customization
+    Item.Visible := ivNotInCustomizing;
+  end;
+
+var
+  s: string;
+  i: integer;
+begin
+  for i := PopupMenuRecentFiles.ItemLinks.Count-1 downto 0 do
+    PopupMenuRecentFiles.ItemLinks[i].Item.Free;
+
+  ShortCut := '0';
+
+  for s in TranslationManagerSettings.Folders.RecentFiles do
+    if (s <> '') then
+    begin
+      AddRecentFile(s);
+
+      if (ShortCut = '9') then
+        ShortCut := 'A'
+      else
+        Inc(ShortCut);
+    end;
+end;
+
+procedure TFormMain.SaveRecentFiles;
+begin
+end;
+
+procedure TFormMain.AddRecentFile(const Filename: string);
+var
+  i: integer;
+begin
+  if (Filename = '') or (TPath.GetDirectoryName(Filename) = '') or (not TFile.Exists(Filename)) then
+    exit;
+
+  try
+
+    for i := 0 to TranslationManagerSettings.Folders.RecentFiles.Count-1 do
+      if (AnsiSameText(Filename, TranslationManagerSettings.Folders.RecentFiles[i])) then
+      begin
+        TranslationManagerSettings.Folders.RecentFiles.Move(i, 0);
+        Exit;
+      end;
+
+    TranslationManagerSettings.Folders.RecentFiles.Insert(0, Filename);
+
+    // Prune to at most 10 items
+    for i := TranslationManagerSettings.Folders.RecentFiles.Count-1 downto 10 do
+      TranslationManagerSettings.Folders.RecentFiles.Delete(i);
+
+  finally
+    LoadRecentFiles;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -577,7 +911,7 @@ end;
 
 procedure TFormMain.ActionAutomationMemoryAddUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedItem <> nil) and (SourceLanguageID <> TargetLanguageID);
+  TAction(Sender).Enabled := (FocusedItem <> nil) and (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
 end;
 
 procedure TFormMain.ActionAutomationMemoryExecute(Sender: TObject);
@@ -616,31 +950,32 @@ begin
   if (SourceLocaleItem = TargetLocaleItem) then
     Exit;
 
-  TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem);
+  Count := 0;
+  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  begin
+    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Inc(Count);
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.State <> ItemStateUnused) then
+          Inc(ElegibleCount);
+        Result := True;
+      end, False);
+  end;
+
+  if (ElegibleCount < Count) then
+    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+  else
+    ElegibleWarning :=  '';
+
+  if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.ServiceName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
+    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  if (not TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem)) then
+    Exit;
   try
-
-    Count := 0;
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-    begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-      Item.Traverse(
-        function(Prop: TLocalizerProperty): boolean
-        begin
-          Inc(Count);
-          if (Prop.EffectiveStatus = ItemStatusTranslate) then
-            Inc(ElegibleCount);
-          Result := True;
-        end, False);
-    end;
-
-    if (ElegibleCount < Count) then
-      ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
-    else
-      ElegibleWarning :=  '';
-
-    if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.ServiceName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
-      mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
-      Exit;
 
     TranslatedCount := 0;
     UpdatedCount := 0;
@@ -673,12 +1008,12 @@ begin
             else
               TranslatedValue := SourceValue;
 
-            Progress.Progress(psProgress, Count, ElegibleCount, Copy(SourceValue, 1, 40));
+            Progress.Progress(psProgress, Count, ElegibleCount, SourceValue);
             if (Progress.Aborted) then
               Exit(False);
 
             // Perform translation
-            // Note: It is the responsibility of the translation function to return True/False to indicate
+            // Note: It is the responsibility of the translation service to return True/False to indicate
             // if SourceValue=TargetValue is in fact a translation.
             if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
             begin
@@ -720,6 +1055,8 @@ begin
           end, False);
       end;
 
+      Progress.Progress(psEnd, Count, ElegibleCount);
+
     finally
       FLocalizerProject.EndUpdate;
     end;
@@ -751,7 +1088,7 @@ begin
   Item := FocusedItem;
 
   TAction(Sender).Enabled := (Item <> nil) and (Item.State <> ItemStateUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
-    (FDataModuleTranslationMemory.HasData) and (SourceLanguageID <> TargetLanguageID);
+    (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1195,6 +1532,9 @@ begin
     if (FLocalizerProject.SourceFilename <> '') then
       FormNewProject.SourceApplication := FLocalizerProject.SourceFilename
     else
+    if (TranslationManagerSettings.Folders.RecentApplications.Count > 0) then
+      FormNewProject.SourceApplication := TranslationManagerSettings.Folders.RecentApplications[0]
+    else
       FormNewProject.SourceApplication := Application.ExeName;
 
     if (FLocalizerProject.BaseLocaleID <> 0) then
@@ -1214,7 +1554,7 @@ begin
   LoadProject(FLocalizerProject);
 end;
 
-procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
+procedure TFormMain.LoadFromFile(const FIlename: string);
 var
   BestLanguage: TTargetLanguage;
   i: integer;
@@ -1225,12 +1565,7 @@ begin
   if (not CheckSave) then
     exit;
 
-  if (not OpenDialogProject.Execute(Handle)) then
-    exit;
-
   SaveCursor(crHourGlass);
-
-  OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
   ClearDependents;
   ClearTargetLanguage;
@@ -1245,7 +1580,7 @@ begin
     FLocalizerProject.BeginUpdate;
     try
 
-      TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, OpenDialogProject.FileName);
+      TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, Filename);
       FLocalizerProject.Modified := False;
 
     finally
@@ -1276,8 +1611,25 @@ begin
     Progress := nil;
   end;
 
+  AddRecentFile(Filename);
+
   if (not TFile.Exists(FLocalizerProject.SourceFilename)) then
     ShowMessageFmt(sLocalizerSourceFileNotFound, [FLocalizerProject.SourceFilename]);
+end;
+
+procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
+begin
+  if (not CheckSave) then
+    exit;
+
+  if (not OpenDialogProject.Execute(Handle)) then
+    exit;
+
+  SaveCursor(crHourGlass);
+
+  OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
+
+  LoadFromFile(OpenDialogProject.FileName);
 end;
 
 procedure TFormMain.ActionProjectPurgeExecute(Sender: TObject);
@@ -1479,6 +1831,8 @@ begin
   finally
     Progress := nil;
   end;
+
+  AddRecentFile(Filename);
 end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
@@ -1573,6 +1927,24 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionSettingsExecute(Sender: TObject);
+var
+  FormSettings: TFormSettings;
+begin
+  FormSettings := TFormSettings.Create(nil);
+  try
+    FormSettings.RibbonStyle := RibbonMain.Style;
+    FormSettings.SpellChecker := SpellChecker;
+
+    if (not FormSettings.Execute) then
+      Exit;
+
+    Skin := TranslationManagerSettings.System.Skin;
+  finally
+    FormSettings.Free;
+  end;
+end;
 
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 var
@@ -1933,6 +2305,11 @@ begin
   dxShowSpellingOptionsDialog(SpellChecker);
 end;
 
+procedure TFormMain.ButtonOpenRecentClick(Sender: TObject);
+begin
+  LoadFromFile(TdxBarItem(Sender).Hint);
+end;
+
 // -----------------------------------------------------------------------------
 
 function TFormMain.CheckSave: boolean;
@@ -1968,103 +2345,6 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
-
-procedure TFormMain.FormCreate(Sender: TObject);
-
-  procedure CreateBookmarkMenu;
-  var
-    Flag: TPropertyFlag;
-    Action: TAction;
-    ItemLink: TdxBarItemLink;
-    Separator: TdxBarSeparator;
-  resourcestring
-    sMenuCaptionBookmark = 'Bookmark &%.1X';
-  begin
-    FLastBookmark := -1;
-    for Flag := FlagBookmark0 to FlagBookmarkF do
-    begin
-      if (Flag = FlagBookmarkA) then
-      begin
-        ItemLink := PopupMenuBookmark.ItemLinks.AddItem(TdxBarSeparator);
-        Separator := TdxBarSeparator(ItemLink.Item);
-        Separator.ShowCaption := False;
-      end;
-
-      Action := TAction.Create(ActionList);
-      Action.Tag := Ord(Flag);
-      Action.Caption := Format(sMenuCaptionBookmark, [Action.Tag - Ord(FlagBookmark0)]);
-      Action.ImageIndex := ImageIndexBookmark0 + Ord(Flag) - Ord(FlagBookmark0);
-      Action.OnExecute := ActionBookmarkExecute;
-
-      ItemLink := PopupMenuBookmark.ItemLinks.AddButton;
-      ItemLink.Item.Action := Action;
-      TdxBarButton(ItemLink.Item).ButtonStyle := bsChecked;
-    end;
-  end;
-
-var
-  i: integer;
-begin
-  DisableAero := True;
-
-  msxmldom.MSXMLDOMDocumentFactory.AddDOMProperty('ProhibitDTD', False);
-
-  OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(Application.ExeName);
-  OpenDialogProject.InitialDir := TPath.GetDirectoryName(Application.ExeName);
-
-  FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
-  FLocalizerProject.OnChanged := OnProjectChanged;
-  FLocalizerProject.OnModuleChanged := OnModuleChanged;
-
-  FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
-
-  FLocalizerDataSource := TLocalizerDataSource.Create(nil);
-  TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
-
-  DataModuleMain := TDataModuleMain.Create(Self);
-  FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
-
-  for i := 0 to StatusBar.Panels.Count-1 do
-    StatusBar.Panels[i].Text := '';
-  SetLength(FStatusBarPanelHint, StatusBar.Panels.Count);
-
-  Application.OnHint := ShowHint;
-  Application.OnShowHint := DoShowHint;
-
-  RibbonTabMain.Active := True;
-
-  InitializeProject('', GetUserDefaultUILanguage);
-
-  CreateBookmarkMenu;
-end;
-
-procedure TFormMain.FormDestroy(Sender: TObject);
-begin
-  Application.OnHint := nil;
-  Application.OnShowHint := nil;
-
-  // Block notifications
-  FLocalizerProject.BeginUpdate;
-
-  FTranslationCounts.Clear;
-  FLocalizerProject.Clear;
-
-  FLocalizerDataSource.Free;
-  FLocalizerProject.Free;
-  FTranslationCounts.Free;
-end;
-
-procedure TFormMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-begin
-  if (Key = VK_F12) and (ssAlt in Shift) then
-  begin
-    FLocalizerProject.Clear;
-    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
-    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item', 'TFooBar').AddProperty('Test', 'test');
-    LoadProject(FLocalizerProject);
-    Key := 0;
-  end;
-end;
 
 // -----------------------------------------------------------------------------
 
@@ -2136,6 +2416,175 @@ begin
 
     for Warning in Translation.Warnings do
       Result := Result + #13 + '- ' + sTranslationValidationWarnings[Warning];
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+const
+  RemoteSession = False;
+
+procedure TFormMain.SetSkin(const Value: string);
+var
+  SkinName, SkinFilename: string;
+  SkinIndex: integer;
+  OriginalSkinName: string;
+  SkinLoaded: boolean;
+  Retry: boolean;
+  ColorSchemeName: string;
+  RibbonSkin: TdxCustomRibbonSkin;
+  SkinDetails: TdxSkinDetails;
+  i: integer;
+begin
+  if (AnsiSameText(FSkin, Value)) then
+    Exit;
+
+  DecomposeSkinName(Value, SkinName, SkinFilename, SkinIndex);
+  OriginalSkinName := SkinName;
+
+  SkinLoaded := False;
+  if (SkinFilename <> '') then
+  begin
+    if (TFile.Exists(SkinFilename)) then
+    begin
+      SkinLoaded := dxSkinsUserSkinLoadFromFile(SkinFilename, SkinName);
+      if (not SkinLoaded) and (SkinIndex <> -1) then
+        SkinLoaded := dxSkinsUserSkinLoadFromFileByIndex(SkinFilename, SkinIndex);
+    end;
+    if (not SkinLoaded) then
+    begin
+      SkinFilename := '';
+      SkinIndex := -1;
+    end else
+      SkinName := 'UserSkin'; // Custom skin must be named "UserSkin"
+  end;
+
+  Retry := True;
+  while (True) do
+  begin
+
+    // Verify that skin is valid
+    // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, dxRibbonMain.Style);
+    // DevExpress 17.1.1
+    RibbonSkin := dxRibbonSkinsManager.GetMostSituable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
+
+    if (RibbonSkin <> nil) or (SkinLoaded) or (not Retry) then
+      break;
+
+    Retry := False;
+
+    // Map old skins to new skins
+    if (ContainsText(SkinName, 'Silver')) then
+      SkinName := 'Office2013White'
+    else
+    if (ContainsText(SkinName, 'Blue')) then
+      SkinName := 'Office2013LightGray'
+    else
+    if (ContainsText(SkinName, 'Black')) then
+      SkinName := 'Office2013DarkGray'
+    else
+      break;
+
+    OriginalSkinName := SkinName;
+  end;
+
+  // If value was invalid. Try default.
+  if (RibbonSkin = nil) then
+  begin
+    SkinFilename := '';
+    SkinIndex := -1;
+    SkinName := sDefaultSkinName;
+    OriginalSkinName := SkinName;
+
+    if (not AnsiSameText(SkinName, Value)) then
+      // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, RibbonMain.Style);
+      // DevExpress 17.1.1
+      RibbonSkin := dxRibbonSkinsManager.GetMostSituable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
+  end;
+
+  // If value was invalid. Find first valid skin.
+  if (RibbonSkin = nil) then
+  begin
+    SkinName := '';
+    for i := 0 to dxRibbonSkinsManager.SkinCount-1 do
+    begin
+      RibbonSkin := dxRibbonSkinsManager.Skins[I];
+
+      if (RibbonSkin.Style <> RibbonMain.Style) then
+        continue;
+
+      if not(RibbonSkin is TdxSkinRibbonPainter) then
+        continue;
+
+      if (TdxSkinRibbonPainter(RibbonSkin).Painter.IsInternalPainter) then
+        continue;
+
+      if (TdxSkinRibbonPainter(RibbonSkin).Painter.GetPainterDetails(SkinDetails)) then
+      begin
+        SkinName := SkinDetails.Name;
+        break;
+      end;
+    end;
+    OriginalSkinName := SkinName;
+  end;
+
+
+  RibbonMain.BeginUpdate;
+  try
+    RibbonMain.ColorSchemeAccent := TdxRibbonColorSchemeAccent(FColorSchemeAccent);
+
+{
+    if (SkinName = '') or (ContainsText(SkinName, 'Office')) then
+    begin
+      ColorSchemeName := 'Colorful';
+      if (dxRibbonSkinsManager.Find(ColorSchemeName, RibbonMain.Style) = nil) then
+        ColorSchemeName := SkinName;
+    end else
+}
+      ColorSchemeName := SkinName;
+
+    // Ribbon skin (ColorSchemeName specifies the skin/painter to use for the ribbon)
+    RibbonMain.ColorSchemeName := ColorSchemeName;
+
+    // "The rest" skin (i.e. not ribbon)
+    if (SkinName <> '') then
+    begin
+      if (cxLookAndFeelPaintersManager.GetPainter(SkinName) = nil) then
+      begin
+        // Ribbon Color Schemes only skins the ribbon. Use a static skin for rest of application.
+        if (RibbonMain.ColorScheme.Style = rs2013) then
+          SkinName := 'Office2013White'
+        else
+        if (RibbonMain.ColorScheme.Style = rs2016) then
+          SkinName := 'Office2016Colorful'
+        else
+          SkinName := sDefaultSkinName;
+      end;
+
+      FSkin := ComposeSkinName(OriginalSkinName, SkinFilename, SkinIndex);
+    end else
+    begin
+      FSkin := '';
+    end;
+
+    SkinController.SkinName := SkinName;
+
+    // Switch to Alternate skin mode (use Fills instead of BitBlts) if remote session
+    if (RemoteSession) then
+      SkinController.UseImageSet := imsAlternate;
+
+    SkinController.UseSkins := (FSkin <> ''); // Causes splash to flicker if skinned
+
+    // SkinPainter is nil if we tried to use a non-existing skin
+    if (RootLookAndFeel.SkinPainter = nil) then
+    begin
+      FSkin := '';
+      SkinController.UseImageSet := imsAlternate;
+      SkinController.UseSkins := False;
+    end;
+
+  finally
+    RibbonMain.EndUpdate;
   end;
 end;
 
@@ -2415,85 +2864,6 @@ begin
   Assert(Node <> nil);
 
   ReloadNode(Node);
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
-begin
-  FLocalizerProject.BaseLocaleID := BarEditItemSourceLanguage.EditValue;
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
-end;
-
-procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
-var
-  LocaleItem: TLocaleItem;
-  i: integer;
-  Found: boolean;
-  AnyFound: boolean;
-  FilenameDic, FilenameAff: string;
-  SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
-begin
-  ClearDependents;
-  ClearTargetLanguage;
-  InvalidateTranslatedCounts;
-  
-  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-  TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
-
-  (*
-  ** Load spell check dictionary for new language
-  *)
-
-  // Unload old custom dictionary
-  Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
-  SpellChecker.Dictionaries[0].Enabled := False;
-  SpellChecker.Dictionaries[0].Unload;
-  // Load new custom dictionary
-  TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := Format('.\dictionaries\user-%s.dic', [LocaleItem.LanguageShortName]);
-  SpellChecker.Dictionaries[0].Enabled := True;
-  SpellChecker.Dictionaries[0].Load;
-  SpellChecker.Dictionaries[0].Language := LocaleItem.Locale;
-
-  // Deactivate all existing dictionaries except ones that match new language
-  AnyFound := False;
-  for i := 1 to SpellChecker.DictionaryCount-1 do
-  begin
-    Found := (SpellChecker.Dictionaries[i].Language = LocaleItem.Locale);
-
-//    if (SpellChecker.Dictionaries[i].Enabled) and (not Found) then
-//      SpellChecker.Dictionaries[i].Unload;
-
-    SpellChecker.Dictionaries[i].Enabled := Found;
-    AnyFound := AnyFound or Found;
-  end;
-
-  // Add and load  new dictionary
-  if (not AnyFound) then
-  begin
-    FilenameDic := Format('.\dictionaries\%s.dic', [LocaleItem.LanguageShortName]);
-    FilenameAff := Format('.\dictionaries\%s.aff', [LocaleItem.LanguageShortName]);
-    if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
-    begin
-      // AnyFound := True;
-      SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
-      SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := LocaleItem.Locale;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
-      SpellCheckerDictionaryItem.DictionaryType.Load;
-    end;
-
-    // TODO : Add support for other formats here...
-  end;
-
-  // Reload project
-  FLocalizerDataSource.TargetLanguage := TargetLanguage;
-  TreeListModules.FullRefresh;
-  DisplayModuleStats;
-//  LoadProject(FLocalizerProject, False);
 end;
 
 // -----------------------------------------------------------------------------

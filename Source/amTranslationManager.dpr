@@ -19,7 +19,9 @@ uses
   amLocalization.Translator.TM in 'amLocalization.Translator.TM.pas' {DataModuleTranslationMemory: TDataModule},
   amLocalization.Utils in 'amLocalization.Utils.pas',
   amLocalization.Dialog.TranslationMemory.SelectDuplicate in 'amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas' {FormSelectDuplicate},
-  amLocalization.Translator in 'amLocalization.Translator.pas';
+  amLocalization.Translator in 'amLocalization.Translator.pas',
+  amLocalization.Settings in 'amLocalization.Settings.pas',
+  amLocalization.Dialog.Settings in 'amLocalization.Dialog.Settings.pas' {FormSettings};
 
 {$R *.res}
 

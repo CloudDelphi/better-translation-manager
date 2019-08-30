@@ -23,7 +23,6 @@ type
     procedure TableTranslationMemoryAfterPost(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
   private
-    FFilename: string;
     FLoaded: boolean;
     FFormSelectDuplicate: TFormSelectDuplicate;
     FDuplicateAction: TDuplicateAction;
@@ -31,13 +30,14 @@ type
     FConflictResolution: TDictionary<string, string>;
     FModified: boolean;
     FCreateDate: TDateTime;
+  private
     function FindField(LocaleItem: TLocaleItem): TField;
     function GetHasData: boolean;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
-
+    function GetAvailable: boolean;
   protected
     // ITranslationService
-    procedure BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     procedure EndLookup;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
     function GetServiceName: string;
@@ -47,9 +47,10 @@ type
     procedure LoadTranslationMemory(const Filename: string);
     procedure SaveTranslationMemory(const Filename: string);
     function CheckSave: boolean;
+    function CheckLoaded: boolean;
 
-    property Filename: string read FFilename write FFilename;
     property IsLoaded: boolean read FLoaded;
+    property IsAvailable: boolean read GetAvailable;
     property HasData: boolean read GetHasData;
     property Modified: boolean read FModified;
   end;
@@ -72,6 +73,7 @@ uses
   XMLDoc, XMLIntf,
   Forms,
   amCursorService,
+  amLocalization.Settings,
   amLocalization.Utils;
 
 type
@@ -81,6 +83,39 @@ type
   end;
 
   TTerms = TList<TTerm>;
+
+function TDataModuleTranslationMemory.CheckLoaded: boolean;
+var
+  Res: integer;
+resourcestring
+  sLocalizerNoTMFileTitle = 'Translation Memory does not exist';
+  sLocalizerNoTMFile = 'The Translation Memory file does not exist.'#13#13'Filename: %s'#13#13'A new file will be created when you save the Translation Memory.'#13#13'Do you want to save an new empty file now?';
+begin
+  if (not FLoaded) and (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand) then
+  begin
+    if (not TFile.Exists(TranslationManagerSettings.Translators.TranslationMemory.Filename)) then
+    begin
+      Res := TaskMessageDlg(sLocalizerNoTMFileTitle, Format(sLocalizerNoTMFile, [TranslationManagerSettings.Translators.TranslationMemory.Filename]),
+        mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbNo);
+
+      if (Res = mrCancel) then
+        Exit(False);
+
+      if (Res = mrYes) then
+      begin
+        // Save empty
+        SaveTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+        // ...and load it
+        LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+      end else
+        // Pretend we have loaded to avoid further prompts
+        FLoaded := True;
+    end else
+      LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  end;
+
+  Result := FLoaded;
+end;
 
 function TDataModuleTranslationMemory.CheckSave: boolean;
 var
@@ -101,7 +136,7 @@ begin
     begin
       SaveCursor(crHourGlass);
 
-      SaveTranslationMemory(Filename);
+      SaveTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
 
       Result := (not Modified);
     end else
@@ -123,6 +158,11 @@ begin
     if (SameText(LocaleItem.LocaleName, TableTranslationMemory.Fields[i].FieldName)) then
       Exit(TableTranslationMemory.Fields[i]);
   Result := nil;
+end;
+
+function TDataModuleTranslationMemory.GetAvailable: boolean;
+begin
+  Result := (FLoaded) or (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand);
 end;
 
 function TDataModuleTranslationMemory.GetHasData: boolean;
@@ -158,6 +198,7 @@ var
   TargetField: TField;
   Duplicates: TStringList;
   Clone: TdxMemData;
+  SanitizedSourceValue: string;
 resourcestring
   sTranslationMemoryAddDuplicateTitle = 'Duplicates found';
   sTranslationMemoryAddDuplicate = 'You are adding a term that already has %d translation(s) in the dictionary.'#13#13+
@@ -171,8 +212,8 @@ begin
   Assert(SourceLocaleItem <> nil);
   Assert(TargetLocaleItem <> nil);
 
-  if (not FLoaded) then
-    LoadTranslationMemory(FFilename);
+  if (not CheckLoaded) then
+    Exit;
 
   SourceField := FindField(SourceLocaleItem);
   TargetField := FindField(TargetLocaleItem);
@@ -203,14 +244,16 @@ begin
   Duplicates := nil;
   try
 
+    SanitizedSourceValue := SanitizeText(SourceValue);
+
     TableTranslationMemory.First;
     while (not TableTranslationMemory.EOF) do
     begin
       if (not TargetField.IsNull) and (not SourceField.IsNull) then
       begin
-        if (AnsiSameText(SourceValue, SourceField.AsString)) then
+        if (AnsiSameText(SanitizedSourceValue, SanitizeText(SourceField.AsString))) then
         begin
-          if (AnsiSameText(TargetValue, TargetField.AsString)) then
+          if (AnsiSameText(SourceValue, SourceField.AsString)) and (AnsiSameText(TargetValue, TargetField.AsString)) then
             Exit; // Exact duplicate - do nothing
 
           // Source same, target differs
@@ -386,9 +429,6 @@ var
   i: integer;
   TempFilename, BackupFilename: string;
 begin
-  if (not HasData) then
-    raise Exception.Create('Translation memory is empty');
-
   XML := TXMLDocument.Create(nil);
   XML.Active := True;
 
@@ -410,23 +450,26 @@ begin
 
   Body := XML.DocumentElement.AddChild('body');
 
-  TableTranslationMemory.First;
-
-  while (not TableTranslationMemory.EOF) do
+  if (HasData) then
   begin
-    ItemNode := Body.AddChild('tu');
+    TableTranslationMemory.First;
 
-    for i := 0 to TableTranslationMemory.FieldCount-1 do
+    while (not TableTranslationMemory.EOF) do
     begin
-      if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
-      begin
-        LanguageNode := ItemNode.AddChild('tuv');
-        LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-        LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
-      end;
-    end;
+      ItemNode := Body.AddChild('tu');
 
-    TableTranslationMemory.Next;
+      for i := 0 to TableTranslationMemory.FieldCount-1 do
+      begin
+        if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
+        begin
+          LanguageNode := ItemNode.AddChild('tuv');
+          LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
+          LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
+        end;
+      end;
+
+      TableTranslationMemory.Next;
+    end;
   end;
 
   TempFilename := Filename;
@@ -484,6 +527,7 @@ var
   Duplicates: TStringList;
   RecordIndex: integer;
   List: TList<integer>;
+  i: integer;
 begin
   Result := False;
   TargetValue := '';
@@ -491,7 +535,7 @@ begin
   if (SourceLanguage = TargetLanguage) then
     Exit;
 
-  if (not TableTranslationMemory.Active) then
+  if (not HasData) then
     Exit;
 
   SourceField := FindField(SourceLanguage);
@@ -520,7 +564,17 @@ begin
         TargetValue := TargetField.AsString;
 
         if (Duplicates <> nil) then
-          Duplicates.Add(TargetValue);
+        begin
+          // Ignore exact duplicates
+          for i := 0 to Duplicates.Count-1 do
+            if (Duplicates[i] = TargetValue) then
+            begin
+              TargetValue := '';
+              break;
+            end;
+          if (TargetValue <> '') then
+            Duplicates.Add(TargetValue);
+        end;
       end;
     end else
       Exit(False);
@@ -553,8 +607,14 @@ begin
     end;
 *)
 
-    if (Duplicates <> nil) then
+    if (Duplicates <> nil) and (Duplicates.Count > 0) then
     begin
+      if (Duplicates.Count = 1) then
+      begin
+        TargetValue := Duplicates[0];
+        Exit;
+      end;
+
       // Attempt to resolve using previously resolved conflicts
       if (FConflictResolution.TryGetValue(Prop.Value, TargetValue)) then
         Exit(True);
@@ -580,7 +640,7 @@ begin
   end;
 end;
 
-procedure TDataModuleTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
+function TDataModuleTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
 var
   SourceField: TField;
   TargetField: TField;
@@ -592,45 +652,48 @@ begin
   FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues]);
   FConflictResolution := TDictionary<string, string>.Create;
 
-  if (not FLoaded) then
-    LoadTranslationMemory(FFilename);
-
-  if (not TableTranslationMemory.Active) then
-    Exit;
+  if (not CheckLoaded) then
+    Exit(False);
 
   SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
-  if (SourceField = nil) or (TargetField = nil) then
-    // One or both languages doesn't exist in TM
-    Exit;
-
-  // Create dictionary of source terms
-  TableTranslationMemory.First;
-  RecordIndex := 0;
-  while (not TableTranslationMemory.EOF) do
+  // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
+  if (HasData) then
   begin
-    if (not TargetField.IsNull) and (not SourceField.IsNull) then
+    if (SourceField = nil) or (TargetField = nil) then
+      // One or both languages doesn't exist in TM
+      Exit(False);
+
+    // Create dictionary of source terms
+    TableTranslationMemory.First;
+    RecordIndex := 0;
+    while (not TableTranslationMemory.EOF) do
     begin
-      SourceValue := AnsiUppercase(SanitizeText(SourceField.AsString));
-
-      if (not FLookupIndex.TryGetValue(SourceValue, List)) then
+      if (not TargetField.IsNull) and (not SourceField.IsNull) then
       begin
-        List := TList<integer>.Create;
-        FLookupIndex.Add(SourceValue, List);
+        SourceValue := AnsiUppercase(SanitizeText(SourceField.AsString));
+
+        if (not FLookupIndex.TryGetValue(SourceValue, List)) then
+        begin
+          List := TList<integer>.Create;
+          FLookupIndex.Add(SourceValue, List);
+        end;
+        List.Add(RecordIndex);
       end;
-      List.Add(RecordIndex);
+
+      Inc(RecordIndex);
+
+      TableTranslationMemory.Next;
     end;
-
-    Inc(RecordIndex);
-
-    TableTranslationMemory.Next;
   end;
+
+  Result := True;
 end;
 
 procedure TDataModuleTranslationMemory.DataModuleCreate(Sender: TObject);
 begin
-  FFilename := TPath.ChangeExtension(Application.ExeName, '.tmx');
+//  FFilename := TPath.ChangeExtension(Application.ExeName, '.tmx');
 end;
 
 procedure TDataModuleTranslationMemory.EndLookup;

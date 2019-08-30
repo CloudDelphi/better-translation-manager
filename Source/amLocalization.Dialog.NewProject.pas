@@ -53,6 +53,7 @@ implementation
 
 uses
   IOUtils,
+  amLocalization.Settings,
   amLocalization.Data.Main;
 
 procedure TFormNewProject.ActionCancelExecute(Sender: TObject);
@@ -80,16 +81,30 @@ begin
 end;
 
 function TFormNewProject.Execute: boolean;
-//var
-//  i: integer;
+var
+  i: integer;
 begin
-(*
   EditSourceApplication.Properties.Items.Clear;
-  for i := 0 to FileOpenDialogApplication.FavoriteLinks.Count-1 do
-    EditSourceApplication.Properties.Items.Add(FileOpenDialogApplication.FavoriteLinks[i].Location);
-*)
+  for i := 0 to TranslationManagerSettings.Folders.RecentApplications.Count-1 do
+    EditSourceApplication.Properties.Items.Add(TranslationManagerSettings.Folders.RecentApplications[i]);
 
   Result := (ShowModal = mrOK);
+
+  if (not Result) then
+    Exit;
+
+  for i := 0 to TranslationManagerSettings.Folders.RecentApplications.Count-1 do
+    if (AnsiSameText(SourceApplication, TranslationManagerSettings.Folders.RecentApplications[i])) then
+    begin
+      TranslationManagerSettings.Folders.RecentApplications.Move(i, 0);
+      Exit;
+    end;
+
+  TranslationManagerSettings.Folders.RecentApplications.Insert(0, SourceApplication);
+
+  // Prune to at most 10 items
+  for i := TranslationManagerSettings.Folders.RecentApplications.Count-1 downto 10 do
+    TranslationManagerSettings.Folders.RecentApplications.Delete(i);
 end;
 
 function TFormNewProject.GetSourceApplication: string;

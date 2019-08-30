@@ -11,22 +11,30 @@ uses
   amLocalization.Translator;
 
 type
-  TDataModuleTranslatorMicrosoftV3 = class(TDataModule, ITranslationService)
+  ITranslationServiceMS = interface
+    ['{BCB967CF-9D86-404E-824F-3952F31B4AEC}']
+    function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+  end;
+
+type
+  TDataModuleTranslatorMicrosoftV3 = class(TDataModule, ITranslationService, ITranslationServiceMS)
     RESTRequestTranslate: TRESTRequest;
     RESTResponseResult: TRESTResponse;
     RESTClient: TRESTClient;
+    RESTRequestLanguages: TRESTRequest;
+    RESTRequestValidateAPIKey: TRESTRequest;
   private
   protected
     // ITranslationService
-    procedure BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     procedure EndLookup;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
     function GetServiceName: string;
+
+    // ITranslationServiceMS
+    function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
   public
   end;
-
-const
-  sMicrosoftTranslatorV3_APIKEY = '3b9fd2ef5375467bb5a8302b7c6dc8e8';
 
 implementation
 
@@ -34,7 +42,9 @@ uses
   System.json,
   Rest.Types,
   System.json.Types,
-  System.json.Writers;
+  System.json.Writers,
+  Dialogs,
+  amLocalization.Settings;
 
 
 {%CLASSGROUP 'Vcl.Controls.TControl'}
@@ -43,9 +53,18 @@ uses
 
 { TDataModule1 }
 
-procedure TDataModuleTranslatorMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem);
+function TDataModuleTranslatorMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+resourcestring
+  sPrompMicrosoftV3APIKey = 'You must register an API key before the Microsoft Translator v3 service can be used.';
 begin
-  RESTClient.Params[0].Value := sMicrosoftTranslatorV3_APIKEY;
+  if (TranslationManagerSettings.Translators.MicrosoftV3.APIKey = '') then
+  begin
+    ShowMessage(sPrompMicrosoftV3APIKey);
+    Exit(False);
+  end else
+    RESTClient.Params[0].Value := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
+
+  Result := True;
 end;
 
 procedure TDataModuleTranslatorMicrosoftV3.EndLookup;
@@ -67,6 +86,7 @@ var
   JsonTranslationItem: TJsonObject;
   JsonTranslationItemArray: TJsonArray;
   JsonError: TJsonObject;
+  Msg: string;
 begin
   RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleSName;
   RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleSName;
@@ -79,17 +99,23 @@ begin
   RESTRequestTranslate.Body.JSONWriter.WriteEndObject;
   RESTRequestTranslate.Body.JSONWriter.WriteEndArray;
 
-  // Excecute Call to Microsoft API
+  // Call web service
   RESTRequestTranslate.Execute;
 
-  // Track result
+  // Get result
   if (RESTResponseResult.JSONValue.TryGetValue<TJsonObject>('error', JsonError)) then
   begin
+    Msg := JsonError.GetValue<string>('message');
+    raise Exception.CreateFmt('REST call failed'#13'Error message: %s'#13#13'%s', [Msg, RESTResponseResult.Content]);
     TargetValue := JsonError.Value;
 
     Result := False;
   end else
   begin
+    // API key is valid - Save it if we haven't already
+    if (TranslationManagerSettings.Translators.MicrosoftV3.APIKey = '') then
+      TranslationManagerSettings.Translators.MicrosoftV3.APIKey := RESTClient.Params[0].Value;
+
     JsonResultArray := RESTResponseResult.JSONValue as TJsonArray;
     JsonTranslationItem := JsonResultArray.items[0] as TJsonObject;
     JsonTranslationItemArray := JsonTranslationItem.GetValue('translations') as TJsonArray;
@@ -97,6 +123,34 @@ begin
 
     Result := (not AnsiSameText(SourceValue, TargetValue));
   end;
+end;
+
+function TDataModuleTranslatorMicrosoftV3.ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+var
+  JsonError: TJsonObject;
+begin
+  // Call web service
+  RESTClient.Params[0].Value := APIKey;
+
+  RESTRequestValidateAPIKey.Body.ClearBody;
+  RESTRequestValidateAPIKey.Body.JSONWriter.WriteStartArray;
+  RESTRequestValidateAPIKey.Body.JSONWriter.WriteStartObject;
+  RESTRequestValidateAPIKey.Body.JSONWriter.WritePropertyName('Text');
+  RESTRequestValidateAPIKey.Body.JSONWriter.WriteValue('hello world');
+  RESTRequestValidateAPIKey.Body.JSONWriter.WriteEndObject;
+  RESTRequestValidateAPIKey.Body.JSONWriter.WriteEndArray;
+
+  RESTRequestValidateAPIKey.Execute;
+
+  // Get result
+  if (RESTResponseResult.JSONValue.TryGetValue<TJsonObject>('error', JsonError)) then
+  begin
+    ErrorMessage := JsonError.GetValue<string>('message');
+    Exit(False);
+  end;
+
+  ErrorMessage := '';
+  Result := True;
 end;
 
 end.

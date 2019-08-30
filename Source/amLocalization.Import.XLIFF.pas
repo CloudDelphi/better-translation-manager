@@ -16,6 +16,8 @@ type
   private
   protected
   public
+    class constructor Create;
+
     function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string = ''): TLocalizerModule; overload;
     function LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string): TLocalizerModule; overload;
   end;
@@ -32,6 +34,7 @@ uses
   Variants,
   Windows,
   SysUtils,
+  msxmldom,
   XMLDoc, XMLIntf,
   amLocale;
 
@@ -40,6 +43,12 @@ uses
 // TModuleImporterXLIFF
 //
 // -----------------------------------------------------------------------------
+class constructor TModuleImporterXLIFF.Create;
+begin
+  // Can't remember why this was necessary
+  msxmldom.MSXMLDOMDocumentFactory.AddDOMProperty('ProhibitDTD', False);
+end;
+
 function TModuleImporterXLIFF.LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string): TLocalizerModule;
 var
   Stream: TStream;

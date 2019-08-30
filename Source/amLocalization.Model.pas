@@ -371,28 +371,33 @@ type
   strict private
     FTranslations: TDictionary<TTargetLanguage, TLocalizerTranslation>;
     FOwner: TLocalizerProperty;
-  strict
-  private
-    function GetCount: integer; protected
+  strict private
+    class var FDefaultStatus: TTranslationStatus;
+  strict protected
+    function GetCount: integer;
     function GetItem(Language: TTargetLanguage): TLocalizerTranslation; overload;
     function GetItem(Index: integer): TLocalizerTranslation; overload;
   protected
     property Translations: TDictionary<TTargetLanguage, TLocalizerTranslation> read FTranslations;
   public
-    constructor Create(AOwner: TLocalizerProperty);
+    class constructor Create; overload;
+    constructor Create(AOwner: TLocalizerProperty); overload;
     destructor Destroy; override;
 
     procedure Clear;
 
     function TryGetTranslation(Language: TTargetLanguage; var Value: TLocalizerTranslation): boolean;
     function FindTranslation(Language: TTargetLanguage): TLocalizerTranslation;
-    function AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string; Status: TTranslationStatus = tStatusProposed): TLocalizerTranslation;
+    function AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string): TLocalizerTranslation; overload;
+    function AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation; overload;
     procedure Remove(Language: TTargetLanguage);
 
     property Owner: TLocalizerProperty read FOwner;
     property Items[Language: TTargetLanguage]: TLocalizerTranslation read GetItem; default;
     property Items[Index: integer]: TLocalizerTranslation read GetItem; default;
     property Count: integer read GetCount;
+
+    class property DefaultStatus: TTranslationStatus read FDefaultStatus write FDefaultStatus;
   end;
 
 
@@ -2015,6 +2020,11 @@ end;
 // TLocalizerTranslations
 //
 // -----------------------------------------------------------------------------
+class constructor TLocalizerTranslations.Create;
+begin
+  FDefaultStatus := tStatusProposed;
+end;
+
 constructor TLocalizerTranslations.Create(AOwner: TLocalizerProperty);
 begin
   inherited Create;
@@ -2029,6 +2039,11 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string): TLocalizerTranslation;
+begin
+  Result := AddOrUpdateTranslation(Language, Value, FDefaultStatus);
+end;
 
 function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation;
 begin

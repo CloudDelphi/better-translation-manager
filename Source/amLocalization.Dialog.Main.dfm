@@ -20,13 +20,13 @@ object FormMain: TFormMain
     Left = 0
     Top = 0
     Width = 964
-    Height = 125
+    Height = 158
     ApplicationButton.Visible = False
     BarManager = BarManager
     Style = rs2016
-    ColorSchemeAccent = rcsaOrange
+    ColorSchemeAccent = rcsaBlue
     ColorSchemeName = 'Office2016Colorful'
-    QuickAccessToolbar.Visible = False
+    QuickAccessToolbar.Toolbar = BarManagerBarQuickAccess
     SupportNonClientDrawing = True
     Contexts = <
       item
@@ -39,6 +39,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -71,7 +72,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -122,38 +122,36 @@ object FormMain: TFormMain
         Width = 200
       end>
     Ribbon = RibbonMain
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
+    ParentFont = True
     OnMouseDown = StatusBarMouseDown
     OnMouseMove = StatusBarMouseMove
   end
   object SplitterTreeLists: TcxSplitter
     Left = 240
-    Top = 125
+    Top = 158
     Width = 4
-    Height = 495
+    Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
   end
   object PanelModules: TPanel
     Left = 0
-    Top = 125
+    Top = 158
     Width = 240
-    Height = 495
+    Height = 462
     Align = alLeft
     BevelOuter = bvNone
     FullRepaint = False
     ParentColor = True
     ShowCaption = False
     TabOrder = 3
+    ExplicitTop = 125
+    ExplicitHeight = 495
     object TreeListModules: TcxTreeList
       Left = 0
       Top = 0
       Width = 240
-      Height = 436
+      Height = 403
       Align = alClient
       Bands = <
         item
@@ -190,6 +188,7 @@ object FormMain: TFormMain
       OnExit = TreeListModulesExit
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
+      ExplicitHeight = 436
       object TreeListColumnModuleName: TcxTreeListColumn
         BestFitMaxWidth = 200
         Caption.AlignVert = vaTop
@@ -236,13 +235,14 @@ object FormMain: TFormMain
     end
     object LayoutControlModules: TdxLayoutControl
       Left = 0
-      Top = 436
+      Top = 403
       Width = 240
       Height = 59
       Align = alBottom
       TabOrder = 1
       AutoSize = True
       LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
+      ExplicitTop = 436
       object LabelCountTranslated: TcxLabel
         Left = 66
         Top = 6
@@ -336,9 +336,9 @@ object FormMain: TFormMain
   end
   object TreeListItems: TcxVirtualTreeList
     Left = 244
-    Top = 125
+    Top = 158
     Width = 720
-    Height = 495
+    Height = 462
     Align = alClient
     Bands = <
       item
@@ -382,6 +382,8 @@ object FormMain: TFormMain
     OnExit = TreeListModulesExit
     OnGetCellHint = TreeListItemsGetCellHint
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
+    ExplicitTop = 125
+    ExplicitHeight = 495
     object TreeListColumnItemName: TcxTreeListColumn
       BestFitMaxWidth = 300
       Caption.AlignVert = vaTop
@@ -550,6 +552,7 @@ object FormMain: TFormMain
     Font.Height = -12
     Font.Name = 'Segoe UI'
     Font.Style = []
+    CanCustomize = False
     Categories.Strings = (
       'Default')
     Categories.ItemsVisibles = (
@@ -562,6 +565,7 @@ object FormMain: TFormMain
     ImageOptions.UseLeftBottomPixelAsTransparent = False
     MenusShowRecentItemsFirst = False
     PopupMenuLinks = <>
+    ShowShortCutInHint = True
     UseSystemFont = True
     Left = 824
     Top = 44
@@ -599,7 +603,7 @@ object FormMain: TFormMain
     object BarManagerBarProject: TdxBar
       Caption = 'Project'
       CaptionButtons = <>
-      DockedLeft = 163
+      DockedLeft = 172
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -663,7 +667,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 329
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -839,11 +843,7 @@ object FormMain: TFormMain
     end
     object BarManagerBarLookup: TdxBar
       Caption = 'Automation'
-      CaptionButtons = <
-        item
-          Enabled = False
-          Hint = 'Settings'
-        end>
+      CaptionButtons = <>
       DockedLeft = 411
       DockedTop = 0
       FloatLeft = 998
@@ -917,9 +917,38 @@ object FormMain: TFormMain
       Visible = True
       WholeRow = False
     end
+    object BarManagerBarQuickAccess: TdxBar
+      AllowClose = False
+      AllowCustomizing = False
+      AllowQuickCustomizing = False
+      AllowReset = False
+      Caption = 'Quick Access'
+      CaptionButtons = <>
+      DockedLeft = 0
+      DockedTop = 0
+      FloatLeft = 998
+      FloatTop = 8
+      FloatClientWidth = 0
+      FloatClientHeight = 0
+      Hidden = True
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton34'
+        end>
+      OneOnRow = True
+      Row = 0
+      ShowMark = False
+      SizeGrip = False
+      UseOwnFont = False
+      Visible = True
+      WholeRow = False
+    end
     object dxBarLargeButton1: TdxBarLargeButton
       Action = ActionProjectOpen
       Category = 0
+      ButtonStyle = bsDropDown
+      DropDownMenu = PopupMenuRecentFiles
     end
     object dxBarLargeButton2: TdxBarLargeButton
       Action = ActionProjectNew
@@ -945,7 +974,7 @@ object FormMain: TFormMain
     object BarEditItemSourceLanguage: TcxBarEditItem
       Caption = '&Source'
       Category = 0
-      Hint = 'Source'
+      Hint = 'Source language'
       Visible = ivAlways
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.DropDownAutoSize = True
@@ -957,7 +986,7 @@ object FormMain: TFormMain
     object BarEditItemTargetLanguage: TcxBarEditItem
       Caption = 'T&arget'
       Category = 0
-      Hint = 'Target'
+      Hint = 'Target language'
       Visible = ivAlways
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.DropDownAutoSize = True
@@ -1196,25 +1225,35 @@ object FormMain: TFormMain
     object dxBarButton28: TdxBarButton
       Action = ActionGotoNextStatusTranslate
       Category = 0
+      Visible = ivNotInCustomizing
     end
     object dxBarButton29: TdxBarButton
       Action = ActionGotoNextStatusHold
       Category = 0
+      Visible = ivNotInCustomizing
     end
     object dxBarButton30: TdxBarButton
       Action = ActionGotoNextStatusDontTranslate
       Category = 0
+      Visible = ivNotInCustomizing
     end
     object dxBarButton31: TdxBarButton
       Action = ActionGotoNextStateNew
       Category = 0
+      Visible = ivNotInCustomizing
     end
     object dxBarButton32: TdxBarButton
       Action = ActionGotoNextStateUnused
       Category = 0
+      Visible = ivNotInCustomizing
     end
     object dxBarButton33: TdxBarButton
       Action = ActionGotoNextStateExisting
+      Category = 0
+      Visible = ivNotInCustomizing
+    end
+    object dxBarButton34: TdxBarButton
+      Action = ActionSettings
       Category = 0
     end
   end
@@ -2844,6 +2883,40 @@ object FormMain: TFormMain
           527285F219F94F90E37C8417DF4679F9349A927FC5520AD01AE58BA78FE2E23B
           DCBF87FA2F7C11D40DCDF81C6A01753F58E9BCF4FEC6BF90E338EE2F55193229
           700A35F90000000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxPNGImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          6100000024744558745469746C6500446F63756D656E7450726F706572746965
+          733B50726F706572746965733B3656A5830000033849444154785E7D937D4C53
+          5718C69F7B7B4AE52355971095599D2B3A0264A6219A85AA03679832C3A21665
+          A2F891CD124704D9206340746B46623019C6A82C565315043F96383F83124D86
+          D3B9580BCC39C0E98A6C4080B60B850BB7F79E7BBC6D5AFE5A78935FCE93933C
+          EF7DCFCDF3629AE25478154D484F57D5872FA3B2F6D29429C817DF380ACA6BCE
+          B3325B23DB576DDF116E14812BAEB6E3F38A93200060FBD2C2590ACAE2CABF6B
+          BCAA50DAEF1919A8A18C59766C30833106FBF93B96DC5D158FE3E72CA800C719
+          9F3C6CC93E62FBF43F6BF971C647C65D98987A65775E46C6969CF4ADC6C4C44E
+          C6F0D192450930BC190F4561D9C9C9A91DF99B32F2ADDBD7BE976A7AFF270044
+          12259048834040F2F8C72690B4643E9216CFE7BD3E3F3484872228282C58CB2F
+          5E34175461B8FBB30B7DAF7ABD002049D2D4CFD1E4EEFA3A2539E55D5769610E
+          2F49140A63E0390E924C43CF5025C40045D5B7F5CAD3F6472BDA1F5D730290B8
+          A0796751ED368D56BB9968C8BAAAD23C4E1B45F0C7B3976868BA054234D8BE35
+          1B06430286863DA83BFEA332210AADA22034FFD97EAF8900204437C3B1273F4B
+          1DDD0042087CFE71D41D6B46FF3FEECD248A7027CFE2C2A18356F01A82BD9F6D
+          E4BD5E5FD6E973B7B2DC7FB92E11009C1C0884DEE71F9F84A45050CA10131B0D
+          DD0C5DB4362A4AD5B1102519E38208AA500C794621CB0104BD3C00F9E5F3AEA2
+          AF0ED4B5EEAF3CC10607BD989C10B1735B0E92524D67826C5CBF1263C2243CBE
+          51D86C2760B737B4F5B9BB4B010422E1D1A5993F5EBEA7E47BF9EFBE21F6C0D9
+          C3DA1E77B1DFBBFB588F7B80B53FEB652D6D9DEC5AAB93ADB3942886B7D33201
+          C4A8F0040053417C82B12C739549234C8AA1AF8D8CF830365B1FCC008646BC98
+          39531F0AD5F2654BB9DE172FF603CEBC7796AE57A672C0281644C7EA70F3F62F
+          68BD7D1F94D3B2A2BD9F700149467D7D239BA58F41DA3213A7D7C781CA745ED0
+          23530991244A1DBFDDD870E468C3AF0E47F3F5A71DF7B32684D1078303C370BB
+          FF85E0F73DEC74B6655F6EBA78F5D40F0E57FF2BD71600A2422942B53AA718E1
+          258909136B4ACF2D367F58C8CC6BACCC98F2410980B8E07DF8D4AA706F25AD99
+          7695A355DE0812D63CFEA75E03CFF56ADF743CC8850000000049454E44AE4260
+          82}
       end>
   end
   object ImageListLarge: TcxImageList
@@ -4726,6 +4799,13 @@ object FormMain: TFormMain
       ImageIndex = 51
       OnExecute = ActionGotoNextStateExecute
     end
+    object ActionSettings: TAction
+      Category = 'File'
+      Caption = 'Settings'
+      Hint = 'Settings'
+      ImageIndex = 52
+      OnExecute = ActionSettingsExecute
+    end
   end
   object OpenDialogProject: TOpenDialog
     Filter = 'Translation projects (*.xlat)|*.xlat|All files (*.*)|*.*'
@@ -5114,6 +5194,11 @@ object FormMain: TFormMain
         BeginGroup = True
         Visible = True
         ItemName = 'dxBarButton10'
+      end
+      item
+        BeginGroup = True
+        Visible = True
+        ItemName = 'ButtonItemBookmark'
       end>
     Ribbon = RibbonMain
     UseOwnFont = False
@@ -5208,6 +5293,15 @@ object FormMain: TFormMain
     OnPopup = PopupMenuBookmarkPopup
     Left = 276
     Top = 312
+    PixelsPerInch = 96
+  end
+  object PopupMenuRecentFiles: TdxRibbonPopupMenu
+    BarManager = BarManager
+    ItemLinks = <>
+    Ribbon = RibbonMain
+    UseOwnFont = False
+    Left = 80
+    Top = 177
     PixelsPerInch = 96
   end
 end

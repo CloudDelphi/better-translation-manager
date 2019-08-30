@@ -25,7 +25,7 @@ type
     ListViewDuplicates: TcxListView;
     dxLayoutItem2: TdxLayoutItem;
     dxLayoutItem3: TdxLayoutItem;
-    cxButton1: TcxButton;
+    ButtonOK: TcxButton;
     dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
@@ -33,7 +33,7 @@ type
     ActionOK: TAction;
     ActionCancel: TAction;
     dxLayoutItem4: TdxLayoutItem;
-    cxButton2: TcxButton;
+    ButtonCancel: TcxButton;
     CheckBoxAll: TcxCheckBox;
     dxLayoutItem5: TdxLayoutItem;
     ComboBoxAction: TcxComboBox;
