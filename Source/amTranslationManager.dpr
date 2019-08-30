@@ -1,6 +1,8 @@
 program amTranslationManager;
 
 uses
+  madExcept,
+  madListModules,
   SysUtils,
   Vcl.Forms,
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {Form4},
