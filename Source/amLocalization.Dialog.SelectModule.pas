@@ -52,6 +52,7 @@ begin
     function(Module: TLocalizerModule): boolean
     begin
       ComboBoxModule.Properties.Items.AddObject(Module.Name, Module);
+      Result := True;
     end);
 
   ComboBoxModule.ItemIndex := 0;

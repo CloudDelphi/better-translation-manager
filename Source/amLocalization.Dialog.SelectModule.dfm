@@ -128,6 +128,7 @@ object FormSelectModule: TFormSelectModule
     end
     object LayoutGroupPrompt: TdxLayoutGroup
       Parent = LayoutControlGroup_Root
+      CaptionOptions.Text = 'Hidden Group'
       CaptionOptions.Visible = False
       ButtonOptions.Buttons = <>
       Hidden = True

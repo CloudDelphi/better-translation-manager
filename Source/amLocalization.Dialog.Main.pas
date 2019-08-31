@@ -2775,21 +2775,15 @@ begin
       Inc(Counts.CountModule);
 
       if (Module.State = ItemStateUnused) then
-      begin
         Inc(Counts.UnusedModule);
-        Exit(True);
-      end;
 
       Module.Traverse(
         function(Item: TLocalizerItem): boolean
         begin
           Inc(Counts.CountItem);
 
-          if (Item.State = ItemStateUnused) then
-          begin
+          if (Item.State = ItemStateUnused) or (Module.State = ItemStateUnused) then
             Inc(Counts.UnusedItem);
-            Exit(True);
-          end;
 
           Item.Traverse(
             function(Prop: TLocalizerProperty): boolean
@@ -2798,11 +2792,8 @@ begin
             begin
               Inc(Counts.CountProperty);
 
-              if (Prop.State = ItemStateUnused) then
-              begin
+              if (Prop.State = ItemStateUnused) or (Item.State = ItemStateUnused) or (Module.State = ItemStateUnused) then
                 Inc(Counts.UnusedProperty);
-                Exit(True);
-              end;
 
               for i := 0 to Prop.Translations.Count-1 do
                 case Prop.Translations[i].Status of

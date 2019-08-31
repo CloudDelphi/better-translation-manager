@@ -250,7 +250,6 @@ type
     FProject: TLocalizerProject;
     FKind: TLocalizerModuleKind;
     FItems: TLocalizerItems;
-    FResourceGroups: TList<Word>;
   strict protected
     procedure SetName(const Value: string); override;
     procedure UpdateParentStatusCount(AStatus: TLocalizerItemStatus; Delta: integer); override;
@@ -271,8 +270,6 @@ type
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
 
-    property ResourceGroups: TList<Word> read FResourceGroups;
-
     function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
     function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; overload; override;
   end;
@@ -285,7 +282,7 @@ type
 // -----------------------------------------------------------------------------
   TLocalizerItem = class(TCustomLocalizerChildItem<TLocalizerModule>)
   strict private
-    FResourceID: WORD;
+    FResourceID: integer;
     FTypeName: string;
     FProperties: TLocalizerProperties;
   strict protected
@@ -304,7 +301,7 @@ type
     function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; override;
 
     property Module: TLocalizerModule read GetParent;
-    property ResourceID: WORD read FResourceID write FResourceID;
+    property ResourceID: integer read FResourceID write FResourceID;
     property TypeName: string read FTypeName write FTypeName;
     property Properties: TLocalizerProperties read FProperties;
   end;
@@ -1088,7 +1085,6 @@ constructor TLocalizerModule.Create(AProject: TLocalizerProject; const AName: st
 begin
   inherited Create(AName);
   FItems := TLocalizerItems.Create([doOwnsValues], TTextComparer.Create);
-  FResourceGroups := TList<Word>.Create;
   BeginUpdate;
   try
     FProject := AProject;
@@ -1106,7 +1102,6 @@ begin
     Clear;
     FProject.Modules.ExtractPair(Name);
     FItems.Free;
-    FResourceGroups.Free;
     Changed;
   finally
     EndUpdate;
@@ -1156,8 +1151,9 @@ procedure TLocalizerModule.Clear;
 begin
   BeginUpdate;
   try
+
     FItems.Clear;
-    FResourceGroups.Clear;
+
   finally
     EndUpdate;
   end;
@@ -1281,14 +1277,15 @@ var
 begin
   Result := nil;
 
-  for Item in Items do
-    if (Item.Value.ResourceID = AResourceID) then
-    begin
-      Result := Item.Value;
-      break;
-    end;
+  if (not FItems.TryGetValue(IntToStr(AResourceID), Result)) then
+    for Item in Items do
+      if (Item.Value.ResourceID = AResourceID) then
+      begin
+        Result := Item.Value;
+        break;
+      end;
 
-  if (Result = nil) and (not FItems.TryGetValue(IntToStr(AResourceID), Result)) then
+  if (Result = nil) then
   begin
     Result := TLocalizerItem.Create(Self, IntToStr(AResourceID), ATypeName);
     Result.ResourceID := AResourceID;
@@ -1307,6 +1304,8 @@ constructor TLocalizerItem.Create(AModule: TLocalizerModule; const AName, ATypeN
 begin
   inherited Create(AModule, AName);
   FProperties := TLocalizerProperties.Create([doOwnsValues], TTextComparer.Create);
+  FResourceID := -1;
+
   BeginUpdate;
   try
     FTypeName := ATypeName;

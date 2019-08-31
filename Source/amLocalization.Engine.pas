@@ -565,13 +565,16 @@ end;
 //
 // -----------------------------------------------------------------------------
 type
+  TResourceGroups = TList<Word>;
+
   TModuleStringResourceProcessor = class(TModuleResourceProcessor)
   private
     FSymbolMap: TResourceStringSymbolMap;
+    FResourceGroups: TResourceGroups;
   protected
     procedure ExecuteGroup(Action: TLocalizerImportAction; ResourceGroupID: Word; ReadStream, WriteStream: TStream; Language: TTargetLanguage; Translator: TTranslateProc);
   public
-    constructor Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
+    constructor Create(ALocalizerModule: TLocalizerModule; AInstance: HINST; AResourceGroups: TResourceGroups);
     destructor Destroy; override;
 
     function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean; override;
@@ -579,13 +582,14 @@ type
 
 // -----------------------------------------------------------------------------
 
-constructor TModuleStringResourceProcessor.Create(ALocalizerModule: TLocalizerModule; AInstance: HINST);
+constructor TModuleStringResourceProcessor.Create(ALocalizerModule: TLocalizerModule; AInstance: HINST; AResourceGroups: TResourceGroups);
 var
   Size: integer;
   Filename: string;
 begin
   inherited Create(ALocalizerModule, AInstance);
 
+  FResourceGroups := AResourceGroups;
   FSymbolMap := TResourceStringSymbolMap.Create;
 
   Filename := LocalizerModule.Project.SourceFilename;
@@ -619,14 +623,12 @@ var
 begin
   Assert(LocalizerModule.Kind = mkString);
 
-  if (LocalizerModule.ResourceGroups.Count = 0) then
+  if (FResourceGroups.Count = 0) then
     Exit(False);
-
-  LocalizerModule.ResourceGroups.Sort;
 
   AnyFound := False;
 
-  for ResourceID in LocalizerModule.ResourceGroups do
+  for ResourceID in FResourceGroups do
   begin
     if (FindResource(Instance, PChar(ResourceID), RT_STRING) <> 0) then
     begin
@@ -809,24 +811,26 @@ begin
   Result := DWORD(Ident) and $0000FFFF;
 end;
 
-function EnumResourceNamesProc(Module: HMODULE; ResType, ResName: PChar; LocalizerProject: TLocalizerProject): BOOL; stdcall;
+function EnumResourceNamesDFMs(Module: HMODULE; ResType, ResName: PChar; LocalizerProject: TLocalizerProject): BOOL; stdcall;
 var
   LocalizerModule: TLocalizerModule;
+begin
+  Assert(ResType = RT_RCDATA);
+
+  LocalizerModule := LocalizerProject.AddModule(ResName);
+  LocalizerModule.Kind := mkForm;
+
+  Result := True;
+end;
+
+function EnumResourceNamesStrings(Module: HMODULE; ResType, ResName: PChar; ResourceGroups: TResourceGroups): BOOL; stdcall;
+var
   ResourceID: WORD;
 begin
-  if (ResType = RT_RCDATA) then
-  begin
-    LocalizerModule := LocalizerProject.AddModule(ResName);
-    LocalizerModule.Kind := mkForm;
-  end else
-  if (ResType = RT_STRING) then
-  begin
-    ResourceID := ResourceIdentToOrdinal(ResName);
+  Assert(ResType = RT_STRING);
 
-    LocalizerModule := LocalizerProject.AddModule(sModuleNameResourcestrings);
-    LocalizerModule.Kind := mkString;
-    LocalizerModule.ResourceGroups.Add(ResourceID);
-  end;
+  ResourceID := ResourceIdentToOrdinal(ResName);
+  ResourceGroups.Add(ResourceID);
 
   Result := True;
 end;
@@ -858,6 +862,8 @@ procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Loca
 
 var
   LocalizerModule: TLocalizerModule;
+  StringsModule: TLocalizerModule;
+  ResourceGroups: TResourceGroups;
   ModuleProcessor: TModuleResourceProcessor;
 begin
   LocalizerProject.BeginUpdate;
@@ -865,55 +871,65 @@ begin
     LocalizerProject.BeginLoad(Action = liaUpdateSource);
     try
 
-      EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesProc, integer(LocalizerProject));
+      EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, integer(LocalizerProject));
 
-      EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesProc, integer(LocalizerProject));
+      StringsModule := LocalizerProject.AddModule(sModuleNameResourcestrings);
+      StringsModule.Kind := mkString;
 
-      if (ResourceWriter <> nil) then
-        ResourceWriter.BeginWrite;
+      ResourceGroups := TResourceGroups.Create;
       try
+        EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesStrings, integer(ResourceGroups));
 
-        if (Action = liaTranslate) and (not Assigned(Translator)) then
-          Translator := TProjectResourceProcessor.DefaultTranslator;
+        ResourceGroups.Sort;
 
-        for LocalizerModule in LocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from the list
-        begin
-          if (LocalizerModule.Kind = mkForm) then
-            ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
-          else
-          if (LocalizerModule.Kind = mkString) then
-            ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance)
-          else
+        if (ResourceWriter <> nil) then
+          ResourceWriter.BeginWrite;
+        try
+
+          if (Action = liaTranslate) and (not Assigned(Translator)) then
+            Translator := TProjectResourceProcessor.DefaultTranslator;
+
+          for LocalizerModule in LocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from the list
           begin
-            LocalizerModule.Free;
-            continue;
-          end;
-          try
+            if (LocalizerModule.Kind = mkForm) then
+              ModuleProcessor := TModuleDFMResourceProcessor.Create(LocalizerModule, Instance)
+            else
+            if (LocalizerModule.Kind = mkString) then
+              ModuleProcessor := TModuleStringResourceProcessor.Create(LocalizerModule, Instance, ResourceGroups)
+            else
+            begin
+              LocalizerModule.Free;
+              continue;
+            end;
+            try
 
-            ModuleProcessor.Execute(Action, ResourceWriter, Language, Translator);
+              ModuleProcessor.Execute(Action, ResourceWriter, Language, Translator);
 
-          finally
-            ModuleProcessor.Free;
+            finally
+              ModuleProcessor.Free;
+            end;
+
+            if (LocalizerModule.State = ItemStateNew) and ((LocalizerModule.Kind = mkOther) or (LocalizerModule.Items.Count = 0)) then
+            begin
+              LocalizerModule.Free;
+              continue;
+            end;
           end;
 
-          if (LocalizerModule.State = ItemStateNew) and ((LocalizerModule.Kind = mkOther) or (LocalizerModule.Items.Count = 0)) then
-          begin
-            LocalizerModule.Free;
-            continue;
-          end;
+          if (Action = liaTranslate) and (ResourceWriter <> nil) then
+            CopyVersionInfo;
+
+          if (ResourceWriter <> nil) then
+            ResourceWriter.EndWrite(True);
+
+        except
+          if (ResourceWriter <> nil) then
+            ResourceWriter.EndWrite(False);
+
+          raise;
         end;
-
-        if (Action = liaTranslate) and (ResourceWriter <> nil) then
-          CopyVersionInfo;
-
-        if (ResourceWriter <> nil) then
-          ResourceWriter.EndWrite(True);
-
-      except
-        if (ResourceWriter <> nil) then
-          ResourceWriter.EndWrite(False);
-
-        raise;
+      finally
+        ResourceGroups.Free;
       end;
     finally
       LocalizerProject.EndLoad;
