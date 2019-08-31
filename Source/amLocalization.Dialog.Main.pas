@@ -2130,17 +2130,17 @@ procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
-  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    NeedReload := (Item.EffectiveStatus <> ItemStatusDontTranslate);
+
+    if (Item.Status = ItemStatusDontTranslate) then
+      continue;
 
     Item.Status := ItemStatusDontTranslate;
 
-    if (NeedReload) then
-      LoadItem(Item, True);
+    LoadItem(Item, True);
   end;
 end;
 
@@ -2155,17 +2155,17 @@ procedure TFormMain.ActionStatusHoldExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
-  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    NeedReload := (Item.EffectiveStatus <> ItemStatusHold);
+
+    if (Item.Status = ItemStatusHold) then
+      continue;
 
     Item.Status := ItemStatusHold;
 
-    if (NeedReload) then
-      LoadItem(Item, True);
+    LoadItem(Item, True);
   end;
 end;
 
@@ -2180,17 +2180,17 @@ procedure TFormMain.ActionStatusTranslateExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
-  NeedReload: boolean;
 begin
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
-    NeedReload := (Item.EffectiveStatus <> ItemStatusTranslate);
+
+    if (Item.Status = ItemStatusTranslate) then
+      continue;
 
     Item.Status := ItemStatusTranslate;
 
-    if (NeedReload) then
-      LoadItem(Item, True);
+    LoadItem(Item, True);
   end;
 end;
 
