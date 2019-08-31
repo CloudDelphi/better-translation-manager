@@ -6,6 +6,13 @@ uses
   Classes,
   amLocalization.Model;
 
+type
+  TImportStats = record
+    CountAdded: integer;
+    CountUpdated: integer;
+    CountIdentical: integer;
+  end;
+
 // -----------------------------------------------------------------------------
 //
 // TModuleImporterXLIFF
@@ -18,8 +25,8 @@ type
   public
     class constructor Create;
 
-    function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string = ''): TLocalizerModule; overload;
-    function LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string): TLocalizerModule; overload;
+    function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string = ''): TLocalizerModule; overload;
+    function LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule; overload;
   end;
 
 
@@ -51,13 +58,13 @@ begin
   msxmldom.MSXMLDOMDocumentFactory.AddDOMProperty('ProhibitDTD', False);
 end;
 
-function TModuleImporterXLIFF.LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule;
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   try
-    Result := LoadFromStream(LocalizerProject, Stream, Filename);
+    Result := LoadFromStream(LocalizerProject, Stream, Stats, Filename);
   finally
     Stream.Free;
   end;
@@ -271,7 +278,7 @@ begin
   end;
 end;
 
-function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; const FileName: string): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string): TLocalizerModule;
 type
   TImportDelegate = reference to function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean;
 var
@@ -294,6 +301,8 @@ var
     ItemName, ItemType, PropertyName: string;
     SourceValue, TargetValue: string;
     Prop: TLocalizerProperty;
+
+    Translation: TLocalizerTranslation;
   begin
     Result := True;
     Node := BodyNode.ChildNodes.First;
@@ -481,6 +490,7 @@ var
 
             if (Prop <> nil) then
             begin
+              // TODO : XLIFF should not modify language invariant properties
               case TranslationStatus of
                 tsUnused:
                   Prop.State := ItemStateUnused;
@@ -492,14 +502,33 @@ var
                   Prop.Status := ItemStatusHold;
               else
                 Prop.Status := ItemStatusTranslate;
-                end;
+              end;
 
-              if (TargetNode <> nil) then
-                Prop.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus])
-              else
-              // Translation without target value (implicit: target=source)
-              if (TranslationStatusMap[TranslationStatus] in [tStatusProposed, tStatusTranslated]) then
-                Prop.Translations.AddOrUpdateTranslation(TargetLanguage, SourceValue, TranslationStatusMap[TranslationStatus]);
+              if (TargetNode = nil) then
+              begin
+                if (TranslationStatusMap[TranslationStatus] in [tStatusProposed, tStatusTranslated]) then
+                  // Translation without target value (implicit: target=source)
+                  TargetValue := SourceValue
+                else
+                  Localize := False;
+              end;
+
+              if (Localize) then
+              begin
+                if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+                begin
+                  if (Translation.Value <> TargetValue) or (Translation.Status <> TranslationStatusMap[TranslationStatus]) then
+                  begin
+                    Translation.Update(TargetValue, TranslationStatusMap[TranslationStatus]);
+                    Inc(Stats.CountUpdated);
+                  end else
+                    Inc(Stats.CountIdentical);
+                end else
+                begin
+                  Prop.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus]);
+                  Inc(Stats.CountAdded);
+                end;
+              end;
             end;
           end;
         end;
@@ -552,6 +581,8 @@ resourcestring
   sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name.'#13#13+
     'Please specify which module to import the translations into.';
 begin
+  FillChar(Stats, SizeOf(Stats), 0);
+
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
   XML.Active := True;
@@ -662,18 +693,25 @@ begin
   if (Result.Project.BaseLocaleID = 0) then
     Result.Project.BaseLocaleID := SourceLocaleID;
 
-  // TODO : Validation that module languages matches project
+  // TODO : Validation that module source language matches project
 
-  ProcessNodes(Body, Result,
-    function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean
-    var
-      Item: TLocalizerItem;
-    begin
-      Item := Module.AddItem(ItemName, ItemType);
-      Prop := Item.AddProperty(PropertyName, SourceValue);
+  LocalizerProject.BeginUpdate;
+  try
 
-      Result := True;
-    end);
+    ProcessNodes(Body, Result,
+      function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean
+      var
+        Item: TLocalizerItem;
+      begin
+        Item := Module.AddItem(ItemName, ItemType);
+        Prop := Item.AddProperty(PropertyName, SourceValue);
+
+        Result := True;
+      end);
+
+  finally
+    LocalizerProject.EndUpdate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

@@ -19,11 +19,12 @@ object FormTranslationMemory: TFormTranslationMemory
     Height = 446
     Align = alClient
     TabOrder = 0
+    LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
     object GridTM: TcxGrid
-      Left = 10
-      Top = 10
-      Width = 692
-      Height = 383
+      Left = 6
+      Top = 6
+      Width = 700
+      Height = 391
       TabOrder = 0
       object GridTMDBTableView: TcxGridDBTableView
         Navigator.Buttons.CustomButtons = <>
@@ -48,8 +49,8 @@ object FormTranslationMemory: TFormTranslationMemory
       end
     end
     object ButtonLoad: TcxButton
-      Left = 10
-      Top = 411
+      Left = 6
+      Top = 415
       Width = 75
       Height = 25
       Caption = 'Load TM...'
@@ -57,8 +58,8 @@ object FormTranslationMemory: TFormTranslationMemory
       OnClick = ButtonLoadClick
     end
     object ButtonClose: TcxButton
-      Left = 627
-      Top = 411
+      Left = 631
+      Top = 415
       Width = 75
       Height = 25
       Cancel = True
@@ -67,8 +68,8 @@ object FormTranslationMemory: TFormTranslationMemory
       TabOrder = 3
     end
     object ButtonSaveAs: TcxButton
-      Left = 91
-      Top = 411
+      Left = 87
+      Top = 415
       Width = 75
       Height = 25
       Caption = 'Save as...'

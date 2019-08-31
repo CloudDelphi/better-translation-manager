@@ -698,6 +698,8 @@ begin
           Item := LocalizerModule.AddItem(Name, '')
         else
           // TODO : This could be considered an error. Should flag item as unmapped.
+          // Has been seen in some Delphi apps. E.g. sigma.exe - presumably the strings
+          // are from explicitly included .RES files and are not resourcestrings.
           Item := LocalizerModule.AddItem(ResourceID, '');
 
 

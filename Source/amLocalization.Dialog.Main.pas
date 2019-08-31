@@ -406,6 +406,7 @@ type
     TCounts = record
       CountModule, CountItem, CountProperty: integer;
       UnusedModule, UnusedItem, UnusedProperty: integer;
+      Translated: integer;
       ObsoleteTranslation: integer;
     end;
   private
@@ -1510,6 +1511,13 @@ end;
 procedure TFormMain.ActionImportXLIFFExecute(Sender: TObject);
 var
   Importer: TModuleImporterXLIFF;
+  ImportStats: TImportStats;
+resourcestring
+  sImportStatsTitle = 'Translations imported';
+  sImportStats = 'Translation has been imported with the following changes:'#13#13+
+    'Translations added: %.0n'#13+
+    'Translations updated: %.0n'#13+
+    'Translations identical: %.0n';
 begin
   if (not OpenDialogXLIFF.Execute(Handle)) then
     exit;
@@ -1520,10 +1528,14 @@ begin
 
   Importer := TModuleImporterXLIFF.Create;
   try
-    Importer.LoadFromFile(FLocalizerProject, OpenDialogXLIFF.FileName);
+    Importer.LoadFromFile(FLocalizerProject, OpenDialogXLIFF.FileName, ImportStats);
   finally
     Importer.Free;
   end;
+
+  TaskMessageDlg(sImportStatsTitle,
+    Format(sImportStats, [1.0 * ImportStats.CountAdded, 1.0 * ImportStats.CountUpdated, 1.0 * ImportStats.CountIdentical]),
+    mtInformation, [mbOK], 0);
 
   FLocalizerProject.Modified := True;
 
@@ -1615,6 +1627,14 @@ end;
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
 var
   FormNewProject: TFormNewProject;
+  ProjectProcessor: TProjectResourceProcessor;
+  Count: TCounts;
+resourcestring
+  sProjectInitializedTitle = 'Project initialized';
+  sProjectInitialized = 'Project has been initialized. The following resources was read from the source file:'#13#13+
+    'Modules: %.0n'#13+
+    'Items: %.0n'#13+
+    'Properties: %.0n';
 begin
   if (not CheckSave) then
     exit;
@@ -1645,7 +1665,28 @@ begin
     FormNewProject.Free;
   end;
 
+  if (not CheckSourceFile) then
+    Exit;
   CheckStringsSymbolFile;
+
+  // Initial scan
+  SaveCursor(crHourGlass);
+
+  ProjectProcessor := TProjectResourceProcessor.Create;
+  try
+
+    ProjectProcessor.ScanProject(FLocalizerProject, FLocalizerProject.SourceFilename);
+
+  finally
+    ProjectProcessor.Free;
+  end;
+
+  Count := CountStuff;
+
+  // Display update statistics
+  TaskMessageDlg(sProjectInitializedTitle,
+    Format(sProjectInitialized, [1.0*Count.CountModule, 1.0*Count.CountItem, 1.0*Count.CountProperty]),
+    mtInformation, [mbOK], 0);
 
   LoadProject(FLocalizerProject);
 end;
@@ -2727,20 +2768,28 @@ var
   Counts: TCounts;
 begin
   ZeroMemory(@Counts, SizeOf(Counts));
-  
+
   FLocalizerProject.Traverse(
     function(Module: TLocalizerModule): boolean
     begin
       Inc(Counts.CountModule);
+
       if (Module.State = ItemStateUnused) then
+      begin
         Inc(Counts.UnusedModule);
+        Exit(True);
+      end;
 
       Module.Traverse(
         function(Item: TLocalizerItem): boolean
         begin
           Inc(Counts.CountItem);
+
           if (Item.State = ItemStateUnused) then
+          begin
             Inc(Counts.UnusedItem);
+            Exit(True);
+          end;
 
           Item.Traverse(
             function(Prop: TLocalizerProperty): boolean
@@ -2748,11 +2797,21 @@ begin
               i: integer;
             begin
               Inc(Counts.CountProperty);
+
               if (Prop.State = ItemStateUnused) then
+              begin
                 Inc(Counts.UnusedProperty);
+                Exit(True);
+              end;
+
               for i := 0 to Prop.Translations.Count-1 do
-                if (Prop.Translations[i].Status = tStatusObsolete) then
-                  Inc(Counts.ObsoleteTranslation);
+                case Prop.Translations[i].Status of
+                  tStatusProposed,
+                  tStatusTranslated:
+                    Inc(Counts.Translated);
+                  tStatusObsolete:
+                    Inc(Counts.ObsoleteTranslation);
+                end;
 
               Result := True;
             end, False);
@@ -3053,7 +3112,7 @@ end;
 
 procedure TFormMain.UpdateProjectModifiedIndicator;
 resourcestring
-  sLocalizerStatusCount = 'Translate: %d, Ignore: %d, Hold: %d';
+  sLocalizerStatusCount = 'Translate: %.0n, Ignore: %.0n, Hold: %.0n';
   sLocalizerProjectModified = 'Project has been modified since it was last saved';
   sLocalizerProjectBackupTimestamp = 'Last autosave: %s';
   sLocalizerProjectBackupTimestampModified = 'Last autosave: %s'+#13+'Project has been modified since last autosave.';
@@ -3104,7 +3163,7 @@ begin
   TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelModified].PanelStyle).ImageIndex := ImageIndex;
 
   StatusBar.Panels[StatusBarPanelStats].Text := Format(sLocalizerStatusCount,
-    [FLocalizerProject.StatusCount[ItemStatusTranslate], FLocalizerProject.StatusCount[ItemStatusDontTranslate], FLocalizerProject.StatusCount[ItemStatusHold]]);
+    [1.0*FLocalizerProject.StatusCount[ItemStatusTranslate], 1.0*FLocalizerProject.StatusCount[ItemStatusDontTranslate], 1.0*FLocalizerProject.StatusCount[ItemStatusHold]]);
 
   StatusBar.Update;
 end;
