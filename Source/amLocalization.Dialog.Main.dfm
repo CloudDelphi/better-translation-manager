@@ -698,7 +698,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 338
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -722,7 +722,7 @@ object FormMain: TFormMain
     object BarManagetBarTranslationStatus: TdxBar
       Caption = 'Status'
       CaptionButtons = <>
-      DockedLeft = 156
+      DockedLeft = 159
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -750,7 +750,7 @@ object FormMain: TFormMain
     object BarManagetBarTranslationState: TdxBar
       Caption = 'State'
       CaptionButtons = <>
-      DockedLeft = 271
+      DockedLeft = 274
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -875,7 +875,7 @@ object FormMain: TFormMain
     object BarManagerBarLookup: TdxBar
       Caption = 'Automation'
       CaptionButtons = <>
-      DockedLeft = 411
+      DockedLeft = 414
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1003,7 +1003,8 @@ object FormMain: TFormMain
       Category = 0
     end
     object BarEditItemSourceLanguage: TcxBarEditItem
-      Caption = '&Source'
+      Align = iaRight
+      Caption = '&Source:'
       Category = 0
       Hint = 'Source language'
       Visible = ivAlways
@@ -1015,7 +1016,8 @@ object FormMain: TFormMain
       Properties.OnEditValueChanged = BarEditItemSourceLanguagePropertiesEditValueChanged
     end
     object BarEditItemTargetLanguage: TcxBarEditItem
-      Caption = 'T&arget'
+      Align = iaRight
+      Caption = 'T&arget:'
       Category = 0
       Hint = 'Target language'
       Visible = ivAlways
