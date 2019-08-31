@@ -22,6 +22,7 @@ uses
   Classes,
   Forms,
   dxSpellChecker,
+  cxCustomData,
   amRegConfig;
 
 
@@ -189,6 +190,29 @@ type
   published
   end;
 
+  TTranslationManagerLayoutTreeSettings = class(TConfigurationSection)
+  private
+    FValid: boolean;
+  public
+    procedure WriteFilter(Filter: TcxDataFilterCriteria);
+    procedure ReadFilter(Filter: TcxDataFilterCriteria);
+  published
+    property Valid: boolean read FValid write FValid;
+  end;
+
+  TTranslationManagerLayoutSettings = class(TConfigurationSection)
+  private
+    FItemTree: TTranslationManagerLayoutTreeSettings;
+    FModuleTree: TTranslationManagerLayoutTreeSettings;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+  published
+    property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
+    property ItemTree: TTranslationManagerLayoutTreeSettings read FItemTree;
+  end;
+
+
   TTranslationManagerSystemSettings = class(TConfigurationSection)
   private
     FSingleInstance: boolean;
@@ -205,13 +229,14 @@ type
   TTranslationManagerSettings = class(TConfiguration)
   strict private
     FValid: boolean;
+    FVersion: string;
     FSystem: TTranslationManagerSystemSettings;
     FForms: TTranslationManagerFormsSettings;
     FFolders: TTranslationManagerFolderSettings;
     FTranslators: TTranslationManagerTranslatorSettings;
     FProofing: TTranslationManagerProofingSettings;
+    FLayout: TTranslationManagerLayoutSettings;
   private
-    FVersion: string;
   protected
   public
     constructor Create(Root: HKEY; const APath: string; AAccess: LongWord = KEY_ALL_ACCESS); override;
@@ -226,6 +251,7 @@ type
     property Forms: TTranslationManagerFormsSettings read FForms;
     property Translators: TTranslationManagerTranslatorSettings read FTranslators;
     property Proofing: TTranslationManagerProofingSettings read FProofing;
+    property Layout: TTranslationManagerLayoutSettings read FLayout;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -465,6 +491,7 @@ begin
   FFolders := TTranslationManagerFolderSettings.Create(Self);
   FTranslators := TTranslationManagerTranslatorSettings.Create(Self);
   FProofing := TTranslationManagerProofingSettings.Create(Self);
+  FLayout := TTranslationManagerLayoutSettings.Create(Self);
 end;
 
 destructor TTranslationManagerSettings.Destroy;
@@ -474,6 +501,7 @@ begin
   FFolders.Free;
   FTranslators.Free;
   FProofing.Free;
+  FLayout.Free;
 
   inherited;
 end;
@@ -573,6 +601,58 @@ begin
     PropertiesStoreComponent.StoreToRegistry(KeyPath, True);
   finally
     PropertiesStore.Free;
+  end;
+end;
+
+{ TTranslationManagerLayoutSettings }
+
+constructor TTranslationManagerLayoutSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+
+  FItemTree := TTranslationManagerLayoutTreeSettings.Create(Self);
+  FModuleTree := TTranslationManagerLayoutTreeSettings.Create(Self);
+end;
+
+destructor TTranslationManagerLayoutSettings.Destroy;
+begin
+  FItemTree.Free;
+  FModuleTree.Free;
+
+  inherited;
+end;
+
+{ TTranslationManagerLayoutTreeSettings }
+
+
+{ TTranslationManagerLayoutTreeSettings }
+
+procedure TTranslationManagerLayoutTreeSettings.ReadFilter(Filter: TcxDataFilterCriteria);
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    ReadStream(KeyPath+'Filter', '', Stream);
+    Stream.Position := 0;
+    if (Stream.Size > 0) then
+      Filter.LoadFromStream(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TTranslationManagerLayoutTreeSettings.WriteFilter(Filter: TcxDataFilterCriteria);
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    Filter.SaveToStream(Stream);
+    Stream.Position := 0;
+    WriteStream(KeyPath+'Filter', '', Stream);
+  finally
+    Stream.Free;
   end;
 end;
 

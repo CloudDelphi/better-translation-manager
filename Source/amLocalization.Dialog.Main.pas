@@ -332,6 +332,9 @@ type
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FLastBookmark: integer;
   private
+    procedure SaveSettings;
+    procedure LoadSettings;
+  private
     // Hints
     // Status bar panel hint needs custom handling.
     // See: DevPress ticket DS31900
@@ -569,17 +572,6 @@ var
 begin
   DisableAero := True;
 
-  TranslationManagerSettings.ReadConfig;
-  TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
-  LoadRecentFiles;
-  if (TranslationManagerSettings.System.UseProposedStatus) then
-    TLocalizerTranslations.DefaultStatus := tStatusProposed
-  else
-    TLocalizerTranslations.DefaultStatus := tStatusTranslated;
-
-  OpenDialogXLIFF.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
-  OpenDialogProject.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
-
   FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
   FLocalizerProject.OnChanged := OnProjectChanged;
   FLocalizerProject.OnModuleChanged := OnModuleChanged;
@@ -608,16 +600,12 @@ begin
   FSkin := '';
   FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
 
-  SetSkin(TranslationManagerSettings.System.Skin);
+  LoadSettings;
 end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
-  SaveRecentFiles;
-
-  TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
-  TranslationManagerSettings.WriteConfig;
-  TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+  SaveSettings;
 
   TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
   SpellChecker.Dictionaries[0].Unload;
@@ -634,6 +622,59 @@ begin
   FLocalizerDataSource.Free;
   FLocalizerProject.Free;
   FTranslationCounts.Free;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.LoadSettings;
+begin
+  TranslationManagerSettings.ReadConfig;
+
+  TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
+
+  LoadRecentFiles;
+
+  if (TranslationManagerSettings.System.UseProposedStatus) then
+    TLocalizerTranslations.DefaultStatus := tStatusProposed
+  else
+    TLocalizerTranslations.DefaultStatus := tStatusTranslated;
+
+  OpenDialogXLIFF.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
+  OpenDialogProject.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
+
+  if (TranslationManagerSettings.Layout.ModuleTree.Valid) then
+  begin
+    // Tree.RestoreFromRegistry fails if data doesn't exist
+    TreeListModules.RestoreFromRegistry(TranslationManagerSettings.Layout.ModuleTree.Owner.KeyPath, False, False, TranslationManagerSettings.Layout.ModuleTree.Name);
+    TranslationManagerSettings.Layout.ModuleTree.ReadFilter(TreeListModules.Filter);
+  end;
+
+  if (TranslationManagerSettings.Layout.ItemTree.Valid) then
+  begin
+    TreeListItems.RestoreFromRegistry(TranslationManagerSettings.Layout.ItemTree.Owner.KeyPath, False, False, TranslationManagerSettings.Layout.ItemTree.Name);
+    TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
+  end;
+
+  SetSkin(TranslationManagerSettings.System.Skin);
+end;
+
+procedure TFormMain.SaveSettings;
+begin
+  SaveRecentFiles;
+
+  TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
+
+  TreeListModules.StoreToRegistry(TranslationManagerSettings.Layout.ModuleTree.Owner.KeyPath, False, TranslationManagerSettings.Layout.ModuleTree.Name);
+  TranslationManagerSettings.Layout.ModuleTree.WriteFilter(TreeListModules.Filter);
+  TranslationManagerSettings.Layout.ModuleTree.Valid := True;
+
+  TreeListItems.StoreToRegistry(TranslationManagerSettings.Layout.ItemTree.Owner.KeyPath, False, TranslationManagerSettings.Layout.ItemTree.Name);
+  TranslationManagerSettings.Layout.ItemTree.WriteFilter(TreeListItems.Filter);
+  TranslationManagerSettings.Layout.ItemTree.Valid := True;
+
+  TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+
+  TranslationManagerSettings.WriteConfig;
 end;
 
 // -----------------------------------------------------------------------------

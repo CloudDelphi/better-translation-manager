@@ -76,6 +76,7 @@ type
     procedure ReadSection(const Key: string); virtual;
     procedure DoWriteObject(const Key: string; Instance: TObject); virtual;
     procedure DoReadObject(const Key: string; Instance: TObject); virtual;
+    function GetName: string; virtual;
     function GetKey: string; virtual;
     function GetKeyPath: string; virtual;
     function KeyRoot: string; virtual;
@@ -91,7 +92,10 @@ type
     procedure WriteStream(const AName: string; Stream: TMemoryStream); overload; virtual;
     procedure ReadStream(const AName: string; Stream: TMemoryStream); overload; virtual;
     function SectionByName(const Name: string): TConfigurationSection;
+
     property Owner: TConfigurationSection read FOwner;
+    // Name of this registry key
+    property Name: string read GetName;
     // Registry key relative to configuration root
     property Key: string read GetKey;
     // Full registry path
@@ -107,7 +111,7 @@ type
     FStrings: TStrings;
     function GetItem(Index: integer): string;
     procedure SetItem(Index: integer; const Value: string);
-    function GetName(Index: integer): string;
+    function GetValueName(Index: integer): string;
     function GetValue(Name: string): string;
     function GetCount: integer;
     procedure SetStrings(const Value: TStrings);
@@ -132,7 +136,7 @@ type
     function GetEnumerator: TStringsEnumerator;
     property Items[Index: integer]: string read GetItem write SetItem; default;
     property Count: integer read GetCount;
-    property Names[Index: integer]: string read GetName;
+    property Names[Index: integer]: string read GetValueName;
     property Values[Name: string]: string read GetValue write SetValue;
     property Strings: TStrings read FStrings write SetStrings;
   end;
@@ -155,7 +159,7 @@ type
     procedure ReadSection(const Key: string); override;
 
     function GetCount: integer;
-    function GetName(Index: integer): string;
+    function GetValueName(Index: integer): string;
     function GetValue(Name: string): T;
 
     property PurgeOnWrite: boolean read FPurgeOnWrite write FPurgeOnWrite;
@@ -167,7 +171,7 @@ type
     procedure Remove(const Name: string);
     procedure Clear;
     property Count: integer read GetCount;
-    property Names[Index: integer]: string read GetName;
+    property Names[Index: integer]: string read GetValueName;
     property Items[Name: string]: T read GetValue; default;
   end;
 
@@ -178,6 +182,7 @@ type
     FSubPath: string;
     procedure SetSubPath(const Value: string);
   protected
+    function GetName: string; override;
     function GetKey: string; override;
     function KeyRoot: string; override;
     function GetRegistry: TFixedRegIniFile; override;
@@ -632,6 +637,11 @@ begin
   Result := '';
 end;
 
+function TConfiguration.GetName: string;
+begin
+  Result := '';
+end;
+
 function TConfiguration.KeyRoot: string;
 begin
   Result := FPath;
@@ -698,7 +708,7 @@ begin
   Result := Strings[Index];
 end;
 
-function TConfigurationStringValues.GetName(Index: integer): string;
+function TConfigurationStringValues.GetValueName(Index: integer): string;
 begin
   Result := Strings.Names[Index];
 end;
@@ -1023,6 +1033,16 @@ begin
 end;
 
 function TConfigurationSection.GetKey: string;
+begin
+  Result := Owner.Key + Name + '\';
+end;
+
+function TConfigurationSection.GetKeyPath: string;
+begin
+  Result := KeyRoot + Key;
+end;
+
+function TConfigurationSection.GetName: string;
 var
   PropList: pPropList;
   Count: integer;
@@ -1048,12 +1068,6 @@ begin
   finally
     FreeMem(PropList);
   end;
-  Result := Owner.Key+Result+'\';
-end;
-
-function TConfigurationSection.GetKeyPath: string;
-begin
-  Result := KeyRoot + GetKey;
 end;
 
 function TConfigurationSection.KeyRoot: string;
@@ -1288,7 +1302,7 @@ begin
   Result := FItems.Count;
 end;
 
-function TConfigurationSectionValues<T>.GetName(Index: integer): string;
+function TConfigurationSectionValues<T>.GetValueName(Index: integer): string;
 begin
   Result := FItems.Keys.ToArray[Index];
 end;
