@@ -23,7 +23,8 @@ uses
   amLocalization.Dialog.TranslationMemory.SelectDuplicate in 'amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas' {FormSelectDuplicate},
   amLocalization.Translator in 'amLocalization.Translator.pas',
   amLocalization.Settings in 'amLocalization.Settings.pas',
-  amLocalization.Dialog.Settings in 'amLocalization.Dialog.Settings.pas' {FormSettings};
+  amLocalization.Dialog.Settings in 'amLocalization.Dialog.Settings.pas' {FormSettings},
+  amLocalization.Dialog.SelectModule in 'amLocalization.Dialog.SelectModule.pas' {FormSelectModule};
 
 {$R *.res}
 

@@ -34,9 +34,11 @@ uses
   Variants,
   Windows,
   SysUtils,
+  Dialogs,
   msxmldom,
   XMLDoc, XMLIntf,
-  amLocale;
+  amLocale,
+  amLocalization.Dialog.SelectModule;
 
 // -----------------------------------------------------------------------------
 //
@@ -545,6 +547,10 @@ var
   SourceLanguageName, TargetLanguageName: string;
   SourceLocaleID, TargetLocaleID: LCID;
   LocaleItem: TLocaleItem;
+  FormSelectModule: TFormSelectModule;
+resourcestring
+  sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name.'#13#13+
+    'Please specify which module to import the translations into.';
 begin
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
@@ -599,8 +605,17 @@ begin
     Result := FindModule(Body);
 
     // If we still haven't got a module name then we must ask the user for it.
-    if (Result = nil) then
-      raise Exception.Create('Module not found'); // TODO
+    if  (Result = nil) then
+    begin
+      FormSelectModule := TFormSelectModule.Create(nil);
+      try
+        Result := FormSelectModule.Execute(LocalizerProject, sXLIFFMissingModuleName);
+        if (Result = nil) then
+          Exit(nil);
+      finally
+        FormSelectModule.Free;
+      end;
+    end;
   end else
     Result := LocalizerProject.AddModule(ModuleName);
 
