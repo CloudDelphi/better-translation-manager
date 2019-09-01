@@ -1,4 +1,4 @@
-unit amVersionInfo;
+﻿unit amVersionInfo;
 
 (*
  * Copyright © 2008 Anders Melander
@@ -60,6 +60,7 @@ type
     class function VersionMinor(Version: int64): Word;
     class function VersionRelease(Version: int64): Word;
     class function VersionBuild(Version: int64): Word;
+    class function FileVersionString(const Filename: string): string;
     function GetString(const Key: string; LanguageID: integer; CharsetID: integer): string; overload;
     function GetString(const Key, TranslationID: string): string; overload;
     function GetString(const Key: string; Index: integer = 0): string; overload;
@@ -77,6 +78,7 @@ type
     property LanguageNames[Index: integer]: string read GetLanguageName;
     property TranslationCount: integer read FTranslationCount;
   end;
+
 
 implementation
 
@@ -248,6 +250,20 @@ end;
 function TVersionInfo.DoGetString(const Key: string): string;
 begin
   Result := GetString(Key, 0);
+end;
+
+class function TVersionInfo.FileVersionString(const Filename: string): string;
+var
+  VersionInfo: TVersionInfo;
+begin
+  VersionInfo := TVersionInfo.Create(Filename);
+  try
+
+    Result := VersionToString(VersionInfo.FileVersion);
+
+  finally
+    VersionInfo.Free;
+  end;
 end;
 
 function TVersionInfo.GetString(const Key: string; LanguageID, CharsetID: integer): string;

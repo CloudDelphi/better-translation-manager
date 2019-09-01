@@ -139,17 +139,8 @@ begin
 end;
 
 procedure TLocalizationCommandLineTool.Header;
-var
-  VersionInfo: TVersionInfo;
 begin
-  VersionInfo := TVersionInfo.Create(ParamStr(0));
-  try
-
-    Message(Format(sCommandLineTitle, [TVersionInfo.VersionToString(VersionInfo.FileVersion)])+#13);
-
-  finally
-    VersionInfo.Free;
-  end;
+  Message(Format(sCommandLineTitle, [TVersionInfo.FileVersionString(ParamStr(0))])+#13);
 end;
 
 procedure TLocalizationCommandLineTool.Help;

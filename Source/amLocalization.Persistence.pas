@@ -58,7 +58,8 @@ uses
   Variants,
   XMLDoc, XMLIntf,
   amLocale,
-  amPath;
+  amPath,
+  amVersionInfo;
 
 // -----------------------------------------------------------------------------
 //
@@ -379,6 +380,8 @@ begin
   Node := RootNode.AddChild('meta');
   Node.AddChild('version').Text := '1';
   Node.AddChild('created').Text := DateToISO8601(Now, False);
+  Node.AddChild('origin').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
+  Node.AddChild('originversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
 
   ProjectNode := RootNode.AddChild('project');
   ProjectNode.Attributes['name'] := Project.Name;

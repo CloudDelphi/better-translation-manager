@@ -81,6 +81,7 @@ uses
   XMLDoc, XMLIntf,
   Forms,
   amCursorService,
+  amVersionInfo,
   amLocalization.Settings,
   amLocalization.Utils;
 
@@ -447,8 +448,8 @@ begin
   XML.DocumentElement.Attributes['version'] := '1.4';
 
   Node := XML.DocumentElement.AddChild('header');
-  Node.Attributes['creationtool'] := 'amTranslationManager';
-  Node.Attributes['creationtoolversion'] := '1.0';
+  Node.Attributes['creationtool'] := TPath.GetFileNameWithoutExtension(ParamStr(0));
+  Node.Attributes['creationtoolversion'] := TVersionInfo.FileVersionString(ParamStr(0));
   Node.Attributes['datatype'] := 'plaintext';
   Node.Attributes['segtype'] := 'sentence';
   Node.Attributes['adminlang'] := 'en-us';
