@@ -25,8 +25,8 @@ type
   public
     class constructor Create;
 
-    function LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string = ''): TLocalizerModule; overload;
-    function LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule; overload;
+    function LoadFromStream(Project: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string = ''): TLocalizerModule; overload;
+    function LoadFromFile(Project: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule; overload;
   end;
 
 
@@ -58,13 +58,13 @@ begin
   msxmldom.MSXMLDOMDocumentFactory.AddDOMProperty('ProhibitDTD', False);
 end;
 
-function TModuleImporterXLIFF.LoadFromFile(LocalizerProject: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromFile(Project: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule;
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   try
-    Result := LoadFromStream(LocalizerProject, Stream, Stats, Filename);
+    Result := LoadFromStream(Project, Stream, Stats, Filename);
   finally
     Stream.Free;
   end;
@@ -278,7 +278,7 @@ begin
   end;
 end;
 
-function TModuleImporterXLIFF.LoadFromStream(LocalizerProject: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromStream(Project: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string): TLocalizerModule;
 type
   TImportDelegate = reference to function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean;
 var
@@ -549,7 +549,7 @@ var
     if (not ProcessNodes(BodyNode, nil,
       function(AModule: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean
       begin
-        Result := LocalizerProject.Traverse(
+        Result := Project.Traverse(
           function(Item: TLocalizerItem): boolean
           begin
             // Exit if we find an item name match
@@ -640,7 +640,7 @@ begin
     begin
       FormSelectModule := TFormSelectModule.Create(nil);
       try
-        Result := FormSelectModule.Execute(LocalizerProject, sXLIFFMissingModuleName);
+        Result := FormSelectModule.Execute(Project, sXLIFFMissingModuleName);
         if (Result = nil) then
           Exit(nil);
       finally
@@ -648,7 +648,7 @@ begin
       end;
     end;
   end else
-    Result := LocalizerProject.AddModule(ModuleName);
+    Result := Project.AddModule(ModuleName);
 
   if (Result.Kind = mkOther) then
     Result.Kind := ModuleKind;
@@ -690,12 +690,12 @@ begin
 
   TargetLanguage := Result.Project.TargetLanguages.Add(TargetLocaleID);
 
-  if (Result.Project.BaseLocaleID = 0) then
-    Result.Project.BaseLocaleID := SourceLocaleID;
+  if (Result.Project.SourceLanguageID = 0) then
+    Result.Project.SourceLanguageID := SourceLocaleID;
 
   // TODO : Validation that module source language matches project
 
-  LocalizerProject.BeginUpdate;
+  Project.BeginUpdate;
   try
 
     ProcessNodes(Body, Result,
@@ -710,7 +710,7 @@ begin
       end);
 
   finally
-    LocalizerProject.EndUpdate;
+    Project.EndUpdate;
   end;
 end;
 

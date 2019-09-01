@@ -173,7 +173,7 @@ begin
   end else
   begin
     for i := 0 to FProject.TargetLanguages.Count-1 do
-      if (FProject.TargetLanguages[i].LanguageID <> FProject.BaseLocaleID) then
+      if (FProject.TargetLanguages[i].LanguageID <> FProject.SourceLanguageID) then
         DoBuild(FProject.TargetLanguages[i]);
   end;
 end;

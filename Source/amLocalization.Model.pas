@@ -122,7 +122,7 @@ type
     FSourceFilename: string;
     FStringSymbolFilename: string;
     FModules: TLocalizerModules;
-    FBaseLocaleID: LCID;
+    FSourceLanguageID: LCID;
     FTargetLanguages: TTargetLanguageList;
     FState: TLocalizerProjectStates;
     FLoadCount: integer;
@@ -141,7 +141,7 @@ type
     procedure ModuleChanged(Module: TLocalizerModule);
     procedure DoChanged; override;
   public
-    constructor Create(const AName: string; ABaseLocaleID: LCID);
+    constructor Create(const AName: string; ASourceLanguageID: LCID);
     destructor Destroy; override;
 
     procedure Clear; override;
@@ -163,7 +163,7 @@ type
     property SourceFilename: string read FSourceFilename write FSourceFilename;
     property StringSymbolFilename: string read FStringSymbolFilename write FStringSymbolFilename;
 
-    property BaseLocaleID: LCID read FBaseLocaleID write FBaseLocaleID;
+    property SourceLanguageID: LCID read FSourceLanguageID write FSourceLanguageID;
     property TargetLanguages: TTargetLanguageList read FTargetLanguages;
 
     property Modules: TLocalizerModules read FModules;
@@ -854,12 +854,12 @@ end;
 // TLocalizerProject
 //
 // -----------------------------------------------------------------------------
-constructor TLocalizerProject.Create(const AName: string; ABaseLocaleID: LCID);
+constructor TLocalizerProject.Create(const AName: string; ASourceLanguageID: LCID);
 begin
   inherited Create(AName);
   FModules := TLocalizerModules.Create([doOwnsValues], TTextComparer.Create);
   FTargetLanguages := TTargetLanguageList.Create;
-  FBaseLocaleID := ABaseLocaleID;
+  FSourceLanguageID := ASourceLanguageID;
 end;
 
 destructor TLocalizerProject.Destroy;

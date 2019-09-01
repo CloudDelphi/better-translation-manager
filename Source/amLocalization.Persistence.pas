@@ -190,7 +190,7 @@ begin
     // UI will handle if the symbol file doesn't exist
     Project.StringSymbolFilename := VarToStr(ProjectNode.Attributes['stringsymbolfile']);
 
-    Project.BaseLocaleID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
+    Project.SourceLanguageID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
 
     LanguagesNode := ProjectNode.ChildNodes.FindNode('targetlanguages');
     if (LanguagesNode <> nil) then
@@ -377,7 +377,7 @@ begin
   // TODO : Make paths relative to project file
   ProjectNode.Attributes['sourcefile'] := TPath.GetFileName(Project.SourceFilename);
   ProjectNode.Attributes['stringsymbolfile'] := FilenameMakeRelative(TPath.GetDirectoryName(Project.SourceFilename), Project.StringSymbolFilename);
-  ProjectNode.Attributes['language'] := Project.BaseLocaleID;
+  ProjectNode.Attributes['language'] := Project.SourceLanguageID;
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');
   for i := 0 to Project.TargetLanguages.Count-1 do

@@ -39,10 +39,10 @@ type
     procedure EditRepositoryTextItemPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
   private
     FFilterTargetLanguages: boolean;
-    FLocalizerProject: TLocalizerProject;
+    FProject: TLocalizerProject;
   public
     property FilterTargetLanguages: boolean read FFilterTargetLanguages write FFilterTargetLanguages;
-    property LocalizerProject: TLocalizerProject read FLocalizerProject write FLocalizerProject;
+    property Project: TLocalizerProject read FProject write FProject;
   end;
 
 var
@@ -118,10 +118,10 @@ end;
 procedure TDataModuleMain.GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
   ARecordIndex: Integer; var Accept: Boolean);
 begin
-  if (not FFilterTargetLanguages) or (FLocalizerProject = nil) then
+  if (not FFilterTargetLanguages) or (FProject = nil) then
     Exit;
 
-  Accept := (FLocalizerProject.TargetLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewLanguagesColumnLocaleID.Index]));
+  Accept := (FProject.TargetLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewLanguagesColumnLocaleID.Index]));
 end;
 
 end.

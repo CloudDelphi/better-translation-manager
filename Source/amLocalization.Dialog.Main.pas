@@ -317,7 +317,7 @@ type
     procedure ButtonOpenRecentClick(Sender: TObject);
     procedure ActionSettingsExecute(Sender: TObject);
   private
-    FLocalizerProject: TLocalizerProject;
+    FProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
     FUpdateLockCount: integer;
     FSpellCheckProp: TLocalizerProperty;
@@ -572,9 +572,9 @@ var
 begin
   DisableAero := True;
 
-  FLocalizerProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
-  FLocalizerProject.OnChanged := OnProjectChanged;
-  FLocalizerProject.OnModuleChanged := OnModuleChanged;
+  FProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
+  FProject.OnChanged := OnProjectChanged;
+  FProject.OnModuleChanged := OnModuleChanged;
 
   FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
 
@@ -614,13 +614,13 @@ begin
   Application.OnShowHint := nil;
 
   // Block notifications
-  FLocalizerProject.BeginUpdate;
+  FProject.BeginUpdate;
 
   FTranslationCounts.Clear;
-  FLocalizerProject.Clear;
+  FProject.Clear;
 
   FLocalizerDataSource.Free;
-  FLocalizerProject.Free;
+  FProject.Free;
   FTranslationCounts.Free;
 end;
 
@@ -686,8 +686,8 @@ end;
 
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
-  FLocalizerProject.BaseLocaleID := BarEditItemSourceLanguage.EditValue;
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
+  FProject.SourceLanguageID := BarEditItemSourceLanguage.EditValue;
+  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
 end;
 
 procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
@@ -760,7 +760,6 @@ begin
   FLocalizerDataSource.TargetLanguage := TargetLanguage;
   TreeListModules.FullRefresh;
   DisplayModuleStats;
-//  LoadProject(FLocalizerProject, False);
 end;
 
 // -----------------------------------------------------------------------------
@@ -775,10 +774,10 @@ begin
 
     InitializeProject('test.xxx', SourceLanguageID);
 
-    FLocalizerProject.AddModule('ONE', mkForm).AddItem('Item1', 'TFooBar').AddProperty('Test1', 'value1');
-    FLocalizerProject.AddModule('TWO', mkForm).AddItem('Item2', 'TFooBar').AddProperty('Test2', 'value2');
+    FProject.AddModule('ONE', mkForm).AddItem('Item1', 'TFooBar').AddProperty('Test1', 'value1');
+    FProject.AddModule('TWO', mkForm).AddItem('Item2', 'TFooBar').AddProperty('Test2', 'value2');
 
-    LoadProject(FLocalizerProject, True);
+    LoadProject(FProject, True);
   end;
 end;
 
@@ -879,9 +878,9 @@ end;
 
 procedure TFormMain.ActionMainUpdate(Sender: TObject);
 begin
-  BarEditItemSourceLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
-  BarEditItemTargetLanguage.Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
-  BarManagerBarLanguage.CaptionButtons[0].Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  BarEditItemSourceLanguage.Enabled := (not FProject.SourceFilename.IsEmpty);
+  BarEditItemTargetLanguage.Enabled := (not FProject.SourceFilename.IsEmpty);
+  BarManagerBarLanguage.CaptionButtons[0].Enabled := (not FProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionDummyExecute(Sender: TObject);
@@ -891,12 +890,12 @@ end;
 
 procedure TFormMain.ActionHasProjectUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (not FLocalizerProject.SourceFilename.IsEmpty);
+  TAction(Sender).Enabled := (not FProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionHasModulesUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FLocalizerProject.Modules.Count > 0);
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0);
 end;
 
 procedure TFormMain.ActionHasItemFocusedUpdate(Sender: TObject);
@@ -1033,7 +1032,7 @@ begin
     Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.ServiceName]));
     Progress.EnableAbort := True;
 
-    FLocalizerProject.BeginUpdate;
+    FProject.BeginUpdate;
     try
 
       for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
@@ -1106,7 +1105,7 @@ begin
       Progress.Progress(psEnd, Count, ElegibleCount);
 
     finally
-      FLocalizerProject.EndUpdate;
+      FProject.EndUpdate;
     end;
 
   finally
@@ -1213,7 +1212,7 @@ begin
       end;
 
       // Clear existing bookmark...
-      FLocalizerProject.Traverse(
+      FProject.Traverse(
         function(Prop: TLocalizerProperty): boolean
         begin
           Result := True;
@@ -1283,9 +1282,9 @@ begin
   LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
 
   if (LocaleItem <> nil) then
-    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.'+LocaleItem.LanguageShortName)
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName)
   else
-    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.dll');
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, '.dll');
 
   Path := TPath.GetDirectoryName(Filename);
   Filename := TPath.GetFileName(Filename);
@@ -1297,20 +1296,20 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
-    FLocalizerProject.BeginLoad;
+    FProject.BeginLoad;
     try
 
       ResourceWriter := TResourceModuleWriter.Create(Filename);
       try
 
-        ProjectProcessor.Execute(liaTranslate, FLocalizerProject, FLocalizerProject.SourceFilename, TargetLanguage, ResourceWriter);
+        ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TargetLanguage, ResourceWriter);
 
       finally
         ResourceWriter := nil;
       end;
 
     finally
-      FLocalizerProject.EndLoad;
+      FProject.EndLoad;
     end;
   finally
     ProjectProcessor.Free;
@@ -1318,7 +1317,7 @@ begin
 
   ShowMessageFmt(sLocalizerResourceModuleBuilt, [Filename]);
 
-  LoadProject(FLocalizerProject, False);
+  LoadProject(FProject, False);
 end;
 
 procedure TFormMain.ActionImportFileExecute(Sender: TObject);
@@ -1342,33 +1341,33 @@ begin
   OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
 
   // Temporarily switch to new file or we will not be able to find the companion files (*.drc)
-  SaveFilename := FLocalizerProject.SourceFilename;
+  SaveFilename := FProject.SourceFilename;
   try
-    FLocalizerProject.SourceFilename := OpenDialogEXE.FileName;
+    FProject.SourceFilename := OpenDialogEXE.FileName;
 
     ProjectProcessor := TProjectResourceProcessor.Create;
     try
 
-      ProjectProcessor.ScanProject(FLocalizerProject, OpenDialogEXE.FileName);
+      ProjectProcessor.ScanProject(FProject, OpenDialogEXE.FileName);
 
     finally
       ProjectProcessor.Free;
     end;
 
-    LoadProject(FLocalizerProject, False);
+    LoadProject(FProject, False);
 
     if (TaskMessageDlg(sLocalizerSwitchSourceModuleTitle, sLocalizerSwitchSourceModule,
       mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
     begin
-      FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(FLocalizerProject.SourceFilename);
+      FProject.Name := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
       SaveFilename := '';
-      RibbonMain.DocumentName := FLocalizerProject.Name;
-      FLocalizerProject.Changed;
+      RibbonMain.DocumentName := FProject.Name;
+      FProject.Changed;
     end;
 
   finally
     if (SaveFilename <> '') then
-      FLocalizerProject.SourceFilename := SaveFilename;
+      FProject.SourceFilename := SaveFilename;
   end;
 end;
 
@@ -1388,13 +1387,13 @@ begin
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
-    ProjectProcessor.Execute(liaUpdateTarget, FLocalizerProject, OpenDialogEXE.FileName, TargetLanguage, nil);
+    ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TargetLanguage, nil);
 
   finally
     ProjectProcessor.Free;
   end;
 
-  LoadProject(FLocalizerProject, False);
+  LoadProject(FProject, False);
 
   ShowMessage(sLocalizerImportComplete);
 end;
@@ -1569,7 +1568,7 @@ begin
 
   Importer := TModuleImporterXLIFF.Create;
   try
-    Importer.LoadFromFile(FLocalizerProject, OpenDialogXLIFF.FileName, ImportStats);
+    Importer.LoadFromFile(FProject, OpenDialogXLIFF.FileName, ImportStats);
   finally
     Importer.Free;
   end;
@@ -1578,9 +1577,9 @@ begin
     Format(sImportStats, [1.0 * ImportStats.CountAdded, 1.0 * ImportStats.CountUpdated, 1.0 * ImportStats.CountIdentical]),
     mtInformation, [mbOK], 0);
 
-  FLocalizerProject.Modified := True;
+  FProject.Modified := True;
 
-  LoadProject(FLocalizerProject, False);
+  LoadProject(FProject, False);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1598,16 +1597,16 @@ resourcestring
 begin
   Result := True;
 
-  if (FLocalizerProject.StringSymbolFilename = '') then
-    FLocalizerProject.StringSymbolFilename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, '.drc');
+  if (FProject.StringSymbolFilename = '') then
+    FProject.StringSymbolFilename := TPath.ChangeExtension(FProject.SourceFilename, '.drc');
 
-  Filename := FLocalizerProject.StringSymbolFilename;
+  Filename := FProject.StringSymbolFilename;
   while (not TFile.Exists(Filename)) do
   begin
     Result := False;
 
     // Symbol file does not exist. Try to locate it.
-    Res := TaskMessageDlg(sStringSymbolsNotFoundTitle, Format(sStringSymbolsNotFound, [FLocalizerProject.StringSymbolFilename]),
+    Res := TaskMessageDlg(sStringSymbolsNotFoundTitle, Format(sStringSymbolsNotFound, [FProject.StringSymbolFilename]),
       mtWarning, [mbYes, mbNo], 0, mbYes);
     if (Res <> mrYes) then
       Exit(False);
@@ -1622,7 +1621,7 @@ begin
   end;
 
   if (not Result) then
-    FLocalizerProject.StringSymbolFilename := Filename;
+    FProject.StringSymbolFilename := Filename;
 
   Result := True;
 end;
@@ -1639,13 +1638,13 @@ resourcestring
 begin
   Result := True;
 
-  Filename := FLocalizerProject.SourceFilename;
+  Filename := FProject.SourceFilename;
   while (not TFile.Exists(Filename)) do
   begin
     Result := False;
 
     // Symbol file does not exist. Try to locate it.
-    Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [FLocalizerProject.SourceFilename]),
+    Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [FProject.SourceFilename]),
       mtWarning, [mbYes, mbNo], 0, mbYes);
     if (Res <> mrYes) then
       Exit(False);
@@ -1660,7 +1659,7 @@ begin
   end;
 
   if (not Result) then
-    FLocalizerProject.SourceFilename := Filename;
+    FProject.SourceFilename := Filename;
 
   Result := True;
 end;
@@ -1684,16 +1683,16 @@ begin
   try
     FormNewProject.SetLanguageView(DataModuleMain.GridTableViewLanguages, DataModuleMain.GridTableViewLanguagesColumnLanguage);
 
-    if (FLocalizerProject.SourceFilename <> '') then
-      FormNewProject.SourceApplication := FLocalizerProject.SourceFilename
+    if (FProject.SourceFilename <> '') then
+      FormNewProject.SourceApplication := FProject.SourceFilename
     else
     if (TranslationManagerSettings.Folders.RecentApplications.Count > 0) then
       FormNewProject.SourceApplication := TranslationManagerSettings.Folders.RecentApplications[0]
     else
       FormNewProject.SourceApplication := Application.ExeName;
 
-    if (FLocalizerProject.BaseLocaleID <> 0) then
-      FormNewProject.SourceLanguageID := FLocalizerProject.BaseLocaleID
+    if (FProject.SourceLanguageID <> 0) then
+      FormNewProject.SourceLanguageID := FProject.SourceLanguageID
     else
       FormNewProject.SourceLanguageID := GetUserDefaultUILanguage;
 
@@ -1716,7 +1715,7 @@ begin
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
-    ProjectProcessor.ScanProject(FLocalizerProject, FLocalizerProject.SourceFilename);
+    ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
   finally
     ProjectProcessor.Free;
@@ -1729,7 +1728,7 @@ begin
     Format(sProjectInitialized, [1.0*Count.CountModule, 1.0*Count.CountItem, 1.0*Count.CountProperty]),
     mtInformation, [mbOK], 0);
 
-  LoadProject(FLocalizerProject);
+  LoadProject(FProject);
 end;
 
 procedure TFormMain.LoadFromFile(const FIlename: string);
@@ -1755,25 +1754,25 @@ begin
   try
     Progress.Marquee := True;
 
-    FLocalizerProject.BeginUpdate;
+    FProject.BeginUpdate;
     try
 
-      TLocalizationProjectFiler.LoadFromFile(FLocalizerProject, Filename);
-      FLocalizerProject.Modified := False;
+      TLocalizationProjectFiler.LoadFromFile(FProject, Filename);
+      FProject.Modified := False;
 
     finally
-      FLocalizerProject.EndUpdate;
+      FProject.EndUpdate;
     end;
 
     UpdateProjectModifiedIndicator;
 
-    RibbonMain.DocumentName := FLocalizerProject.Name;
+    RibbonMain.DocumentName := FProject.Name;
 
     // Find language with most translations
     BestLanguage := nil;
-    for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
-      if (BestLanguage = nil) or (FLocalizerProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
-        BestLanguage := FLocalizerProject.TargetLanguages[i];
+    for i := 0 to FProject.TargetLanguages.Count-1 do
+      if (BestLanguage = nil) or (FProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
+        BestLanguage := FProject.TargetLanguages[i];
 
     if (BestLanguage <> nil) then
     begin
@@ -1782,7 +1781,7 @@ begin
     end else
       FFilterTargetLanguages := False;
 
-    LoadProject(FLocalizerProject);
+    LoadProject(FProject);
 
   finally
     Progress.Hide;
@@ -1836,7 +1835,7 @@ begin
   try
     try
 
-      for LoopModule in FLocalizerProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
+      for LoopModule in FProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
       begin
         Module := LoopModule;
         Module.BeginUpdate;
@@ -1932,9 +1931,9 @@ begin
 
       if (NeedReload) then
       begin
-        FLocalizerProject.Modified := True;
+        FProject.Modified := True;
 
-        LoadProject(FLocalizerProject, False);
+        LoadProject(FProject, False);
       end;
 
     finally
@@ -1971,7 +1970,7 @@ begin
   try
     Progress.Marquee := True;
 
-    Filename := TPath.ChangeExtension(FLocalizerProject.SourceFilename, sLocalizationFiletype);
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, sLocalizationFiletype);
     TempFilename := Filename;
 
     // Save to temporary file if destination file already exist
@@ -1985,7 +1984,7 @@ begin
     end;
 
     // Save file
-    TLocalizationProjectFiler.SaveToFile(FLocalizerProject, TempFilename);
+    TLocalizationProjectFiler.SaveToFile(FProject, TempFilename);
 
     // Save existing file as backup
     if (TempFilename <> Filename) then
@@ -2002,7 +2001,7 @@ begin
       TFile.Move(TempFilename, Filename);
     end;
 
-    FLocalizerProject.Modified := False;
+    FProject.Modified := False;
 
     SetInfoText('Saved');
     UpdateProjectModifiedIndicator;
@@ -2015,7 +2014,7 @@ end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (not FLocalizerProject.Name.IsEmpty) and (FLocalizerProject.Modified);
+  TAction(Sender).Enabled := (not FProject.Name.IsEmpty) and (FProject.Modified);
 end;
 
 procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);
@@ -2044,14 +2043,14 @@ begin
   CountBefore := CountStuff;
 
   (*
-  SaveModified := FLocalizerProject.Modified;
-  FLocalizerProject.Modified := False;
+  SaveModified := FProject.Modified;
+  FProject.Modified := False;
   *)
   
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
-    ProjectProcessor.ScanProject(FLocalizerProject, FLocalizerProject.SourceFilename);
+    ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
   finally
     ProjectProcessor.Free;
@@ -2059,14 +2058,14 @@ begin
 
   // This method of detecting if any changes were made doesn't work as the setting 
   // and clearing of ItemStateUnused during load will be detected as a change.
-  WasModified := FLocalizerProject.Modified;
+  WasModified := FProject.Modified;
   (*
-  FLocalizerProject.Modified := SaveModified;
+  FProject.Modified := SaveModified;
   *)
-  
+
   CountAfter := CountStuff;
 
-  LoadProject(FLocalizerProject, False);
+  LoadProject(FProject, False);
 
   // Display update statistics
   if (WasModified) then
@@ -2097,7 +2096,7 @@ procedure TFormMain.ActionProofingCheckExecute(Sender: TObject);
 begin
   SaveCursor(crAppStart);
 
-  FLocalizerProject.Traverse(
+  FProject.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := PerformSpellCheck(Prop);
@@ -2219,7 +2218,7 @@ begin
   WarningCount := 0;
   NewWarningCount := 0;
 
-  FLocalizerProject.Traverse(
+  FProject.Traverse(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
@@ -2329,7 +2328,7 @@ end;
 
 procedure TFormMain.BarEditItemSourceLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
-  FLocalizerProject.Modified := True;
+  FProject.Modified := True;
   UpdateProjectModifiedIndicator;
   PostMessage(Handle, MSG_SOURCE_CHANGED, 0, 0);
 end;
@@ -2342,10 +2341,10 @@ end;
 procedure TFormMain.BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
 begin
   DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
-    ((FLocalizerProject.TargetLanguages.Count > 1) or
-     ((FLocalizerProject.TargetLanguages.Count = 1) and (FLocalizerProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
+    ((FProject.TargetLanguages.Count > 1) or
+     ((FProject.TargetLanguages.Count = 1) and (FProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
 
-  DataModuleMain.LocalizerProject := FLocalizerProject;
+  DataModuleMain.Project := FProject;
 end;
 
 procedure TFormMain.BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
@@ -2370,8 +2369,8 @@ begin
 
     FormLanguages.SourceLanguageID := SourceLanguageID;
 
-    for i := 0 to FLocalizerProject.TargetLanguages.Count-1 do
-      FormLanguages.SelectTargetLanguage(FLocalizerProject.TargetLanguages[i].LanguageID);
+    for i := 0 to FProject.TargetLanguages.Count-1 do
+      FormLanguages.SelectTargetLanguage(FProject.TargetLanguages[i].LanguageID);
 
     FormLanguages.ApplyFilter := FFilterTargetLanguages;
 
@@ -2393,12 +2392,12 @@ begin
 
           // Loop though list of current languages and build list of languages to delete
           PromptCount := 0;
-          for i := FLocalizerProject.TargetLanguages.Count-1 downto 0 do
-            if (not Languages.Contains(FLocalizerProject.TargetLanguages[i].LanguageID)) then
+          for i := FProject.TargetLanguages.Count-1 downto 0 do
+            if (not Languages.Contains(FProject.TargetLanguages[i].LanguageID)) then
             begin
-              DeleteLanguages.Add(FLocalizerProject.TargetLanguages[i]);
+              DeleteLanguages.Add(FProject.TargetLanguages[i]);
 
-              if (FLocalizerProject.TargetLanguages[i].TranslatedCount > 0) then
+              if (FProject.TargetLanguages[i].TranslatedCount > 0) then
                 Inc(PromptCount);
             end;
 
@@ -2447,7 +2446,7 @@ begin
           end;
 
           // Delete translations
-          FLocalizerProject.Traverse(
+          FProject.Traverse(
             function(Prop: TLocalizerProperty): boolean
             begin
               Prop.Translations.Remove(Language);
@@ -2456,7 +2455,7 @@ begin
 
           Assert(Language.TranslatedCount = 0);
 
-          FLocalizerProject.TargetLanguages.Remove(Language.LanguageID);
+          FProject.TargetLanguages.Remove(Language.LanguageID);
         end;
 
       finally
@@ -2465,7 +2464,7 @@ begin
 
       // Add selected languages
       for i := 0 to FormLanguages.TargetLanguageCount-1 do
-        FLocalizerProject.TargetLanguages.Add(FormLanguages.TargetLanguage[i]);
+        FProject.TargetLanguages.Add(FormLanguages.TargetLanguage[i]);
 
       // If we deleted current target language we must select a new one - default to source language
       if (FTargetLanguage = nil) then
@@ -2499,7 +2498,7 @@ resourcestring
   sLocalizerSavePromptTitle = 'Project has not been saved';
   sLocalizerSavePrompt = 'Your changes has not been saved.'#13#13'Do you want to save them now?';
 begin
-  if (FLocalizerProject.Modified) then
+  if (FProject.Modified) then
   begin
     Res := TaskMessageDlg(sLocalizerSavePromptTitle, sLocalizerSavePrompt,
       mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
@@ -2510,7 +2509,7 @@ begin
     if (Res = mrYes) then
     begin
       ActionProjectSave.Execute;
-      Result := (not FLocalizerProject.Modified);
+      Result := (not FProject.Modified);
     end else
       Result := True;
   end else
@@ -2785,9 +2784,9 @@ begin
   if (FTargetLanguage = nil) then
   begin
     if (TargetLanguageID <> 0) then
-      FTargetLanguage := FLocalizerProject.TargetLanguages.Add(TargetLanguageID)
+      FTargetLanguage := FProject.TargetLanguages.Add(TargetLanguageID)
     else
-      FTargetLanguage := FLocalizerProject.TargetLanguages.Add(SourceLanguageID);
+      FTargetLanguage := FProject.TargetLanguages.Add(SourceLanguageID);
   end;
 
   Result := FTargetLanguage;
@@ -2810,7 +2809,7 @@ var
 begin
   ZeroMemory(@Counts, SizeOf(Counts));
 
-  FLocalizerProject.Traverse(
+  FProject.Traverse(
     function(Module: TLocalizerModule): boolean
     begin
       Inc(Counts.CountModule);
@@ -2883,34 +2882,34 @@ begin
   TreeListModules.Clear;
   ClearTargetLanguage;
 
-  FLocalizerProject.BeginUpdate;
+  FProject.BeginUpdate;
   try
 
     FTranslationCounts.Clear;
 
-    FLocalizerProject.Clear;
+    FProject.Clear;
 
-    FLocalizerProject.SourceFilename := SourceFilename;
-    FLocalizerProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, '.drc');
+    FProject.SourceFilename := SourceFilename;
+    FProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, '.drc');
 
-    FLocalizerProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
-    FLocalizerProject.BaseLocaleID := SourceLocaleID;
+    FProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
+    FProject.SourceLanguageID := SourceLocaleID;
 
-    FLocalizerProject.Modified := False;
+    FProject.Modified := False;
 
   finally
-    FLocalizerProject.EndUpdate;
+    FProject.EndUpdate;
   end;
 
   UpdateProjectModifiedIndicator;
 
-  RibbonMain.DocumentName := FLocalizerProject.Name;
+  RibbonMain.DocumentName := FProject.Name;
 
-  SourceLanguageID := FLocalizerProject.BaseLocaleID;
-  TargetLanguageID := FLocalizerProject.BaseLocaleID;
+  SourceLanguageID := FProject.SourceLanguageID;
+  TargetLanguageID := FProject.SourceLanguageID;
 
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
-  TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FLocalizerProject.BaseLocaleID).LanguageName;
+  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
+  TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
 end;
 
 // -----------------------------------------------------------------------------
@@ -3156,7 +3155,7 @@ var
 //  s: string;
   ImageIndex: integer;
 begin
-  if (FLocalizerProject.Modified) then
+  if (FProject.Modified) then
   begin
     FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectModified;
     ImageIndex := ImageIndexModified;
@@ -3170,9 +3169,9 @@ begin
     else
       FStatusBarPanelHint[cStatusBarPanelModified] := sLocalizerProjectBackupAutoSaveDisabledProject
     else
-    if (FLocalizerProject.BackupTimestamp <> 0) then
+    if (FProject.BackupTimestamp <> 0) then
     begin
-      if (FLocalizerProject.NeedBackup) then
+      if (FProject.NeedBackup) then
         s := sLocalizerProjectBackupTimestampModified
       else
       begin
@@ -3180,11 +3179,11 @@ begin
         ImageIndex := ImageIndexFileSaveProtected;
       end;
 
-      FStatusBarPanelHint[StatusBarPanelModified] := Format(s, [TimeToStr(FLocalizerProject.BackupTimestamp)]);
+      FStatusBarPanelHint[StatusBarPanelModified] := Format(s, [TimeToStr(FProject.BackupTimestamp)]);
     end else
       FStatusBarPanelHint[StatusBarPanelModified] := sLocalizerProjectBackupNone;
 
-    if (psBackup in FLocalizerProject.State) then
+    if (psBackup in FProject.State) then
       ImageIndex := ImageIndexFileSaveWorking;
 *)
   end else
@@ -3195,7 +3194,7 @@ begin
   TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelModified].PanelStyle).ImageIndex := ImageIndex;
 
   StatusBar.Panels[StatusBarPanelStats].Text := Format(sLocalizerStatusCount,
-    [1.0*FLocalizerProject.StatusCount[ItemStatusTranslate], 1.0*FLocalizerProject.StatusCount[ItemStatusDontTranslate], 1.0*FLocalizerProject.StatusCount[ItemStatusHold]]);
+    [1.0*FProject.StatusCount[ItemStatusTranslate], 1.0*FProject.StatusCount[ItemStatusDontTranslate], 1.0*FProject.StatusCount[ItemStatusHold]]);
 
   StatusBar.Update;
 end;
@@ -3338,7 +3337,7 @@ begin
 
   Found := False;
 
-  FLocalizerProject.Traverse(
+  FProject.Traverse(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
