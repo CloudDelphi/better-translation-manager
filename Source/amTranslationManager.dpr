@@ -5,6 +5,8 @@ uses
   madListModules,
   SysUtils,
   Vcl.Forms,
+  Dialogs,
+  UITypes,
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {Form4},
   amLocalization.Model in 'amLocalization.Model.pas',
   amLocalization.Dialog.NewProject in 'amLocalization.Dialog.NewProject.pas' {FormNewProject},
@@ -24,11 +26,94 @@ uses
   amLocalization.Translator in 'amLocalization.Translator.pas',
   amLocalization.Settings in 'amLocalization.Settings.pas',
   amLocalization.Dialog.Settings in 'amLocalization.Dialog.Settings.pas' {FormSettings},
-  amLocalization.Dialog.SelectModule in 'amLocalization.Dialog.SelectModule.pas' {FormSelectModule};
+  amLocalization.Dialog.SelectModule in 'amLocalization.Dialog.SelectModule.pas' {FormSelectModule},
+  amLocalization.CommandLine in 'amLocalization.CommandLine.pas';
 
 {$R *.res}
 
+type
+  TCommandLineGUILogger = class(TInterfacedObject, ICommandLineLogger)
+  private
+    FMessages: string;
+    FHasWarnings: boolean;
+    FHasErrors: boolean;
+  protected
+    procedure DisplayMessages;
+  private
+    // ICommandLineLogger
+    procedure Message(const Msg: string);
+    procedure Error(const Msg: string);
+    procedure Warning(const Msg: string);
+  public
+    destructor Destroy; override;
+  end;
+
+destructor TCommandLineGUILogger.Destroy;
 begin
+  DisplayMessages;
+  inherited;
+end;
+
+procedure TCommandLineGUILogger.DisplayMessages;
+var
+  DialogType: TMsgDlgType;
+begin
+  if (FMessages = '') then
+    Exit;
+
+  if (FHasErrors) then
+    DialogType := mtError
+  else
+  if (FHasWarnings) then
+    DialogType := mtWarning
+  else
+    DialogType := mtInformation;
+
+  MessageDlg(FMessages, DialogType, [mbOK], 0);
+
+  FMessages := '';
+  FHasErrors := False;
+  FHasWarnings := False;
+end;
+
+procedure TCommandLineGUILogger.Error(const Msg: string);
+begin
+  FMessages := FMessages + Format('Error: %s', [Msg]);
+  FHasErrors := True;
+
+  DisplayMessages;
+
+  Halt(1);
+end;
+
+procedure TCommandLineGUILogger.Message(const Msg: string);
+begin
+  FMessages := FMessages + Msg;
+end;
+
+procedure TCommandLineGUILogger.Warning(const Msg: string);
+begin
+  FMessages := FMessages + Format('Warning: %s', [Msg]);
+  FHasWarnings := True;
+end;
+
+var
+  CommandLineTool: TLocalizationCommandLineTool;
+begin
+  if (ParamCount > 0) then
+  begin
+    CommandLineTool := TLocalizationCommandLineTool.Create(TCommandLineGUILogger.Create);
+    try
+
+      CommandLineTool.Execute;
+
+    finally
+      CommandLineTool.Free;
+    end;
+
+    Exit;
+  end;
+
   if (CheckWin32Version(6, 0)) then
   begin
     // Application.DefaultFont is the font used when TForm.ParentFont=True.

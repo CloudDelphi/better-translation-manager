@@ -1,16 +1,21 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{37DFBCD3-209C-472F-B667-74407DBC7456}</ProjectGuid>
-        <ProjectVersion>18.6</ProjectVersion>
-        <FrameworkType>VCL</FrameworkType>
-        <MainSource>amTranslationManager.dpr</MainSource>
+        <ProjectGuid>{AEE2318E-D69F-4129-A284-D37E6FEFF4BC}</ProjectGuid>
+        <ProjectVersion>18.4</ProjectVersion>
+        <FrameworkType>None</FrameworkType>
+        <MainSource>amResourceModuleBuilder.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
-        <AppType>Application</AppType>
+        <AppType>Console</AppType>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Android' and '$(Base)'=='true') or '$(Base_Android)'!=''">
+        <Base_Android>true</Base_Android>
+        <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Base)'=='true') or '$(Base_Win32)'!=''">
@@ -39,12 +44,6 @@
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
-        <Cfg_2_Win32>true</Cfg_2_Win32>
-        <CfgParent>Cfg_2</CfgParent>
-        <Cfg_2>true</Cfg_2>
-        <Base>true</Base>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_DcuOutput>..\Lib\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>..\Bin\$(Platform)\$(Config)</DCC_ExeOutput>
@@ -55,30 +54,39 @@
         <DCC_K>false</DCC_K>
         <DCC_UsePackage>RESTComponents;FireDACIBDriver;FireDACCommon;RESTBackendComponents;soapserver;CloudService;FireDACCommonDriver;inet;FireDAC;FireDACSqliteDriver;soaprtl;soapmidas;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-        <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
-        <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
-        <SanitizedProjectName>amTranslationManager</SanitizedProjectName>
+        <SanitizedProjectName>amResourceModuleBuilder</SanitizedProjectName>
         <VerInfo_Locale>1030</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <DCC_OutputDRCFile>true</DCC_OutputDRCFile>
-        <DCC_DebugDCUs>true</DCC_DebugDCUs>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Android)'!=''">
+        <DCC_UsePackage>DBXSqliteDriver;DBXInterBaseDriver;tethering;fmx;dbexpress;IndyCore;dsnap;bindengine;IndyIPCommon;IndyIPServer;IndySystem;fmxFireDAC;DbxCommonDriver;xmlrtl;rtl;DbxClientDriver;CustomIPTransport;IndyIPClient;dbxcds;dsnapxml;dbrtl;IndyProtocols;$(DCC_UsePackage)</DCC_UsePackage>
+        <Android_LauncherIcon36>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png</Android_LauncherIcon36>
+        <Android_LauncherIcon48>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_48x48.png</Android_LauncherIcon48>
+        <Android_LauncherIcon72>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_72x72.png</Android_LauncherIcon72>
+        <Android_LauncherIcon96>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_96x96.png</Android_LauncherIcon96>
+        <Android_LauncherIcon144>$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png</Android_LauncherIcon144>
+        <Android_SplashImage426>$(BDS)\bin\Artwork\Android\FM_SplashImage_426x320.png</Android_SplashImage426>
+        <Android_SplashImage470>$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png</Android_SplashImage470>
+        <Android_SplashImage640>$(BDS)\bin\Artwork\Android\FM_SplashImage_640x480.png</Android_SplashImage640>
+        <Android_SplashImage960>$(BDS)\bin\Artwork\Android\FM_SplashImage_960x720.png</Android_SplashImage960>
+        <EnabledSysJars>android-support-v4.dex.jar;cloud-messaging.dex.jar;fmx.dex.jar;google-analytics-v2.dex.jar;google-play-billing.dex.jar;google-play-licensing.dex.jar;google-play-services-ads-7.0.0.dex.jar;google-play-services-analytics-7.0.0.dex.jar;google-play-services-base-7.0.0.dex.jar;google-play-services-gcm-7.0.0.dex.jar;google-play-services-identity-7.0.0.dex.jar;google-play-services-maps-7.0.0.dex.jar;google-play-services-panorama-7.0.0.dex.jar;google-play-services-plus-7.0.0.dex.jar;google-play-services-wallet-7.0.0.dex.jar</EnabledSysJars>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>DBXSqliteDriver;dxCoreRS25;dxSpreadSheetCoreDialogsRS25;DBXInterBaseDriver;TeeDB925;dxRichEditControlCoreRS25;vclactnband;dxRibbonCustomizationFormRS25;vclFireDAC;cxExportRS25;dxPSPrVwRibbonRS25;cxSchedulerTreeBrowserRS25;dxSpreadSheetInplaceRichEditRS25;dxHttpIndyRequestRS25;tethering;svnui;dxPScxCommonRS25;HMT_SKINRS25;FireDACADSDriver;BasicUtilsD10Tokyo;cxPivotGridOLAPRS25;IFxEditorsD10Tokyo;dxPSdxFCLnkRS25;dxRichEditCoreRS25;cxSchedulerGridRS25;vcltouch;vcldb;svn;inetdb;TeeImport925;dxGaugeControlRS25;cxLibraryRS25;fmx;fmxdae;dxPScxPivotGridLnkRS25;dxBarDBNavRS25;dxTabbedMDIRS25;IFX_MetropolisRS25;dxFlowChartAdvancedCustomizeFormRS25;MonthYearScrollPackageD10Tokyo;HRS_SkinRS25;dbexpress;IndyCore;Tee925;dxFlowChartRS25;vclx;dxRichEditDocumentModelRS25;dsnap;dxBarRS25;dxSpreadSheetConditionalFormattingDialogsRS25;TeeWorld925;TeeTree2D25Tee9;dxTileControlRS25;dxdborRS25;dxMapControlRS25;dxPDFViewerRS25;dxDockingRS25;VCLRESTComponents;dxPScxExtCommonRS25;cxPivotGridRS25;KaiCompD10Tokyo;dxPSLnksRS25;dxWizardControlRS25;dxSpreadSheetReportDesignerRS25;dxNavBarRS25;dxRichEditControlRS25;dxPSdxSpreadSheetLnkRS25;vclie;cxSchedulerRibbonStyleEventEditorRS25;bindengine;DBXMySQLDriver;dxFireDACServerModeRS25;FireDACMySQLDriver;cxStatusKeeperPackageRS25;FireDACCommonODBC;cxTreeListRS25;dxPSdxPDFViewerLnkRS25;IFX_OptimizerBlueRS25;IndyIPCommon;dxPSdxLCLnkRS25;vcl;IndyIPServer;dxPScxVGridLnkRS25;P164_R2010;dxBarExtItemsRS25;IndySystem;TeeUI925;dxComnRS25;dxSkinsCoreRS25;dxPSdxDBTVLnkRS25;dsnapcon;madExcept_;dxPSRichEditControlLnkRS25;FireDACMSAccDriver;fmxFireDAC;vclimg;madBasic_;TeeMaker125;dxSpreadSheetCoreRS25;dxServerModeRS25;dxPScxPCProdRS25;dxdbtrRS25;dxSpreadSheetRS25;dxPScxTLLnkRS25;Skin_Horizon_PlannerRS25;TeeGL925;FireDACPgDriver;SPMEventsPackageD10Tokyo;IFXTrafficLightD10Tokyo;TeePro925;LicenceManager2D10Tokyo;dxPScxSchedulerLnkRS25;cxGridRS25;dxSpreadSheetCoreConditionalFormattingDialogsRS25;DbxCommonDriver;dxorgcRS25;dxCloudServiceLibraryRS25;Skin_Horizon_dagkalkyleRS25;xmlrtl;dxPsPrVwAdvRS25;fmxobj;vclwinx;dxPScxGridLnkRS25;rtl;madDisAsm_;DbxClientDriver;dxRichEditInplaceRS25;cxTreeListdxBarPopupMenuRS25;dxPSCoreRS25;CustomIPTransport;vcldsnap;dxmdsRS25;cxSchedulerWebServiceStorageRS25;dxPSdxOCLnkRS25;HorizonMT_AltRS25;GUITranslatorPackageD10Tokyo;TCPFileTransferPackageD10Tokyo;appanalytics;cxPivotGridChartRS25;IndyIPClient;IFXMemDataPackageD10Tokyo;dxBarExtDBItemsRS25;cxSchedulerRS25;SynEdit_R;dxDBXServerModeRS25;dxGDIPlusRS25;dxPSdxGaugeControlLnkRS25;dbxcds;VclSmp;adortl;TeeImage925;dclcxStatusKeeperPackageRS25;dxPSdxDBOCLnkRS25;TeeLanguage925;dxRibbonRS25;dsnapxml;dxSpellCheckerRS25;dbrtl;IndyProtocols;inetdbxpress;cxVerticalGridRS25;dxtrmdRS25;dxFlowChartDesignerRS25;dxADOServerModeRS25;dxPSdxMapControlLnkRS25;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=BTM;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <DCC_ConsoleTarget>true</DCC_ConsoleTarget>
+        <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
+        <Manifest_File>(None)</Manifest_File>
+        <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
+        <Debugger_RunParams>-?</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <DCC_UsePackage>DBXSqliteDriver;dxCoreRS25;dxSpreadSheetCoreDialogsRS25;DBXInterBaseDriver;dxRichEditControlCoreRS25;vclactnband;dxRibbonCustomizationFormRS25;vclFireDAC;cxExportRS25;dxPSPrVwRibbonRS25;cxSchedulerTreeBrowserRS25;dxSpreadSheetInplaceRichEditRS25;dxHttpIndyRequestRS25;tethering;dxPScxCommonRS25;HMT_SKINRS25;FireDACADSDriver;BasicUtilsD10Tokyo;cxPivotGridOLAPRS25;IFxEditorsD10Tokyo;dxPSdxFCLnkRS25;dxRichEditCoreRS25;cxSchedulerGridRS25;vcltouch;vcldb;inetdb;dxGaugeControlRS25;cxLibraryRS25;fmx;fmxdae;dxPScxPivotGridLnkRS25;dxBarDBNavRS25;dxTabbedMDIRS25;IFX_MetropolisRS25;dxFlowChartAdvancedCustomizeFormRS25;HRS_SkinRS25;dbexpress;IndyCore;dxFlowChartRS25;vclx;dxRichEditDocumentModelRS25;dsnap;dxBarRS25;dxSpreadSheetConditionalFormattingDialogsRS25;dxTileControlRS25;dxdborRS25;dxMapControlRS25;dxPDFViewerRS25;dxDockingRS25;VCLRESTComponents;dxPScxExtCommonRS25;cxPivotGridRS25;dxPSLnksRS25;dxWizardControlRS25;dxSpreadSheetReportDesignerRS25;dxNavBarRS25;dxRichEditControlRS25;dxPSdxSpreadSheetLnkRS25;vclie;cxSchedulerRibbonStyleEventEditorRS25;bindengine;DBXMySQLDriver;dxFireDACServerModeRS25;FireDACMySQLDriver;FireDACCommonODBC;cxTreeListRS25;dxPSdxPDFViewerLnkRS25;IFX_OptimizerBlueRS25;IndyIPCommon;dxPSdxLCLnkRS25;vcl;IndyIPServer;dxPScxVGridLnkRS25;dxBarExtItemsRS25;IndySystem;dxComnRS25;dxSkinsCoreRS25;dxPSdxDBTVLnkRS25;dsnapcon;dxPSRichEditControlLnkRS25;FireDACMSAccDriver;fmxFireDAC;vclimg;dxSpreadSheetCoreRS25;dxServerModeRS25;dxPScxPCProdRS25;dxdbtrRS25;dxSpreadSheetRS25;dxPScxTLLnkRS25;Skin_Horizon_PlannerRS25;FireDACPgDriver;IFXTrafficLightD10Tokyo;dxPScxSchedulerLnkRS25;cxGridRS25;dxSpreadSheetCoreConditionalFormattingDialogsRS25;DbxCommonDriver;dxorgcRS25;dxCloudServiceLibraryRS25;Skin_Horizon_dagkalkyleRS25;xmlrtl;dxPsPrVwAdvRS25;fmxobj;vclwinx;dxPScxGridLnkRS25;rtl;DbxClientDriver;dxRichEditInplaceRS25;cxTreeListdxBarPopupMenuRS25;dxPSCoreRS25;CustomIPTransport;vcldsnap;dxmdsRS25;cxSchedulerWebServiceStorageRS25;dxPSdxOCLnkRS25;HorizonMT_AltRS25;appanalytics;cxPivotGridChartRS25;IndyIPClient;dxBarExtDBItemsRS25;cxSchedulerRS25;SynEdit_R;dxDBXServerModeRS25;dxGDIPlusRS25;dxPSdxGaugeControlLnkRS25;dbxcds;VclSmp;adortl;dxPSdxDBOCLnkRS25;dxRibbonRS25;dsnapxml;dxSpellCheckerRS25;dbrtl;IndyProtocols;inetdbxpress;cxVerticalGridRS25;dxtrmdRS25;dxFlowChartDesignerRS25;dxADOServerModeRS25;dxPSdxMapControlLnkRS25;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_ConsoleTarget>true</DCC_ConsoleTarget>
+        <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -90,19 +98,8 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <DCC_DebugInfoInExe>false</DCC_DebugInfoInExe>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
-        <DCC_MapFile>3</DCC_MapFile>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.6;InternalName=BTM;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-        <VerInfo_Build>6</VerInfo_Build>
-        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
-        <Debugger_RunParams>-?</Debugger_RunParams>
+        <Manifest_File>(None)</Manifest_File>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -110,68 +107,10 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=BTM;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-    </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="amLocalization.Dialog.Main.pas">
-            <Form>Form4</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Model.pas"/>
-        <DCCReference Include="amLocalization.Dialog.NewProject.pas">
-            <Form>FormNewProject</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Import.XLIFF.pas"/>
-        <DCCReference Include="amLocalization.ResourceWriter.pas"/>
-        <DCCReference Include="amLocalization.Persistence.pas"/>
-        <DCCReference Include="amLocalization.Engine.pas"/>
-        <DCCReference Include="amLocalization.Dialog.TextEdit.pas">
-            <Form>FormTextEditor</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Dialog.Languages.pas">
-            <Form>FormLanguages</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Data.Main.pas">
-            <Form>DataModuleMain</Form>
-            <DesignClass>TDataModule</DesignClass>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Translator.Microsoft.Version3.pas">
-            <Form>DataModuleTranslatorMicrosoftV3</Form>
-            <DesignClass>TDataModule</DesignClass>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Dialog.Search.pas">
-            <Form>FormSearch</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Dialog.TranslationMemory.pas">
-            <Form>FormTranslationMemory</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Translator.TM.pas">
-            <Form>DataModuleTranslationMemory</Form>
-            <DesignClass>TDataModule</DesignClass>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Utils.pas"/>
-        <DCCReference Include="amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas">
-            <Form>FormSelectDuplicate</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Translator.pas"/>
-        <DCCReference Include="amLocalization.Settings.pas"/>
-        <DCCReference Include="amLocalization.Dialog.Settings.pas">
-            <Form>FormSettings</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.Dialog.SelectModule.pas">
-            <Form>FormSelectModule</Form>
-        </DCCReference>
-        <DCCReference Include="amLocalization.CommandLine.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -190,7 +129,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">amTranslationManager.dpr</Source>
+                    <Source Name="MainSource">amResourceModuleBuilder.dpr</Source>
                 </Source>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclbindcomp250.bpl">Embarcadero LiveBindings Components</Excluded_Packages>
@@ -203,9 +142,29 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
-                <DeployFile LocalName="..\Bin\Win32\Debug\amTranslationManager.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="$(BDS)\Redist\osx32\libcgunwind.1.0.dylib" Class="DependencyModule">
+                    <Platform Name="OSX32">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="$(BDS)\Redist\iossimulator\libcgunwind.1.0.dylib" Class="DependencyModule">
+                    <Platform Name="iOSSimulator">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="$(BDS)\Redist\iossimulator\libPCRE.dylib" Class="DependencyModule">
+                    <Platform Name="iOSSimulator">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="$(BDS)\Redist\osx32\libcgsqlite3.dylib" Class="DependencyModule">
+                    <Platform Name="OSX32">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win32\Debug\amResourceModuleBuilder.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>amTranslationManager.exe</RemoteName>
+                        <RemoteName>amResourceModuleBuilder.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -225,12 +184,6 @@
                 <DeployClass Name="AndroidClassesDexFile">
                     <Platform Name="Android">
                         <RemoteDir>classes</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidFileProvider">
-                    <Platform Name="Android">
-                        <RemoteDir>res\xml</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
@@ -267,12 +220,6 @@
                 <DeployClass Name="AndroidSplashStyles">
                     <Platform Name="Android">
                         <RemoteDir>res\values</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidSplashStylesV21">
-                    <Platform Name="Android">
-                        <RemoteDir>res\values-v21</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
@@ -557,12 +504,6 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="ProjectOSXDebug">
-                    <Platform Name="OSX64">
-                        <RemoteDir>..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
                 <DeployClass Name="ProjectOSXEntitlements">
                     <Platform Name="OSX32">
                         <RemoteDir>..\</RemoteDir>
@@ -641,10 +582,10 @@
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="OSX64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
+                <Platform value="Android">False</Platform>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">False</Platform>
             </Platforms>

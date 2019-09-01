@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{F485564E-F29A-4F60-AB30-317D3FA54E7D}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="amTranslationManager.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="amResourceModuleBuilder.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="amTranslationManager">
+        <MSBuild Projects="amTranslationManager.dproj"/>
+    </Target>
+    <Target Name="amTranslationManager:Clean">
+        <MSBuild Projects="amTranslationManager.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="amTranslationManager:Make">
+        <MSBuild Projects="amTranslationManager.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="amResourceModuleBuilder">
+        <MSBuild Projects="amResourceModuleBuilder.dproj"/>
+    </Target>
+    <Target Name="amResourceModuleBuilder:Clean">
+        <MSBuild Projects="amResourceModuleBuilder.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="amResourceModuleBuilder:Make">
+        <MSBuild Projects="amResourceModuleBuilder.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="amTranslationManager;amResourceModuleBuilder"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="amTranslationManager:Clean;amResourceModuleBuilder:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="amTranslationManager:Make;amResourceModuleBuilder:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
