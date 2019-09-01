@@ -472,6 +472,7 @@ uses
   dxSpellCheckerDialogs,
 
   amCursorService,
+  amVersionInfo,
 
   amLocalization.Engine,
   amLocalization.ResourceWriter,
@@ -667,6 +668,8 @@ end;
 
 procedure TFormMain.SaveSettings;
 begin
+  TranslationManagerSettings.Version := TVersionInfo.FileVersionString(ParamStr(0));
+
   SaveRecentFiles;
 
   TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
