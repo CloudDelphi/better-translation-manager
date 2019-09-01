@@ -1,14 +1,12 @@
-unit amLocale;
+﻿unit amLocale;
 
-// -----------------------------------------------------------------------------
-// Integrated Resource Editor for Delphi
-// The original author is Anders Melander, anders@melander.dk, http://melander.dk
-// Copyright � 2008-2014 Anders Melander
-// -----------------------------------------------------------------------------
-// License:
-// Creative Commons Attribution-Share Alike 3.0 Unported
-// http://creativecommons.org/licenses/by-sa/3.0/
-// -----------------------------------------------------------------------------
+(*
+ * Copyright © 2014 Anders Melander
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *)
 
 {$WARN UNIT_PLATFORM OFF}
 {$WARN SYMBOL_PLATFORM OFF}

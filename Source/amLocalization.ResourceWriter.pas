@@ -1,4 +1,12 @@
-unit amLocalization.ResourceWriter;
+﻿unit amLocalization.ResourceWriter;
+
+(*
+ * Copyright © 2019 Anders Melander
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *)
 
 {$define INTERNAL_RESOURCE_MODULE}
 {$WARN SYMBOL_PLATFORM OFF}
