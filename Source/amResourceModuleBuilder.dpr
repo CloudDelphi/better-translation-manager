@@ -3,6 +3,7 @@ program amResourceModuleBuilder;
 {$APPTYPE CONSOLE}
 
 {$R *.res}
+{$R amTranslationManager.res}
 
 uses
   System.SysUtils,

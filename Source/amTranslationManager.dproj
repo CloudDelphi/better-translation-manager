@@ -102,7 +102,6 @@
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
         <VerInfo_Build>6</VerInfo_Build>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
-        <Debugger_RunParams>-?</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>

@@ -46,7 +46,7 @@ type
   end;
 
 resourcestring
-  sCommandLineTitle = 'amTranslationManager resource module builder';
+  sCommandLineTitle = 'amTranslationManager resource module builder version %s';
   sCommandLineHelp = 'Usage: %s <projectfile> [options]'+#13#13+
     'Options:'+#13+
     '  -?               Display help (this message)'+#13+
@@ -61,6 +61,7 @@ uses
   StrUtils,
   Windows,
   amLocale,
+  amVersionInfo,
   amLocalization.Persistence,
   amLocalization.ResourceWriter,
   amLocalization.Engine;
@@ -130,8 +131,17 @@ begin
 end;
 
 procedure TLocalizationCommandLineTool.Header;
+var
+  VersionInfo: TVersionInfo;
 begin
-  Message(sCommandLineTitle+#13);
+  VersionInfo := TVersionInfo.Create(ParamStr(0));
+  try
+
+    Message(Format(sCommandLineTitle, [TVersionInfo.VersionToString(VersionInfo.FileVersion)])+#13);
+
+  finally
+    VersionInfo.Free;
+  end;
 end;
 
 procedure TLocalizationCommandLineTool.Help;
