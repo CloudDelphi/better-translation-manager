@@ -55,7 +55,7 @@ type
     procedure LoadTranslationMemory(const Filename: string);
     procedure SaveTranslationMemory(const Filename: string);
     function CheckSave: boolean;
-    function CheckLoaded: boolean;
+    function CheckLoaded(Force: boolean = False): boolean;
 
     property IsLoaded: boolean read FLoaded;
     property IsAvailable: boolean read GetAvailable;
@@ -92,14 +92,14 @@ type
 
   TTerms = TList<TTerm>;
 
-function TDataModuleTranslationMemory.CheckLoaded: boolean;
+function TDataModuleTranslationMemory.CheckLoaded(Force: boolean): boolean;
 var
   Res: integer;
 resourcestring
   sLocalizerNoTMFileTitle = 'Translation Memory does not exist';
   sLocalizerNoTMFile = 'The Translation Memory file does not exist.'#13#13'Filename: %s'#13#13'A new file will be created when you save the Translation Memory.'#13#13'Do you want to save an new empty file now?';
 begin
-  if (not FLoaded) and (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand) then
+  if (not FLoaded) and ((Force) or (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand)) then
   begin
     if (not TFile.Exists(TranslationManagerSettings.Translators.TranslationMemory.Filename)) then
     begin

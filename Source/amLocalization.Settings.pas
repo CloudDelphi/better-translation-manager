@@ -437,7 +437,7 @@ const
 begin
 {$ifdef DEBUG}
   // Place stuff with .exe during development so we don't have to hunt for it
-  Result := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName)) + sApplicationFolder;
+  Result := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName));
 {$else DEBUG}
   // We should use AppData but for now Documents will do and is easier to locate
   Result := IncludeTrailingPathDelimiter(TPath.GetDocumentsPath) + sApplicationFolder;
