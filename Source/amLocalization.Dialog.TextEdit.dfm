@@ -1,88 +1,137 @@
-object FormTextEditor: TFormTextEditor
-  Left = 0
-  Top = 0
-  ActiveControl = EditText
+inherited FormTextEditor: TFormTextEditor
   BorderIcons = [biSystemMenu, biMaximize]
   BorderStyle = bsSizeToolWin
   Caption = 'Edit text'
-  ClientHeight = 335
-  ClientWidth = 664
-  Color = clBtnFace
-  DoubleBuffered = True
-  ParentFont = True
+  ClientHeight = 375
+  ClientWidth = 597
   KeyPreview = True
-  OldCreateOrder = False
-  Position = poOwnerFormCenter
-  ShowHint = True
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
+  ExplicitWidth = 613
+  ExplicitHeight = 409
   PixelsPerInch = 96
   TextHeight = 13
-  object Panel1: TPanel
-    Left = 0
-    Top = 299
-    Width = 664
-    Height = 36
-    Align = alBottom
-    BevelOuter = bvNone
-    FullRepaint = False
-    TabOrder = 0
-    DesignSize = (
-      664
-      36)
-    object ButtonOK: TcxButton
-      Left = 498
-      Top = 6
-      Width = 75
-      Height = 25
-      Anchors = [akTop, akRight]
-      Caption = 'OK'
-      Default = True
-      ModalResult = 1
-      TabOrder = 0
-    end
-    object ButtonCancel: TcxButton
-      Left = 579
-      Top = 6
-      Width = 75
-      Height = 25
-      Anchors = [akTop, akRight]
-      Cancel = True
-      Caption = 'Cancel'
-      ModalResult = 2
-      TabOrder = 1
-    end
-  end
-  object EditText: TcxRichEdit
-    AlignWithMargins = True
-    Left = 330
-    Top = 32
-    Margins.Left = 0
-    Margins.Top = 4
-    Margins.Right = 4
-    Margins.Bottom = 0
-    Align = alClient
-    PopupMenu = PopupActionBar1
-    Properties.MemoMode = True
-    Properties.PlainText = True
-    Properties.ScrollBars = ssVertical
+  inherited LayoutControlButtons: TdxLayoutControl
+    Top = 327
+    Width = 597
     TabOrder = 1
-    Height = 267
-    Width = 330
+    ExplicitTop = 287
+    ExplicitWidth = 664
+    inherited ButtonOK: TcxButton
+      Left = 430
+      ExplicitLeft = 430
+    end
+    inherited ButtonCancel: TcxButton
+      Left = 511
+      ExplicitLeft = 511
+    end
   end
-  object ToolActionBar2: TActionToolBar
+  inherited LayoutControlHeader: TdxLayoutControl
+    Width = 597
+    TabOrder = 0
+    Visible = False
+    ExplicitWidth = 664
+    inherited LabelHeader: TcxLabel
+      ExplicitWidth = 575
+      Width = 575
+    end
+  end
+  inherited PanelMain: TPanel
+    Top = 65
+    Width = 597
+    Height = 262
+    ExplicitLeft = 334
+    ExplicitTop = 67
+    ExplicitWidth = 330
+    ExplicitHeight = 220
+    inherited LayoutControl: TdxLayoutControl
+      Width = 581
+      Height = 250
+      ExplicitLeft = 8
+      ExplicitTop = 4
+      ExplicitWidth = 648
+      ExplicitHeight = 201
+      object PanelEditors: TPanel [0]
+        Left = 6
+        Top = 6
+        Width = 569
+        Height = 238
+        BevelOuter = bvNone
+        FullRepaint = False
+        ShowCaption = False
+        TabOrder = 0
+        object EditSourceText: TcxRichEdit
+          Left = 0
+          Top = 0
+          Align = alLeft
+          PopupMenu = PopupActionBar1
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          Style.TextColor = clGrayText
+          TabOrder = 0
+          Height = 238
+          Width = 277
+        end
+        object EditText: TcxRichEdit
+          Left = 285
+          Top = 0
+          Align = alClient
+          PopupMenu = PopupActionBar1
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          TabOrder = 1
+          ExplicitLeft = 463
+          ExplicitTop = 6
+          ExplicitWidth = 227
+          ExplicitHeight = 179
+          Height = 238
+          Width = 284
+        end
+        object SplitterEditors: TcxSplitter
+          Left = 277
+          Top = 0
+          Width = 8
+          Height = 238
+          HotZoneClassName = 'TcxSimpleStyle'
+          ExplicitLeft = 216
+          ExplicitTop = 44
+          ExplicitHeight = 100
+        end
+      end
+      inherited LayoutControlGroup_Root: TdxLayoutGroup
+        AlignVert = avClient
+        LayoutDirection = ldHorizontal
+      end
+      object LayoutItemEditors: TdxLayoutItem
+        Parent = LayoutControlGroup_Root
+        AlignHorz = ahClient
+        AlignVert = avClient
+        CaptionOptions.Visible = False
+        Control = PanelEditors
+        ControlOptions.AutoColor = True
+        ControlOptions.OriginalHeight = 179
+        ControlOptions.OriginalWidth = 443
+        ControlOptions.ShowBorder = False
+        Index = 0
+      end
+    end
+  end
+  object ToolActionBar2: TActionToolBar [3]
     Left = 0
-    Top = 0
-    Width = 664
-    Height = 28
+    Top = 39
+    Width = 597
+    Height = 26
     ActionManager = ActionManager1
     Color = clMenuBar
     ColorMap.DisabledFontColor = 7171437
     ColorMap.HighlightColor = clWhite
     ColorMap.BtnSelectedFont = clBlack
     ColorMap.UnusedColor = clWhite
-    EdgeBorders = [ebBottom]
-    EdgeOuter = esLowered
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clBlack
     Font.Height = -11
@@ -90,34 +139,8 @@ object FormTextEditor: TFormTextEditor
     Font.Style = []
     ParentFont = False
     Spacing = 0
-  end
-  object EditSourceText: TcxRichEdit
-    AlignWithMargins = True
-    Left = 4
-    Top = 32
-    Margins.Left = 4
-    Margins.Top = 4
-    Margins.Right = 0
-    Margins.Bottom = 0
-    Align = alLeft
-    PopupMenu = PopupActionBar1
-    Properties.MemoMode = True
-    Properties.PlainText = True
-    Properties.ReadOnly = True
-    Properties.ScrollBars = ssVertical
-    Style.TextColor = clGrayText
-    TabOrder = 3
-    Height = 267
-    Width = 322
-  end
-  object Splitter: TcxSplitter
-    Left = 326
-    Top = 28
-    Width = 4
-    Height = 271
-    HotZoneClassName = 'TcxSimpleStyle'
-    AutoSnap = True
-    ResizeUpdate = True
+    ExplicitWidth = 664
+    ExplicitHeight = 28
   end
   object ImageListNormal: TcxImageList
     SourceDPI = 96
@@ -673,10 +696,6 @@ object FormTextEditor: TFormTextEditor
       Caption = 'F&ind First'
       Hint = 'Find First|Finds the first occurance of specified text'
     end
-  end
-  object ActionList1: TActionList
-    Left = 208
-    Top = 136
   end
   object PopupActionBar1: TPopupActionBar
     Images = ImageListNormal

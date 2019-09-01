@@ -19,29 +19,17 @@ uses
   cxEdit, dxLayoutcxEditAdapters, dxLayoutContainer, dxLayoutControlAdapters, cxButtons,
   cxListView, cxLabel, cxClasses, dxLayoutControl, cxCheckBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
 
-  amLocalization.Model;
+  amLocalization.Dialog,
+  amLocalization.Model, Vcl.ExtCtrls;
 
 type
   TDuplicateAction = (daPrompt, daFirst, daFirstAll, daSkip, daSkipAll, daAbort);
 
-  TFormSelectDuplicate = class(TForm)
-    LayoutControlGroup_Root: TdxLayoutGroup;
-    LayoutControl: TdxLayoutControl;
-    dxLayoutLabeledItem1: TdxLayoutLabeledItem;
+  TFormSelectDuplicate = class(TFormDialog)
     dxLayoutItem1: TdxLayoutItem;
     LabelSourceValue: TcxLabel;
     ListViewDuplicates: TcxListView;
     dxLayoutItem2: TdxLayoutItem;
-    dxLayoutItem3: TdxLayoutItem;
-    ButtonOK: TcxButton;
-    dxLayoutGroup1: TdxLayoutGroup;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
-    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
-    ActionList1: TActionList;
-    ActionOK: TAction;
-    ActionCancel: TAction;
-    dxLayoutItem4: TdxLayoutItem;
-    ButtonCancel: TcxButton;
     CheckBoxAll: TcxCheckBox;
     dxLayoutItem5: TdxLayoutItem;
     ComboBoxAction: TcxComboBox;

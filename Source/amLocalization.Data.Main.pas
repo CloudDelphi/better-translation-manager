@@ -41,6 +41,7 @@ type
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     EditRepository: TcxEditRepository;
     EditRepositoryTextItem: TcxEditRepositoryButtonItem;
+    LayoutSkinLookAndFeelHeader: TdxLayoutSkinLookAndFeel;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);

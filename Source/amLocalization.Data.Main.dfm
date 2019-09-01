@@ -101,6 +101,12 @@ object DataModuleMain: TDataModuleMain
       Offsets.RootItemsAreaOffsetVert = 4
       PixelsPerInch = 96
     end
+    object LayoutSkinLookAndFeelHeader: TdxLayoutSkinLookAndFeel
+      GroupOptions.Color = clBtnFace
+      Offsets.RootItemsAreaOffsetHorz = 8
+      Offsets.RootItemsAreaOffsetVert = 8
+      PixelsPerInch = 96
+    end
   end
   object EditRepository: TcxEditRepository
     Left = 196

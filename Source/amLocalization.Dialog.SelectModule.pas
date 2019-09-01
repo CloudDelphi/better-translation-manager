@@ -16,25 +16,14 @@ uses
   dxSkinsCore, Vcl.Menus, dxLayoutcxEditAdapters, dxLayoutControlAdapters, System.Actions, Vcl.ActnList, dxLayoutContainer,
   cxClasses, Vcl.StdCtrls, cxButtons, dxLayoutControl, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox, cxTextEdit, cxMaskEdit,
   cxDropDownEdit,
-  amLocalization.Model;
+  amLocalization.Dialog,
+  amLocalization.Model, Vcl.ExtCtrls, cxLabel;
 
 
 type
-  TFormSelectModule = class(TForm)
-    LayoutControl: TdxLayoutControl;
+  TFormSelectModule = class(TFormDialog)
     ComboBoxModule: TcxComboBox;
-    ButtonOK: TcxButton;
-    ButtonCancel: TcxButton;
-    LayoutControlGroup_Root: TdxLayoutGroup;
     dxLayoutItem1: TdxLayoutItem;
-    dxLayoutItem3: TdxLayoutItem;
-    dxLayoutItem4: TdxLayoutItem;
-    dxLayoutGroup1: TdxLayoutGroup;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
-    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
-    LayoutItemPrompt: TdxLayoutLabeledItem;
-    dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
-    LayoutGroupPrompt: TdxLayoutGroup;
   private
   public
     function Execute(Project: TLocalizerProject; const Prompt: string = ''): TLocalizerModule;
@@ -52,8 +41,7 @@ uses
 
 function TFormSelectModule.Execute(Project: TLocalizerProject; const Prompt: string): TLocalizerModule;
 begin
-  LayoutItemPrompt.CaptionOptions.Text := Prompt;
-  LayoutGroupPrompt.Visible := (Prompt <> '');
+  SetHeader(Prompt);
 
   ComboBoxModule.Properties.Items.Clear;
   Project.Traverse(

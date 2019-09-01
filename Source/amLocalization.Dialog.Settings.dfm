@@ -1,2052 +1,35 @@
-object FormSettings: TFormSettings
-  Left = 0
-  Top = 0
-  ActiveControl = ButtonCategoryGeneral
-  BorderStyle = bsDialog
+inherited FormSettings: TFormSettings
   Caption = 'Settings'
-  ClientHeight = 632
+  ClientHeight = 607
   ClientWidth = 605
-  Color = clBtnFace
-  ParentFont = True
   KeyPreview = True
-  OldCreateOrder = False
-  Position = poMainFormCenter
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
+  ExplicitWidth = 611
+  ExplicitHeight = 635
   PixelsPerInch = 96
   TextHeight = 13
-  object PageControl: TcxPageControl
-    Left = 128
-    Top = 0
-    Width = 477
-    Height = 557
-    Align = alClient
-    Color = clWhite
-    Constraints.MinHeight = 530
-    Constraints.MinWidth = 430
-    ParentBackground = False
-    ParentColor = False
-    TabOrder = 1
-    TabStop = False
-    Properties.ActivePage = TabSheetGeneral
-    Properties.CustomButtons.Buttons = <>
-    Properties.MultiLine = True
-    Properties.ShowFrame = True
-    LookAndFeel.SkinName = ''
-    ExplicitWidth = 442
-    ExplicitHeight = 688
-    ClientRectBottom = 556
-    ClientRectLeft = 1
-    ClientRectRight = 476
-    ClientRectTop = 24
-    object TabSheetGeneral: TcxTabSheet
-      AlignWithMargins = True
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 8
-      Caption = 'General'
-      ExplicitWidth = 416
-      ExplicitHeight = 542
-      object LayoutControlGeneral: TdxLayoutControl
-        Left = 0
-        Top = 0
-        Width = 451
-        Height = 512
-        Align = alClient
-        ParentBackground = True
-        TabOrder = 0
-        Transparent = True
-        LayoutLookAndFeel = LayoutSkinLookAndFeel
-        OptionsItem.FocusControlOnItemCaptionClick = True
-        ExplicitWidth = 416
-        ExplicitHeight = 542
-        object LabelEditingHeader: TcxLabel
-          Left = 0
-          Top = 0
-          AutoSize = False
-          Caption = 'Editing'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object CheckUseProposed: TcxCheckBox
-          Left = 12
-          Top = 23
-          Caption = 'Use Proposed status for new translations'
-          ParentBackground = False
-          ParentColor = False
-          Style.Color = 16053234
-          Style.TransparentBorder = False
-          TabOrder = 1
-          Transparent = True
-        end
-        object CheckBoxAtstart: TcxCheckBox
-          Left = 12
-          Top = 79
-          Caption = 'Display guide dialog when the application starts'
-          ParentBackground = False
-          ParentColor = False
-          Style.Color = 16053234
-          Style.TransparentBorder = False
-          TabOrder = 3
-          Transparent = True
-        end
-        object cxLabel2: TcxLabel
-          Left = 0
-          Top = 56
-          AutoSize = False
-          Caption = 'Dialogs'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object ImageComboBoxSkin: TcxImageComboBox
-          Left = 85
-          Top = 164
-          Properties.DefaultDescription = '(none)'
-          Properties.Images = ImageListSkin
-          Properties.Items = <>
-          Properties.LargeImages = ImageListSkinLarge
-          Style.HotTrack = False
-          TabOrder = 6
-          Width = 164
-        end
-        object LabelApperance: TcxLabel
-          Left = 0
-          Top = 141
-          AutoSize = False
-          Caption = 'User Interface'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object ButtonDialogsSuppressReset: TcxButton
-          Left = 12
-          Top = 104
-          Width = 197
-          Height = 23
-          Caption = 'Reset suppressed dialogs'
-          TabOrder = 4
-        end
-        object LabelLanguage: TcxLabel
-          Left = 0
-          Top = 199
-          AutoSize = False
-          Caption = 'Language'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object ComboBoxDefaultTargetLanguage: TcxComboBox
-          Left = 136
-          Top = 249
-          Properties.DropDownListStyle = lsFixedList
-          Style.HotTrack = False
-          TabOrder = 9
-          Width = 315
-        end
-        object ComboBoxUILanguage: TcxComboBox
-          Left = 136
-          Top = 222
-          Properties.DropDownListStyle = lsFixedList
-          Style.HotTrack = False
-          TabOrder = 8
-          Width = 315
-        end
-        object dxLayoutGroup1: TdxLayoutGroup
-          AlignHorz = ahParentManaged
-          AlignVert = avParentManaged
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = -1
-        end
-        object LayoutControlGeneralItem1: TdxLayoutItem
-          Parent = LayoutControlGroupEditing
-          CaptionOptions.Visible = False
-          Control = LabelEditingHeader
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 442
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGeneralItem2: TdxLayoutItem
-          Parent = LayoutControlGeneralGroup2
-          CaptionOptions.Visible = False
-          Control = CheckUseProposed
-          ControlOptions.AutoColor = True
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGroupEditing: TdxLayoutGroup
-          Parent = dxLayoutGroup1
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGeneralItem12: TdxLayoutItem
-          Parent = LayoutControlGeneralGroup4
-          CaptionOptions.Visible = False
-          Control = CheckBoxAtstart
-          ControlOptions.AutoColor = True
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGeneralItem13: TdxLayoutItem
-          Parent = LayoutControlGroupStartup
-          CaptionOptions.Visible = False
-          Control = cxLabel2
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 442
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGroupStartup: TdxLayoutGroup
-          Parent = dxLayoutGroup1
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlGeneralItem14: TdxLayoutItem
-          Parent = LayoutControlGeneralGroup3
-          CaptionOptions.Text = 'Color scheme:'
-          Control = ImageComboBoxSkin
-          ControlOptions.AlignHorz = ahLeft
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 164
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGeneralItem16: TdxLayoutItem
-          Parent = LayoutControlGroupUserInterface
-          CaptionOptions.Visible = False
-          Control = LabelApperance
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 442
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlGroupUserInterface: TdxLayoutGroup
-          Parent = dxLayoutGroup1
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 2
-        end
-        object LayoutControlGeneralGroup2: TdxLayoutGroup
-          Parent = LayoutControlGroupEditing
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlGeneralGroup3: TdxLayoutGroup
-          Parent = LayoutControlGroupUserInterface
-          CaptionOptions.Text = 'Hidden Group'
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlGeneralItem11: TdxLayoutItem
-          Parent = LayoutControlGeneralGroup4
-          CaptionOptions.Text = 'New Item'
-          CaptionOptions.Visible = False
-          Control = ButtonDialogsSuppressReset
-          ControlOptions.AlignHorz = ahLeft
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 197
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlGeneralGroup4: TdxLayoutGroup
-          Parent = LayoutControlGroupStartup
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem29: TdxLayoutItem
-          Parent = LayoutGroupLanguage
-          CaptionOptions.Visible = False
-          Control = LabelLanguage
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 7
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem28: TdxLayoutItem
-          Parent = dxLayoutGroup10
-          CaptionOptions.Text = 'Default target language:'
-          Control = ComboBoxDefaultTargetLanguage
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem30: TdxLayoutItem
-          Parent = dxLayoutGroup10
-          CaptionOptions.Text = 'Application language:'
-          Control = ComboBoxUILanguage
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutGroupLanguage: TdxLayoutGroup
-          Parent = dxLayoutGroup1
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 3
-        end
-        object dxLayoutGroup10: TdxLayoutGroup
-          Parent = LayoutGroupLanguage
-          CaptionOptions.Visible = False
-          LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-      end
-    end
-    object TabSheetTranslationServices: TcxTabSheet
-      AlignWithMargins = True
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 8
-      Caption = 'Translators'
-      ImageIndex = 5
-      ExplicitWidth = 416
-      ExplicitHeight = 542
-      object LayoutControlTranslators: TdxLayoutControl
-        Left = 0
-        Top = 0
-        Width = 451
-        Height = 512
-        Align = alClient
-        ParentBackground = True
-        TabOrder = 0
-        Transparent = True
-        LayoutLookAndFeel = LayoutSkinLookAndFeel
-        OptionsItem.FocusControlOnItemCaptionClick = True
-        ExplicitWidth = 416
-        ExplicitHeight = 542
-        object LabelTranslatorTM: TcxLabel
-          Left = 0
-          Top = 0
-          AutoSize = False
-          Caption = 'Translation Memory'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object CheckBoxTMLoadOnDemand: TcxCheckBox
-          Left = 12
-          Top = 23
-          Caption = 'Load on demand'
-          ParentBackground = False
-          ParentColor = False
-          Style.Color = 16053234
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 1
-          Transparent = True
-        end
-        object LabelTransalatorMS: TcxLabel
-          Left = 0
-          Top = 56
-          AutoSize = False
-          Caption = 'Microsoft Translator'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object EditTranslatorMSAPIKey: TcxButtonEdit
-          Left = 58
-          Top = 79
-          Properties.Buttons = <
-            item
-              ImageIndex = 0
-              Hint = 'Verify API key'
-              Kind = bkGlyph
-            end>
-          Properties.Images = ImageList
-          Properties.IncrementalSearch = False
-          Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
-          Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
-          Style.HotTrack = False
-          TabOrder = 3
-          Width = 393
-        end
-        object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
-          AlignHorz = ahClient
-          AlignVert = avTop
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = -1
-        end
-        object dxLayoutItem16: TdxLayoutItem
-          Parent = LayoutGroupTranslatorTM
-          CaptionOptions.Visible = False
-          LayoutLookAndFeel = LayoutSkinLookAndFeelTitle
-          Control = LabelTranslatorTM
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 416
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutGroupTranslatorTM: TdxLayoutGroup
-          Parent = LayoutControlTranslatorsGroup_Root
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem23: TdxLayoutItem
-          Parent = dxLayoutGroup2
-          CaptionOptions.Visible = False
-          Control = CheckBoxTMLoadOnDemand
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 100
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutGroup2: TdxLayoutGroup
-          Parent = LayoutGroupTranslatorTM
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem24: TdxLayoutItem
-          Parent = LayoutGroupTranslatorMS
-          CaptionOptions.Visible = False
-          Control = LabelTransalatorMS
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 7
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutGroupTranslatorMS: TdxLayoutGroup
-          Parent = LayoutControlTranslatorsGroup_Root
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem25: TdxLayoutItem
-          Parent = dxLayoutGroup8
-          CaptionOptions.Text = 'API key:'
-          Control = EditTranslatorMSAPIKey
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutGroup8: TdxLayoutGroup
-          Parent = LayoutGroupTranslatorMS
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-      end
-    end
-    object TabSheetFileLocations: TcxTabSheet
-      AlignWithMargins = True
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 12
-      Caption = 'Files'
-      ExplicitWidth = 416
-      ExplicitHeight = 538
-      object LayoutControlFiles: TdxLayoutControl
-        Left = 0
-        Top = 0
-        Width = 451
-        Height = 508
-        Align = alClient
-        ParentBackground = True
-        TabOrder = 0
-        Transparent = True
-        LayoutLookAndFeel = LayoutSkinLookAndFeel
-        ExplicitWidth = 416
-        ExplicitHeight = 477
-        DesignSize = (
-          451
-          508)
-        object cxLabel5: TcxLabel
-          Left = 0
-          Top = 0
-          AutoSize = False
-          Caption = 'File locations'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object GridFolders: TcxGrid
-          AlignWithMargins = True
-          Left = 12
-          Top = 23
-          Width = 439
-          Height = 200
-          Margins.Left = 12
-          Margins.Top = 6
-          Margins.Right = 12
-          Margins.Bottom = 2
-          TabOrder = 1
-          object GridFoldersTableView: TcxGridTableView
-            Navigator.Buttons.CustomButtons = <>
-            OnCellDblClick = GridFoldersTableViewCellDblClick
-            OnEditing = GridFoldersTableViewEditing
-            DataController.Summary.DefaultGroupSummaryItems = <>
-            DataController.Summary.FooterSummaryItems = <>
-            DataController.Summary.SummaryGroups = <>
-            OptionsBehavior.CellHints = True
-            OptionsCustomize.ColumnFiltering = False
-            OptionsCustomize.ColumnGrouping = False
-            OptionsCustomize.ColumnMoving = False
-            OptionsCustomize.ColumnSorting = False
-            OptionsData.Deleting = False
-            OptionsData.Inserting = False
-            OptionsSelection.InvertSelect = False
-            OptionsView.ColumnAutoWidth = True
-            OptionsView.GroupByBox = False
-            Styles.UseOddEvenStyles = bFalse
-            Styles.OnGetContentStyle = GridFoldersTableViewStylesGetContentStyle
-            object GridFoldersTableViewColumnName: TcxGridColumn
-              Caption = 'File type'
-              PropertiesClassName = 'TcxLabelProperties'
-              Properties.ShowAccelChar = False
-              Properties.ShowEndEllipsis = True
-              MinWidth = 50
-              Options.Editing = False
-              Options.Focusing = False
-              Width = 120
-            end
-            object GridFoldersTableViewColumnPath: TcxGridColumn
-              Caption = 'Path'
-              PropertiesClassName = 'TcxButtonEditProperties'
-              Properties.Buttons = <
-                item
-                  Action = ActionFoldersModify
-                  Default = True
-                  Kind = bkEllipsis
-                end
-                item
-                  Action = ActionFoldersExplorer
-                  Glyph.SourceDPI = 96
-                  Glyph.Data = {
-                    424D360400000000000036000000280000001000000010000000010020000000
-                    000000000000C40E0000C40E000000000000000000004298D2EF3D94D0FF3D94
-                    D0FF4197D1E70000000000000000000000000000000000000000000000000000
-                    000000000000000000000000000000000000000000003D94D0FFDCFDFFFFDAFB
-                    FFFF358FCDFF3A92CFFF3E95D0FF4398D2AF0000000000000000000000000000
-                    000000000000000000000000000000000000000000003B92CFFFD2F9FFFFB6F0
-                    FFFFDCFDFFFFDFFFFFFFE5FFFFFF3E95D0FF0000000000000000000000000000
-                    000000000000000000000000000000000000000000003D93CFFFC1F7FFFF51B5
-                    E5FF2F89CAFF2F8ACBFF328CCCFF3992CFFF3F97D3FF000000004097D3AC3D94
-                    D0FF3D94D0FF4197D1A80000000000000000000000004095D0FFA0E5FBFF48A7
-                    DDFFDDFAFFFFDAF9FFFFDBFAFFFFDDFCFFFF328AC8CE000000003692D2FFDCFD
-                    FFFFDAFBFFFF348DCDFF3991CEFF3D94D0FF4297D2B04397D1FF54A6D9FF82E3
-                    FDFF86EBFFFF83EAFFFF85ECFFFF51B3E4FF8D8C8CFF8D8C8CFF3190D2FFCEF7
-                    FFFFB5EEFEFFDBF9FFFFDDFBFFFFE2FFFFFF3D94D0FF4190C7D14397D1FF4094
-                    D0FF3C92D0FF3991D0FF3B92D1FF3991CFEC00000033000000333490D1FFB7F3
-                    FFFF77E0FDFF77E0FDFF76E0FEFFDAFEFFFF3B92CFFF00000027000000330000
-                    0033000000338D8C8CFF000000330000002E00000000000000003C93D1FFA9F9
-                    FFFF8FF0FFFF8FEFFFFF8DF0FFFFD2FFFFFF3E94D0FF00000000000000000000
-                    0000000000008D8C8CFF000000000000000000000000000000003A87BCB23E93
-                    CFFF3E91CEFF3E92CEFF3E92CFFF3E94D0FF3D8BC1BE00000000000000000000
-                    0000000000008D8C8CFF000000000000000000000000000000003D93CFE23C93
-                    D0FF3B92CFFF3D8EC7D600000033000000330000002300000000000000000000
-                    0000000000008D8C8CFF000000000000000000000000000000003492D3FFDCFD
-                    FFFFDAFBFFFF348DCDFF3991CEFF3D94D0FF4297D2AE00000000000000000000
-                    0000000000008D8C8CFF8D8C8CFF8D8C8CFF8D8C8CFF8D8C8CFF308FD2FFCEF7
-                    FFFFB5EEFEFFDBF9FFFFDDFBFFFFE2FFFFFF3D94D0FF00000000000000000000
-                    00000000000000000033000000330000003300000033000000333390D1FFB7F3
-                    FFFF77E0FDFF77E0FDFF76E0FEFFDAFEFFFF3B92CFFF00000000000000000000
-                    00000000000000000000000000000000000000000000000000003B93D1FFA9F9
-                    FFFF8FF0FFFF8FEFFFFF8DF0FFFFD2FFFFFF3E94D0FF00000000000000000000
-                    00000000000000000000000000000000000000000000000000003D8BC1C04094
-                    D0FF3F92CFFF3F92CEFF3E92CFFF3E94D0FF3D8BC1C000000000000000000000
-                    0000000000000000000000000000000000000000000000000000000000230000
-                    00330000003300000033000000330000003300000023}
-                  Kind = bkGlyph
-                end>
-              Properties.OnEditValueChanged = GridFoldersTableViewColumnPathPropertiesEditValueChanged
-              OnGetCellHint = GridFoldersTableViewColumnPathGetCellHint
-              OnGetDisplayText = GridFoldersTableViewColumnPathGetDisplayText
-              MinWidth = 100
-              Width = 297
-            end
-            object GridFoldersTableViewColumnReadOnly: TcxGridColumn
-              DataBinding.ValueType = 'Boolean'
-              PropertiesClassName = 'TcxCheckBoxProperties'
-              Visible = False
-            end
-          end
-          object GridFoldersLevel: TcxGridLevel
-            GridView = GridFoldersTableView
-          end
-        end
-        object ButtonFilesReset: TcxButton
-          Left = 376
-          Top = 229
-          Width = 75
-          Height = 23
-          Action = ActionFolderReset
-          Anchors = [akTop, akRight]
-          DropDownMenu = PopupMenuFolderReset
-          Kind = cxbkDropDownButton
-          TabOrder = 3
-        end
-        object ButtonFilesModify: TcxButton
-          Left = 283
-          Top = 229
-          Width = 75
-          Height = 23
-          Action = ActionFoldersModify
-          Anchors = [akTop, akRight]
-          TabOrder = 2
-        end
-        object cxLabel6: TcxLabel
-          Left = 0
-          Top = 266
-          AutoSize = False
-          Caption = 'Document file recovery'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object CheckBoxAutoRecovery: TcxCheckBox
-          Left = 12
-          Top = 289
-          Caption = 'Save auto-recovery information'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 5
-          Transparent = True
-        end
-        object EditAutoRecoveryInterval: TcxSpinEdit
-          Left = 152
-          Top = 314
-          Properties.Alignment.Horz = taRightJustify
-          Properties.MaxValue = 60.000000000000000000
-          Properties.MinValue = 1.000000000000000000
-          Properties.UseLeftAlignmentOnEditing = False
-          Properties.ValidationOptions = [evoShowErrorIcon]
-          Style.HotTrack = False
-          TabOrder = 6
-          Value = 1
-          Width = 53
-        end
-        object CheckBoxAutoRecoveryReduced: TcxCheckBox
-          Left = 12
-          Top = 341
-          Hint = 
-            'Reduces the size of the saved document by excluding various non-' +
-            'essential parts such as images.'
-          Caption = 'Save a reduced version of the document'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 7
-          Transparent = True
-        end
-        object cxLabel10: TcxLabel
-          Left = 0
-          Top = 374
-          Anchors = [akLeft, akTop, akRight]
-          AutoSize = False
-          Caption = 'Backup files'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object CheckBoxHistoryBackup: TcxCheckBox
-          Left = 12
-          Top = 397
-          Caption = 'Save extra backup files'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 9
-          Transparent = True
-        end
-        object EditHistoryBackupMaxFiles: TcxSpinEdit
-          Left = 152
-          Top = 422
-          Properties.Alignment.Horz = taRightJustify
-          Properties.MaxValue = 100.000000000000000000
-          Properties.MinValue = 1.000000000000000000
-          Properties.UseLeftAlignmentOnEditing = False
-          Properties.ValidationOptions = [evoShowErrorIcon]
-          Style.HotTrack = False
-          TabOrder = 10
-          Value = 1
-          Width = 53
-        end
-        object EditHistoryBackupMaxSize: TcxSpinEdit
-          Left = 319
-          Top = 422
-          Properties.Alignment.Horz = taRightJustify
-          Properties.DisplayFormat = '0,0 Mb'
-          Properties.EditFormat = '0,0'
-          Properties.MaxValue = 10000.000000000000000000
-          Properties.MinValue = 1.000000000000000000
-          Properties.UseLeftAlignmentOnEditing = False
-          Properties.ValidationOptions = [evoShowErrorIcon]
-          Style.HotTrack = False
-          TabOrder = 11
-          Value = 100
-          Width = 78
-        end
-        object LayoutControlFilesGroup_Root: TdxLayoutGroup
-          AlignHorz = ahClient
-          AlignVert = avTop
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = -1
-        end
-        object dxLayoutItem31: TdxLayoutItem
-          Parent = dxLayoutGroup11
-          CaptionOptions.Visible = False
-          Control = cxLabel5
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 416
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem32: TdxLayoutItem
-          Parent = dxLayoutGroup12
-          Control = GridFolders
-          ControlOptions.OriginalHeight = 200
-          ControlOptions.OriginalWidth = 250
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem33: TdxLayoutItem
-          Parent = dxLayoutGroup13
-          AlignHorz = ahRight
-          CaptionOptions.Visible = False
-          Control = ButtonFilesReset
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 75
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem34: TdxLayoutItem
-          Parent = dxLayoutGroup13
-          AlignHorz = ahRight
-          CaptionOptions.Visible = False
-          Control = ButtonFilesModify
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 75
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutGroup11: TdxLayoutGroup
-          Parent = LayoutControlFilesGroup_Root
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 3
-          ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutGroup12: TdxLayoutGroup
-          Parent = dxLayoutGroup11
-          CaptionOptions.Visible = False
-          LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutGroup13: TdxLayoutGroup
-          Parent = dxLayoutGroup12
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          LayoutDirection = ldHorizontal
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem35: TdxLayoutItem
-          Parent = LayoutGroupRecovery
-          CaptionOptions.Visible = False
-          Control = cxLabel6
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 7
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem36: TdxLayoutItem
-          Parent = dxLayoutGroup14
-          CaptionOptions.Visible = False
-          Control = CheckBoxAutoRecovery
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 174
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem37: TdxLayoutItem
-          Parent = dxLayoutGroup14
-          AlignHorz = ahLeft
-          CaptionOptions.Text = 'Interval (minutes):'
-          Offsets.Left = 20
-          Control = EditAutoRecoveryInterval
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 53
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem38: TdxLayoutItem
-          Parent = dxLayoutGroup14
-          CaptionOptions.Visible = False
-          Control = CheckBoxAutoRecoveryReduced
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 216
-          ControlOptions.ShowBorder = False
-          Index = 2
-        end
-        object LayoutGroupRecovery: TdxLayoutGroup
-          Parent = dxLayoutGroup11
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 2
-        end
-        object dxLayoutGroup14: TdxLayoutGroup
-          Parent = LayoutGroupRecovery
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 2
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem39: TdxLayoutItem
-          Parent = LayoutGroupBackup
-          CaptionOptions.Visible = False
-          Control = cxLabel10
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 7
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem40: TdxLayoutItem
-          Parent = dxLayoutGroup15
-          CaptionOptions.Visible = False
-          Control = CheckBoxHistoryBackup
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 133
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutGroupBackup: TdxLayoutGroup
-          Parent = dxLayoutGroup11
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 3
-        end
-        object dxLayoutGroup15: TdxLayoutGroup
-          Parent = LayoutGroupBackup
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem41: TdxLayoutItem
-          Parent = dxLayoutGroup16
-          CaptionOptions.Text = 'Number of files to save:'
-          Control = EditHistoryBackupMaxFiles
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 53
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem42: TdxLayoutItem
-          Parent = dxLayoutGroup16
-          CaptionOptions.Text = 'Max total file size:'
-          Control = EditHistoryBackupMaxSize
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 78
-          ControlOptions.ShowBorder = False
-          Index = 2
-        end
-        object dxLayoutGroup16: TdxLayoutGroup
-          Parent = dxLayoutGroup15
-          CaptionOptions.Visible = False
-          Offsets.Left = 20
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          LayoutDirection = ldHorizontal
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem
-          Parent = dxLayoutGroup16
-          CaptionOptions.Text = 'Empty Space Item'
-          SizeOptions.Height = 10
-          SizeOptions.Width = 10
-          Index = 1
-        end
-      end
-    end
-    object TabSheetProofing: TcxTabSheet
-      AlignWithMargins = True
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 8
-      Caption = 'Proofing'
-      ImageIndex = 6
-      ExplicitWidth = 416
-      ExplicitHeight = 542
-      object LayoutControlProofing: TdxLayoutControl
-        Left = 0
-        Top = 0
-        Width = 451
-        Height = 512
-        Align = alClient
-        ParentBackground = True
-        TabOrder = 0
-        Transparent = True
-        LayoutLookAndFeel = LayoutSkinLookAndFeel
-        OptionsItem.FocusControlOnItemCaptionClick = True
-        ExplicitWidth = 416
-        ExplicitHeight = 542
-        DesignSize = (
-          451
-          512)
-        object CheckBoxProofingIgnoreNumbers: TcxCheckBox
-          Left = 12
-          Top = 123
-          Caption = 'Ignore words with numbers'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 5
-          Transparent = True
-        end
-        object cxLabel12: TcxLabel
-          Left = 0
-          Top = 0
-          AutoSize = False
-          Caption = 'Spell check'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 434
-        end
-        object CheckBoxProofingIgnoreRepeatWords: TcxCheckBox
-          Left = 12
-          Top = 98
-          Caption = 'Ignore repeated words'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 4
-          Transparent = True
-        end
-        object ComboBoxProofingLanguages: TcxCheckComboBox
-          Left = 217
-          Top = 160
-          Properties.Items = <>
-          Style.HotTrack = False
-          TabOrder = 6
-          Width = 217
-        end
-        object cxLabel13: TcxLabel
-          Left = 0
-          Top = 216
-          AutoSize = False
-          Caption = 'AutoCorrect'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 434
-        end
-        object ButtonProofingEditCustomDictionary: TcxButton
-          Left = 288
-          Top = 187
-          Width = 146
-          Height = 23
-          Anchors = [akTop, akRight]
-          Caption = 'Edit user dictionary...'
-          TabOrder = 7
-          OnClick = ButtonProofingEditCustomDictionaryClick
-        end
-        object CheckBoxProofingSpellCheck: TcxCheckBox
-          Left = 12
-          Top = 23
-          Caption = 'Check spelling as you type'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 1
-          Transparent = True
-        end
-        object CheckBoxProofingIgnoreUppercase: TcxCheckBox
-          Left = 12
-          Top = 48
-          Caption = 'Ignore words in UPPERCASE'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 2
-          Transparent = True
-        end
-        object CheckBoxProofingIgnoreMixedCase: TcxCheckBox
-          Left = 12
-          Top = 73
-          Caption = 'Ignore words in MIXed caSE'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 3
-          Transparent = True
-        end
-        object CheckBoxProofingCorrectSentenceCaps: TcxCheckBox
-          Left = 28
-          Top = 264
-          Caption = 'Capitalize first letter of &sentences'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 10
-          Transparent = True
-        end
-        object CheckBoxProofingCorrectCapsLock: TcxCheckBox
-          Left = 28
-          Top = 314
-          Caption = 'Correct accidental usage of cAPS &LOCK key'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 13
-          Transparent = True
-        end
-        object CheckBoxProofingDisableCapsLock: TcxCheckBox
-          Left = 28
-          Top = 339
-          Caption = 'Disable Caps Lock'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 14
-          Transparent = True
-        end
-        object CheckBoxProofingCorrectAutoReplace: TcxCheckBox
-          Left = 28
-          Top = 376
-          Caption = 'Correct text as you type'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 15
-          Transparent = True
-        end
-        object ListViewProofingAutoCorrectReplacements: TcxListView
-          Left = 46
-          Top = 426
-          Width = 294
-          Height = 85
-          Anchors = [akLeft, akTop, akRight]
-          ColumnClick = False
-          Columns = <
-            item
-              MaxWidth = 100
-              MinWidth = 100
-              Width = 100
-            end
-            item
-              AutoSize = True
-            end>
-          Enabled = False
-          IconOptions.WrapText = False
-          ReadOnly = True
-          RowSelect = True
-          ShowColumnHeaders = False
-          SortType = stText
-          Style.TransparentBorder = False
-          TabOrder = 18
-          ViewStyle = vsReport
-          OnClick = ListViewProofingAutoCorrectReplacementsClick
-        end
-        object ButtonProofingAutoCorrectAdd: TcxButton
-          Left = 346
-          Top = 426
-          Width = 88
-          Height = 23
-          Action = ActionProofingAdd
-          Anchors = [akRight, akBottom]
-          Enabled = False
-          TabOrder = 19
-        end
-        object ButtonProofingAutoCorrectDelete: TcxButton
-          Left = 346
-          Top = 455
-          Width = 88
-          Height = 23
-          Action = ActionProofingDelete
-          Anchors = [akRight, akBottom]
-          Enabled = False
-          TabOrder = 20
-        end
-        object CheckBoxProofingCorrectAutomaticallyUseSuggestions: TcxCheckBox
-          Left = 46
-          Top = 517
-          Caption = 'Automatically use suggestions from the spell checker'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 21
-          Transparent = True
-        end
-        object EditProofingAutoCorrectReplacementFrom: TcxTextEdit
-          Left = 93
-          Top = 401
-          Enabled = False
-          Properties.OnChange = EditProofingAutoCorrectReplacementFromPropertiesChange
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 16
-          Width = 124
-        end
-        object EditProofingAutoCorrectReplacementTo: TcxTextEdit
-          Left = 254
-          Top = 401
-          Anchors = [akLeft, akTop, akRight]
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 17
-          Width = 180
-        end
-        object CheckBoxProofingAutoCorrect: TcxCheckBox
-          Left = 12
-          Top = 239
-          Caption = 'Enable AutoCorrect'
-          Properties.OnChange = CheckBoxProofingAutoCorrectPropertiesChange
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 9
-          Transparent = True
-        end
-        object ButtonProofingAutoCorrectExceptions: TcxButton
-          Left = 288
-          Top = 264
-          Width = 146
-          Height = 23
-          Caption = 'Exceptions...'
-          Enabled = False
-          TabOrder = 12
-          OnClick = ButtonProofingAutoCorrectExceptionsClick
-        end
-        object CheckBoxProofingCorrectInitialCaps: TcxCheckBox
-          Left = 28
-          Top = 289
-          Caption = 'Correct TWo &INitial CApitals'
-          Enabled = False
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 11
-          Transparent = True
-        end
-        object LayoutGroupProofing: TdxLayoutGroup
-          AlignHorz = ahClient
-          AlignVert = avTop
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = -1
-        end
-        object dxLayoutItem5: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingIgnoreNumbers
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 4
-        end
-        object dxLayoutItem1: TdxLayoutItem
-          Parent = dxLayoutGroup4
-          CaptionOptions.Visible = False
-          Control = cxLabel12
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 448
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem6: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingIgnoreRepeatWords
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 3
-        end
-        object dxLayoutGroup3: TdxLayoutGroup
-          Parent = dxLayoutGroup4
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem7: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Text = 'Dictionaries:'
-          Visible = False
-          Control = ComboBoxProofingLanguages
-          ControlOptions.AlignHorz = ahRight
-          ControlOptions.AutoControlAreaAlignment = False
-          ControlOptions.OriginalHeight = 21
-          ControlOptions.OriginalWidth = 217
-          ControlOptions.ShowBorder = False
-          Index = 6
-        end
-        object dxLayoutGroup4: TdxLayoutGroup
-          Parent = LayoutGroupProofing
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem9: TdxLayoutItem
-          Parent = dxLayoutGroup6
-          CaptionOptions.Visible = False
-          Control = cxLabel13
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 448
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutGroup6: TdxLayoutGroup
-          Parent = LayoutGroupProofing
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem8: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Text = 'User dictionary:'
-          Control = ButtonProofingEditCustomDictionary
-          ControlOptions.AlignHorz = ahRight
-          ControlOptions.AutoControlAreaAlignment = False
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 146
-          ControlOptions.ShowBorder = False
-          Index = 7
-        end
-        object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Text = 'Separator'
-          Index = 5
-        end
-        object dxLayoutItem2: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingSpellCheck
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem3: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingIgnoreUppercase
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem4: TdxLayoutItem
-          Parent = dxLayoutGroup3
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingIgnoreMixedCase
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 2
-        end
-        object dxLayoutItem11: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup5
-          AlignHorz = ahClient
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingCorrectSentenceCaps
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem13: TdxLayoutItem
-          Parent = LayoutGroupProofingAutoCorrect
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingCorrectCapsLock
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem14: TdxLayoutItem
-          Parent = LayoutGroupProofingAutoCorrect
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingDisableCapsLock
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 2
-        end
-        object dxLayoutGroup7: TdxLayoutGroup
-          Parent = dxLayoutGroup6
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem10: TdxLayoutItem
-          Parent = LayoutGroupProofingAutoCorrect
-          AlignHorz = ahLeft
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingCorrectAutoReplace
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 140
-          ControlOptions.ShowBorder = False
-          Index = 4
-        end
-        object dxLayoutGroup5: TdxLayoutGroup
-          Parent = LayoutGroupProofingAutoCorrect
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 18
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 5
-        end
-        object dxLayoutAutoCreatedGroup3: TdxLayoutAutoCreatedGroup
-          Parent = dxLayoutGroup5
-          LayoutDirection = ldHorizontal
-          Index = 1
-        end
-        object dxLayoutItem18: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup3
-          AlignHorz = ahClient
-          AlignVert = avTop
-          Control = ListViewProofingAutoCorrectReplacements
-          ControlOptions.OriginalHeight = 85
-          ControlOptions.OriginalWidth = 308
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutAutoCreatedGroup2: TdxLayoutAutoCreatedGroup
-          Parent = dxLayoutAutoCreatedGroup3
-          Index = 1
-        end
-        object dxLayoutItem19: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup2
-          AlignVert = avTop
-          CaptionOptions.Visible = False
-          Control = ButtonProofingAutoCorrectAdd
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 88
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem20: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup2
-          AlignVert = avTop
-          CaptionOptions.Visible = False
-          Control = ButtonProofingAutoCorrectDelete
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 73
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem21: TdxLayoutItem
-          Parent = dxLayoutGroup5
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingCorrectAutomaticallyUseSuggestions
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 2
-        end
-        object dxLayoutAutoCreatedGroup1: TdxLayoutAutoCreatedGroup
-          Parent = dxLayoutGroup5
-          LayoutDirection = ldHorizontal
-          Index = 0
-        end
-        object EditProofingAutoCorrectReplace: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup1
-          AlignHorz = ahClient
-          AlignVert = avTop
-          CaptionOptions.Text = 'Replace:'
-          Control = EditProofingAutoCorrectReplacementFrom
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 114
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object dxLayoutItem17: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup1
-          AlignHorz = ahClient
-          AlignVert = avTop
-          CaptionOptions.Text = 'With:'
-          Control = EditProofingAutoCorrectReplacementTo
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 168
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutSeparatorItem2: TdxLayoutSeparatorItem
-          Parent = LayoutGroupProofingAutoCorrect
-          CaptionOptions.Text = 'Separator'
-          Index = 3
-        end
-        object dxLayoutItem22: TdxLayoutItem
-          Parent = dxLayoutGroup7
-          AlignHorz = ahLeft
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingAutoCorrect
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 115
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutGroupProofingAutoCorrect: TdxLayoutGroup
-          Parent = dxLayoutGroup7
-          CaptionOptions.Text = 'Hidden Group'
-          CaptionOptions.Visible = False
-          Offsets.Left = 16
-          ButtonOptions.Buttons = <>
-          Enabled = False
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutItem15: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup4
-          CaptionOptions.Visible = False
-          Control = ButtonProofingAutoCorrectExceptions
-          ControlOptions.AlignHorz = ahRight
-          ControlOptions.AutoControlAreaAlignment = False
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 146
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutAutoCreatedGroup4: TdxLayoutAutoCreatedGroup
-          Parent = LayoutGroupProofingAutoCorrect
-          LayoutDirection = ldHorizontal
-          Index = 0
-        end
-        object dxLayoutItem12: TdxLayoutItem
-          Parent = dxLayoutAutoCreatedGroup5
-          CaptionOptions.Visible = False
-          Control = CheckBoxProofingCorrectInitialCaps
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutAutoCreatedGroup5: TdxLayoutAutoCreatedGroup
-          Parent = dxLayoutAutoCreatedGroup4
-          AlignHorz = ahClient
-          Index = 0
-        end
-      end
-    end
-    object TabSheetSystem: TcxTabSheet
-      AlignWithMargins = True
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 8
-      Caption = 'Advanced'
-      ImageIndex = 5
-      ExplicitWidth = 416
-      ExplicitHeight = 542
-      object LayoutControlAdvanced: TdxLayoutControl
-        Left = 0
-        Top = 0
-        Width = 451
-        Height = 512
-        Align = alClient
-        ParentBackground = True
-        TabOrder = 0
-        Transparent = True
-        LayoutLookAndFeel = LayoutSkinLookAndFeel
-        OptionsItem.FocusControlOnItemCaptionClick = True
-        ExplicitWidth = 416
-        ExplicitHeight = 542
-        object LabelAutoUpdateIntro: TcxLabel
-          AlignWithMargins = True
-          Left = 12
-          Top = 139
-          Margins.Left = 12
-          Margins.Top = 6
-          Margins.Right = 12
-          Margins.Bottom = 4
-          Caption = 
-            'The application can automatically check for, download and instal' +
-            'l updates as they become available. You will always be asked to ' +
-            'accept an update before it is downloaded and installed.'
-          ParentColor = False
-          Style.Color = 16053234
-          Properties.ShowAccelChar = False
-          Properties.WordWrap = True
-          Transparent = True
-          Width = 439
-        end
-        object CheckBoxSingleInstance: TcxCheckBox
-          Left = 12
-          Top = 23
-          Caption = 'Use single instance of the application'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 1
-          Transparent = True
-        end
-        object cxLabel4: TcxLabel
-          Left = 0
-          Top = 56
-          AutoSize = False
-          Caption = 'File types'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object ButtonRegisterFiletypes: TcxButton
-          Left = 12
-          Top = 79
-          Width = 253
-          Height = 23
-          Caption = 'Restore Translation Manager file associations'
-          TabOrder = 3
-        end
-        object cxLabel11: TcxLabel
-          Left = 0
-          Top = 116
-          AutoSize = False
-          Caption = 'Auto Update'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object CheckBoxAutoUpdateEnabled: TcxCheckBox
-          AlignWithMargins = True
-          Left = 12
-          Top = 188
-          Margins.Left = 12
-          Margins.Top = 6
-          Margins.Right = 12
-          Margins.Bottom = 0
-          Caption = 'Check for updates every time the application starts'
-          Style.HotTrack = False
-          Style.TransparentBorder = False
-          TabOrder = 6
-          Transparent = True
-        end
-        object ButtonAutoUpdateNow: TcxButton
-          Left = 12
-          Top = 258
-          Width = 197
-          Height = 23
-          Caption = 'Check for updates now'
-          TabOrder = 8
-        end
-        object ButtonAutoUpdateReset: TcxButton
-          Left = 12
-          Top = 229
-          Width = 197
-          Height = 23
-          Caption = 'Reset declined updates'
-          TabOrder = 7
-        end
-        object cxLabel14: TcxLabel
-          Left = 0
-          Top = 0
-          AutoSize = False
-          Caption = 'Launch'
-          Style.HotTrack = False
-          Style.TextStyle = [fsBold]
-          Style.TransparentBorder = False
-          Properties.LineOptions.Visible = True
-          Transparent = True
-          Height = 17
-          Width = 451
-        end
-        object LayoutControlAdvancedGroup_Root: TdxLayoutGroup
-          AlignHorz = ahClient
-          AlignVert = avTop
-          CaptionOptions.Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = -1
-        end
-        object LayoutControlAdvancedItem1: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup9
-          CaptionOptions.Visible = False
-          Control = CheckBoxSingleInstance
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedItem2: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup2
-          CaptionOptions.Visible = False
-          Control = cxLabel4
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 402
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedItem3: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup4
-          CaptionOptions.Visible = False
-          Control = ButtonRegisterFiletypes
-          ControlOptions.AlignHorz = ahLeft
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 253
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedGroup2: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup_Root
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlAdvancedGroup4: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup2
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlAdvancedItem6: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup5
-          CaptionOptions.Visible = False
-          Control = cxLabel11
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 442
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedItem7: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup6
-          CaptionOptions.Visible = False
-          Control = LabelAutoUpdateIntro
-          ControlOptions.AutoColor = True
-          ControlOptions.OriginalHeight = 43
-          ControlOptions.OriginalWidth = 428
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedItem8: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup6
-          CaptionOptions.Visible = False
-          Control = CheckBoxAutoUpdateEnabled
-          ControlOptions.OriginalHeight = 19
-          ControlOptions.OriginalWidth = 121
-          ControlOptions.ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlAdvancedGroup5: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup_Root
-          CaptionOptions.Visible = False
-          Offsets.Top = 8
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 1
-          ShowBorder = False
-          Index = 2
-        end
-        object LayoutControlAdvancedGroup6: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup5
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ItemIndex = 2
-          ShowBorder = False
-          Index = 1
-        end
-        object LayoutControlAdvancedItem9: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup6
-          CaptionOptions.Visible = False
-          Control = ButtonAutoUpdateNow
-          ControlOptions.AlignHorz = ahLeft
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 197
-          ControlOptions.ShowBorder = False
-          Index = 4
-        end
-        object LayoutControlAdvancedItem10: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup6
-          CaptionOptions.Visible = False
-          Control = ButtonAutoUpdateReset
-          ControlOptions.AlignHorz = ahLeft
-          ControlOptions.OriginalHeight = 23
-          ControlOptions.OriginalWidth = 197
-          ControlOptions.ShowBorder = False
-          Index = 3
-        end
-        object LayoutControlAdvancedItem17: TdxLayoutItem
-          Parent = LayoutControlAdvancedGroup7
-          CaptionOptions.Visible = False
-          Control = cxLabel14
-          ControlOptions.OriginalHeight = 17
-          ControlOptions.OriginalWidth = 442
-          ControlOptions.ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedGroup7: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup_Root
-          CaptionOptions.Visible = False
-          Visible = False
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 0
-        end
-        object LayoutControlAdvancedGroup9: TdxLayoutGroup
-          Parent = LayoutControlAdvancedGroup7
-          CaptionOptions.Visible = False
-          Offsets.Left = 12
-          ButtonOptions.Buttons = <>
-          Hidden = True
-          ShowBorder = False
-          Index = 1
-        end
-        object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
-          Parent = LayoutControlAdvancedGroup6
-          CaptionOptions.Text = 'Empty Space Item'
-          SizeOptions.Height = 10
-          SizeOptions.Width = 10
-          Index = 2
-        end
-      end
-    end
-  end
-  object PanelCategory: TPanel
-    AlignWithMargins = True
-    Left = 0
-    Top = 0
-    Width = 122
-    Height = 557
-    Margins.Left = 0
-    Margins.Top = 0
-    Margins.Right = 6
-    Margins.Bottom = 0
-    Align = alLeft
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    Color = clWhite
-    FullRepaint = False
-    ParentBackground = False
-    ShowCaption = False
-    TabOrder = 0
-    ExplicitHeight = 587
-    object ButtonCategoryGeneral: TcxButton
-      AlignWithMargins = True
-      Left = 2
-      Top = 2
-      Width = 114
-      Height = 25
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 0
-      Align = alTop
-      Action = ActionCategoryGeneral
-      OptionsImage.Margin = 8
-      SpeedButtonOptions.Flat = True
-      SpeedButtonOptions.Transparent = True
-      TabOrder = 0
-      TabStop = False
-      OnEnter = ButtonCategoryEnter
-    end
-    object ButtonCategoryFiles: TcxButton
-      AlignWithMargins = True
-      Left = 2
-      Top = 56
-      Width = 114
-      Height = 25
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 0
-      Align = alTop
-      Action = ActionCategoryFiles
-      OptionsImage.Margin = 8
-      SpeedButtonOptions.Flat = True
-      SpeedButtonOptions.Transparent = True
-      TabOrder = 2
-      TabStop = False
-      OnEnter = ButtonCategoryEnter
-      ExplicitTop = 83
-    end
-    object ButtonCategoryAdvanced: TcxButton
-      AlignWithMargins = True
-      Left = 2
-      Top = 110
-      Width = 114
-      Height = 25
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 0
-      Align = alTop
-      Action = ActionCategorySystem
-      OptionsImage.Margin = 8
-      SpeedButtonOptions.Flat = True
-      SpeedButtonOptions.Transparent = True
-      TabOrder = 4
-      TabStop = False
-      OnEnter = ButtonCategoryEnter
-      ExplicitTop = 137
-    end
-    object ButtonCategoryProofing: TcxButton
-      AlignWithMargins = True
-      Left = 2
-      Top = 83
-      Width = 114
-      Height = 25
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 0
-      Align = alTop
-      Action = ActionCategoryProofing
-      OptionsImage.Margin = 8
-      SpeedButtonOptions.Flat = True
-      SpeedButtonOptions.Transparent = True
-      TabOrder = 3
-      TabStop = False
-      OnEnter = ButtonCategoryEnter
-      ExplicitTop = 110
-    end
-    object ButtonCategoryTranslators: TcxButton
-      AlignWithMargins = True
-      Left = 2
-      Top = 29
-      Width = 114
-      Height = 25
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 0
-      Align = alTop
-      Action = ActionCategoryTranslators
-      OptionsImage.Margin = 8
-      SpeedButtonOptions.Flat = True
-      SpeedButtonOptions.Transparent = True
-      TabOrder = 1
-      TabStop = False
-      OnEnter = ButtonCategoryEnter
-    end
-  end
-  object dxLayoutControl1: TdxLayoutControl
-    Left = 0
-    Top = 557
+  inherited LayoutControlButtons: TdxLayoutControl
+    Top = 532
     Width = 605
     Height = 75
-    Align = alBottom
-    TabOrder = 2
-    AutoSize = True
-    LayoutLookAndFeel = LayoutSkinLookAndFeelStandard
-    ExplicitTop = 567
-    ExplicitWidth = 570
-    object ButtonCancel: TcxButton
-      Left = 503
-      Top = 40
-      Width = 75
-      Height = 25
-      Cancel = True
-      Caption = 'Cancel'
-      ModalResult = 2
-      TabOrder = 1
+    TabOrder = 1
+    ExplicitTop = 569
+    ExplicitWidth = 605
+    ExplicitHeight = 75
+    inherited ButtonOK: TcxButton
+      Left = 421
+      Top = 45
+      ExplicitLeft = 421
+      ExplicitTop = 45
     end
-    object ButtonOK: TcxButton
-      Left = 422
-      Top = 40
-      Width = 75
-      Height = 25
-      Caption = 'OK'
-      Default = True
-      ModalResult = 1
-      TabOrder = 0
+    inherited ButtonCancel: TcxButton
+      Left = 502
+      Top = 45
+      ExplicitLeft = 502
+      ExplicitTop = 45
     end
-    object dxLayoutControl1Group_Root: TdxLayoutGroup
-      AlignHorz = ahClient
-      AlignVert = avTop
-      ButtonOptions.Buttons = <>
-      Hidden = True
-      ShowBorder = False
-      Index = -1
-    end
-    object dxLayoutItem26: TdxLayoutItem
-      Parent = dxLayoutGroup9
-      AlignHorz = ahRight
-      CaptionOptions.Text = 'cxButton1'
-      CaptionOptions.Visible = False
-      Control = ButtonCancel
-      ControlOptions.OriginalHeight = 25
-      ControlOptions.OriginalWidth = 75
-      ControlOptions.ShowBorder = False
-      Index = 1
-    end
-    object dxLayoutItem27: TdxLayoutItem
-      Parent = dxLayoutGroup9
-      AlignHorz = ahRight
-      CaptionOptions.Visible = False
-      Control = ButtonOK
-      ControlOptions.OriginalHeight = 25
-      ControlOptions.OriginalWidth = 75
-      ControlOptions.ShowBorder = False
-      Index = 0
-    end
-    object dxLayoutGroup9: TdxLayoutGroup
-      Parent = dxLayoutControl1Group_Root
-      CaptionOptions.Visible = False
-      ButtonOptions.Buttons = <>
-      LayoutDirection = ldHorizontal
-      ShowBorder = False
+    inherited LayoutGroupButtons: TdxLayoutGroup
       Index = 1
     end
     object LayoutItemRestart: TdxLayoutLabeledItem
@@ -2083,21 +66,2043 @@ object FormSettings: TFormSettings
       CaptionOptions.WordWrap = True
       Index = 0
     end
+    object LayoutGroupRestart: TdxLayoutGroup
+      Parent = LayoutControlButtonsGroup_Root
+      CaptionOptions.Visible = False
+      Visible = False
+      ButtonOptions.Buttons = <>
+      ItemIndex = 1
+      ShowBorder = False
+      Index = 0
+    end
     object dxLayoutSeparatorItem3: TdxLayoutSeparatorItem
       Parent = LayoutGroupRestart
       CaptionOptions.Text = 'Separator'
       Index = 1
     end
-    object LayoutGroupRestart: TdxLayoutGroup
-      Parent = dxLayoutControl1Group_Root
-      CaptionOptions.Visible = False
-      Visible = False
-      ButtonOptions.Buttons = <>
-      ShowBorder = False
-      Index = 0
+  end
+  inherited LayoutControlHeader: TdxLayoutControl
+    Width = 605
+    TabOrder = 2
+    Visible = False
+    ExplicitWidth = 605
+    inherited LabelHeader: TcxLabel
+      ExplicitWidth = 583
+      Width = 583
     end
   end
-  object ActionListDialog: TActionList
+  inherited PanelMain: TPanel
+    Width = 605
+    Height = 493
+    TabOrder = 0
+    ExplicitLeft = 128
+    ExplicitTop = 39
+    ExplicitWidth = 477
+    ExplicitHeight = 530
+    inherited LayoutControl: TdxLayoutControl
+      Width = 589
+      Height = 481
+      ExplicitLeft = 8
+      ExplicitTop = 4
+      ExplicitWidth = 461
+      ExplicitHeight = 518
+      object PageControl: TcxPageControl [0]
+        Left = 134
+        Top = 6
+        Width = 449
+        Height = 469
+        Color = clWhite
+        ParentColor = False
+        TabOrder = 1
+        TabStop = False
+        Properties.ActivePage = TabSheetGeneral
+        Properties.CustomButtons.Buttons = <>
+        Properties.MultiLine = True
+        Properties.ShowFrame = True
+        LookAndFeel.SkinName = ''
+        ClientRectBottom = 465
+        ClientRectLeft = 4
+        ClientRectRight = 445
+        ClientRectTop = 24
+        object TabSheetGeneral: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 8
+          Caption = 'General'
+          ExplicitWidth = 445
+          ExplicitHeight = 482
+          object LayoutControlGeneral: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 417
+            Height = 421
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            OptionsItem.FocusControlOnItemCaptionClick = True
+            ExplicitWidth = 445
+            ExplicitHeight = 482
+            object LabelEditingHeader: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'Editing'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object CheckUseProposed: TcxCheckBox
+              Left = 12
+              Top = 23
+              Caption = 'Use Proposed status for new translations'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = clBtnFace
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Transparent = True
+            end
+            object CheckBoxAtstart: TcxCheckBox
+              Left = 12
+              Top = 77
+              Caption = 'Display guide dialog when the application starts'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = clBtnFace
+              Style.TransparentBorder = False
+              TabOrder = 3
+              Transparent = True
+            end
+            object cxLabel2: TcxLabel
+              Left = 0
+              Top = 54
+              AutoSize = False
+              Caption = 'Dialogs'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object ImageComboBoxSkin: TcxImageComboBox
+              Left = 85
+              Top = 160
+              Properties.DefaultDescription = '(none)'
+              Properties.Images = ImageListSkin
+              Properties.Items = <>
+              Properties.LargeImages = ImageListSkinLarge
+              Style.HotTrack = False
+              TabOrder = 6
+              Width = 164
+            end
+            object LabelApperance: TcxLabel
+              Left = 0
+              Top = 137
+              AutoSize = False
+              Caption = 'User Interface'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object ButtonDialogsSuppressReset: TcxButton
+              Left = 12
+              Top = 100
+              Width = 197
+              Height = 23
+              Caption = 'Reset suppressed dialogs'
+              TabOrder = 4
+            end
+            object LabelLanguage: TcxLabel
+              Left = 0
+              Top = 195
+              AutoSize = False
+              Caption = 'Language'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object ComboBoxDefaultTargetLanguage: TcxComboBox
+              Left = 136
+              Top = 245
+              Properties.DropDownListStyle = lsFixedList
+              Style.HotTrack = False
+              TabOrder = 9
+              Width = 281
+            end
+            object ComboBoxUILanguage: TcxComboBox
+              Left = 136
+              Top = 218
+              Properties.DropDownListStyle = lsFixedList
+              Style.HotTrack = False
+              TabOrder = 8
+              Width = 281
+            end
+            object dxLayoutGroup1: TdxLayoutGroup
+              AlignHorz = ahParentManaged
+              AlignVert = avParentManaged
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = -1
+            end
+            object LayoutControlGeneralItem1: TdxLayoutItem
+              Parent = LayoutControlGroupEditing
+              CaptionOptions.Visible = False
+              Control = LabelEditingHeader
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 442
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGeneralItem2: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup2
+              CaptionOptions.Visible = False
+              Control = CheckUseProposed
+              ControlOptions.AutoColor = True
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGroupEditing: TdxLayoutGroup
+              Parent = dxLayoutGroup1
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGeneralItem12: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup4
+              CaptionOptions.Visible = False
+              Control = CheckBoxAtstart
+              ControlOptions.AutoColor = True
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGeneralItem13: TdxLayoutItem
+              Parent = LayoutControlGroupStartup
+              CaptionOptions.Visible = False
+              Control = cxLabel2
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 442
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGroupStartup: TdxLayoutGroup
+              Parent = dxLayoutGroup1
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlGeneralItem14: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup3
+              CaptionOptions.Text = 'Color scheme:'
+              Control = ImageComboBoxSkin
+              ControlOptions.AlignHorz = ahLeft
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 164
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGeneralItem16: TdxLayoutItem
+              Parent = LayoutControlGroupUserInterface
+              CaptionOptions.Visible = False
+              Control = LabelApperance
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 442
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlGroupUserInterface: TdxLayoutGroup
+              Parent = dxLayoutGroup1
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 2
+            end
+            object LayoutControlGeneralGroup2: TdxLayoutGroup
+              Parent = LayoutControlGroupEditing
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlGeneralGroup3: TdxLayoutGroup
+              Parent = LayoutControlGroupUserInterface
+              CaptionOptions.Text = 'Hidden Group'
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlGeneralItem11: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup4
+              CaptionOptions.Text = 'New Item'
+              CaptionOptions.Visible = False
+              Control = ButtonDialogsSuppressReset
+              ControlOptions.AlignHorz = ahLeft
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 197
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlGeneralGroup4: TdxLayoutGroup
+              Parent = LayoutControlGroupStartup
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem29: TdxLayoutItem
+              Parent = LayoutGroupLanguage
+              CaptionOptions.Visible = False
+              Control = LabelLanguage
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 7
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem28: TdxLayoutItem
+              Parent = dxLayoutGroup10
+              CaptionOptions.Text = 'Default target language:'
+              Control = ComboBoxDefaultTargetLanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem30: TdxLayoutItem
+              Parent = dxLayoutGroup10
+              CaptionOptions.Text = 'Application language:'
+              Control = ComboBoxUILanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupLanguage: TdxLayoutGroup
+              Parent = dxLayoutGroup1
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 3
+            end
+            object dxLayoutGroup10: TdxLayoutGroup
+              Parent = LayoutGroupLanguage
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+          end
+        end
+        object TabSheetTranslationServices: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 8
+          Caption = 'Translators'
+          ImageIndex = 5
+          ExplicitWidth = 445
+          ExplicitHeight = 482
+          object LayoutControlTranslators: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 417
+            Height = 421
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            OptionsItem.FocusControlOnItemCaptionClick = True
+            ExplicitWidth = 445
+            ExplicitHeight = 482
+            object LabelTranslatorTM: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'Translation Memory'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object CheckBoxTMLoadOnDemand: TcxCheckBox
+              Left = 12
+              Top = 23
+              Caption = 'Load on demand'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Transparent = True
+            end
+            object LabelTransalatorMS: TcxLabel
+              Left = 0
+              Top = 54
+              AutoSize = False
+              Caption = 'Microsoft Translator'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object EditTranslatorMSAPIKey: TcxButtonEdit
+              Left = 58
+              Top = 77
+              Properties.Buttons = <
+                item
+                  ImageIndex = 0
+                  Hint = 'Verify API key'
+                  Kind = bkGlyph
+                end>
+              Properties.Images = ImageList
+              Properties.IncrementalSearch = False
+              Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
+              Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
+              Style.HotTrack = False
+              TabOrder = 3
+              Width = 359
+            end
+            object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
+              AlignHorz = ahClient
+              AlignVert = avTop
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = -1
+            end
+            object dxLayoutItem16: TdxLayoutItem
+              Parent = LayoutGroupTranslatorTM
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelTitle
+              Control = LabelTranslatorTM
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 416
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupTranslatorTM: TdxLayoutGroup
+              Parent = LayoutControlTranslatorsGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem23: TdxLayoutItem
+              Parent = dxLayoutGroup2
+              CaptionOptions.Visible = False
+              Control = CheckBoxTMLoadOnDemand
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 100
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup2: TdxLayoutGroup
+              Parent = LayoutGroupTranslatorTM
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem24: TdxLayoutItem
+              Parent = LayoutGroupTranslatorMS
+              CaptionOptions.Visible = False
+              Control = LabelTransalatorMS
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 7
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupTranslatorMS: TdxLayoutGroup
+              Parent = LayoutControlTranslatorsGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem25: TdxLayoutItem
+              Parent = dxLayoutGroup8
+              CaptionOptions.Text = 'API key:'
+              Control = EditTranslatorMSAPIKey
+              ControlOptions.OriginalHeight = 24
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup8: TdxLayoutGroup
+              Parent = LayoutGroupTranslatorMS
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+          end
+        end
+        object TabSheetFileLocations: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 12
+          Caption = 'Files'
+          ExplicitWidth = 445
+          ExplicitHeight = 478
+          object LayoutControlFiles: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 417
+            Height = 417
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            ExplicitWidth = 445
+            ExplicitHeight = 478
+            DesignSize = (
+              417
+              417)
+            object cxLabel5: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'File locations'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 400
+            end
+            object GridFolders: TcxGrid
+              AlignWithMargins = True
+              Left = 12
+              Top = 23
+              Width = 388
+              Height = 200
+              Margins.Left = 12
+              Margins.Top = 6
+              Margins.Right = 12
+              Margins.Bottom = 2
+              TabOrder = 1
+              object GridFoldersTableView: TcxGridTableView
+                Navigator.Buttons.CustomButtons = <>
+                OnCellDblClick = GridFoldersTableViewCellDblClick
+                OnEditing = GridFoldersTableViewEditing
+                DataController.Summary.DefaultGroupSummaryItems = <>
+                DataController.Summary.FooterSummaryItems = <>
+                DataController.Summary.SummaryGroups = <>
+                OptionsBehavior.CellHints = True
+                OptionsCustomize.ColumnFiltering = False
+                OptionsCustomize.ColumnGrouping = False
+                OptionsCustomize.ColumnMoving = False
+                OptionsCustomize.ColumnSorting = False
+                OptionsData.Deleting = False
+                OptionsData.Inserting = False
+                OptionsSelection.InvertSelect = False
+                OptionsView.ColumnAutoWidth = True
+                OptionsView.GroupByBox = False
+                Styles.UseOddEvenStyles = bFalse
+                Styles.OnGetContentStyle = GridFoldersTableViewStylesGetContentStyle
+                object GridFoldersTableViewColumnName: TcxGridColumn
+                  Caption = 'File type'
+                  PropertiesClassName = 'TcxLabelProperties'
+                  Properties.ShowAccelChar = False
+                  Properties.ShowEndEllipsis = True
+                  MinWidth = 50
+                  Options.Editing = False
+                  Options.Focusing = False
+                  Width = 120
+                end
+                object GridFoldersTableViewColumnPath: TcxGridColumn
+                  Caption = 'Path'
+                  PropertiesClassName = 'TcxButtonEditProperties'
+                  Properties.Buttons = <
+                    item
+                      Action = ActionFoldersModify
+                      Default = True
+                      Kind = bkEllipsis
+                    end
+                    item
+                      Action = ActionFoldersExplorer
+                      Glyph.SourceDPI = 96
+                      Glyph.Data = {
+                        424D360400000000000036000000280000001000000010000000010020000000
+                        000000000000C40E0000C40E000000000000000000004298D2EF3D94D0FF3D94
+                        D0FF4197D1E70000000000000000000000000000000000000000000000000000
+                        000000000000000000000000000000000000000000003D94D0FFDCFDFFFFDAFB
+                        FFFF358FCDFF3A92CFFF3E95D0FF4398D2AF0000000000000000000000000000
+                        000000000000000000000000000000000000000000003B92CFFFD2F9FFFFB6F0
+                        FFFFDCFDFFFFDFFFFFFFE5FFFFFF3E95D0FF0000000000000000000000000000
+                        000000000000000000000000000000000000000000003D93CFFFC1F7FFFF51B5
+                        E5FF2F89CAFF2F8ACBFF328CCCFF3992CFFF3F97D3FF000000004097D3AC3D94
+                        D0FF3D94D0FF4197D1A80000000000000000000000004095D0FFA0E5FBFF48A7
+                        DDFFDDFAFFFFDAF9FFFFDBFAFFFFDDFCFFFF328AC8CE000000003692D2FFDCFD
+                        FFFFDAFBFFFF348DCDFF3991CEFF3D94D0FF4297D2B04397D1FF54A6D9FF82E3
+                        FDFF86EBFFFF83EAFFFF85ECFFFF51B3E4FF8D8C8CFF8D8C8CFF3190D2FFCEF7
+                        FFFFB5EEFEFFDBF9FFFFDDFBFFFFE2FFFFFF3D94D0FF4190C7D14397D1FF4094
+                        D0FF3C92D0FF3991D0FF3B92D1FF3991CFEC00000033000000333490D1FFB7F3
+                        FFFF77E0FDFF77E0FDFF76E0FEFFDAFEFFFF3B92CFFF00000027000000330000
+                        0033000000338D8C8CFF000000330000002E00000000000000003C93D1FFA9F9
+                        FFFF8FF0FFFF8FEFFFFF8DF0FFFFD2FFFFFF3E94D0FF00000000000000000000
+                        0000000000008D8C8CFF000000000000000000000000000000003A87BCB23E93
+                        CFFF3E91CEFF3E92CEFF3E92CFFF3E94D0FF3D8BC1BE00000000000000000000
+                        0000000000008D8C8CFF000000000000000000000000000000003D93CFE23C93
+                        D0FF3B92CFFF3D8EC7D600000033000000330000002300000000000000000000
+                        0000000000008D8C8CFF000000000000000000000000000000003492D3FFDCFD
+                        FFFFDAFBFFFF348DCDFF3991CEFF3D94D0FF4297D2AE00000000000000000000
+                        0000000000008D8C8CFF8D8C8CFF8D8C8CFF8D8C8CFF8D8C8CFF308FD2FFCEF7
+                        FFFFB5EEFEFFDBF9FFFFDDFBFFFFE2FFFFFF3D94D0FF00000000000000000000
+                        00000000000000000033000000330000003300000033000000333390D1FFB7F3
+                        FFFF77E0FDFF77E0FDFF76E0FEFFDAFEFFFF3B92CFFF00000000000000000000
+                        00000000000000000000000000000000000000000000000000003B93D1FFA9F9
+                        FFFF8FF0FFFF8FEFFFFF8DF0FFFFD2FFFFFF3E94D0FF00000000000000000000
+                        00000000000000000000000000000000000000000000000000003D8BC1C04094
+                        D0FF3F92CFFF3F92CEFF3E92CFFF3E94D0FF3D8BC1C000000000000000000000
+                        0000000000000000000000000000000000000000000000000000000000230000
+                        00330000003300000033000000330000003300000023}
+                      Kind = bkGlyph
+                    end>
+                  Properties.OnEditValueChanged = GridFoldersTableViewColumnPathPropertiesEditValueChanged
+                  OnGetCellHint = GridFoldersTableViewColumnPathGetCellHint
+                  OnGetDisplayText = GridFoldersTableViewColumnPathGetDisplayText
+                  MinWidth = 100
+                  Width = 297
+                end
+                object GridFoldersTableViewColumnReadOnly: TcxGridColumn
+                  DataBinding.ValueType = 'Boolean'
+                  PropertiesClassName = 'TcxCheckBoxProperties'
+                  Visible = False
+                end
+              end
+              object GridFoldersLevel: TcxGridLevel
+                GridView = GridFoldersTableView
+              end
+            end
+            object ButtonFilesReset: TcxButton
+              Left = 325
+              Top = 229
+              Width = 75
+              Height = 23
+              Action = ActionFolderReset
+              Anchors = [akTop, akRight]
+              DropDownMenu = PopupMenuFolderReset
+              Kind = cxbkDropDownButton
+              TabOrder = 3
+            end
+            object ButtonFilesModify: TcxButton
+              Left = 232
+              Top = 229
+              Width = 75
+              Height = 23
+              Action = ActionFoldersModify
+              Anchors = [akTop, akRight]
+              TabOrder = 2
+            end
+            object cxLabel6: TcxLabel
+              Left = 0
+              Top = 266
+              AutoSize = False
+              Caption = 'Document file recovery'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 400
+            end
+            object CheckBoxAutoRecovery: TcxCheckBox
+              Left = 12
+              Top = 289
+              Caption = 'Save auto-recovery information'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 5
+              Transparent = True
+            end
+            object EditAutoRecoveryInterval: TcxSpinEdit
+              Left = 152
+              Top = 312
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 60.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 6
+              Value = 1
+              Width = 53
+            end
+            object CheckBoxAutoRecoveryReduced: TcxCheckBox
+              Left = 12
+              Top = 339
+              Hint = 
+                'Reduces the size of the saved document by excluding various non-' +
+                'essential parts such as images.'
+              Caption = 'Save a reduced version of the document'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 7
+              Transparent = True
+            end
+            object cxLabel10: TcxLabel
+              Left = 0
+              Top = 370
+              Anchors = [akLeft, akTop, akRight]
+              AutoSize = False
+              Caption = 'Backup files'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 400
+            end
+            object CheckBoxHistoryBackup: TcxCheckBox
+              Left = 12
+              Top = 393
+              Caption = 'Save extra backup files'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 9
+              Transparent = True
+            end
+            object EditHistoryBackupMaxFiles: TcxSpinEdit
+              Left = 152
+              Top = 416
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 100.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 10
+              Value = 1
+              Width = 53
+            end
+            object EditHistoryBackupMaxSize: TcxSpinEdit
+              Left = 319
+              Top = 416
+              Properties.Alignment.Horz = taRightJustify
+              Properties.DisplayFormat = '0,0 Mb'
+              Properties.EditFormat = '0,0'
+              Properties.MaxValue = 10000.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 11
+              Value = 100
+              Width = 78
+            end
+            object LayoutControlFilesGroup_Root: TdxLayoutGroup
+              AlignHorz = ahClient
+              AlignVert = avTop
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = -1
+            end
+            object dxLayoutItem31: TdxLayoutItem
+              Parent = dxLayoutGroup11
+              CaptionOptions.Visible = False
+              Control = cxLabel5
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 416
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem32: TdxLayoutItem
+              Parent = dxLayoutGroup12
+              Control = GridFolders
+              ControlOptions.OriginalHeight = 200
+              ControlOptions.OriginalWidth = 250
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem33: TdxLayoutItem
+              Parent = dxLayoutGroup13
+              AlignHorz = ahRight
+              CaptionOptions.Visible = False
+              Control = ButtonFilesReset
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 75
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem34: TdxLayoutItem
+              Parent = dxLayoutGroup13
+              AlignHorz = ahRight
+              CaptionOptions.Visible = False
+              Control = ButtonFilesModify
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 75
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup11: TdxLayoutGroup
+              Parent = LayoutControlFilesGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 3
+              ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup12: TdxLayoutGroup
+              Parent = dxLayoutGroup11
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutGroup13: TdxLayoutGroup
+              Parent = dxLayoutGroup12
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              LayoutDirection = ldHorizontal
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem35: TdxLayoutItem
+              Parent = LayoutGroupRecovery
+              CaptionOptions.Visible = False
+              Control = cxLabel6
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 7
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem36: TdxLayoutItem
+              Parent = dxLayoutGroup14
+              CaptionOptions.Visible = False
+              Control = CheckBoxAutoRecovery
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 174
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem37: TdxLayoutItem
+              Parent = dxLayoutGroup14
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Interval (minutes):'
+              Offsets.Left = 20
+              Control = EditAutoRecoveryInterval
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 53
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem38: TdxLayoutItem
+              Parent = dxLayoutGroup14
+              CaptionOptions.Visible = False
+              Control = CheckBoxAutoRecoveryReduced
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 216
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object LayoutGroupRecovery: TdxLayoutGroup
+              Parent = dxLayoutGroup11
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutGroup14: TdxLayoutGroup
+              Parent = LayoutGroupRecovery
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 2
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem39: TdxLayoutItem
+              Parent = LayoutGroupBackup
+              CaptionOptions.Visible = False
+              Control = cxLabel10
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 7
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem40: TdxLayoutItem
+              Parent = dxLayoutGroup15
+              CaptionOptions.Visible = False
+              Control = CheckBoxHistoryBackup
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 133
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupBackup: TdxLayoutGroup
+              Parent = dxLayoutGroup11
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 3
+            end
+            object dxLayoutGroup15: TdxLayoutGroup
+              Parent = LayoutGroupBackup
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem41: TdxLayoutItem
+              Parent = dxLayoutGroup16
+              CaptionOptions.Text = 'Number of files to save:'
+              Control = EditHistoryBackupMaxFiles
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 53
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem42: TdxLayoutItem
+              Parent = dxLayoutGroup16
+              CaptionOptions.Text = 'Max total file size:'
+              Control = EditHistoryBackupMaxSize
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 78
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutGroup16: TdxLayoutGroup
+              Parent = dxLayoutGroup15
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 20
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              LayoutDirection = ldHorizontal
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem
+              Parent = dxLayoutGroup16
+              CaptionOptions.Text = 'Empty Space Item'
+              SizeOptions.Height = 10
+              SizeOptions.Width = 10
+              Index = 1
+            end
+          end
+        end
+        object TabSheetProofing: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 8
+          Caption = 'Proofing'
+          ImageIndex = 6
+          ExplicitWidth = 445
+          ExplicitHeight = 482
+          object LayoutControlProofing: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 417
+            Height = 421
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            OptionsItem.FocusControlOnItemCaptionClick = True
+            ExplicitWidth = 445
+            ExplicitHeight = 482
+            DesignSize = (
+              417
+              421)
+            object CheckBoxProofingIgnoreNumbers: TcxCheckBox
+              Left = 12
+              Top = 115
+              Caption = 'Ignore words with numbers'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 5
+              Transparent = True
+            end
+            object cxLabel12: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'Spell check'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 400
+            end
+            object CheckBoxProofingIgnoreRepeatWords: TcxCheckBox
+              Left = 12
+              Top = 92
+              Caption = 'Ignore repeated words'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 4
+              Transparent = True
+            end
+            object ComboBoxProofingLanguages: TcxCheckComboBox
+              Left = 183
+              Top = 150
+              Properties.Items = <>
+              Style.HotTrack = False
+              TabOrder = 6
+              Width = 217
+            end
+            object cxLabel13: TcxLabel
+              Left = 0
+              Top = 206
+              AutoSize = False
+              Caption = 'AutoCorrect'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 400
+            end
+            object ButtonProofingEditCustomDictionary: TcxButton
+              Left = 254
+              Top = 177
+              Width = 146
+              Height = 23
+              Anchors = [akTop, akRight]
+              Caption = 'Edit user dictionary...'
+              TabOrder = 7
+              OnClick = ButtonProofingEditCustomDictionaryClick
+            end
+            object CheckBoxProofingSpellCheck: TcxCheckBox
+              Left = 12
+              Top = 23
+              Caption = 'Check spelling as you type'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Transparent = True
+            end
+            object CheckBoxProofingIgnoreUppercase: TcxCheckBox
+              Left = 12
+              Top = 46
+              Caption = 'Ignore words in UPPERCASE'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 2
+              Transparent = True
+            end
+            object CheckBoxProofingIgnoreMixedCase: TcxCheckBox
+              Left = 12
+              Top = 69
+              Caption = 'Ignore words in MIXed caSE'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 3
+              Transparent = True
+            end
+            object CheckBoxProofingCorrectSentenceCaps: TcxCheckBox
+              Left = 28
+              Top = 252
+              Caption = 'Capitalize first letter of &sentences'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 10
+              Transparent = True
+            end
+            object CheckBoxProofingCorrectCapsLock: TcxCheckBox
+              Left = 28
+              Top = 298
+              Caption = 'Correct accidental usage of cAPS &LOCK key'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 13
+              Transparent = True
+            end
+            object CheckBoxProofingDisableCapsLock: TcxCheckBox
+              Left = 28
+              Top = 321
+              Caption = 'Disable Caps Lock'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 14
+              Transparent = True
+            end
+            object CheckBoxProofingCorrectAutoReplace: TcxCheckBox
+              Left = 28
+              Top = 356
+              Caption = 'Correct text as you type'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 15
+              Transparent = True
+            end
+            object ListViewProofingAutoCorrectReplacements: TcxListView
+              Left = 46
+              Top = 406
+              Width = 260
+              Height = 85
+              Anchors = [akLeft, akTop, akRight]
+              ColumnClick = False
+              Columns = <
+                item
+                  MaxWidth = 100
+                  MinWidth = 100
+                  Width = 100
+                end
+                item
+                  AutoSize = True
+                end>
+              Enabled = False
+              IconOptions.WrapText = False
+              ReadOnly = True
+              RowSelect = True
+              ShowColumnHeaders = False
+              SortType = stText
+              Style.TransparentBorder = False
+              TabOrder = 18
+              ViewStyle = vsReport
+              OnClick = ListViewProofingAutoCorrectReplacementsClick
+            end
+            object ButtonProofingAutoCorrectAdd: TcxButton
+              Left = 312
+              Top = 406
+              Width = 88
+              Height = 23
+              Action = ActionProofingAdd
+              Anchors = [akRight, akBottom]
+              Enabled = False
+              TabOrder = 19
+            end
+            object ButtonProofingAutoCorrectDelete: TcxButton
+              Left = 312
+              Top = 435
+              Width = 88
+              Height = 23
+              Action = ActionProofingDelete
+              Anchors = [akRight, akBottom]
+              Enabled = False
+              TabOrder = 20
+            end
+            object CheckBoxProofingCorrectAutomaticallyUseSuggestions: TcxCheckBox
+              Left = 46
+              Top = 497
+              Caption = 'Automatically use suggestions from the spell checker'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 21
+              Transparent = True
+            end
+            object EditProofingAutoCorrectReplacementFrom: TcxTextEdit
+              Left = 93
+              Top = 379
+              Enabled = False
+              Properties.OnChange = EditProofingAutoCorrectReplacementFromPropertiesChange
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 16
+              Width = 109
+            end
+            object EditProofingAutoCorrectReplacementTo: TcxTextEdit
+              Left = 239
+              Top = 379
+              Anchors = [akLeft, akTop, akRight]
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 17
+              Width = 161
+            end
+            object CheckBoxProofingAutoCorrect: TcxCheckBox
+              Left = 12
+              Top = 229
+              Caption = 'Enable AutoCorrect'
+              Properties.OnChange = CheckBoxProofingAutoCorrectPropertiesChange
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 9
+              Transparent = True
+            end
+            object ButtonProofingAutoCorrectExceptions: TcxButton
+              Left = 254
+              Top = 252
+              Width = 146
+              Height = 23
+              Caption = 'Exceptions...'
+              Enabled = False
+              TabOrder = 12
+              OnClick = ButtonProofingAutoCorrectExceptionsClick
+            end
+            object CheckBoxProofingCorrectInitialCaps: TcxCheckBox
+              Left = 28
+              Top = 275
+              Caption = 'Correct TWo &INitial CApitals'
+              Enabled = False
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 11
+              Transparent = True
+            end
+            object LayoutGroupProofing: TdxLayoutGroup
+              AlignHorz = ahClient
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = -1
+            end
+            object dxLayoutItem5: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingIgnoreNumbers
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 4
+            end
+            object dxLayoutItem1: TdxLayoutItem
+              Parent = dxLayoutGroup4
+              CaptionOptions.Visible = False
+              Control = cxLabel12
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 448
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem6: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingIgnoreRepeatWords
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 3
+            end
+            object dxLayoutGroup3: TdxLayoutGroup
+              Parent = dxLayoutGroup4
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem7: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Text = 'Dictionaries:'
+              Visible = False
+              Control = ComboBoxProofingLanguages
+              ControlOptions.AlignHorz = ahRight
+              ControlOptions.AutoControlAreaAlignment = False
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 217
+              ControlOptions.ShowBorder = False
+              Index = 6
+            end
+            object dxLayoutGroup4: TdxLayoutGroup
+              Parent = LayoutGroupProofing
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem9: TdxLayoutItem
+              Parent = dxLayoutGroup6
+              CaptionOptions.Visible = False
+              Control = cxLabel13
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 448
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup6: TdxLayoutGroup
+              Parent = LayoutGroupProofing
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem8: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Text = 'User dictionary:'
+              Control = ButtonProofingEditCustomDictionary
+              ControlOptions.AlignHorz = ahRight
+              ControlOptions.AutoControlAreaAlignment = False
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 146
+              ControlOptions.ShowBorder = False
+              Index = 7
+            end
+            object dxLayoutSeparatorItem1: TdxLayoutSeparatorItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Text = 'Separator'
+              Index = 5
+            end
+            object dxLayoutItem2: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingSpellCheck
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem3: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingIgnoreUppercase
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem4: TdxLayoutItem
+              Parent = dxLayoutGroup3
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingIgnoreMixedCase
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutItem11: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup5
+              AlignHorz = ahClient
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingCorrectSentenceCaps
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem13: TdxLayoutItem
+              Parent = LayoutGroupProofingAutoCorrect
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingCorrectCapsLock
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem14: TdxLayoutItem
+              Parent = LayoutGroupProofingAutoCorrect
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingDisableCapsLock
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutGroup7: TdxLayoutGroup
+              Parent = dxLayoutGroup6
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem10: TdxLayoutItem
+              Parent = LayoutGroupProofingAutoCorrect
+              AlignHorz = ahLeft
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingCorrectAutoReplace
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 139
+              ControlOptions.ShowBorder = False
+              Index = 4
+            end
+            object dxLayoutGroup5: TdxLayoutGroup
+              Parent = LayoutGroupProofingAutoCorrect
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 18
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 5
+            end
+            object dxLayoutAutoCreatedGroup3: TdxLayoutAutoCreatedGroup
+              Parent = dxLayoutGroup5
+              LayoutDirection = ldHorizontal
+              Index = 1
+            end
+            object dxLayoutItem18: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup3
+              AlignHorz = ahClient
+              AlignVert = avTop
+              Control = ListViewProofingAutoCorrectReplacements
+              ControlOptions.OriginalHeight = 85
+              ControlOptions.OriginalWidth = 308
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutAutoCreatedGroup2: TdxLayoutAutoCreatedGroup
+              Parent = dxLayoutAutoCreatedGroup3
+              Index = 1
+            end
+            object dxLayoutItem19: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup2
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              Control = ButtonProofingAutoCorrectAdd
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 88
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem20: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup2
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              Control = ButtonProofingAutoCorrectDelete
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 73
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem21: TdxLayoutItem
+              Parent = dxLayoutGroup5
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingCorrectAutomaticallyUseSuggestions
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutAutoCreatedGroup1: TdxLayoutAutoCreatedGroup
+              Parent = dxLayoutGroup5
+              LayoutDirection = ldHorizontal
+              Index = 0
+            end
+            object EditProofingAutoCorrectReplace: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup1
+              AlignHorz = ahClient
+              AlignVert = avTop
+              CaptionOptions.Text = 'Replace:'
+              Control = EditProofingAutoCorrectReplacementFrom
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 114
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem17: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup1
+              AlignHorz = ahClient
+              AlignVert = avTop
+              CaptionOptions.Text = 'With:'
+              Control = EditProofingAutoCorrectReplacementTo
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 168
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutSeparatorItem2: TdxLayoutSeparatorItem
+              Parent = LayoutGroupProofingAutoCorrect
+              CaptionOptions.Text = 'Separator'
+              Index = 3
+            end
+            object dxLayoutItem22: TdxLayoutItem
+              Parent = dxLayoutGroup7
+              AlignHorz = ahLeft
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingAutoCorrect
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 114
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupProofingAutoCorrect: TdxLayoutGroup
+              Parent = dxLayoutGroup7
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 16
+              ButtonOptions.Buttons = <>
+              Enabled = False
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem15: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup4
+              CaptionOptions.Visible = False
+              Control = ButtonProofingAutoCorrectExceptions
+              ControlOptions.AlignHorz = ahRight
+              ControlOptions.AutoControlAreaAlignment = False
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 146
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutAutoCreatedGroup4: TdxLayoutAutoCreatedGroup
+              Parent = LayoutGroupProofingAutoCorrect
+              LayoutDirection = ldHorizontal
+              Index = 0
+            end
+            object dxLayoutItem12: TdxLayoutItem
+              Parent = dxLayoutAutoCreatedGroup5
+              CaptionOptions.Visible = False
+              Control = CheckBoxProofingCorrectInitialCaps
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutAutoCreatedGroup5: TdxLayoutAutoCreatedGroup
+              Parent = dxLayoutAutoCreatedGroup4
+              AlignHorz = ahClient
+              Index = 0
+            end
+          end
+        end
+        object TabSheetSystem: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 8
+          Caption = 'Advanced'
+          ImageIndex = 5
+          ExplicitWidth = 445
+          ExplicitHeight = 482
+          object LayoutControlAdvanced: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 417
+            Height = 421
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            OptionsItem.FocusControlOnItemCaptionClick = True
+            ExplicitWidth = 445
+            ExplicitHeight = 482
+            object LabelAutoUpdateIntro: TcxLabel
+              AlignWithMargins = True
+              Left = 12
+              Top = 137
+              Margins.Left = 12
+              Margins.Top = 6
+              Margins.Right = 12
+              Margins.Bottom = 4
+              Caption = 
+                'The application can automatically check for, download and instal' +
+                'l updates as they become available. You will always be asked to ' +
+                'accept an update before it is downloaded and installed.'
+              ParentColor = False
+              Style.Color = clBtnFace
+              Properties.ShowAccelChar = False
+              Properties.WordWrap = True
+              Transparent = True
+              Width = 405
+            end
+            object CheckBoxSingleInstance: TcxCheckBox
+              Left = 12
+              Top = 23
+              Caption = 'Use single instance of the application'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Transparent = True
+            end
+            object cxLabel4: TcxLabel
+              Left = 0
+              Top = 54
+              AutoSize = False
+              Caption = 'File types'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object ButtonRegisterFiletypes: TcxButton
+              Left = 12
+              Top = 77
+              Width = 253
+              Height = 23
+              Caption = 'Restore Translation Manager file associations'
+              TabOrder = 3
+            end
+            object cxLabel11: TcxLabel
+              Left = 0
+              Top = 114
+              AutoSize = False
+              Caption = 'Auto Update'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object CheckBoxAutoUpdateEnabled: TcxCheckBox
+              AlignWithMargins = True
+              Left = 12
+              Top = 186
+              Margins.Left = 12
+              Margins.Top = 6
+              Margins.Right = 12
+              Margins.Bottom = 0
+              Caption = 'Check for updates every time the application starts'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 6
+              Transparent = True
+            end
+            object ButtonAutoUpdateNow: TcxButton
+              Left = 12
+              Top = 254
+              Width = 197
+              Height = 23
+              Caption = 'Check for updates now'
+              TabOrder = 8
+            end
+            object ButtonAutoUpdateReset: TcxButton
+              Left = 12
+              Top = 225
+              Width = 197
+              Height = 23
+              Caption = 'Reset declined updates'
+              TabOrder = 7
+            end
+            object cxLabel14: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'Launch'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 417
+            end
+            object LayoutControlAdvancedGroup_Root: TdxLayoutGroup
+              AlignHorz = ahClient
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = -1
+            end
+            object LayoutControlAdvancedItem1: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup9
+              CaptionOptions.Visible = False
+              Control = CheckBoxSingleInstance
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedItem2: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup2
+              CaptionOptions.Visible = False
+              Control = cxLabel4
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 402
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedItem3: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup4
+              CaptionOptions.Visible = False
+              Control = ButtonRegisterFiletypes
+              ControlOptions.AlignHorz = ahLeft
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 253
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedGroup2: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlAdvancedGroup4: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup2
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlAdvancedItem6: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup5
+              CaptionOptions.Visible = False
+              Control = cxLabel11
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 442
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedItem7: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup6
+              CaptionOptions.Visible = False
+              Control = LabelAutoUpdateIntro
+              ControlOptions.AutoColor = True
+              ControlOptions.OriginalHeight = 43
+              ControlOptions.OriginalWidth = 428
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedItem8: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup6
+              CaptionOptions.Visible = False
+              Control = CheckBoxAutoUpdateEnabled
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlAdvancedGroup5: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 2
+            end
+            object LayoutControlAdvancedGroup6: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup5
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ItemIndex = 2
+              ShowBorder = False
+              Index = 1
+            end
+            object LayoutControlAdvancedItem9: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup6
+              CaptionOptions.Visible = False
+              Control = ButtonAutoUpdateNow
+              ControlOptions.AlignHorz = ahLeft
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 197
+              ControlOptions.ShowBorder = False
+              Index = 4
+            end
+            object LayoutControlAdvancedItem10: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup6
+              CaptionOptions.Visible = False
+              Control = ButtonAutoUpdateReset
+              ControlOptions.AlignHorz = ahLeft
+              ControlOptions.OriginalHeight = 23
+              ControlOptions.OriginalWidth = 197
+              ControlOptions.ShowBorder = False
+              Index = 3
+            end
+            object LayoutControlAdvancedItem17: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup7
+              CaptionOptions.Visible = False
+              Control = cxLabel14
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 442
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedGroup7: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup_Root
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Visible = False
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 0
+            end
+            object LayoutControlAdvancedGroup9: TdxLayoutGroup
+              Parent = LayoutControlAdvancedGroup7
+              CaptionOptions.Text = 'Hidden Group'
+              CaptionOptions.Visible = False
+              Offsets.Left = 12
+              ButtonOptions.Buttons = <>
+              Hidden = True
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
+              Parent = LayoutControlAdvancedGroup6
+              CaptionOptions.Text = 'Empty Space Item'
+              SizeOptions.Height = 10
+              SizeOptions.Width = 10
+              Index = 2
+            end
+          end
+        end
+      end
+      object PanelCategory: TPanel [1]
+        Left = 6
+        Top = 6
+        Width = 122
+        Height = 469
+        BevelKind = bkFlat
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentBackground = False
+        ShowCaption = False
+        TabOrder = 0
+        object ButtonCategoryGeneral: TcxButton
+          AlignWithMargins = True
+          Left = 2
+          Top = 2
+          Width = 114
+          Height = 25
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 0
+          Align = alTop
+          Action = ActionCategoryGeneral
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 0
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+        object ButtonCategoryFiles: TcxButton
+          AlignWithMargins = True
+          Left = 2
+          Top = 56
+          Width = 114
+          Height = 25
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 0
+          Align = alTop
+          Action = ActionCategoryFiles
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 2
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+        object ButtonCategoryAdvanced: TcxButton
+          AlignWithMargins = True
+          Left = 2
+          Top = 110
+          Width = 114
+          Height = 25
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 0
+          Align = alTop
+          Action = ActionCategorySystem
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 4
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+        object ButtonCategoryProofing: TcxButton
+          AlignWithMargins = True
+          Left = 2
+          Top = 83
+          Width = 114
+          Height = 25
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 0
+          Align = alTop
+          Action = ActionCategoryProofing
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 3
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+        object ButtonCategoryTranslators: TcxButton
+          AlignWithMargins = True
+          Left = 2
+          Top = 29
+          Width = 114
+          Height = 25
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 0
+          Align = alTop
+          Action = ActionCategoryTranslators
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 1
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+      end
+      inherited LayoutControlGroup_Root: TdxLayoutGroup
+        AlignVert = avClient
+        LayoutDirection = ldHorizontal
+      end
+      object LayoutItemCategories: TdxLayoutItem
+        Parent = LayoutControlGroup_Root
+        AlignHorz = ahLeft
+        AlignVert = avClient
+        CaptionOptions.Visible = False
+        Control = PanelCategory
+        ControlOptions.AutoColor = True
+        ControlOptions.OriginalHeight = 424
+        ControlOptions.OriginalWidth = 122
+        ControlOptions.ShowBorder = False
+        Index = 0
+      end
+      object LayoutItemPages: TdxLayoutItem
+        Parent = LayoutControlGroup_Root
+        AlignHorz = ahClient
+        AlignVert = avClient
+        CaptionOptions.Visible = False
+        Control = PageControl
+        ControlOptions.OriginalHeight = 530
+        ControlOptions.OriginalWidth = 477
+        ControlOptions.ShowBorder = False
+        Index = 1
+      end
+    end
+  end
+  inherited ActionList: TActionList
     Left = 36
     Top = 144
     object ActionCategoryGeneral: TAction

@@ -15,20 +15,14 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxClasses,
   dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, Vcl.Menus, dxLayoutcxEditAdapters,
   dxLayoutControlAdapters, cxCheckBox, cxCustomListBox, cxCheckListBox, cxGroupBox, dxCheckGroupBox, Vcl.StdCtrls, cxButtons,
-  cxTextEdit, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox, System.Actions, Vcl.ActnList;
+  cxTextEdit, cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox, System.Actions, Vcl.ActnList,
+  amLocalization.Dialog, Vcl.ExtCtrls, cxLabel;
 
 type
-  TFormLanguages = class(TForm)
-    LayoutControl: TdxLayoutControl;
+  TFormLanguages = class(TFormDialog)
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
-    ButtonOK: TcxButton;
-    ButtonCancel: TcxButton;
-    LayoutControlGroup_Root: TdxLayoutGroup;
     dxLayoutItem2: TdxLayoutItem;
-    dxLayoutItem3: TdxLayoutItem;
-    dxLayoutItem4: TdxLayoutItem;
     dxLayoutGroup1: TdxLayoutGroup;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     dxLayoutItem1: TdxLayoutItem;
     CheckListBoxLanguages: TcxCheckListBox;
     CheckBoxApplyFilter: TcxCheckBox;

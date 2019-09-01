@@ -15,7 +15,8 @@ uses
   Dialogs, ExtCtrls, StdCtrls, ComCtrls, ToolWin, ActnMan, ActnCtrls, ActnList,
   StdActns, PlatformDefaultStyleActnCtrls, ImgList,
   Menus, ActnPopup, System.Actions, System.ImageList, cxGraphics, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxControls,
-  cxContainer, cxEdit, cxTextEdit, cxMemo, cxRichEdit, cxButtons, cxSplitter, cxImageList;
+  cxContainer, cxEdit, cxTextEdit, cxMemo, cxRichEdit, cxButtons, cxSplitter, cxImageList,
+  amLocalization.Dialog, dxLayoutControlAdapters, dxLayoutcxEditAdapters, cxLabel, dxLayoutContainer, cxClasses, dxLayoutControl;
 
 type
   TEditDelete = class(StdActns.TEditDelete)
@@ -30,11 +31,7 @@ type
 //
 //------------------------------------------------------------------------------
 type
-  TFormTextEditor = class(TForm)
-    Panel1: TPanel;
-    EditText: TcxRichEdit;
-    ButtonOK: TcxButton;
-    ButtonCancel: TcxButton;
+  TFormTextEditor = class(TFormDialog)
     ImageListNormal: TcxImageList;
     ActionManager1: TActionManager;
     EditCut1: TEditCut;
@@ -49,7 +46,6 @@ type
     SearchFindNext1: TSearchFindNext;
     SearchReplace1: TSearchReplace;
     SearchFindFirst1: TSearchFindFirst;
-    ActionList1: TActionList;
     ToolActionBar2: TActionToolBar;
     PopupActionBar1: TPopupActionBar;
     Cut1: TMenuItem;
@@ -57,8 +53,11 @@ type
     Paste1: TMenuItem;
     Delete1: TMenuItem;
     N1: TMenuItem;
+    LayoutItemEditors: TdxLayoutItem;
+    PanelEditors: TPanel;
     EditSourceText: TcxRichEdit;
-    Splitter: TcxSplitter;
+    EditText: TcxRichEdit;
+    SplitterEditors: TcxSplitter;
     procedure FormKeyPress(Sender: TObject; var Key: Char);
     procedure FileOpen1Accept(Sender: TObject);
     procedure FileSaveAs1Accept(Sender: TObject);
@@ -89,11 +88,8 @@ uses
 
 function TFormTextEditor.Execute(ShowSourceValue: boolean): boolean;
 begin
-  if (not ShowSourceValue) then
-  begin
-    EditSourceText.Visible := False;
-    Splitter.Visible := False;
-  end;
+  EditSourceText.Visible := ShowSourceValue;
+  SplitterEditors.Visible := ShowSourceValue;
 
   Result := (ShowModal = mrOK);
 end;
@@ -122,7 +118,7 @@ begin
   FileOpen1.Dialog.FilterIndex := 0;
   FileSaveAs1.Dialog.Filter := sFileTextFilter + '|' + SDefaultFilter;
   FileSaveAs1.Dialog.FilterIndex := 0;
-  Splitter.CloseSplitter;
+  SplitterEditors.CloseSplitter;
 end;
 
 //------------------------------------------------------------------------------

@@ -20,7 +20,8 @@ uses
   cxClasses, dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, dxLayoutcxEditAdapters, dxLayoutControlAdapters, cxButtons,
   cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit,
 
-  amLocalization.Model;
+  amLocalization.Dialog,
+  amLocalization.Model, Vcl.ExtCtrls, cxLabel;
 
 type
   ILocalizerSearchHost = interface
@@ -46,15 +47,12 @@ type
   TSearchScopes = set of TSearchScope;
 
 type
-  TFormSearch = class(TForm, ILocalizerSearchProvider)
-    LayoutControlGroup_Root: TdxLayoutGroup;
-    LayoutControl: TdxLayoutControl;
+  TFormSearch = class(TFormDialog, ILocalizerSearchProvider)
     dxLayoutItem1: TdxLayoutItem;
     EditSearchText: TcxTextEdit;
     dxLayoutItem2: TdxLayoutItem;
     ComboBoxSearchScope: TcxCheckComboBox;
     dxLayoutGroup2: TdxLayoutGroup;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     dxLayoutItem3: TdxLayoutItem;
     CheckBoxSearchAll: TcxCheckBox;
     dxLayoutItem4: TdxLayoutItem;
@@ -66,23 +64,14 @@ type
     dxLayoutGroup3: TdxLayoutGroup;
     dxLayoutSeparatorItem2: TdxLayoutSeparatorItem;
     dxLayoutGroup4: TdxLayoutGroup;
-    LayoutItemSearch: TdxLayoutItem;
-    ButtonSearch: TcxButton;
-    dxLayoutItem9: TdxLayoutItem;
-    ButtonClose: TcxButton;
-    dxLayoutGroup5: TdxLayoutGroup;
-    ActionListDialog: TActionList;
     ActionSearch: TAction;
     ActionClose: TAction;
-    dxLayoutItem7: TdxLayoutItem;
+    LayoutItemList: TdxLayoutItem;
     ListViewResult: TcxListView;
     ActionGoTo: TAction;
     ActionOptionRegExp: TAction;
-    LayoutItemStatus: TdxLayoutLabeledItem;
     ActionOptionCaseSensitive: TAction;
     ActionOptionGlobal: TAction;
-    dxLayoutItem10: TdxLayoutItem;
-    ButtonGoto: TcxButton;
     dxLayoutItem11: TdxLayoutItem;
     CheckBoxIgnoreAccelerator: TcxCheckBox;
     ActionOptionIgnoreAccelerator: TAction;
@@ -94,9 +83,16 @@ type
     ActionOptionFuzzy: TAction;
     SpinEditFuzzy: TcxSpinEdit;
     dxLayoutItem13: TdxLayoutItem;
+    ActionAbort: TAction;
+    dxLayoutItem8: TdxLayoutItem;
+    ButtonGoto: TcxButton;
     LayoutItemAbort: TdxLayoutItem;
     ButtonAbort: TcxButton;
-    ActionAbort: TAction;
+    LayoutItemSearch: TdxLayoutItem;
+    ButtonSearch: TcxButton;
+    LayoutItemClose: TdxLayoutItem;
+    ButtonClose: TcxButton;
+    LayoutItemStatus: TdxLayoutLabeledItem;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);

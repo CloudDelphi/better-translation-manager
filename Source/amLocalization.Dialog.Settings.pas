@@ -29,11 +29,12 @@ uses
   cxPC,
 
   dxRibbonSkins,
-  dxSpellChecker;
+  dxSpellChecker,
+
+  amLocalization.Dialog;
 
 type
-  TFormSettings = class(TForm)
-    ActionListDialog: TActionList;
+  TFormSettings = class(TFormDialog)
     ActionCategoryGeneral: TAction;
     ActionCategoryFiles: TAction;
     ActionCategoryProofing: TAction;
@@ -195,16 +196,8 @@ type
     dxLayoutGroup8: TdxLayoutGroup;
     LayoutSkinLookAndFeelGroup: TdxLayoutSkinLookAndFeel;
     ImageList: TcxImageList;
-    dxLayoutControl1Group_Root: TdxLayoutGroup;
-    dxLayoutControl1: TdxLayoutControl;
-    ButtonCancel: TcxButton;
-    dxLayoutItem26: TdxLayoutItem;
-    dxLayoutItem27: TdxLayoutItem;
-    ButtonOK: TcxButton;
-    dxLayoutGroup9: TdxLayoutGroup;
     LayoutItemRestart: TdxLayoutLabeledItem;
     LayoutSkinLookAndFeelStandard: TdxLayoutSkinLookAndFeel;
-    dxLayoutSeparatorItem3: TdxLayoutSeparatorItem;
     LayoutGroupRestart: TdxLayoutGroup;
     dxLayoutItem29: TdxLayoutItem;
     LabelLanguage: TcxLabel;
@@ -255,6 +248,9 @@ type
     EditHistoryBackupMaxSize: TcxSpinEdit;
     dxLayoutGroup16: TdxLayoutGroup;
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
+    dxLayoutSeparatorItem3: TdxLayoutSeparatorItem;
+    LayoutItemCategories: TdxLayoutItem;
+    LayoutItemPages: TdxLayoutItem;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);

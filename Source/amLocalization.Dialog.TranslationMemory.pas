@@ -20,26 +20,23 @@ uses
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
   cxGridDBTableView, cxGrid, cxEditRepositoryItems,
 
-  amLocalization.Translator.TM;
+  amLocalization.Dialog,
+  amLocalization.Translator.TM, dxLayoutcxEditAdapters, cxContainer, System.Actions, Vcl.ActnList, Vcl.ExtCtrls, cxLabel;
 
 type
-  TFormTranslationMemory = class(TForm)
+  TFormTranslationMemory = class(TFormDialog)
     GridTMDBTableView: TcxGridDBTableView;
     GridTMLevel: TcxGridLevel;
     GridTM: TcxGrid;
-    dxLayoutControl1Group_Root: TdxLayoutGroup;
-    dxLayoutControl1: TdxLayoutControl;
-    ButtonLoad: TcxButton;
-    dxLayoutItem1: TdxLayoutItem;
-    dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutItem2: TdxLayoutItem;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
-    dxLayoutItem3: TdxLayoutItem;
-    ButtonClose: TcxButton;
     OpenDialogTMX: TOpenDialog;
-    dxLayoutItem4: TdxLayoutItem;
-    ButtonSaveAs: TcxButton;
     SaveDialogTMX: TSaveDialog;
+    dxLayoutItem1: TdxLayoutItem;
+    ButtonClose: TcxButton;
+    dxLayoutItem3: TdxLayoutItem;
+    ButtonSaveAs: TcxButton;
+    dxLayoutItem4: TdxLayoutItem;
+    ButtonLoad: TcxButton;
     procedure ButtonLoadClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
@@ -67,11 +64,7 @@ function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModul
 begin
   FDataModuleTranslationMemory := ADataModuleTranslationMemory;
 
-  if (not FDataModuleTranslationMemory.IsLoaded) then
-  begin
-    SaveCursor(crHourGlass);
-    FDataModuleTranslationMemory.LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
-  end;
+  FDataModuleTranslationMemory.CheckLoaded(True);
 
   GridTMDBTableView.BeginUpdate;
   try

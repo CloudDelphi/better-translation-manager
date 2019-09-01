@@ -18,27 +18,16 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxClasses, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
   cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
-  cxGridDBTableView, System.Actions, Vcl.ActnList, cxMRUEdit;
+  cxGridDBTableView, System.Actions, Vcl.ActnList, cxMRUEdit,
+  amLocalization.Dialog, Vcl.ExtCtrls, cxLabel;
 
 type
-  TFormNewProject = class(TForm)
-    LayoutControlGroup_Root: TdxLayoutGroup;
-    LayoutControl: TdxLayoutControl;
+  TFormNewProject = class(TFormDialog)
     EditSourceApplication: TcxMRUEdit;
     dxLayoutItem1: TdxLayoutItem;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
     dxLayoutItem2: TdxLayoutItem;
-    ButtonOK: TcxButton;
-    dxLayoutItem3: TdxLayoutItem;
-    dxLayoutItem4: TdxLayoutItem;
-    ButtonCancel: TcxButton;
-    dxLayoutGroup1: TdxLayoutGroup;
-    dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
     FileOpenDialogApplication: TFileOpenDialog;
-    ActionList1: TActionList;
-    ActionOK: TAction;
-    ActionCancel: TAction;
-    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
     procedure ActionCancelExecute(Sender: TObject);
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionOKUpdate(Sender: TObject);
