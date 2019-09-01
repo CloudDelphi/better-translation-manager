@@ -450,14 +450,22 @@ begin
       FReader.ReadInteger;
 
     Name := Format('%s[%d]', [Path, Index]);
-    ChildItem := Module.AddItem(Name, Item.TypeName);
+
+    if (Item <> nil) then
+    begin
+      if (Action <> liaUpdateTarget) then
+        ChildItem := Module.AddItem(Name, Item.TypeName)
+      else
+        ChildItem := Module.FindItem(Name);
+    end else
+      ChildItem := nil;
 
     FReader.ReadListBegin;
     while (not FReader.EndOfList) do
       ReadProperty(Action, Language, Translator, ChildItem, Name);
     FReader.ReadListEnd;
 
-    if (ChildItem.State = ItemStateNew) and (ChildItem.Properties.Count = 0) then
+    if (ChildItem <> nil) and (ChildItem.State = ItemStateNew) and (ChildItem.Properties.Count = 0) then
       ChildItem.Free;
 
     Inc(Index);
@@ -483,16 +491,30 @@ begin
   if (Path <> '') then
     Name := Path + '.' + Name;
 
-  Item := Module.AddItem(Name, ClassName);
+  if (Action <> liaUpdateTarget) then
+    Item := Module.AddItem(Name, ClassName)
+  else
+    Item := Module.FindItem(Name);
 
-  // TReader.ReadDataInner
-  while (not FReader.EndOfList) do
-    ReadProperty(Action, Language, Translator, Item, Name);
-  FReader.ReadListEnd;
+  if (Item <> nil) then
+  begin
+    // TReader.ReadDataInner
+    while (not FReader.EndOfList) do
+      ReadProperty(Action, Language, Translator, Item, Name);
+    FReader.ReadListEnd;
 
-  // Remove empty item
-  if (Item.State = ItemStateNew) and (Item.Properties.Count = 0) then
-    Item.Free;
+    // Remove empty item
+    if (Item.State = ItemStateNew) and (Item.Properties.Count = 0) then
+      Item.Free;
+  end else
+  begin
+    while (not FReader.EndOfList) do
+    begin
+      FReader.ReadStr;
+      FReader.SkipValue;
+    end;
+    FReader.ReadListEnd;
+  end;
 
   while (not FReader.EndOfList) do
     ReadComponent(Action, Language, Translator, Name);
@@ -530,21 +552,26 @@ begin
 
       EndPos := FReader.Position;
 
-      if (Action = liaUpdateSource) then
-        Prop := Item.AddProperty(PropertyName, Value)
-      else
-      if (Action = liaTranslate) then
-        Prop := Item.AddProperty(PropertyName)
-      else
-      if (Action = liaUpdateTarget) and (Language <> nil) then
+      if (Item <> nil) then
       begin
-        Prop := Item.AddProperty(PropertyName);
-        Prop.TranslatedValue[Language] := Value;
+        if (Action = liaUpdateSource) then
+          Prop := Item.AddProperty(PropertyName, Value)
+        else
+        if (Action = liaTranslate) then
+          Prop := Item.AddProperty(PropertyName)
+        else
+        if (Action = liaUpdateTarget) and (Language <> nil) then
+        begin
+          Prop := Item.FindProperty(PropertyName);
+          if (Prop <> nil) and (Prop.Value <> Value) then
+            Prop.TranslatedValue[Language] := Value;
+        end else
+          Prop := nil;
       end else
         Prop := nil;
 
       // Perform translation
-      if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) then
+      if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) and (Prop <> nil) then
       begin
         NewValue := Prop.Value;
 
@@ -705,15 +732,26 @@ begin
       if (FSymbolMap.TryLookupID(ResourceID, Name)) or (not Value.IsEmpty) then
       begin
         if (not Name.IsEmpty) then
-          Item := Module.AddItem(Name, '')
-        else
+        begin
+          if (Action <> liaUpdateTarget) then
+            Item := Module.AddItem(Name, '')
+          else
+            // Look for existing item - don't add new
+            Item := Module.FindItem(Name);
+        end else
+        begin
           // TODO : This could be considered an error. Should flag item as unmapped.
           // Has been seen in some Delphi apps. E.g. sigma.exe - presumably the strings
           // are from explicitly included .RES files and are not resourcestrings.
-          Item := Module.AddItem(ResourceID, '');
+          if (Action <> liaUpdateTarget) then
+            Item := Module.AddItem(ResourceID, '')
+          else
+            // Look for existing item - don't add new
+            Item := Module.FindItem(ResourceID);
+        end;
 
 
-        if (Item.Status <> ItemStatusDontTranslate) then
+        if (Item <> nil) and (Item.Status <> ItemStatusDontTranslate) then
         begin
           if (Action = liaUpdateSource) then
             Prop := Item.AddProperty('', Value)
@@ -723,13 +761,16 @@ begin
           else
           if (Action = liaUpdateTarget) and (Language <> nil) then
           begin
-            Prop := Item.AddProperty('');
-            Prop.TranslatedValue[Language] := Value;
+            // Look for existing property - don't add new
+            Prop := Item.FindProperty('');
+            // Ignore Source=Target
+            if (Prop <> nil) and (Prop.Value <> Value) then
+              Prop.TranslatedValue[Language] := Value;
           end else
             Prop := nil;
 
           // Perform translation
-          if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) then
+          if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) and (Prop <> nil) then
           begin
             Value := Prop.Value;
 
@@ -879,7 +920,9 @@ begin
     Project.BeginLoad(Action = liaUpdateSource);
     try
 
-      EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, integer(Project));
+      // Don't add modules if we're updating the target values
+      if (Action <> liaUpdateTarget) then
+        EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, integer(Project));
 
       StringsModule := Project.AddModule(sModuleNameResourcestrings);
       StringsModule.Kind := mkString;

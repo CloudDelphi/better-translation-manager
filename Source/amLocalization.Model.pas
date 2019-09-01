@@ -274,7 +274,8 @@ type
     procedure Clear; override;
     function Purge: boolean;
 
-    function FindItem(const AName: string): TLocalizerItem;
+    function FindItem(const AName: string): TLocalizerItem; overload;
+    function FindItem(AResourceID: Word): TLocalizerItem; overload;
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
 
@@ -1266,6 +1267,21 @@ function TLocalizerModule.FindItem(const AName: string): TLocalizerItem;
 begin
   if (not FItems.TryGetValue(AName, Result)) then
     Result := nil;
+end;
+
+function TLocalizerModule.FindItem(AResourceID: Word): TLocalizerItem;
+var
+  Item: TPair<string, TLocalizerItem>;
+begin
+  Result := nil;
+
+  if (not FItems.TryGetValue(IntToStr(AResourceID), Result)) then
+    for Item in Items do
+      if (Item.Value.ResourceID = AResourceID) then
+      begin
+        Result := Item.Value;
+        break;
+      end;
 end;
 
 // -----------------------------------------------------------------------------
