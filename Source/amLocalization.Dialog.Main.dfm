@@ -39,7 +39,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -90,6 +89,7 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
+      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -698,7 +698,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 338
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -4682,7 +4682,7 @@ object FormMain: TFormMain
       Caption = 'Import target language'
       Hint = 'Import translated values from an external file'
       OnExecute = ActionImportFileTargetExecute
-      OnUpdate = ActionHasProjectUpdate
+      OnUpdate = ActionImportFileTargetUpdate
     end
     object ActionAutomationWebLookup: TAction
       Category = 'Automation'

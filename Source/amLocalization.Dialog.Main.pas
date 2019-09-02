@@ -323,6 +323,7 @@ type
     procedure ActionAutomationMemoryAddUpdate(Sender: TObject);
     procedure ButtonOpenRecentClick(Sender: TObject);
     procedure ActionSettingsExecute(Sender: TObject);
+    procedure ActionImportFileTargetUpdate(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FTargetLanguage: TTargetLanguage;
@@ -1348,6 +1349,8 @@ begin
   LoadProject(FProject, False);
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionImportFileExecute(Sender: TObject);
 begin
 //
@@ -1425,9 +1428,24 @@ procedure TFormMain.ActionImportFileTargetExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
   Stats: TTranslationCounts;
+  SaveFilter: string;
+  LocaleItem: TLocaleItem;
+resourcestring
+  sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 begin
-  if (not OpenDialogEXE.Execute(Handle)) then
-    exit;
+  SaveFilter := OpenDialogEXE.Filter;
+  try
+
+    LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
+    OpenDialogEXE.Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + SaveFilter;
+    OpenDialogEXE.FilterIndex := 1;
+
+    if (not OpenDialogEXE.Execute(Handle)) then
+      exit;
+
+  finally
+    OpenDialogEXE.Filter := SaveFilter;
+  end;
 
   SaveCursor(crHourGlass);
 
@@ -1450,6 +1468,13 @@ begin
     Format(sTranslationsUpdated, [1.0 * Stats.CountAdded, 1.0 * Stats.CountUpdated, 1.0 * Stats.CountSkipped]),
     mtInformation, [mbOK], 0);
 end;
+
+procedure TFormMain.ActionImportFileTargetUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (SourceLanguageID <> TargetLanguageID);
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionEditMarkExecute(Sender: TObject);
 var
@@ -1624,13 +1649,11 @@ begin
     Importer.Free;
   end;
 
+  LoadProject(FProject, False);
+
   TaskMessageDlg(sTranslationsUpdatedTitle,
     Format(sTranslationsUpdated, [1.0 * Stats.CountAdded, 1.0 * Stats.CountUpdated, 1.0 * Stats.CountSkipped]),
     mtInformation, [mbOK], 0);
-
-  FProject.Modified := True;
-
-  LoadProject(FProject, False);
 end;
 
 // -----------------------------------------------------------------------------
@@ -2073,7 +2096,7 @@ var
   ProjectProcessor: TProjectResourceProcessor;
   CountBefore, CountAfter: TCounts;
   Msg: string;
-//  SaveModified: boolean;
+  SaveModified: boolean;
   WasModified: boolean;
 begin
   if (not CheckSourceFile) then
@@ -2085,10 +2108,8 @@ begin
 
   CountBefore := CountStuff;
 
-  (*
   SaveModified := FProject.Modified;
   FProject.Modified := False;
-  *)
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -2099,12 +2120,12 @@ begin
     ProjectProcessor.Free;
   end;
 
-  // This method of detecting if any changes were made doesn't work as the setting
-  // and clearing of ItemStateUnused during load will be detected as a change.
+  // Doesn't work:
+  // Project will always be modified as some of the modules that are created during
+  // the resource scan will be found to not be DFMs and thus deleted before completion.
+  // Creation of these modules causes change notification.
   WasModified := FProject.Modified;
-  (*
-  FProject.Modified := SaveModified;
-  *)
+  FProject.Modified := WasModified or SaveModified;
 
   CountAfter := CountStuff;
 
