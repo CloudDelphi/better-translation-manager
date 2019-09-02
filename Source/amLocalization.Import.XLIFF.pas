@@ -12,14 +12,8 @@ interface
 
 uses
   Classes,
-  amLocalization.Model;
-
-type
-  TImportStats = record
-    CountAdded: integer;
-    CountUpdated: integer;
-    CountIdentical: integer;
-  end;
+  amLocalization.Model,
+  amLocalization.Engine;
 
 // -----------------------------------------------------------------------------
 //
@@ -29,12 +23,15 @@ type
 type
   TModuleImporterXLIFF = class
   private
+    FTranslationCount: TTranslationCounts;
   protected
   public
     class constructor Create;
 
-    function LoadFromStream(Project: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string = ''): TLocalizerModule; overload;
-    function LoadFromFile(Project: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule; overload;
+    function LoadFromStream(Project: TLocalizerProject; Stream: TStream; const FileName: string = ''): TLocalizerModule; overload;
+    function LoadFromFile(Project: TLocalizerProject; const Filename: string): TLocalizerModule; overload;
+
+    property TranslationCounts: TTranslationCounts read FTranslationCount;
   end;
 
 
@@ -66,13 +63,13 @@ begin
   msxmldom.MSXMLDOMDocumentFactory.AddDOMProperty('ProhibitDTD', False);
 end;
 
-function TModuleImporterXLIFF.LoadFromFile(Project: TLocalizerProject; const Filename: string; var Stats: TImportStats): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromFile(Project: TLocalizerProject; const Filename: string): TLocalizerModule;
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   try
-    Result := LoadFromStream(Project, Stream, Stats, Filename);
+    Result := LoadFromStream(Project, Stream, Filename);
   finally
     Stream.Free;
   end;
@@ -286,7 +283,7 @@ begin
   end;
 end;
 
-function TModuleImporterXLIFF.LoadFromStream(Project: TLocalizerProject; Stream: TStream; var Stats: TImportStats; const FileName: string): TLocalizerModule;
+function TModuleImporterXLIFF.LoadFromStream(Project: TLocalizerProject; Stream: TStream; const FileName: string): TLocalizerModule;
 type
   TImportDelegate = reference to function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean;
 var
@@ -523,21 +520,27 @@ var
 
               if (Localize) then
               begin
+                if (SourceValue <> Prop.Value) then
+                begin
+                  // Do not import obsolete translations
+                  Inc(FTranslationCount.CountSkipped);
+                end else
                 if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
                 begin
                   if (Translation.Value <> TargetValue) or (Translation.Status <> TranslationStatusMap[TranslationStatus]) then
                   begin
                     Translation.Update(TargetValue, TranslationStatusMap[TranslationStatus]);
-                    Inc(Stats.CountUpdated);
+                    Inc(FTranslationCount.CountUpdated);
                   end else
-                    Inc(Stats.CountIdentical);
+                    Inc(FTranslationCount.CountSkipped);
                 end else
                 begin
                   Prop.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus]);
-                  Inc(Stats.CountAdded);
+                  Inc(FTranslationCount.CountAdded);
                 end;
               end;
-            end;
+            end else
+              Inc(FTranslationCount.CountSkipped);
           end;
         end;
       end;
@@ -589,8 +592,6 @@ resourcestring
   sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name.'#13#13+
     'Please specify which module to import the translations into.';
 begin
-  FillChar(Stats, SizeOf(Stats), 0);
-
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
   XML.Active := True;
@@ -703,6 +704,8 @@ begin
 
   // TODO : Validation that module source language matches project
 
+  FillChar(FTranslationCount, SizeOf(FTranslationCount), 0);
+
   Project.BeginUpdate;
   try
 
@@ -711,8 +714,11 @@ begin
       var
         Item: TLocalizerItem;
       begin
-        Item := Module.AddItem(ItemName, ItemType);
-        Prop := Item.AddProperty(PropertyName, SourceValue);
+        Item := Module.FindItem(ItemName, True);
+        if (Item <> nil) then
+          Prop := Item.FindProperty(PropertyName, True)
+        else
+          Prop := nil;
 
         Result := True;
       end);

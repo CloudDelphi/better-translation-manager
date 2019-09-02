@@ -27,7 +27,7 @@ type
     const
       sModuleKind: array[TLocalizerModuleKind] of string = ('invalid', 'form', 'strings');
       sTranslationStatus: array[TTranslationStatus] of string = ('obsolete', 'pending', 'proposed', '');
-      sItemState: array[TLocalizerItemState] of string = ('new', 'unused');
+      sItemState: array[TLocalizerItemState] of string = ('new', 'unused', '');
       sItemStatus: array[TLocalizerItemStatus] of string = ('', 'hold', 'skip');
   private
     class function EncodeString(const Value: string): string;

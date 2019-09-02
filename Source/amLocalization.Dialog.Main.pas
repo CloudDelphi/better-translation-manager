@@ -490,7 +490,25 @@ uses
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
-  sTranslateEligibleWarning = #13#13'Note: %d of the selected values are not elegible for translation.';
+
+resourcestring
+  sTranslateEligibleWarning = 'Note: %d of the selected values are not elegible for translation.';
+
+resourcestring
+  sProjectUpdatedTitle = 'Project updated';
+  sProjectUpdated = 'Update completed with the following changes:'#13#13+
+    'Modules: %.0n added, %.0n unused'#13+
+    'Items: %.0n added, %.0n unused'#13+
+    'Properties: %.0n added, %.0n unused'#13+
+    'Translations obsoleted: %.0n';
+  sProjectUpdatedNothing = 'Update completed without any changes.';
+
+resourcestring
+  sTranslationsUpdatedTitle = 'Translations updated';
+  sTranslationsUpdated = 'Translations has been updated with the following changes:'#13#13+
+    'Added: %.0n'#13+
+    'Updated: %.0n'#13+
+    'Skipped: %.0n';
 
 const
   ImageIndexBookmark0 = 27;
@@ -945,7 +963,7 @@ begin
   end;
 
   if (ElegibleCount < Count) then
-    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+    ElegibleWarning :=  #13#13 + Format(sTranslateEligibleWarning, [Count-ElegibleCount])
   else
     ElegibleWarning :=  '';
 
@@ -1015,7 +1033,7 @@ begin
       function(Prop: TLocalizerProperty): boolean
       begin
         Inc(Count);
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.Unused) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
           Inc(ElegibleCount);
         Result := True;
       end, False);
@@ -1054,7 +1072,7 @@ begin
           var
             Value, SourceValue, TranslatedValue: string;
           begin
-            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.Unused) then
+            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
               Exit(True);
 
             Inc(Count);
@@ -1144,7 +1162,7 @@ var
 begin
   Item := FocusedItem;
 
-  TAction(Sender).Enabled := (Item <> nil) and (not Item.Unused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
+  TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
     (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
 end;
 
@@ -1170,7 +1188,7 @@ var
 begin
   Item := FocusedItem;
 
-  TAction(Sender).Enabled := (Item <> nil) and (not Item.Unused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
+  TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
     (SourceLanguageID <> TargetLanguageID);
 end;
 
@@ -1337,55 +1355,76 @@ end;
 
 procedure TFormMain.ActionImportFileSourceExecute(Sender: TObject);
 var
-  ProjectProcessor: TProjectResourceProcessor;
+  Filename: string;
   SaveFilename: string;
+  ProjectProcessor: TProjectResourceProcessor;
+  CountBefore, CountAfter: TCounts;
+  Msg: string;
 resourcestring
-  sLocalizerSwitchSourceModuleTitle = 'Update project?';
-  sLocalizerSwitchSourceModule = 'Do you want to update the project to use this file as the source file?';
+  sSwitchSourceModuleTitle = 'Update project?';
+  sSwitchSourceModule = 'Do you want to alter the project to use this file as the source file?';
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
 
-  SaveCursor(crHourGlass);
-
-  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
+  Filename := OpenDialogEXE.FileName;
+  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
 
   // Temporarily switch to new file or we will not be able to find the companion files (*.drc)
   SaveFilename := FProject.SourceFilename;
   try
-    FProject.SourceFilename := OpenDialogEXE.FileName;
+    FProject.SourceFilename := Filename;
+
+    CheckStringsSymbolFile;
+
+    SaveCursor(crHourGlass);
+
+    CountBefore := CountStuff;
 
     ProjectProcessor := TProjectResourceProcessor.Create;
     try
 
-      ProjectProcessor.ScanProject(FProject, OpenDialogEXE.FileName);
+      ProjectProcessor.ScanProject(FProject, Filename);
 
     finally
       ProjectProcessor.Free;
     end;
+  finally
+    FProject.SourceFilename := SaveFilename;
+  end;
+
+  CountAfter := CountStuff;
 
   LoadProject(FProject, False);
 
-    if (TaskMessageDlg(sLocalizerSwitchSourceModuleTitle, sLocalizerSwitchSourceModule,
-      mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
-  begin
-      FProject.Name := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
-      SaveFilename := '';
-    RibbonMain.DocumentName := FProject.Name;
-      FProject.Changed;
-    end;
+  // Display update statistics
+  if (FProject.Modified) then
+    Msg := Format(sProjectUpdated,
+      [
+      1.0*(CountAfter.CountModule-CountBefore.CountModule), 1.0*(CountAfter.UnusedModule-CountBefore.UnusedModule),
+      1.0*(CountAfter.CountItem-CountBefore.CountItem), 1.0*(CountAfter.UnusedItem-CountBefore.UnusedItem),
+      1.0*(CountAfter.CountProperty-CountBefore.CountProperty), 1.0*(CountAfter.UnusedProperty-CountBefore.UnusedProperty),
+      1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
+      ])
+  else
+    Msg := sProjectUpdatedNothing;
 
-  finally
-    if (SaveFilename <> '') then
-      FProject.SourceFilename := SaveFilename;
+  Msg := Msg + #13#13 +sSwitchSourceModule;
+
+  if (TaskMessageDlg(sProjectUpdatedTitle, Msg, mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
+  begin
+    FProject.SourceFilename := Filename;
+    FProject.Name := TPath.GetFileNameWithoutExtension(Filename);
+    RibbonMain.DocumentName := FProject.Name;
+
+    FProject.Changed;
   end;
 end;
 
 procedure TFormMain.ActionImportFileTargetExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
-resourcestring
-  sLocalizerImportComplete = 'Import completed.';
+  Stats: TTranslationCounts;
 begin
   if (not OpenDialogEXE.Execute(Handle)) then
     exit;
@@ -1399,13 +1438,17 @@ begin
 
     ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TargetLanguage, nil);
 
+    Stats := ProjectProcessor.TranslationCount;
+
   finally
     ProjectProcessor.Free;
   end;
 
   LoadProject(FProject, False);
 
-  ShowMessage(sLocalizerImportComplete);
+  TaskMessageDlg(sTranslationsUpdatedTitle,
+    Format(sTranslationsUpdated, [1.0 * Stats.CountAdded, 1.0 * Stats.CountUpdated, 1.0 * Stats.CountSkipped]),
+    mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionEditMarkExecute(Sender: TObject);
@@ -1513,7 +1556,7 @@ begin
     var
       Translation: TLocalizerTranslation;
     begin
-      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.Unused) then
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
         Exit(False);
 
       Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
@@ -1528,7 +1571,7 @@ begin
     var
       Translation: TLocalizerTranslation;
     begin
-      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.Unused) then
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
         Exit(False);
 
       Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
@@ -1561,30 +1604,28 @@ end;
 procedure TFormMain.ActionImportXLIFFExecute(Sender: TObject);
 var
   Importer: TModuleImporterXLIFF;
-  ImportStats: TImportStats;
-resourcestring
-  sImportStatsTitle = 'Translations imported';
-  sImportStats = 'Translation has been imported with the following changes:'#13#13+
-    'Translations added: %.0n'#13+
-    'Translations updated: %.0n'#13+
-    'Translations identical: %.0n';
+  Stats: TTranslationCounts;
 begin
   if (not OpenDialogXLIFF.Execute(Handle)) then
     exit;
 
-  SaveCursor(crHourGlass);
-
   OpenDialogXLIFF.InitialDir := TPath.GetDirectoryName(OpenDialogXLIFF.FileName);
+
+  SaveCursor(crHourGlass);
 
   Importer := TModuleImporterXLIFF.Create;
   try
-    Importer.LoadFromFile(FProject, OpenDialogXLIFF.FileName, ImportStats);
+
+    Importer.LoadFromFile(FProject, OpenDialogXLIFF.FileName);
+
+    Stats := Importer.TranslationCounts;
+
   finally
     Importer.Free;
   end;
 
-  TaskMessageDlg(sImportStatsTitle,
-    Format(sImportStats, [1.0 * ImportStats.CountAdded, 1.0 * ImportStats.CountUpdated, 1.0 * ImportStats.CountIdentical]),
+  TaskMessageDlg(sTranslationsUpdatedTitle,
+    Format(sTranslationsUpdated, [1.0 * Stats.CountAdded, 1.0 * Stats.CountUpdated, 1.0 * Stats.CountSkipped]),
     mtInformation, [mbOK], 0);
 
   FProject.Modified := True;
@@ -1850,7 +1891,7 @@ begin
         Module := LoopModule;
         Module.BeginUpdate;
         try
-          if (Module.Kind = mkOther) or (Module.Unused) then
+          if (Module.Kind = mkOther) or (Module.IsUnused) then
           begin
             NeedReload := True;
             if (Module = CurrentModule) then
@@ -1870,7 +1911,7 @@ begin
             Item := LoopItem;
             Item.BeginUpdate;
             try
-              if (Item.Unused) then
+              if (Item.IsUnused) then
               begin
                 NeedReload := True;
                 if (Module = CurrentModule) then
@@ -1884,7 +1925,7 @@ begin
 
               // TODO : Purge obsolete translations?
               for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-                if (Prop.Unused) then
+                if (Prop.IsUnused) then
                 begin
                   NeedReload := True;
                   if (Module = CurrentModule) then
@@ -2034,14 +2075,6 @@ var
   Msg: string;
 //  SaveModified: boolean;
   WasModified: boolean;
-resourcestring
-  sLocalizerProjectUpdatedTitle = 'Project updated';
-  sLocalizerProjectUpdated = 'Update completed with the following changes:'#13#13+
-    'Modules: %.0n added, %.0n unused'#13+
-    'Items: %.0n added, %.0n unused'#13+
-    'Properties: %.0n added, %.0n unused'#13+
-    'Translations obsoleted: %.0n';
-  sLocalizerProjectUpdatedNothing = 'Update completed without any changes.';
 begin
   if (not CheckSourceFile) then
     Exit;
@@ -2080,16 +2113,16 @@ begin
   // Display update statistics
   if (WasModified) then
   begin
-    Msg := Format(sLocalizerProjectUpdated,
+    Msg := Format(sProjectUpdated,
       [
       1.0*(CountAfter.CountModule-CountBefore.CountModule), 1.0*(CountAfter.UnusedModule-CountBefore.UnusedModule),
       1.0*(CountAfter.CountItem-CountBefore.CountItem), 1.0*(CountAfter.UnusedItem-CountBefore.UnusedItem),
       1.0*(CountAfter.CountProperty-CountBefore.CountProperty), 1.0*(CountAfter.UnusedProperty-CountBefore.UnusedProperty),
       1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
       ]);
-    TaskMessageDlg(sLocalizerProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
+    TaskMessageDlg(sProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
   end else
-    TaskMessageDlg(sLocalizerProjectUpdatedTitle, sLocalizerProjectUpdatedNothing, mtInformation, [mbOK], 0);
+    TaskMessageDlg(sProjectUpdatedTitle, sProjectUpdatedNothing, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionProofingLiveCheckExecute(Sender: TObject);
@@ -2155,7 +2188,7 @@ end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.Unused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusDontTranslate);
 end;
@@ -2180,7 +2213,7 @@ end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.Unused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusHold);
 end;
@@ -2205,7 +2238,7 @@ end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.Unused);
+  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusTranslate);
 end;
@@ -2235,7 +2268,7 @@ begin
       OldWarnings: TTranslationWarnings;
       Warning: TTranslationWarning;
     begin
-      if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.Unused) then
+      if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
       begin
         if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
         begin
@@ -2278,7 +2311,7 @@ var
 begin
   Prop := FocusedProperty;
 
-  TAction(Sender).Enabled := (Prop <> nil) and (not Prop.Unused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate);
+  TAction(Sender).Enabled := (Prop <> nil) and (not Prop.IsUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate);
 end;
 
 procedure TFormMain.ActionTranslationStateAcceptExecute(Sender: TObject);
@@ -2824,7 +2857,7 @@ begin
     begin
       Inc(Counts.CountModule);
 
-      if (Module.Unused) then
+      if (Module.IsUnused) then
         Inc(Counts.UnusedModule);
 
       Module.Traverse(
@@ -2832,7 +2865,7 @@ begin
         begin
           Inc(Counts.CountItem);
 
-          if (Item.Unused) then
+          if (Item.IsUnused) then
             Inc(Counts.UnusedItem);
 
           Item.Traverse(
@@ -2842,7 +2875,7 @@ begin
             begin
               Inc(Counts.CountProperty);
 
-              if (Prop.Unused) then
+              if (Prop.IsUnused) then
                 Inc(Counts.UnusedProperty);
 
               for i := 0 to Prop.Translations.Count-1 do
@@ -3225,7 +3258,7 @@ begin
   Module.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
-      if (not Prop.Unused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
+      if (not Prop.IsUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
         Inc(Count);
       Result := True;
     end, False);
@@ -3476,7 +3509,7 @@ function TFormMain.PerformSpellCheck(Prop: TLocalizerProperty): boolean;
 var
   Text, CheckedText: string;
 begin
-  if (Prop.Unused) then
+  if (Prop.IsUnused) then
     Exit(True);
 
   if (Prop.EffectiveStatus <> ItemStatusTranslate) then
@@ -3851,7 +3884,7 @@ begin
 
   // Note: Image indicates effective status
 
-  if (Prop.Unused) then
+  if (Prop.IsUnused) then
     AIndex := 1
   else
   if (ItemStateNew in Prop.State) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Translation = nil) then
@@ -3897,7 +3930,7 @@ begin
 
   Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
 
-  if (Prop.Unused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
+  if (Prop.IsUnused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
   begin
     AStyle := StyleDontTranslate;
     Exit;
@@ -4006,7 +4039,7 @@ begin
 
   Module := TLocalizerModule(ANode.Data);
 
-  if (Module.Unused) then
+  if (Module.IsUnused) then
     AIndex := 1
   else
   if (Module.EffectiveStatus = ItemStatusTranslate) then
@@ -4061,7 +4094,7 @@ begin
 
   Module := TLocalizerModule(ANode.Data);
 
-  if (Module.Unused) or (Module.EffectiveStatus = ItemStatusDontTranslate) then
+  if (Module.IsUnused) or (Module.EffectiveStatus = ItemStatusDontTranslate) then
   begin
     AStyle := StyleDontTranslate;
     Exit;

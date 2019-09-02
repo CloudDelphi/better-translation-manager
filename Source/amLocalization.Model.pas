@@ -33,7 +33,13 @@ type
   TLocalizerPropertyDelegate = reference to function(Prop: TLocalizerProperty): boolean;
   TLocalizerTranslationDelegate = reference to function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean;
 
-  TLocalizerItemState = (ItemStateNew, ItemStateUnused);
+  TLocalizerItemState = (
+    ItemStateNew,               // Item has been added since last update
+    ItemStateUnused,            // Item has been removed since first update/last purge
+    ItemStateUpdating           // Item is waiting for update.
+                                // ItemStateUpdating flag is set by BeginLoad, cleared by Find*, and
+                                // converted to ItemStateUnused by EndLoad.
+    );
   TLocalizerItemStates = set of TLocalizerItemState;
 
   TLocalizerItemStatus = (ItemStatusTranslate, ItemStatusHold, ItemStatusDontTranslate);
@@ -158,10 +164,10 @@ type
     function Purge: boolean;
 
     function AddModule(const AName: string; Kind: TLocalizerModuleKind = mkOther): TLocalizerModule;
-    function FindModule(const AName: string): TLocalizerModule;
+    function FindModule(const AName: string; IgnoreUnused: boolean = False): TLocalizerModule;
 
-    procedure BeginLoad(MarkUnused: boolean = False);
-    procedure EndLoad;
+    procedure BeginLoad(MarkUpdating: boolean = False);
+    procedure EndLoad(ClearUpdating: boolean = False; MarkUnused: boolean = False);
 
     function Traverse(Delegate: TLocalizerModuleDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
     function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
@@ -213,7 +219,7 @@ type
     function GetInheritParentState: boolean; virtual;
     function GetEffectiveStatus: TLocalizerItemStatus; virtual;
     function GetStatusCount(AStatus: TLocalizerItemStatus): integer;
-    function GetUnused: boolean;
+    function GetIsUnused: boolean;
   protected
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
     function CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
@@ -228,7 +234,7 @@ type
     property InheritParentState: boolean read GetInheritParentState;
     property EffectiveStatus: TLocalizerItemStatus read GetEffectiveStatus;
     // Shortcut to test for ItemStateUnused
-    property Unused: boolean read GetUnused;
+    property IsUnused: boolean read GetIsUnused;
 
     property StatusCount[AStatus: TLocalizerItemStatus]: integer read GetStatusCount;
   end;
@@ -283,8 +289,8 @@ type
     procedure Clear; override;
     function Purge: boolean;
 
-    function FindItem(const AName: string): TLocalizerItem; overload;
-    function FindItem(AResourceID: Word): TLocalizerItem; overload;
+    function FindItem(const AName: string; IgnoreUnused: boolean = False): TLocalizerItem; overload;
+    function FindItem(AResourceID: Word; IgnoreUnused: boolean = False): TLocalizerItem; overload;
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
 
@@ -312,7 +318,7 @@ type
     procedure Clear; override;
     function Purge: boolean;
 
-    function FindProperty(const AName: string): TLocalizerProperty;
+    function FindProperty(const AName: string; IgnoreUnused: boolean = False): TLocalizerProperty;
     function AddProperty(const AName: string): TLocalizerProperty; overload;
     function AddProperty(const AName: string; const AValue: string): TLocalizerProperty; overload;
 
@@ -616,7 +622,8 @@ begin
 
   Include(FState, Value);
 
-  Changed;
+  if (Value = ItemStateUnused) then
+    Changed;
 end;
 
 procedure TCustomLocalizerItem.ClearState(const Value: TLocalizerItemState);
@@ -634,7 +641,8 @@ begin
     UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
   end;
 
-  Changed;
+  if (Value = ItemStateUnused) then
+    Changed;
 end;
 
 procedure TCustomLocalizerItem.DoSetStatus(const Value: TLocalizerItemStatus);
@@ -724,7 +732,7 @@ begin
     Result := 0;
 end;
 
-function TCustomLocalizerItem.GetUnused: boolean;
+function TCustomLocalizerItem.GetIsUnused: boolean;
 begin
   Result := (ItemStateUnused in State); // Note: Must use State to invoke virtual GetState!
 end;
@@ -964,22 +972,90 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerProject.BeginLoad(MarkUnused: boolean);
+procedure TLocalizerProject.BeginLoad(MarkUpdating: boolean);
+var
+  Module: TLocalizerModule;
+  Item: TLocalizerItem;
+  Prop: TLocalizerProperty;
 begin
   Inc(FLoadCount);
   if (FLoadCount = 1) then
   begin
     Include(FState, ProjectStateLoading);
-    if (MarkUnused) then
-      SetItemStateRecursive(ItemStateUnused);
+
+    if (MarkUpdating) then
+    begin
+      BeginUpdate;
+      try
+        for Module in Modules.Values do
+        begin
+          Module.SetState(ItemStateUpdating);
+          for Item in Module.Items.Values do
+          begin
+            Item.SetState(ItemStateUpdating);
+            for Prop in Item.Properties.Values do
+              Prop.SetState(ItemStateUpdating);
+          end;
+        end;
+      finally
+        EndUpdate;
+      end;
+    end;
   end;
 end;
 
-procedure TLocalizerProject.EndLoad;
+procedure TLocalizerProject.EndLoad(ClearUpdating, MarkUnused: boolean);
+var
+  Module: TLocalizerModule;
+  Item: TLocalizerItem;
+  Prop: TLocalizerProperty;
 begin
   Dec(FLoadCount);
   if (FLoadCount = 0) then
+  begin
+    // Referencing an item during "load" will clear the ItemStateUpdating flag set in BeginLoad.
+    // Any items that still have ItemStateUpdating set in EndLoad will get ItemStateUnused set instead.
+    // This way we can mark the items that were not refenced during update/import/etc.
+    if (ClearUpdating or MarkUnused) then
+    begin
+      BeginUpdate;
+      try
+        for Module in Modules.Values do
+        begin
+          if (ItemStateUpdating in Module.State) then
+          begin
+            if (MarkUnused) then
+              Module.SetState(ItemStateUnused);
+            if (ClearUpdating) then
+              Module.ClearState(ItemStateUpdating);
+          end;
+
+          for Item in Module.Items.Values do
+          begin
+            if (ItemStateUpdating in Item.State) then
+            begin
+              if (MarkUnused) then
+                Item.SetState(ItemStateUnused);
+              if (ClearUpdating) then
+                Item.ClearState(ItemStateUpdating);
+            end;
+
+            for Prop in Item.Properties.Values do
+              if (ItemStateUpdating in Prop.State) then
+              begin
+                if (MarkUnused) then
+                  Prop.SetState(ItemStateUnused);
+                if (ClearUpdating) then
+                  Prop.ClearState(ItemStateUpdating);
+              end;
+          end;
+        end;
+      finally
+        EndUpdate;
+      end;
+    end;
     Exclude(FState, ProjectStateLoading);
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1095,21 +1171,23 @@ end;
 
 function TLocalizerProject.AddModule(const AName: string; Kind: TLocalizerModuleKind): TLocalizerModule;
 begin
-  if (not FModules.TryGetValue(AName, Result)) then
+  Result := FindModule(AName);
+
+  if (Result = nil) then
   begin
     Result := TLocalizerModule.Create(Self, AName);
     Result.Kind := Kind;
-  end else
-  if (ProjectStateLoading in State) then
-  begin
-    Result.ClearState(ItemStateNew);
-    Result.ClearState(ItemStateUnused);
   end;
 end;
 
-function TLocalizerProject.FindModule(const AName: string): TLocalizerModule;
+function TLocalizerProject.FindModule(const AName: string; IgnoreUnused: boolean): TLocalizerModule;
 begin
-  if (not FModules.TryGetValue(AName, Result)) then
+  if (FModules.TryGetValue(AName, Result)) and ((not IgnoreUnused) or (not Result.IsUnused)) then
+  begin
+    if (ProjectStateLoading in State) then
+      Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUpdating);
+  end else
     Result := nil;
 end;
 
@@ -1292,23 +1370,31 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerModule.FindItem(const AName: string): TLocalizerItem;
+function TLocalizerModule.FindItem(const AName: string; IgnoreUnused: boolean): TLocalizerItem;
 begin
-  if (not FItems.TryGetValue(AName, Result)) then
+  if (FItems.TryGetValue(AName, Result)) and ((not IgnoreUnused) or (not Result.IsUnused)) then
+  begin
+    if (ProjectStateLoading in Project.State) then
+      Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUpdating);
+  end else
     Result := nil;
 end;
 
-function TLocalizerModule.FindItem(AResourceID: Word): TLocalizerItem;
+function TLocalizerModule.FindItem(AResourceID: Word; IgnoreUnused: boolean): TLocalizerItem;
 var
   Item: TPair<string, TLocalizerItem>;
 begin
-  Result := nil;
+  Result := FindItem(IntToStr(AResourceID), IgnoreUnused);
 
-  if (not FItems.TryGetValue(IntToStr(AResourceID), Result)) then
+  if (Result = nil) then
     for Item in Items do
-      if (Item.Value.ResourceID = AResourceID) then
+      if (Item.Value.ResourceID = AResourceID) and ((not IgnoreUnused) or (not Result.IsUnused)) then
       begin
         Result := Item.Value;
+        if (ProjectStateLoading in Project.State) then
+          Result.ClearState(ItemStateNew);
+        Result.ClearState(ItemStateUpdating);
         break;
       end;
 end;
@@ -1317,39 +1403,19 @@ end;
 
 function TLocalizerModule.AddItem(const AName, ATypeName: string): TLocalizerItem;
 begin
-  if (not FItems.TryGetValue(AName, Result)) then
-    Result := TLocalizerItem.Create(Self, AName, ATypeName)
-  else
-  if (ProjectStateLoading in Project.State) then
-  begin
-    Result.ClearState(ItemStateNew);
-    Result.ClearState(ItemStateUnused);
-  end;
+  Result := FindItem(AName);
+  if (Result = nil) then
+    Result := TLocalizerItem.Create(Self, AName, ATypeName);
 end;
 
 function TLocalizerModule.AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem;
-var
-  Item: TPair<string, TLocalizerItem>;
 begin
-  Result := nil;
-
-  if (not FItems.TryGetValue(IntToStr(AResourceID), Result)) then
-    for Item in Items do
-      if (Item.Value.ResourceID = AResourceID) then
-      begin
-        Result := Item.Value;
-        break;
-      end;
+  Result := FindItem(AResourceID);
 
   if (Result = nil) then
   begin
     Result := TLocalizerItem.Create(Self, IntToStr(AResourceID), ATypeName);
     Result.ResourceID := AResourceID;
-  end else
-  if (ProjectStateLoading in Project.State) then
-  begin
-    Result.ClearState(ItemStateNew);
-    Result.ClearState(ItemStateUnused);
   end;
 end;
 
@@ -1471,9 +1537,14 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerItem.FindProperty(const AName: string): TLocalizerProperty;
+function TLocalizerItem.FindProperty(const AName: string; IgnoreUnused: boolean): TLocalizerProperty;
 begin
-  if (not FProperties.TryGetValue(AName, Result)) then
+  if (FProperties.TryGetValue(AName, Result)) and ((not IgnoreUnused) or (not Result.IsUnused)) then
+  begin
+    if (ProjectStateLoading in Module.Project.State) then
+      Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUpdating);
+  end else
     Result := nil;
 end;
 
@@ -1481,14 +1552,10 @@ end;
 
 function TLocalizerItem.AddProperty(const AName: string): TLocalizerProperty;
 begin
-  if (not FProperties.TryGetValue(AName, Result)) then
-    Result := TLocalizerProperty.Create(Self, AName)
-  else
-  if (ProjectStateLoading in Module.Project.State) then
-  begin
-    Result.ClearState(ItemStateNew);
-    Result.ClearState(ItemStateUnused);
-  end;
+  Result := FindProperty(AName);
+
+  if (Result = nil) then
+    Result := TLocalizerProperty.Create(Self, AName);
 end;
 
 function TLocalizerItem.AddProperty(const AName, AValue: string): TLocalizerProperty;

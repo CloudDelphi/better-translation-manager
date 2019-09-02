@@ -64,8 +64,16 @@ type
   TLocalizerImportAction = (liaUpdateSource, liaUpdateTarget, liaTranslate);
 
 type
+  TTranslationCounts = record
+    CountAdded: integer;
+    CountUpdated: integer;
+    CountSkipped: integer;
+  end;
+
+type
   TProjectResourceProcessor = class
   private
+    FTranslationCount: TTranslationCounts;
   protected
     class function DefaultTranslator(Language: TTargetLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
   public
@@ -74,6 +82,8 @@ type
 
     procedure ScanProject(Project: TLocalizerProject; Instance: HINST); overload;
     procedure ScanProject(Project: TLocalizerProject; const Filename: string); overload;
+
+    property TranslationCount: TTranslationCounts read FTranslationCount;
   end;
 
 
@@ -251,6 +261,9 @@ type
     FModule: TLocalizerModule;
     FInstance: HINST;
   protected
+    FTranslationCounts: TTranslationCounts;
+  protected
+    procedure DoSetTranslation(Prop: TLocalizerProperty; Language: TTargetLanguage; const Value: string);
     property Module: TLocalizerModule read FModule;
     property Instance: HINST read FInstance;
   public
@@ -258,6 +271,8 @@ type
 
     function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean; overload; virtual; abstract;
     function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage): boolean; overload;
+
+    property TranslationCount: TTranslationCounts read FTranslationCounts;
   end;
 
 // -----------------------------------------------------------------------------
@@ -274,6 +289,35 @@ end;
 function TModuleResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage): boolean;
 begin
   Result := Execute(Action, ResourceWriter, Language, TProjectResourceProcessor.DefaultTranslator);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TModuleResourceProcessor.DoSetTranslation(Prop: TLocalizerProperty; Language: TTargetLanguage; const Value: string);
+var
+  Translation: TLocalizerTranslation;
+begin
+  // We could have just added the translation with Prop.TranslatedValue[] but we need
+  // to update the counts so we must do it the explicit way (same performance).
+  if (Prop.Translations.TryGetTranslation(Language, Translation)) then
+  begin
+    if (Translation.Value <> Value) then
+    begin
+      // Update existing translation
+      Translation.Value := Value;
+      Inc(FTranslationCounts.CountUpdated);
+    end else
+      Inc(FTranslationCounts.CountSkipped);
+  end else
+  begin
+    if (Prop.Value <> Value) then
+    begin
+      // Add new translation
+      Prop.Translations.AddOrUpdateTranslation(Language, Value);
+      Inc(FTranslationCounts.CountAdded);
+    end else
+      Inc(FTranslationCounts.CountSkipped);
+  end;
 end;
 
 
@@ -456,7 +500,7 @@ begin
       if (Action <> liaUpdateTarget) then
         ChildItem := Module.AddItem(Name, Item.TypeName)
       else
-        ChildItem := Module.FindItem(Name);
+        ChildItem := Module.FindItem(Name, True);
     end else
       ChildItem := nil;
 
@@ -494,7 +538,7 @@ begin
   if (Action <> liaUpdateTarget) then
     Item := Module.AddItem(Name, ClassName)
   else
-    Item := Module.FindItem(Name);
+    Item := Module.FindItem(Name, True);
 
   if (Item <> nil) then
   begin
@@ -562,9 +606,9 @@ begin
         else
         if (Action = liaUpdateTarget) and (Language <> nil) then
         begin
-          Prop := Item.FindProperty(PropertyName);
-          if (Prop <> nil) and (Prop.Value <> Value) then
-            Prop.TranslatedValue[Language] := Value;
+          Prop := Item.FindProperty(PropertyName, True);
+          if (Prop <> nil) then
+            DoSetTranslation(Prop, Language, Value);
         end else
           Prop := nil;
       end else
@@ -737,7 +781,7 @@ begin
             Item := Module.AddItem(Name, '')
           else
             // Look for existing item - don't add new
-            Item := Module.FindItem(Name);
+            Item := Module.FindItem(Name, True);
         end else
         begin
           // TODO : This could be considered an error. Should flag item as unmapped.
@@ -762,10 +806,10 @@ begin
           if (Action = liaUpdateTarget) and (Language <> nil) then
           begin
             // Look for existing property - don't add new
-            Prop := Item.FindProperty('');
-            // Ignore Source=Target
-            if (Prop <> nil) and (Prop.Value <> Value) then
-              Prop.TranslatedValue[Language] := Value;
+            Prop := Item.FindProperty('', True);
+
+            if (Prop <> nil) then
+              DoSetTranslation(Prop, Language, Value);
           end else
             Prop := nil;
 
@@ -915,6 +959,8 @@ var
   ResourceGroups: TResourceGroups;
   ModuleProcessor: TModuleResourceProcessor;
 begin
+  FillChar(FTranslationCount, SizeOf(FTranslationCount), 0);
+
   Project.BeginUpdate;
   try
     Project.BeginLoad(Action = liaUpdateSource);
@@ -924,6 +970,7 @@ begin
       if (Action <> liaUpdateTarget) then
         EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, integer(Project));
 
+      // Make sure we have a resourcestrings module
       StringsModule := Project.AddModule(sModuleNameResourcestrings);
       StringsModule.Kind := mkString;
 
@@ -942,6 +989,9 @@ begin
 
           for Module in Project.Modules.Values.ToArray do // ToArray for stability since we delete from the list
           begin
+            if (Action = liaUpdateTarget) and (Module.IsUnused) then
+              continue;
+
             if (Module.Kind = mkForm) then
               ModuleProcessor := TModuleDFMResourceProcessor.Create(Module, Instance)
             else
@@ -955,6 +1005,10 @@ begin
             try
 
               ModuleProcessor.Execute(Action, ResourceWriter, Language, Translator);
+
+              Inc(FTranslationCount.CountAdded, ModuleProcessor.TranslationCount.CountAdded);
+              Inc(FTranslationCount.CountUpdated, ModuleProcessor.TranslationCount.CountUpdated);
+              Inc(FTranslationCount.CountSkipped, ModuleProcessor.TranslationCount.CountSkipped);
 
             finally
               ModuleProcessor.Free;
@@ -983,7 +1037,7 @@ begin
         ResourceGroups.Free;
       end;
     finally
-      Project.EndLoad;
+      Project.EndLoad((Action = liaUpdateSource), (Action = liaUpdateSource));
     end;
   finally
     Project.EndUpdate;
