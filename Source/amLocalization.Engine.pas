@@ -365,7 +365,7 @@ begin
   if (FindResource(Instance, PChar(Module.Name), RT_RCDATA) = 0) then
   begin
     if (Action = liaUpdateSource) then
-      Module.State := ItemStateUnused;
+      Module.SetState(ItemStateUnused);
     Exit(False);
   end;
 
@@ -391,7 +391,7 @@ begin
       TargetStream := nil;
     try
       // When updating source we need to process the module even if it is marked as "don't translate".
-      // Otherwise the items/properties will be left with lItemStateUnused state.
+      // Otherwise the items/properties will be left with ItemStateUnused state.
       if (Action = liaUpdateSource) or (Module.Status = ItemStatusTranslate) then
       begin
         FReader := TReader.Create(SourceStream, 1024);
@@ -465,7 +465,7 @@ begin
       ReadProperty(Action, Language, Translator, ChildItem, Name);
     FReader.ReadListEnd;
 
-    if (ChildItem <> nil) and (ChildItem.State = ItemStateNew) and (ChildItem.Properties.Count = 0) then
+    if (ChildItem <> nil) and (ItemStateNew in ChildItem.State) and (ChildItem.Properties.Count = 0) then
       ChildItem.Free;
 
     Inc(Index);
@@ -504,7 +504,7 @@ begin
     FReader.ReadListEnd;
 
     // Remove empty item
-    if (Item.State = ItemStateNew) and (Item.Properties.Count = 0) then
+    if (ItemStateNew in Item.State) and (Item.Properties.Count = 0) then
       Item.Free;
   end else
   begin
@@ -700,7 +700,7 @@ begin
   end;
 
   if (Action = liaUpdateSource) and (not AnyFound) then
-    Module.State := ItemStateUnused;
+    Module.SetState(ItemStateUnused);
 
   Result := True;
 end;
@@ -793,7 +793,7 @@ begin
     begin
       // Source item not found in resource - mark unused
       if (Module.Items.TryGetValue('', Item)) then
-        Item.State := ItemStateUnused;
+        Item.SetState(ItemStateUnused);
     end;
 
     Inc(i);
@@ -960,7 +960,7 @@ begin
               ModuleProcessor.Free;
             end;
 
-            if (Module.State = ItemStateNew) and ((Module.Kind = mkOther) or (Module.Items.Count = 0)) then
+            if (ItemStateNew in Module.State) and ((Module.Kind = mkOther) or (Module.Items.Count = 0)) then
             begin
               Module.Free;
               continue;

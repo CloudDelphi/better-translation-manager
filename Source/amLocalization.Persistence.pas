@@ -27,7 +27,7 @@ type
     const
       sModuleKind: array[TLocalizerModuleKind] of string = ('invalid', 'form', 'strings');
       sTranslationStatus: array[TTranslationStatus] of string = ('obsolete', 'pending', 'proposed', '');
-      sItemState: array[TLocalizerItemState] of string = ('new', '', 'unused');
+      sItemState: array[TLocalizerItemState] of string = ('new', 'unused');
       sItemStatus: array[TLocalizerItemStatus] of string = ('', 'hold', 'skip');
   private
     class function EncodeString(const Value: string): string;
@@ -116,12 +116,24 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
     Result := Low(Result);
   end;
 
-  function StringToItemState(const Value: string): TLocalizerItemState;
+  function StringToItemState(Item: TCustomLocalizerItem; const Value: string): TLocalizerItemStates;
+  var
+    StateValues: TArray<string>;
+    StateValue: string;
+    State: TLocalizerItemState;
   begin
-    for Result := Low(Result) To High(Result) do
-      if (Value = sItemState[Result]) then
-        Exit;
-    Result := Low(Result);
+    Result := [];
+    if (Value = '') then
+      Exit;
+    StateValues := Value.Split([',']);
+    for StateValue in StateValues do
+      for State := Low(sItemState) To High(sItemState) do
+        if (StateValue = sItemState[State]) then
+        begin
+          Item.SetState(State);
+          Include(Result, State);
+          break;
+        end;
   end;
 
   function StringToItemStatus(const Value: string): TLocalizerItemStatus;
@@ -231,7 +243,7 @@ begin
       begin
         Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
         Module.Kind := StringToModuleKind(VarToStr(ModuleNode.Attributes['type']));
-        Module.State := StringToItemState(VarToStr(ModuleNode.Attributes['state']));
+        StringToItemState(Module, VarToStr(ModuleNode.Attributes['state']));
         Module.Status := StringToItemStatus(VarToStr(ModuleNode.Attributes['status']));
 
         ItemsNode := ModuleNode.ChildNodes.FindNode('items');
@@ -244,7 +256,7 @@ begin
             begin
               Item := Module.AddItem(VarToStr(ItemNode.Attributes['name']), VarToStr(ItemNode.Attributes['type']));
               Item.ResourceID := StrToIntDef(VarToStr(ItemNode.Attributes['id']), 0);
-              Item.State := StringToItemState(VarToStr(ItemNode.Attributes['state']));
+              StringToItemState(Item, VarToStr(ItemNode.Attributes['state']));
               Item.Status := StringToItemStatus(VarToStr(ItemNode.Attributes['status']));
 
               PropsNode := ItemNode.ChildNodes.FindNode('properties');
@@ -259,7 +271,7 @@ begin
                     // s := s.Replace(#10, #13);
                     s := DecodeString(s);
                     Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
-                    Prop.State := StringToItemState(VarToStr(PropNode.Attributes['state']));
+                    StringToItemState(Prop, VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
                     Prop.Flags := StringToPropFlags(VarToStr(PropNode.Attributes['flags']));
 
@@ -318,9 +330,20 @@ end;
 class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProject; Stream: TStream);
 
   procedure WriteItemState(const Node: IXMLNode; Item: TCustomLocalizerItem);
+  var
+    State: TLocalizerItemState;
+    s: string;
   begin
-    if (not Item.InheritParentState) and (Item.State <> ItemStateExisting) then
-      Node.Attributes['state'] := sItemState[Item.State];
+    if (Item.InheritParentState) or (Item.State = []) then
+      Exit;
+    s := '';
+    for State in Item.State do
+    begin
+      if (s <> '') then
+        s := s + ',';
+      s := s + sItemState[State];
+    end;
+    Node.Attributes['state'] := s;
   end;
 
   procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem);

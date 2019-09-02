@@ -501,7 +501,7 @@ var
               // TODO : XLIFF should not modify language invariant properties
               case TranslationStatus of
                 tsUnused:
-                  Prop.State := ItemStateUnused;
+                  Prop.SetState(ItemStateUnused);
 
                 tsDontTranslate:
                   Prop.Status := ItemStatusDontTranslate;

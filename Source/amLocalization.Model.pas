@@ -33,7 +33,9 @@ type
   TLocalizerPropertyDelegate = reference to function(Prop: TLocalizerProperty): boolean;
   TLocalizerTranslationDelegate = reference to function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean;
 
-  TLocalizerItemState = (ItemStateNew, ItemStateExisting, ItemStateUnused);
+  TLocalizerItemState = (ItemStateNew, ItemStateUnused);
+  TLocalizerItemStates = set of TLocalizerItemState;
+
   TLocalizerItemStatus = (ItemStatusTranslate, ItemStatusHold, ItemStatusDontTranslate);
 
   TLocalizerModuleKind = (mkOther, mkForm, mkString);
@@ -143,7 +145,7 @@ type
   strict protected
     procedure SetModified(const Value: boolean);
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
-    procedure SetItemStateRecursive(State: TLocalizerItemState);
+    procedure SetItemStateRecursive(Value: TLocalizerItemState);
   protected
     procedure UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
     procedure ModuleChanged(Module: TLocalizerModule);
@@ -178,9 +180,9 @@ type
 
     property Modified: boolean read FModified write SetModified;
 
-    // Total number of properties with State<>lItemStateUnused
+    // Total number of properties with State<>ItemStateUnused
     property PropertyCount: integer read FPropertyCount;
-    // Property count by status, State<>lItemStateUnused
+    // Property count by status, State<>ItemStateUnused
     property StatusCount[Status: TLocalizerItemStatus]: integer read GetStatusCount;
 
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
@@ -195,7 +197,7 @@ type
 // -----------------------------------------------------------------------------
   TCustomLocalizerItem = class abstract(TBaseLocalizerItem)
   strict private
-    FState: TLocalizerItemState;
+    FState: TLocalizerItemStates;
     FStatus: TLocalizerItemStatus;
     // FStatusCount holds the accumulated sum of the *actual* status of the item.
     // For parent items the sum is that of its children's FStatusCount
@@ -203,23 +205,30 @@ type
   strict protected
     procedure UpdateParentStatusCount(AStatus: TLocalizerItemStatus; Delta: integer); virtual; abstract;
 
-    procedure SetState(const Value: TLocalizerItemState);
     procedure SetStatus(const Value: TLocalizerItemStatus);
     procedure DoSetStatus(const Value: TLocalizerItemStatus); virtual;
     procedure ApplyParentStatusChange(const Value: TLocalizerItemStatus);
     procedure ApplyDirectStatusChange(const Value: TLocalizerItemStatus);
-    function GetState: TLocalizerItemState; virtual;
+    function GetState: TLocalizerItemStates; virtual;
     function GetInheritParentState: boolean; virtual;
     function GetEffectiveStatus: TLocalizerItemStatus; virtual;
     function GetStatusCount(AStatus: TLocalizerItemStatus): integer;
+    function GetUnused: boolean;
   protected
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
     function CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
   public
-    property State: TLocalizerItemState read GetState write SetState;
+    constructor Create(const AName: string);
+
+    property State: TLocalizerItemStates read GetState;
+    procedure SetState(const Value: TLocalizerItemState);
+    procedure ClearState(const Value: TLocalizerItemState);
+
     property Status: TLocalizerItemStatus read FStatus write SetStatus;
     property InheritParentState: boolean read GetInheritParentState;
     property EffectiveStatus: TLocalizerItemStatus read GetEffectiveStatus;
+    // Shortcut to test for ItemStateUnused
+    property Unused: boolean read GetUnused;
 
     property StatusCount[AStatus: TLocalizerItemStatus]: integer read GetStatusCount;
   end;
@@ -237,7 +246,7 @@ type
     procedure UpdateParentStatusCount(AStatus: TLocalizerItemStatus; Delta: integer); override;
     procedure DoChanged; override;
 
-    function GetState: TLocalizerItemState; override;
+    function GetState: TLocalizerItemStates; override;
     function GetInheritParentState: boolean; override;
     function GetEffectiveStatus: TLocalizerItemStatus; override;
   protected
@@ -574,27 +583,29 @@ end;
 // TCustomLocalizerItem
 //
 // -----------------------------------------------------------------------------
+constructor TCustomLocalizerItem.Create(const AName: string);
+begin
+  inherited Create(AName);
+  FState := [ItemStateNew];
+end;
+
 function TCustomLocalizerItem.GetInheritParentState: boolean;
 begin
   Result := False;
 end;
 
-function TCustomLocalizerItem.GetState: TLocalizerItemState;
+function TCustomLocalizerItem.GetState: TLocalizerItemStates;
 begin
   Result := FState;
 end;
 
 procedure TCustomLocalizerItem.SetState(const Value: TLocalizerItemState);
-var
-  OldState: TLocalizerItemState;
 begin
-  if (FState = Value) then
+  if (Value in FState) then
     Exit;
 
   // Note: We must call UpdateParentStatusCount before ItemStateUnused state is set
   // as UpdateParentStatusCount will not propagate if State=ItemStateUnused.
-  OldState := FState;
-
   if (Value = ItemStateUnused) then
   begin
     // Item is being disabled - Remove stats from parent
@@ -603,11 +614,21 @@ begin
     UpdateParentStatusCount(ItemStatusHold, -FStatusCount[ItemStatusHold]);
   end;
 
-  FState := Value;
+  Include(FState, Value);
 
-  if (OldState = ItemStateUnused) then
+  Changed;
+end;
+
+procedure TCustomLocalizerItem.ClearState(const Value: TLocalizerItemState);
+begin
+  if (not (Value in FState)) then
+    Exit;
+
+  Exclude(FState, Value);
+
+  if (Value = ItemStateUnused) then
   begin
-    // Item is being enabled - Add stats back to parent
+    // Item was enabled - Add stats back to parent
     UpdateParentStatusCount(ItemStatusTranslate, FStatusCount[ItemStatusTranslate]);
     UpdateParentStatusCount(ItemStatusDontTranslate, FStatusCount[ItemStatusDontTranslate]);
     UpdateParentStatusCount(ItemStatusHold, FStatusCount[ItemStatusHold]);
@@ -631,7 +652,7 @@ end;
 
 procedure TCustomLocalizerItem.ApplyParentStatusChange(const Value: TLocalizerItemStatus);
 begin
-  if (FState = ItemStateUnused) then
+  if (ItemStateUnused in FState) then
     Exit;
 
   // Remove all counts belonging to this item from parent
@@ -697,10 +718,15 @@ end;
 
 function TCustomLocalizerItem.GetStatusCount(AStatus: TLocalizerItemStatus): integer;
 begin
-  if (FState <> ItemStateUnused) then
+  if (not (ItemStateUnused in FState)) then
     Result := FStatusCount[AStatus]
   else
     Result := 0;
+end;
+
+function TCustomLocalizerItem.GetUnused: boolean;
+begin
+  Result := (ItemStateUnused in State); // Note: Must use State to invoke virtual GetState!
 end;
 
 procedure TCustomLocalizerItem.UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
@@ -712,7 +738,7 @@ begin
 
   Assert(FStatusCount[AStatus] >= 0);
 
-  if (FState <> ItemStateUnused) then
+  if (not (ItemStateUnused in FState)) then
     UpdateParentStatusCount(AStatus, Delta);
 end;
 
@@ -757,7 +783,7 @@ end;
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
 begin
   //  If the parent is unused, the children are also unused
-  Result := (Parent.State = ItemStateUnused);
+  Result := (ItemStateUnused in Parent.State);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetParent: TParentClass;
@@ -765,7 +791,7 @@ begin
   Result := FParent;
 end;
 
-function TCustomLocalizerChildItem<TParentClass>.GetState: TLocalizerItemState;
+function TCustomLocalizerChildItem<TParentClass>.GetState: TLocalizerItemStates;
 begin
   if (InheritParentState) then
     Result := Parent.State
@@ -918,7 +944,7 @@ begin
   Result := False;
   for Module in Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
   begin
-    if (Module.Kind = mkOther) or (Module.State = ItemStateUnused) then
+    if (Module.Kind = mkOther) or (ItemStateUnused in Module.State) then
     begin
       Module.Free;
       Result := True;
@@ -987,7 +1013,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerProject.SetItemStateRecursive(State: TLocalizerItemState);
+procedure TLocalizerProject.SetItemStateRecursive(Value: TLocalizerItemState);
 var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
@@ -997,12 +1023,12 @@ begin
   try
     for Module in Modules.Values do
     begin
-      Module.State := State;
+      Module.SetState(Value);
       for Item in Module.Items.Values do
       begin
-        Item.State:= State;
+        Item.SetState(Value);
         for Prop in Item.Properties.Values do
-          Prop.State := State;
+          Prop.SetState(Value);
       end;
     end;
   finally
@@ -1075,7 +1101,10 @@ begin
     Result.Kind := Kind;
   end else
   if (ProjectStateLoading in State) then
-    Result.State := ItemStateExisting;
+  begin
+    Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUnused);
+  end;
 end;
 
 function TLocalizerProject.FindModule(const AName: string): TLocalizerModule;
@@ -1130,7 +1159,7 @@ begin
   try
     for Item in FItems.Values.ToArray do // ToArray for stability since we delete from dictionary
     begin
-      if (Item.State = ItemStateUnused) then
+      if (ItemStateUnused in Item.State) then
       begin
         Item.Free;
         Result := True;
@@ -1203,7 +1232,7 @@ begin
   if (Delta = 0) then
     Exit;
 
-  if (State <> ItemStateUnused) then
+  if (not (ItemStateUnused in State)) then
     // Update project with the effective status
     FProject.UpdateStatusCount(CalculateEffectiveStatus(AStatus), Delta);
 end;
@@ -1292,7 +1321,10 @@ begin
     Result := TLocalizerItem.Create(Self, AName, ATypeName)
   else
   if (ProjectStateLoading in Project.State) then
-    Result.State := ItemStateExisting;
+  begin
+    Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUnused);
+  end;
 end;
 
 function TLocalizerModule.AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem;
@@ -1315,7 +1347,10 @@ begin
     Result.ResourceID := AResourceID;
   end else
   if (ProjectStateLoading in Project.State) then
-    Result.State := ItemStateExisting;
+  begin
+    Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUnused);
+  end;
 end;
 
 
@@ -1363,7 +1398,7 @@ begin
   try
 
     for Prop in Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-      if (Prop.State = ItemStateUnused) then
+      if (ItemStateUnused in Prop.State) then
       begin
         Prop.Free;
         Result := True;
@@ -1450,7 +1485,10 @@ begin
     Result := TLocalizerProperty.Create(Self, AName)
   else
   if (ProjectStateLoading in Module.Project.State) then
-    Result.State := ItemStateExisting;
+  begin
+    Result.ClearState(ItemStateNew);
+    Result.ClearState(ItemStateUnused);
+  end;
 end;
 
 function TLocalizerItem.AddProperty(const AName, AValue: string): TLocalizerProperty;
