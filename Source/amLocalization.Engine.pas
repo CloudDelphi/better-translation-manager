@@ -74,6 +74,7 @@ type
   TProjectResourceProcessor = class
   private
     FTranslationCount: TTranslationCounts;
+    FIncludeVersionInfo: boolean;
   protected
     class function DefaultTranslator(Language: TTargetLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
   public
@@ -84,6 +85,7 @@ type
     procedure ScanProject(Project: TLocalizerProject; const Filename: string); overload;
 
     property TranslationCount: TTranslationCounts read FTranslationCount;
+    property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo;
   end;
 
 
@@ -1021,7 +1023,7 @@ begin
             end;
           end;
 
-          if (Action = liaTranslate) and (ResourceWriter <> nil) then
+          if (Action = liaTranslate) and (ResourceWriter <> nil) and (FIncludeVersionInfo) then
             CopyVersionInfo;
 
           if (ResourceWriter <> nil) then

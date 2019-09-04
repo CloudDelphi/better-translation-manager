@@ -251,6 +251,12 @@ type
     dxLayoutSeparatorItem3: TdxLayoutSeparatorItem;
     LayoutItemCategories: TdxLayoutItem;
     LayoutItemPages: TdxLayoutItem;
+    dxLayoutItem26: TdxLayoutItem;
+    LabelResourceModuleHeader: TcxLabel;
+    LayoutGroupResourceModules: TdxLayoutGroup;
+    dxLayoutItem27: TdxLayoutItem;
+    CheckBoxResourceModulesIncludeVersionInfo: TcxCheckBox;
+    dxLayoutGroup9: TdxLayoutGroup;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -452,6 +458,7 @@ begin
   *)
   SetSkin(TranslationManagerSettings.System.Skin);
   CheckUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
+  CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
 
   (*
   ** Translators section
@@ -490,6 +497,7 @@ begin
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
+  TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
 
   (*
   ** Translators section

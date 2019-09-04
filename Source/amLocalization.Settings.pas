@@ -220,10 +220,12 @@ type
     FSingleInstance: boolean;
     FSkin: string;
     FUseProposedStatus: boolean;
+    FIncludeVersionInfo: boolean;
   published
     property SingleInstance: boolean read FSingleInstance write FSingleInstance default False;
     property Skin: string read FSkin write FSkin;
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
+    property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
   end;
 
 

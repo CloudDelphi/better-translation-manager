@@ -1325,6 +1325,8 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
+    ProjectProcessor.IncludeVersionInfo := TranslationManagerSettings.System.IncludeVersionInfo;
+
     FProject.BeginLoad;
     try
 
