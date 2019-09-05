@@ -68,7 +68,7 @@ object DataModuleMain: TDataModuleMain
         Visible = False
       end
     end
-    object GridTableViewTargetLanguages: TcxGridDBTableView
+    object GridTableViewFilteredTargetLanguages: TcxGridDBTableView
       Navigator.Buttons.CustomButtons = <>
       DataController.DataSource = DataSourceLanguages
       DataController.Filter.Active = True
@@ -77,18 +77,22 @@ object DataModuleMain: TDataModuleMain
       DataController.Summary.FooterSummaryItems = <>
       DataController.Summary.SummaryGroups = <>
       DataController.OnFilterRecord = GridTableViewTargetLanguagesDataControllerFilterRecord
-      object GridTableViewTargetLanguagesLocaleID: TcxGridDBColumn
+      object GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn
+        Caption = 'Locale ID'
         DataBinding.FieldName = 'LocaleID'
       end
-      object GridTableViewTargetLanguagesLocaleName: TcxGridDBColumn
+      object GridTableViewFilteredTargetLanguagesLocaleName: TcxGridDBColumn
+        Caption = 'Locale'
         DataBinding.FieldName = 'LocaleName'
       end
-      object GridTableViewTargetLanguagesLanguageName: TcxGridDBColumn
+      object GridTableViewFilteredTargetLanguagesLanguage: TcxGridDBColumn
+        Caption = 'Language'
         DataBinding.FieldName = 'LanguageName'
         SortIndex = 0
         SortOrder = soAscending
       end
-      object GridTableViewTargetLanguagesCountryName: TcxGridDBColumn
+      object GridTableViewFilteredTargetLanguagesCountry: TcxGridDBColumn
+        Caption = 'Country'
         DataBinding.FieldName = 'CountryName'
       end
     end
@@ -121,6 +125,20 @@ object DataModuleMain: TDataModuleMain
         end>
       Properties.ClearKey = 16392
       Properties.OnButtonClick = EditRepositoryTextItemPropertiesButtonClick
+    end
+    object EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem
+      Properties.DropDownAutoSize = True
+      Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
+      Properties.View = GridTableViewLanguages
+      Properties.KeyFieldNames = 'LocaleID'
+      Properties.ListFieldItem = GridTableViewLanguagesColumnLanguage
+    end
+    object EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem
+      Properties.DropDownAutoSize = True
+      Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
+      Properties.View = GridTableViewFilteredTargetLanguages
+      Properties.KeyFieldNames = 'LocaleID'
+      Properties.ListFieldItem = GridTableViewFilteredTargetLanguagesLanguage
     end
   end
 end

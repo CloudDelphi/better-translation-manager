@@ -221,11 +221,48 @@ type
     FSkin: string;
     FUseProposedStatus: boolean;
     FIncludeVersionInfo: boolean;
+    FDefaultTargetLanguage: LCID;
+    FDefaultSourceLanguage: LCID;
+    FApplicationLanguage: LCID;
+    FSafeMode: boolean;
+    FHasBeenRun: boolean;
+    FLastBootCompleted: boolean;
+    FFirstRun: boolean;
+  private
+    FBooting: boolean;
+    FBootCount: integer;
+    FHideFeedback: boolean;
+  protected
+    procedure WriteSection(const Key: string); override;
+    procedure ReadSection(const Key: string); override;
+  public
+    procedure BeginBoot;
+    procedure EndBoot;
+
+    property Booting: boolean read FBooting;
+    property LastBootCompleted: boolean read FLastBootCompleted;
+
+    property SafeMode: boolean read FSafeMode;
+
+    /// <summary>FirstRun is True if the current major version of the application has never run before.</summary>
+    property FirstRun: boolean read FFirstRun;
+
+    /// <summary>HasBeenRun is True if application has been run at least once.</summary>
+    property HasBeenRun: boolean read FHasBeenRun;
+
+    procedure SetSafeMode;
   published
     property SingleInstance: boolean read FSingleInstance write FSingleInstance default False;
+
     property Skin: string read FSkin write FSkin;
+    property HideFeedback: boolean read FHideFeedback write FHideFeedback;
+
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
+
+    property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;
+    property DefaultSourceLanguage: LCID read FDefaultSourceLanguage write FDefaultSourceLanguage;
+    property DefaultTargetLanguage: LCID read FDefaultTargetLanguage write FDefaultTargetLanguage;
   end;
 
 
@@ -266,7 +303,8 @@ uses
   IOUtils,
   Math,
   Types,
-  cxPropertiesStore;
+  cxPropertiesStore,
+  amVersionInfo;
 
 //------------------------------------------------------------------------------
 //
@@ -527,13 +565,17 @@ end;
 //
 //------------------------------------------------------------------------------
 var
-  FScriptDebuggerSettings: TTranslationManagerSettings = nil;
+  FTranslationManagerSettings: TTranslationManagerSettings = nil;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
 begin
-  if (FScriptDebuggerSettings = nil) then
-    FScriptDebuggerSettings := TTranslationManagerSettings.Create(TranslationManagerRegistryKey, TranslationManagerRegistryRoot);
-  Result := FScriptDebuggerSettings;
+  if (FTranslationManagerSettings = nil) then
+  begin
+    FTranslationManagerSettings := TTranslationManagerSettings.Create(TranslationManagerRegistryKey, TranslationManagerRegistryRoot);
+
+    FTranslationManagerSettings.ReadConfig;
+  end;
+  Result := FTranslationManagerSettings;
 end;
 
 //------------------------------------------------------------------------------
@@ -678,9 +720,6 @@ end;
 
 { TTranslationManagerLayoutTreeSettings }
 
-
-{ TTranslationManagerLayoutTreeSettings }
-
 procedure TTranslationManagerLayoutTreeSettings.ReadFilter(Filter: TcxDataFilterCriteria);
 var
   Stream: TMemoryStream;
@@ -710,9 +749,78 @@ begin
   end;
 end;
 
+{ TTranslationManagerSystemSettings }
+
+procedure TTranslationManagerSystemSettings.BeginBoot;
+begin
+  Inc(FBootCount);
+
+  if (FBootCount = 1) then
+  begin
+    FBooting := True;
+
+    // Set boot marker
+    Registry.WriteBoolean(Key, 'Booting', True);
+  end;
+end;
+
+procedure TTranslationManagerSystemSettings.EndBoot;
+begin
+  Dec(FBootCount);
+
+  if (FBootCount = 0) then
+  begin
+    FBooting := False;
+
+    // Clear boot marker
+    Registry.WriteBool(Key, 'Booting', False);
+
+    // Boot complete - clear safe mode
+    Registry.WriteBoolean(Key, 'SafeMode', False);
+    // Set first run marker
+    Registry.WriteBoolean(Key, 'HasBeenRun', True);
+  end;
+end;
+
+procedure TTranslationManagerSystemSettings.ReadSection(const Key: string);
+var
+  SavedVersionMajor: Word;
+  ThisVersionMajor: Word;
+  VersionInfo: TVersionInfo;
+begin
+  inherited ReadSection(Key);
+
+  FSafeMode := Registry.ReadBoolean(Key, 'SafeMode', FSafeMode);
+  FLastBootCompleted := not Registry.ReadBoolean(Key, 'Booting', False);
+  FHasBeenRun := Registry.ReadBoolean(Key, 'HasBeenRun', False);
+
+  SavedVersionMajor := TVersionInfo.VersionMajor(TVersionInfo.StringToVersion(TTranslationManagerSettings(Owner).Version));
+  VersionInfo := TVersionInfo.Create(Application.ExeName);
+  try
+    ThisVersionMajor := TVersionInfo.VersionMajor(VersionInfo.FileVersion);
+  finally
+    VersionInfo.Free;
+  end;
+  FFirstRun := (FFirstRun) or (not FHasBeenRun) or (ThisVersionMajor <> SavedVersionMajor);
+end;
+
+procedure TTranslationManagerSystemSettings.WriteSection(const Key: string);
+begin
+  inherited WriteSection(Key);
+
+  Registry.WriteBoolean(Key, 'SafeMode', False);
+  Registry.WriteBoolean(Key, 'HasBeenRun', True);
+end;
+
+procedure TTranslationManagerSystemSettings.SetSafeMode;
+begin
+  FSafeMode := True;
+  Registry.WriteBoolean(Key, 'SafeMode', True);
+end;
+
 initialization
 //  ConfigurationServiceRegistryKey := TranslationManagerRegistryKey;
 //  ConfigurationServiceRegistryRoot := TranslationManagerRegistryRoot;
 finalization
-  FreeAndNil(FScriptDebuggerSettings);
+  FreeAndNil(FTranslationManagerSettings);
 end.

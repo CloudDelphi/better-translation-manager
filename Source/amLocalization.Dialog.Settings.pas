@@ -31,7 +31,7 @@ uses
   dxRibbonSkins,
   dxSpellChecker,
 
-  amLocalization.Dialog;
+  amLocalization.Dialog, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox;
 
 type
   TFormSettings = class(TFormDialog)
@@ -201,10 +201,6 @@ type
     LayoutGroupRestart: TdxLayoutGroup;
     dxLayoutItem29: TdxLayoutItem;
     LabelLanguage: TcxLabel;
-    dxLayoutItem28: TdxLayoutItem;
-    ComboBoxDefaultTargetLanguage: TcxComboBox;
-    dxLayoutItem30: TdxLayoutItem;
-    ComboBoxUILanguage: TcxComboBox;
     LayoutGroupLanguage: TdxLayoutGroup;
     dxLayoutGroup10: TdxLayoutGroup;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
@@ -257,6 +253,13 @@ type
     dxLayoutItem27: TdxLayoutItem;
     CheckBoxResourceModulesIncludeVersionInfo: TcxCheckBox;
     dxLayoutGroup9: TdxLayoutGroup;
+    dxLayoutItem43: TdxLayoutItem;
+    ComboBoxSourceLanguage: TcxExtLookupComboBox;
+    dxLayoutSeparatorItem4: TdxLayoutSeparatorItem;
+    dxLayoutItem28: TdxLayoutItem;
+    ComboBoxTargetLanguage: TcxExtLookupComboBox;
+    dxLayoutItem30: TdxLayoutItem;
+    ComboBoxApplicationLanguage: TcxExtLookupComboBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -292,6 +295,9 @@ type
     procedure GridFoldersTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
     procedure GridFoldersTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord;
       AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
+    procedure ComboBoxApplicationLanguagePropertiesEditValueChanged(Sender: TObject);
+    procedure CheckBoxSingleInstancePropertiesChange(Sender: TObject);
+    procedure ButtonRegisterFiletypesClick(Sender: TObject);
   private
     type
       TSkinDetails = record
@@ -344,7 +350,9 @@ uses
   Generics.Defaults,
   Types, UITypes,
   IOUtils,
-//  FileCtrl,
+  Registry,
+  ShellAPI,
+  SHlObj,
 
 (*
   dxSkinsDefaultPainters,
@@ -358,10 +366,14 @@ uses
 
   cxStorage,
 
+  Perevoznyk.WindowsFileRegistrationHelper,
   amShell,
+  amCursorService,
   amLocalization.Model,
   amLocalization.Settings,
+  amLocalization.Persistence,
   amLocalization.Utils,
+  amLocalization.Data.Main,
   amLocalization.Translator.Microsoft.Version3;
 
 const
@@ -372,11 +384,20 @@ const
 
 // -----------------------------------------------------------------------------
 
+type
+  TcxExtLookupComboBoxCracker = class(TcxExtLookupComboBox);
+
 constructor TFormSettings.Create(Awner: TComponent);
+resourcestring
+  sLanguageSystemDefault = '(system default)';
 begin
   inherited;
 
   FSkinList := TList<TSkinDetails>.Create;
+
+  TcxExtLookupComboBoxCracker(ComboBoxSourceLanguage).TextHint := sLanguageSystemDefault;
+  TcxExtLookupComboBoxCracker(ComboBoxTargetLanguage).TextHint := sLanguageSystemDefault;
+  TcxExtLookupComboBoxCracker(ComboBoxApplicationLanguage).TextHint := sLanguageSystemDefault;
 end;
 
 destructor TFormSettings.Destroy;
@@ -459,6 +480,9 @@ begin
   SetSkin(TranslationManagerSettings.System.Skin);
   CheckUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
+  ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
+  ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
+  ComboBoxApplicationLanguage.EditValue := TranslationManagerSettings.System.ApplicationLanguage;
 
   (*
   ** Translators section
@@ -487,6 +511,15 @@ begin
 end;
 
 procedure TFormSettings.ApplySettings;
+
+  function VarToLCID(const Value: Variant): LCID;
+  begin
+    if (VarIsOrdinal(Value)) then
+      Result := Value
+    else
+      Result := 0;
+  end;
+
 begin
   (*
   ** General section
@@ -498,6 +531,9 @@ begin
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
+  TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
+  TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);
+  TranslationManagerSettings.System.ApplicationLanguage := VarToLCID(ComboBoxApplicationLanguage.EditValue);
 
   (*
   ** Translators section
@@ -888,9 +924,171 @@ begin
   dxShowCustomDictionaryDialog(FSpellChecker.FindFirstEnabledUserDictionary);
 end;
 
+procedure TFormSettings.ButtonRegisterFiletypesClick(Sender: TObject);
+
+  procedure RegisterShellIntegration;
+
+    procedure RegisterFileTypeHandler;
+    var
+      FileRegistrationHelper : TFileRegistrationHelper;
+    begin
+      FileRegistrationHelper := TFileRegistrationHelper.Create(sApplicationShellProgID, ParamStr(0), sProjectFileDescription, sApplicationShellAppID, sProjectFileType);
+      try
+        FileRegistrationHelper.RegisterToHandleFileType(True);
+      finally
+        FileRegistrationHelper.Free;
+      end;
+    end;
+
+    procedure RegisterApplication;
+    var
+      Registry: TRegistry;
+    begin
+      Registry := TRegistry.Create(KEY_ALL_ACCESS);
+      try
+        // Application Registration
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/ee872121%28v=vs.85%29.aspx
+        Registry.RootKey := HKEY_CURRENT_USER;
+        if (Registry.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\'+ExtractFilename(Application.ExeName), True)) then
+        begin
+          (*
+          ** (Default)
+          ** Is the fully qualified path to the application. The application name provided in the (Default) entry can be
+          ** stated with or without its .exe extension. If necessary, the ShellExecuteEx function adds the extension when
+          ** searching App Paths subkey. The entry is of the REG_SZ type.
+          *)
+          Registry.WriteString('', Application.ExeName);
+          (*
+          ** UseUrl
+          ** Indicates that your application can accept a URL (instead of a file name) on the command line. Applications
+          ** that can open documents directly from the internet, like web browsers and media players, should set this entry.
+          ** When the ShellExecuteEx function starts an application and the UseUrl=1 value is not set, ShellExecuteEx
+          ** downloads the document to a local file and invokes the handler on the local copy.
+          ** For example, if the application has this entry set and a user right-clicks on a file stored on a web server,
+          ** the Open verb will be made available. If not, the user will have to download the file and open the local copy.
+          ** The UseUrl entry is of REG_DWORD type, and the value is 0x1.
+          ** In Windows Vista and earlier, this entry indicated that the URL should be passed to the application along
+          ** with a local file name, when called via ShellExecuteEx. In Windows 7, it indicates that the application can
+          ** understand any http or https url that is passed to it, without having to supply the cache file name as well.
+          ** The registry key SupportedProtocols contains multiple registry values to indicate which URL schemes are supported.
+          *)
+          // Registry.WriteInteger('UseUrl', 1);
+
+          Registry.CloseKey;
+        end;
+
+      finally
+        Registry.Free;
+      end;
+    end;
+
+    procedure RegisterExt(const Extension, IntName: string; const Icon: string; Description, FileName: string; KeepExisting: boolean = False);
+    var
+      Registry: TRegistry;
+      s: string;
+    begin
+      Registry := TRegistry.Create(KEY_ALL_ACCESS);
+      try
+        Registry.RootKey := HKEY_CURRENT_USER;
+        if (not Registry.OpenKey('Software\Classes\' + Extension, True)) then
+          RaiseLastOSError;
+
+        if (KeepExisting) then
+        begin
+          s := Registry.ReadString('');
+          if (s <> '') and (Pos('translation', s) = -1) then
+            exit;
+        end;
+
+        Registry.WriteString('', IntName);
+        Registry.CloseKey;
+
+        if (not Registry.OpenKey('Software\Classes\' + IntName, True)) then
+          RaiseLastOSError;
+
+        Registry.WriteString('', Description);
+        s := Icon;
+        if (s <> '') then
+        begin
+          Registry.OpenKey('DefaultIcon', True);
+          Registry.WriteString('', Icon + ',' + s);
+          Registry.CloseKey;
+        end;
+        Registry.OpenKey('Software\Classes\' + IntName, False);
+        Registry.OpenKey('shell', True);
+        Registry.OpenKey('open', True);
+        Registry.OpenKey('command', True);
+        Registry.WriteString('', FileName + ' "%1"');
+        Registry.CloseKey;
+
+        // Remove association made by windows (open with...) as it will dominate the other option
+        if (not KeepExisting) then
+        begin
+          Registry.RootKey := HKEY_CURRENT_USER;
+          if Registry.KeyExists('Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\' + Extension) then
+          begin
+            if (not Registry.OpenKey('Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\' + Extension, False)) then
+              RaiseLastOSError;
+            Registry.DeleteValue('Application');
+            Registry.DeleteKey('UserChoice');
+            Registry.CloseKey;
+          end;
+        end;
+
+      finally
+        Registry.Free;
+      end;
+    end;
+
+    procedure RegisterFileTypes;
+    begin
+      RegisterExt(sProjectFileType, sProjectFileClass, '-1', sProjectFileDescription, Application.ExeName);
+    end;
+
+  begin
+    RegisterApplication;
+    RegisterFileTypes;
+
+  {$ifdef DEBUG}
+    RegisterFileTypeHandler;
+  {$endif DEBUG}
+
+    // Notify the shell that associations has changed
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil);
+  end;
+
+resourcestring
+  sFileTypeRegistrationSuccess = 'The translation manager file types are now registered.';
+  sFileTypeRegistrationError = 'The translation manager file types could not be registered:'+#13+'%s'+#13#13+'Please run %s with administrative privileges and try again';
+begin
+  SaveCursor(crHourGlass);
+  try
+    // TODO : For now we keep RegisterShellIntegration here. It should be moved somewhere else.
+    RegisterShellIntegration;
+
+    // Register COM server.
+    // ComServer.UpdateRegistry(True);
+
+    MessageDlg(sFileTypeRegistrationSuccess, mtInformation, [mbOk], 0);
+  except
+    on E: Exception do
+      MessageDlg(Format(sFileTypeRegistrationError, [E.Message, TPath.GetFileNameWithoutExtension(Application.ExeName)]), mtError, [mbOK], 0);
+  end;
+end;
+
 procedure TFormSettings.CheckBoxProofingAutoCorrectPropertiesChange(Sender: TObject);
 begin
   LayoutGroupProofingAutoCorrect.Enabled := TcxCheckBox(Sender).Checked;
+end;
+
+procedure TFormSettings.CheckBoxSingleInstancePropertiesChange(Sender: TObject);
+begin
+  RequireRestart;
+end;
+
+procedure TFormSettings.ComboBoxApplicationLanguagePropertiesEditValueChanged(Sender: TObject);
+begin
+  RequireRestart;
 end;
 
 procedure TFormSettings.EditProofingAutoCorrectReplacementFromPropertiesChange(Sender: TObject);

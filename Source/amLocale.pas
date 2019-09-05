@@ -130,6 +130,7 @@ function MakeLangID(Primary, Region: Word ): Word;
 function LocaleName: string;
 function LoadNewResourceModule(Locale: LCID): HModule; overload;
 function LoadNewResourceModule(const ModuleTypeName: string): HModule; overload;
+function LoadNewResourceModule(const ModuleTypeName: string; var ModuleFilename: string): HModule; overload;
 function TryLocaleToISO639_1Name(Locale: LCID; var Value: string): boolean;
 function LocaleToISO639_1Name(Locale: LCID; const Default: string = ''): string;
 function TryISO639_1NameToLocale(const Name: string; var Value: TLCID): boolean;
@@ -382,7 +383,16 @@ end;
 function LoadNewResourceModule(const ModuleTypeName: string): HModule;
 var
   Filename: string;
+begin
+  Result := LoadNewResourceModule(ModuleTypeName, Filename);
+end;
+
+function LoadNewResourceModule(const ModuleTypeName: string; var ModuleFilename: string): HModule; overload;
+var
+  Filename: string;
   NewInst: HModule;
+const
+  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
 begin
   Result := 0;
 
@@ -392,16 +402,22 @@ begin
 
     if (Filename <> '') then
     begin
-      Filename := ChangeFileExt(Filename, '.');
+      ModuleFilename := ChangeFileExt(Filename, '.' + ModuleTypeName);
 
       // Then look for a potential language/country translation
-      NewInst := LoadLibraryEx(PChar(Filename + ModuleTypeName), 0, LOAD_LIBRARY_AS_DATAFILE);
+      NewInst := LoadLibraryEx(PChar(ModuleFilename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
 
       if (NewInst = 0) and (Length(ModuleTypeName) > 2) then
+      begin
         // Finally look for a language only translation
-        NewInst := LoadLibraryEx(PChar(Filename + Copy(ModuleTypeName, 1, 2)), 0, LOAD_LIBRARY_AS_DATAFILE);
+        ModuleFilename := ChangeFileExt(Filename, '.' + Copy(ModuleTypeName, 1, 2));
+        NewInst := LoadLibraryEx(PChar(ModuleFilename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+      end;
     end else
       NewInst := 0;
+
+    if (NewInst = 0) then
+      ModuleFilename := '';
   end else
     NewInst := hInstance;
 

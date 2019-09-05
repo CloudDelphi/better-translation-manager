@@ -39,6 +39,9 @@ type
     function ReadStrings(const Section, Ident, Default: string): string;
     procedure WriteStrings(const Section, Ident, Value: string);
     procedure ReadSectionNames(const Section: string; Strings: TStrings);
+    // Default TRegIniFile ReadBool and WriteBool uses string format
+    function ReadBoolean(const Section, Ident: string; Default: boolean): boolean;
+    procedure WriteBoolean(const Section, Ident: string; Value: boolean);
   end;
 
   TConfiguration = class;
@@ -387,6 +390,11 @@ begin
   end;
 end;
 
+procedure TFixedRegIniFile.WriteBoolean(const Section, Ident: string; Value: boolean);
+begin
+  WriteInteger(Section, Ident, Ord(Value));
+end;
+
 function TFixedRegIniFile.ReadBinaryData(const Section, Ident: string; var Buffer; BufSize: Integer): Integer;
 var
   Key, OldKey: HKEY;
@@ -407,6 +415,11 @@ begin
     RegCloseKey(Key);
   end
   else Result := 0;
+end;
+
+function TFixedRegIniFile.ReadBoolean(const Section, Ident: string; Default: boolean): boolean;
+begin
+  Result := (ReadInteger(Section, Ident, Ord(Default)) <> 0);
 end;
 
 function Int64ToBinStr(Value: int64): string;

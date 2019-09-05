@@ -862,11 +862,12 @@ begin
   if (Prop.Status <> ItemStatusTranslate) then
     Exit(False);
 
-  if (not Prop.Translations.TryGetTranslation(Language, Translation)) or (not (Translation.Status in [tStatusProposed, tStatusTranslated])) then
-    Exit(False);
-
-  NewValue := Translation.Value;
-  Result := True;
+  if (Prop.Translations.TryGetTranslation(Language, Translation)) and (Translation.IsTranslated) then
+  begin
+    NewValue := Translation.Value;
+    Result := True;
+  end else
+    Result := False;
 end;
 
 // -----------------------------------------------------------------------------

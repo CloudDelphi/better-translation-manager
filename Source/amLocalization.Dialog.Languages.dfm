@@ -34,23 +34,19 @@ inherited FormLanguages: TFormLanguages
   inherited PanelMain: TPanel
     Width = 601
     Height = 284
+    ExplicitTop = 39
     ExplicitWidth = 601
     ExplicitHeight = 284
     inherited LayoutControl: TdxLayoutControl
       Width = 585
       Height = 272
       ExplicitLeft = 8
-      ExplicitTop = 4
       ExplicitWidth = 585
       ExplicitHeight = 272
       object ComboBoxSourceLanguage: TcxExtLookupComboBox [0]
         Left = 99
         Top = 6
-        Properties.DropDownAutoSize = True
-        Properties.DropDownSizeable = True
-        Properties.View = DataModuleMain.GridTableViewLanguages
-        Properties.KeyFieldNames = 'LocaleID'
-        Properties.ListFieldItem = DataModuleMain.GridTableViewLanguagesColumnLanguage
+        RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
         Style.HotTrack = False
         TabOrder = 0
         Width = 145
@@ -59,7 +55,7 @@ inherited FormLanguages: TFormLanguages
         Left = 99
         Top = 33
         Width = 480
-        Height = 179
+        Height = 181
         Columns = 2
         EditValueFormat = cvfIndices
         Items = <
@@ -72,15 +68,12 @@ inherited FormLanguages: TFormLanguages
           end>
         ParentColor = True
         Sorted = True
-        Style.BorderStyle = cbsNone
         Style.TransparentBorder = True
-        StyleFocused.BorderStyle = cbsNone
-        StyleHot.BorderStyle = cbsNone
         TabOrder = 1
       end
       object CheckBoxApplyFilter: TcxCheckBox [2]
         Left = 99
-        Top = 218
+        Top = 220
         Action = ActionApplyFilter
         Style.HotTrack = False
         TabOrder = 2
@@ -126,7 +119,7 @@ inherited FormLanguages: TFormLanguages
         CaptionOptions.ShowAccelChar = False
         CaptionOptions.Text = ' '
         Control = CheckBoxApplyFilter
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 85
         ControlOptions.ShowBorder = False
         Index = 2

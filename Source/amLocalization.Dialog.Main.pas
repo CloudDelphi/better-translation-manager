@@ -15,6 +15,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
   Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
+  SyncObjs,
 
   dxRibbonForm,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxRibbonSkins, dxSkinsCore,
@@ -37,6 +38,9 @@ const
   MSG_SOURCE_CHANGED = WM_USER;
   MSG_TARGET_CHANGED = WM_USER+1;
   MSG_FORM_MAXIMIZE = WM_USER+2;
+  MSG_RESTART = WM_USER+3;
+  MSG_FILE_OPEN = WM_USER+4;
+  MSG_AFTER_SHOW = WM_USER+5;
 
 // -----------------------------------------------------------------------------
 //
@@ -238,6 +242,17 @@ type
     dxBarButton34: TdxBarButton;
     TreeListColumnEffectiveStatus: TcxTreeListColumn;
     OpenDialogDRC: TOpenDialog;
+    SaveDialogProject: TSaveDialog;
+    SaveDialogEXE: TOpenDialog;
+    BarManagerBarFeedback: TdxBar;
+    BarButtonFeedbackPositive: TdxBarButton;
+    BarButtonFeedbackNegative: TdxBarButton;
+    BarButtonFeedbackHide: TdxBarButton;
+    BarButtonFeedback: TdxBarSubItem;
+    ActionFeedback: TAction;
+    ActionFeedbackPositive: TAction;
+    ActionFeedbackNegative: TAction;
+    ActionFeedbackHide: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -324,8 +339,15 @@ type
     procedure ButtonOpenRecentClick(Sender: TObject);
     procedure ActionSettingsExecute(Sender: TObject);
     procedure ActionImportFileTargetUpdate(Sender: TObject);
+    procedure BarEditItemTargetLanguageEnter(Sender: TObject);
+    procedure BarEditItemTargetLanguageExit(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure ActionFeedbackHideExecute(Sender: TObject);
+    procedure ActionFeedbackPositiveExecute(Sender: TObject);
+    procedure ActionFeedbackNegativeExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
+    FProjectFilename: string;
     FTargetLanguage: TTargetLanguage;
     FUpdateLockCount: integer;
     FSpellCheckProp: TLocalizerProperty;
@@ -342,6 +364,7 @@ type
   private
     procedure SaveSettings;
     procedure LoadSettings;
+    function QueueRestart(Immediately: boolean = False): boolean;
   private
     // Hints
     // Status bar panel hint needs custom handling.
@@ -353,12 +376,33 @@ type
     procedure ShowHint(Sender: TObject); { updates statusbar with hints }
     procedure SetInfoText(const Msg: string);
   protected
+    procedure CreateParams(var Params: TCreateParams); override;
     procedure DoCreate; override;
+    procedure WndProc(var Msg: TMessage); override;
   private
+    type
+      TMsgFileOpen = packed record
+        Msg: Cardinal;
+        case Integer of
+        0: (
+          WParam: WPARAM;
+          LParam: LPARAM;
+          Result: LRESULT);
+        1: (
+          CommandLine: boolean;
+          WParamPadding0: byte;
+          WParamPadding1: byte;
+          WParamPadding2: byte;
+          Unused: LPARAM;
+          _Result: LRESULT);
+      end;
     // Message handlers
     procedure MsgSourceChanged(var Msg: TMessage); message MSG_SOURCE_CHANGED;
     procedure MsgTargetChanged(var Msg: TMessage); message MSG_TARGET_CHANGED;
     procedure MsgFormMaximize(var Msg: TMessage); message MSG_FORM_MAXIMIZE;
+    procedure MsgRestart(var Msg: TMessage); message MSG_RESTART;
+    procedure MsgAfterShow(var Msg: TMessage); message MSG_AFTER_SHOW;
+    procedure MsgFileOpen(var Msg: TMsgFileOpen); message MSG_FILE_OPEN;
   private
     // Event handlers
     procedure OnProjectChanged(Sender: TObject);
@@ -369,12 +413,14 @@ type
     procedure SaveRecentFiles;
     procedure AddRecentFile(const Filename: string);
   protected
+    function GetLanguageID(Value: LCID): LCID;
     function GetSourceLanguageID: Word;
     function GetTargetLanguageID: Word;
     procedure SetSourceLanguageID(const Value: Word);
     procedure SetTargetLanguageID(const Value: Word);
     function GetTargetLanguage: TTargetLanguage;
     procedure ClearTargetLanguage;
+    procedure UpdateTargetLanguage;
 
     function GetFocusedNode: TcxTreeListNode;
     function GetFocusedItem: TCustomLocalizerItem;
@@ -389,7 +435,11 @@ type
     function NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
     function GetNodeValidationMessage(Node: TcxTreeListNode): string;
   protected
-    procedure LoadFromFile(const FIlename: string);
+    FPendingFileOpen: TStrings;
+    FPendingFileOpenLock: TCriticalSection;
+    procedure LoadFromFile(const Filename: string);
+    procedure LoadFromSingleInstance(const Param: string);
+  protected
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
     procedure LoadItem(Item: TCustomLocalizerItem; Recurse: boolean = False);
     procedure LoadFocusedItem(Recurse: boolean = False);
@@ -461,6 +511,7 @@ uses
   StrUtils,
   Generics.Defaults,
   System.Character,
+  RegularExpressions,
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
@@ -472,8 +523,11 @@ uses
   dxHunspellDictionary,
   dxSpellCheckerDialogs,
 
+  DelphiDabbler.SingleInstance,
+
   amCursorService,
   amVersionInfo,
+  amShell,
 
   amLocalization.Engine,
   amLocalization.ResourceWriter,
@@ -487,7 +541,8 @@ uses
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
   amLocalization.Dialog.Languages,
-  amLocalization.Dialog.Settings;
+  amLocalization.Dialog.Settings,
+  amLocalization.Dialog.Feedback;
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
@@ -510,6 +565,9 @@ resourcestring
     'Added: %.0n'#13+
     'Updated: %.0n'#13+
     'Skipped: %.0n';
+
+resourcestring
+  sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 
 const
   ImageIndexBookmark0 = 27;
@@ -538,6 +596,18 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.CreateParams(var Params: TCreateParams);
+begin
+  inherited CreateParams(Params);
+  SingleInstance.CreateParams(Params);
+end;
+
+procedure TFormMain.WndProc(var Msg: TMessage);
+begin
+  if (not HandleAllocated) or (not SingleInstance.HandleMessages(Handle, Msg)) then
+    inherited;
+end;
 
 procedure TFormMain.DoCreate;
 begin
@@ -599,7 +669,9 @@ var
 begin
   DisableAero := True;
 
-  FProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
+  FPendingFileOpenLock := TCriticalSection.Create;
+
+  FProject := TLocalizerProject.Create('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
   FProject.OnChanged := OnProjectChanged;
   FProject.OnModuleChanged := OnModuleChanged;
 
@@ -611,23 +683,26 @@ begin
   DataModuleMain := TDataModuleMain.Create(Self);
   FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
 
-  for i := 0 to StatusBar.Panels.Count-1 do
-    StatusBar.Panels[i].Text := '';
-  SetLength(FStatusBarPanelHint, StatusBar.Panels.Count);
-
   Application.OnHint := ShowHint;
   Application.OnShowHint := DoShowHint;
 
   RibbonTabMain.Active := True;
 
-  InitializeProject('', GetUserDefaultUILanguage);
+  for i := 0 to StatusBar.Panels.Count-1 do
+    StatusBar.Panels[i].Text := '';
+  SetLength(FStatusBarPanelHint, StatusBar.Panels.Count);
 
   CreateBookmarkMenu;
 
   FSkin := '';
   FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
 
+  if (TranslationManagerSettings.System.SafeMode) then
+    Caption := Caption + ' [SAFE MODE]';
+
   LoadSettings;
+
+  SingleInstance.OnProcessParam := LoadFromSingleInstance;
 end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
@@ -649,15 +724,18 @@ begin
   FLocalizerDataSource.Free;
   FProject.Free;
   FTranslationCounts.Free;
+
+  FreeAndNil(FPendingFileOpen);
+  FreeAndNil(FPendingFileOpenLock);
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.LoadSettings;
 begin
-  TranslationManagerSettings.ReadConfig;
-
   TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
+  SpellChecker.UseThreadedLoad := (not TranslationManagerSettings.System.SafeMode);
+  SpellChecker.CheckAsYouTypeOptions.Active := SpellChecker.CheckAsYouTypeOptions.Active and (not TranslationManagerSettings.System.SafeMode);
 
   LoadRecentFiles;
 
@@ -682,6 +760,8 @@ begin
     TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
   end;
 
+  RibbonMain.TabAreaToolbar.Visible := not TranslationManagerSettings.System.HideFeedback;
+
   SetSkin(TranslationManagerSettings.System.Skin);
 end;
 
@@ -701,7 +781,10 @@ begin
   TranslationManagerSettings.Layout.ItemTree.WriteFilter(TreeListItems.Filter);
   TranslationManagerSettings.Layout.ItemTree.Valid := True;
 
-  TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+  if (not TranslationManagerSettings.System.SafeMode) then // Spell checker setting are not complete in safe mode
+    TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+
+  TranslationManagerSettings.System.HideFeedback := not RibbonMain.TabAreaToolbar.Visible;
 
   TranslationManagerSettings.WriteConfig;
 end;
@@ -713,9 +796,19 @@ begin
   WindowState := wsMaximized;
 end;
 
+procedure TFormMain.MsgRestart(var Msg: TMessage);
+begin
+  if (Application.Terminated) or (csDestroying in ComponentState) then
+    exit;
+
+  QueueRestart(True);
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
-  FProject.SourceLanguageID := BarEditItemSourceLanguage.EditValue;
+  FProject.SourceLanguageID := SourceLanguageID;
   TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
 end;
 
@@ -749,7 +842,6 @@ begin
   // Load new custom dictionary
   TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := TranslationManagerSettings.Folders.FolderUserSpellCheck+Format('user-%s.dic', [LocaleItem.LanguageShortName]);
   SpellChecker.Dictionaries[0].Enabled := True;
-  SpellChecker.Dictionaries[0].Load;
   SpellChecker.Dictionaries[0].Language := LocaleItem.Locale;
 
   // Deactivate all existing dictionaries except ones that match new language
@@ -779,16 +871,15 @@ begin
       TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
       TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
       TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
-      SpellCheckerDictionaryItem.DictionaryType.Load;
     end;
 
     // TODO : Add support for other formats here...
   end;
 
+  SpellChecker.LoadDictionaries;
+
   // Reload project
-  FLocalizerDataSource.TargetLanguage := TargetLanguage;
-  TreeListModules.FullRefresh;
-  DisplayModuleStats;
+  UpdateTargetLanguage;
 end;
 
 // -----------------------------------------------------------------------------
@@ -808,6 +899,13 @@ begin
 
     LoadProject(FProject, True);
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.FormShow(Sender: TObject);
+begin
+  PostMessage(Handle, MSG_AFTER_SHOW, 0, 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1299,6 +1397,7 @@ var
   ResourceWriter: IResourceWriter;
   Filename, Path: string;
   LocaleItem: TLocaleItem;
+  Filter: string;
 resourcestring
   sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
   sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
@@ -1318,7 +1417,11 @@ begin
   Path := TPath.GetDirectoryName(Filename);
   Filename := TPath.GetFileName(Filename);
 
-  if (not PromptForFileName(Filename, '', '', sLocalizerResourceModuleFilenamePrompt, Path)) then
+  Filter := SaveDialogEXE.Filter;
+  if (LocaleItem <> nil) then
+    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + Filter;
+
+  if (not PromptForFileName(Filename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
     Exit;
 
   SaveCursor(crHourGlass);
@@ -1432,8 +1535,6 @@ var
   Stats: TTranslationCounts;
   SaveFilter: string;
   LocaleItem: TLocaleItem;
-resourcestring
-  sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 begin
   SaveFilter := OpenDialogEXE.Filter;
   try
@@ -1618,6 +1719,35 @@ begin
   FSearchProvider.Show;
 end;
 
+procedure TFormMain.ActionFeedbackHideExecute(Sender: TObject);
+begin
+  RibbonMain.TabAreaToolbar.Visible := False;
+end;
+
+procedure TFormMain.ActionFeedbackNegativeExecute(Sender: TObject);
+var
+  FormFeedback: TFormFeedback;
+begin
+  FormFeedback := TFormFeedback.Create(nil);
+  try
+    FormFeedback.Execute(FeedbackNegative);
+  finally
+    FormFeedback.Free;
+  end;
+end;
+
+procedure TFormMain.ActionFeedbackPositiveExecute(Sender: TObject);
+var
+  FormFeedback: TFormFeedback;
+begin
+  FormFeedback := TFormFeedback.Create(nil);
+  try
+    FormFeedback.Execute(FeedbackPositive);
+  finally
+    FormFeedback.Free;
+  end;
+end;
+
 procedure TFormMain.ActionFindNextExecute(Sender: TObject);
 begin
   FSearchProvider.SelectNextResult;
@@ -1767,15 +1897,13 @@ begin
     else
       FormNewProject.SourceApplication := Application.ExeName;
 
-    if (FProject.SourceLanguageID <> 0) then
-      FormNewProject.SourceLanguageID := FProject.SourceLanguageID
-    else
-      FormNewProject.SourceLanguageID := GetUserDefaultUILanguage;
+    FormNewProject.SourceLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage);
 
     if (not FormNewProject.Execute) then
       exit;
 
     InitializeProject(FormNewProject.SourceApplication, FormNewProject.SourceLanguageID);
+    FProjectFilename := '';
 
   finally
     FormNewProject.Free;
@@ -1807,7 +1935,7 @@ begin
   LoadProject(FProject);
 end;
 
-procedure TFormMain.LoadFromFile(const FIlename: string);
+procedure TFormMain.LoadFromFile(const Filename: string);
 var
   BestLanguage: TTargetLanguage;
   i: integer;
@@ -1815,9 +1943,6 @@ var
 resourcestring
   sProgressProjectLoading = 'Loading project...';
 begin
-  if (not CheckSave) then
-    exit;
-
   SaveCursor(crHourGlass);
 
   ClearDependents;
@@ -1833,7 +1958,16 @@ begin
     FProject.BeginUpdate;
     try
 
-      TLocalizationProjectFiler.LoadFromFile(FProject, Filename);
+      FProjectFilename := Filename;
+      try
+
+        TLocalizationProjectFiler.LoadFromFile(FProject, FProjectFilename);
+
+      except
+        FProjectFilename := '';
+        raise;
+      end;
+
       FProject.Modified := False;
 
     finally
@@ -1855,7 +1989,10 @@ begin
       TargetLanguageID := BestLanguage.LanguageID;
       FFilterTargetLanguages := True;
     end else
+    begin
+      TargetLanguageID := SourceLanguageID;
       FFilterTargetLanguages := False;
+    end;
 
     LoadProject(FProject);
 
@@ -1864,10 +2001,86 @@ begin
     Progress := nil;
   end;
 
-  AddRecentFile(Filename);
+  AddRecentFile(FProjectFilename);
 
   if (CheckSourceFile) then
     CheckStringsSymbolFile;
+end;
+
+procedure TFormMain.LoadFromSingleInstance(const Param: string);
+begin
+  // Called by SingleInst.
+  // Continue processing param out of band to avoid blocking this call; If we are too slow the shell will spawn another
+  // instance to handle the request.
+  FPendingFileOpenLock.Enter;
+  try
+    if (FPendingFileOpen = nil) then
+      FPendingFileOpen := TStringList.Create;
+
+    FPendingFileOpen.Add(Param);
+    PostMessage(Handle, MSG_FILE_OPEN, Ord(True), 0);
+  finally
+    FPendingFileOpenLock.Leave;
+  end;
+end;
+
+procedure TFormMain.MsgAfterShow(var Msg: TMessage);
+begin
+  TranslationManagerSettings.System.EndBoot;
+
+  // Release semaphore once SingleInstance handling has been set up and the boot marker has been cleared
+  ReleaseRestartSemaphore;
+
+
+  InitializeProject('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
+
+  // We could just as well have called LoadFromFile directly here but what the hell...
+  if (ParamCount > 0) then
+  begin
+    FPendingFileOpenLock.Enter;
+    try
+      if (FPendingFileOpen = nil) then
+        FPendingFileOpen := TStringList.Create;
+
+      FPendingFileOpen.Add(ParamStr(1));
+      PostMessage(Handle, MSG_FILE_OPEN, Ord(True), 0);
+    finally
+      FPendingFileOpenLock.Leave;
+    end;
+  end;
+end;
+
+procedure TFormMain.MsgFileOpen(var Msg: TMsgFileOpen);
+var
+  Filename: string;
+begin
+  ASSERT(FPendingFileOpen <> nil);
+  ASSERT(FPendingFileOpenLock <> nil);
+
+  FPendingFileOpenLock.Enter;
+  try
+    if (FPendingFileOpen.Count = 0) then
+      exit;
+
+    Filename := FPendingFileOpen[0];
+    FPendingFileOpen.Delete(0);
+
+    if (FPendingFileOpen.Count > 0) then
+      // Repost the message to handle the next pending file
+      PostMessage(Handle, MSG_FILE_OPEN, Msg.WParam, Msg.LParam);
+  finally
+    FPendingFileOpenLock.Leave;
+  end;
+
+  if (not CheckSave) then
+    exit;
+
+  if (Msg.CommandLine) then
+    // Filename is a command line argument, shell execute document, url or the like
+    LoadFromFile(Filename)
+  else
+    // Filename is a physical file path (from drag/drop)
+    LoadFromFile(Filename);
 end;
 
 procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
@@ -2042,11 +2255,23 @@ resourcestring
 begin
   SaveCursor(crHourGlass);
 
+  Filename := FProjectFilename;
+
+  if (Filename = '') then
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, sLocalizationFiletype);
+
+  SaveDialogProject.InitialDir := TPath.GetDirectoryName(Filename);
+  SaveDialogProject.FileName := TPath.GetFileName(Filename);
+
+  if (not SaveDialogProject.Execute(Handle)) then
+    Exit;
+
+  Filename := SaveDialogProject.FileName;
+
   Progress := ShowProgress(sProgressProjectSaving);
   try
     Progress.Marquee := True;
 
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, sLocalizationFiletype);
     TempFilename := Filename;
 
     // Save to temporary file if destination file already exist
@@ -2077,6 +2302,7 @@ begin
       TFile.Move(TempFilename, Filename);
     end;
 
+    FProjectFilename := Filename;
     FProject.Modified := False;
 
     SetInfoText('Saved');
@@ -2186,6 +2412,12 @@ begin
       Exit;
 
     Skin := TranslationManagerSettings.System.Skin;
+
+    if (FormSettings.RestartRequired) then
+    begin
+      if (not QueueRestart(True)) then
+        exit;
+    end;
   finally
     FormSettings.Free;
   end;
@@ -2399,6 +2631,21 @@ begin
   PostMessage(Handle, MSG_SOURCE_CHANGED, 0, 0);
 end;
 
+procedure TFormMain.BarEditItemTargetLanguageEnter(Sender: TObject);
+begin
+  DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
+    ((FProject.TargetLanguages.Count > 1) or
+     ((FProject.TargetLanguages.Count = 1) and (FProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
+
+  DataModuleMain.Project := FProject;
+end;
+
+procedure TFormMain.BarEditItemTargetLanguageExit(Sender: TObject);
+begin
+  DataModuleMain.FilterTargetLanguages := False;
+  DataModuleMain.Project := nil;
+end;
+
 procedure TFormMain.BarEditItemTargetLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
   PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
@@ -2406,11 +2653,8 @@ end;
 
 procedure TFormMain.BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
 begin
-  DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
-    ((FProject.TargetLanguages.Count > 1) or
-     ((FProject.TargetLanguages.Count = 1) and (FProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
-
-  DataModuleMain.Project := FProject;
+  // BUG: The Properties.OnInitPoup isn't fired when a reposity item is assigned.
+  // Instead we use the OnEnter and OnExit events
 end;
 
 procedure TFormMain.BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
@@ -2552,6 +2796,9 @@ end;
 
 procedure TFormMain.ButtonOpenRecentClick(Sender: TObject);
 begin
+  if (not CheckSave) then
+    exit;
+
   LoadFromFile(TdxBarItem(Sender).Hint);
 end;
 
@@ -2680,7 +2927,15 @@ var
   i: integer;
 begin
   if (AnsiSameText(FSkin, Value)) then
-    Exit;
+    exit;
+
+  if (TranslationManagerSettings.System.SafeMode) then
+  begin
+    // In safe mode we just store the skin value, but doesn't act on it. This enables the user to modify the skin
+    // setting without any immediate consequences.
+    FSkin := Value;
+    exit;
+  end;
 
   DecomposeSkinName(Value, SkinName, SkinFilename, SkinIndex);
   OriginalSkinName := SkinName;
@@ -2833,9 +3088,20 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TFormMain.GetLanguageID(Value: LCID): LCID;
+begin
+  if (Value > 0) then
+    Result := Value
+  else
+    Result := GetUserDefaultUILanguage;
+end;
+
 function TFormMain.GetSourceLanguageID: Word;
 begin
-  Result := BarEditItemSourceLanguage.EditValue;
+  if (VarIsOrdinal(BarEditItemSourceLanguage.EditValue)) then
+    Result := BarEditItemSourceLanguage.EditValue
+  else
+    Result := 0;
 end;
 
 procedure TFormMain.SetSourceLanguageID(const Value: Word);
@@ -2860,7 +3126,24 @@ end;
 
 function TFormMain.GetTargetLanguageID: Word;
 begin
-  Result := BarEditItemTargetLanguage.EditValue;
+  if (VarIsOrdinal(BarEditItemTargetLanguage.EditValue)) then
+    Result := BarEditItemTargetLanguage.EditValue
+  else
+    Result := 0;
+end;
+
+procedure TFormMain.SetTargetLanguageID(const Value: Word);
+begin
+  // Always process setting the target. We need to have the dependents cleared and reloaded.
+  // if (TargetLanguageID = Value) then
+  //  Exit;
+
+  ClearDependents;
+  ClearTargetLanguage;
+
+  BarEditItemTargetLanguage.EditValue := Value;
+
+  Perform(MSG_TARGET_CHANGED, 0, 0);
 end;
 
 procedure TFormMain.ClearTargetLanguage;
@@ -2868,6 +3151,15 @@ begin
   FTargetLanguage := nil;
   FLocalizerDataSource.TargetLanguage := nil;
 end;
+
+procedure TFormMain.UpdateTargetLanguage;
+begin
+  FLocalizerDataSource.TargetLanguage := TargetLanguage;
+  TreeListModules.FullRefresh;
+  DisplayModuleStats;
+end;
+
+// -----------------------------------------------------------------------------
 
 function TFormMain.CountStuff: TCounts;
 var
@@ -2922,16 +3214,6 @@ begin
   Result := Counts;
 end;
 
-procedure TFormMain.SetTargetLanguageID(const Value: Word);
-begin
-  ClearDependents;
-  ClearTargetLanguage;
-
-  BarEditItemTargetLanguage.EditValue := Value;
-
-  Perform(MSG_TARGET_CHANGED, 0, 0);
-end;
-
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ClearDependents;
@@ -2972,10 +3254,7 @@ begin
   RibbonMain.DocumentName := FProject.Name;
 
   SourceLanguageID := FProject.SourceLanguageID;
-  TargetLanguageID := FProject.SourceLanguageID;
-
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
-  TreeListColumnTarget.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
+  TargetLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultTargetLanguage);
 end;
 
 // -----------------------------------------------------------------------------
@@ -3530,6 +3809,7 @@ end;
 
 function TFormMain.PerformSpellCheck(Prop: TLocalizerProperty): boolean;
 var
+  Translation: TLocalizerTranslation;
   Text, CheckedText: string;
 begin
   if (Prop.IsUnused) then
@@ -3538,7 +3818,34 @@ begin
   if (Prop.EffectiveStatus <> ItemStatusTranslate) then
     Exit(True);
 
-  Text := Prop.TranslatedValue[TargetLanguage];
+  Translation := Prop.Translations.FindTranslation(TargetLanguage);
+
+  // Do not check values that have not been translated
+  if (Translation = nil) or (not Translation.IsTranslated) then
+    Exit(True);
+
+  Text := Translation.Value;
+
+  CheckedText := SanitizeText(Text);
+
+  // Remove file filters
+  if (Pos('|', CheckedText) > 0) then
+    CheckedText := TRegEx.Replace(CheckedText, '\(?\*\.[a-zA-Z*]+\)?[,;]?\|?', '', []);
+
+  (*
+  i := 0;
+  while (True) do
+  begin
+    i := FindDelimiter('|*()\', CheckedText, i+1);
+    if (i = 0) then
+      break;
+    CheckedText[i] := ' ';
+  end;
+  *)
+
+  CheckedText := CheckedText.Trim;
+  if (CheckedText.IsEmpty) then
+    Exit(True);
 
   // Display spell check dialog
   FSpellCheckProp := Prop;
@@ -3549,8 +3856,9 @@ begin
     FSpellCheckingStringResult := True;
     FSpellCheckingString := True;
     try
-      CheckedText := SanitizeText(Text);
+
       SpellChecker.Check(CheckedText);
+
     finally
       FSpellCheckingString := False;
     end;
@@ -3643,6 +3951,50 @@ begin
       // We need to sync button with action manually in order to work around for button always behaving like AutoCheck=True (http://www.devexpress.com/Support/Center/Question/Details/Q488436)
       TdxBarButton(PopupMenuBookmark.ItemLinks[i].Item).Down := TAction(PopupMenuBookmark.ItemLinks[i].Item.Action).Checked;
     end;
+end;
+
+function TFormMain.QueueRestart(Immediately: boolean): boolean;
+resourcestring
+  sApplicationRestartPrompt = 'The application must be restarted in order to complete the operation.'+#13#13+'Do you want to restart the application now?';
+begin
+  Result := False;
+
+  if (not Immediately) then
+  begin
+    PostMessage(Handle, MSG_RESTART, 0, 0);
+    Exit;
+  end;
+
+  if (MessageDlg(sApplicationRestartPrompt, mtConfirmation, [mbYes, mbNo], -1, mbNo) <> mrYes) then
+    exit;
+
+  // Prompt to save changed files etc.
+  if (CheckSave) then
+  begin
+    SaveCursor(crHourGlass);
+
+    // Grab restart semaphore.
+    // Nobody should be holding the semaphore at this point, so no need to wait very long.
+    while (not AcquireRestartSemaphore(5000)) do
+    begin
+      if (TaskMessageDlg('Failed to prepare for restart', 'A previous instance of the application might have failed to terminate.'+#13#13+
+        'You can use Task Manager to terminate it.', mtWarning, [mbAbort, mbRetry], 0, mbRetry) <> mrRetry) then
+        Exit(False);
+    end;
+
+    // Launch new instance of application
+    if (not Shell.Execute(Application.ExeName, FProjectFilename, Self)) then
+      ReleaseRestartSemaphore;
+
+    // Force close of all projects (we have already prompted to save them) to avoid user being prompted again.
+    FProject.Modified := False;
+
+    // Invoke normal logic to close application
+    Close;
+    //ActionExit.Execute;
+
+    Result := True;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

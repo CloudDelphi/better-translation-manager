@@ -34,15 +34,14 @@ inherited FormNewProject: TFormNewProject
     Height = 147
     ExplicitTop = 39
     ExplicitWidth = 471
-    ExplicitHeight = 156
+    ExplicitHeight = 147
     inherited LayoutControl: TdxLayoutControl
       Width = 455
       Height = 135
       AutoSize = True
       ExplicitLeft = 8
-      ExplicitTop = 4
       ExplicitWidth = 455
-      ExplicitHeight = 144
+      ExplicitHeight = 135
       object EditSourceApplication: TcxMRUEdit [0]
         Left = 102
         Top = 6
@@ -76,7 +75,8 @@ inherited FormNewProject: TFormNewProject
       end
       object ComboBoxSourceLanguage: TcxExtLookupComboBox [1]
         Left = 102
-        Top = 36
+        Top = 33
+        RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
         Properties.DropDownAutoSize = True
         Properties.DropDownSizeable = True
         Style.HotTrack = False
@@ -91,7 +91,7 @@ inherited FormNewProject: TFormNewProject
         CaptionOptions.Text = 'Source application:'
         Control = EditSourceApplication
         ControlOptions.AlignHorz = ahLeft
-        ControlOptions.OriginalHeight = 24
+        ControlOptions.OriginalHeight = 21
         ControlOptions.OriginalWidth = 326
         ControlOptions.ShowBorder = False
         Index = 0

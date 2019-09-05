@@ -98,10 +98,11 @@
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_PreRelease>true</VerInfo_PreRelease>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.11;InternalName=BTM;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.12;InternalName=BTM;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-        <VerInfo_Build>11</VerInfo_Build>
+        <VerInfo_Build>12</VerInfo_Build>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <Debugger_RunParams>D:\Projects\Localizer\Bin\Win32\Debug\amTranslationManager.xlat</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -174,6 +175,11 @@
             <Form>FormSelectModule</Form>
         </DCCReference>
         <DCCReference Include="amLocalization.CommandLine.pas"/>
+        <DCCReference Include="amLocalization.System.SingleInst.pas"/>
+        <DCCReference Include="amLocalization.Dialog.Feedback.pas">
+            <Form>FormFeedback</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

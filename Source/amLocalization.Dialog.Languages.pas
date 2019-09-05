@@ -142,7 +142,10 @@ end;
 
 function TFormLanguages.GetSourceLanguageID: LCID;
 begin
-  Result := ComboBoxSourceLanguage.EditValue;
+  if (VarIsOrdinal(ComboBoxSourceLanguage.EditValue)) then
+    Result := ComboBoxSourceLanguage.EditValue
+  else
+    Result := 0;
 end;
 
 function TFormLanguages.GetTargetLanguage(Index: integer): LCID;

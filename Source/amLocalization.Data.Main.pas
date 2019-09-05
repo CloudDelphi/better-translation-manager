@@ -16,6 +16,7 @@ uses
   cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels, cxEditRepositoryItems,
+  cxDBExtLookupComboBox,
   amLocalization.Model;
 
 type
@@ -32,16 +33,18 @@ type
     GridTableViewLanguagesColumnLocaleName: TcxGridDBColumn;
     GridTableViewLanguagesColumnLanguage: TcxGridDBColumn;
     GridTableViewLanguagesColumnCountry: TcxGridDBColumn;
-    GridTableViewTargetLanguages: TcxGridDBTableView;
-    GridTableViewTargetLanguagesLocaleID: TcxGridDBColumn;
-    GridTableViewTargetLanguagesLocaleName: TcxGridDBColumn;
-    GridTableViewTargetLanguagesLanguageName: TcxGridDBColumn;
-    GridTableViewTargetLanguagesCountryName: TcxGridDBColumn;
+    GridTableViewFilteredTargetLanguages: TcxGridDBTableView;
+    GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn;
+    GridTableViewFilteredTargetLanguagesLocaleName: TcxGridDBColumn;
+    GridTableViewFilteredTargetLanguagesLanguage: TcxGridDBColumn;
+    GridTableViewFilteredTargetLanguagesCountry: TcxGridDBColumn;
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     EditRepository: TcxEditRepository;
     EditRepositoryTextItem: TcxEditRepositoryButtonItem;
     LayoutSkinLookAndFeelHeader: TdxLayoutSkinLookAndFeel;
+    EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem;
+    EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
@@ -76,10 +79,10 @@ var
   i: integer;
 begin
   // Clone
-  TcxCustomGridViewCracker(GridTableViewTargetLanguages).AssignPattern(GridTableViewLanguages);
+  TcxCustomGridViewCracker(GridTableViewFilteredTargetLanguages).AssignPattern(GridTableViewLanguages);
 
   // Restore filter event handler
-  GridTableViewTargetLanguages.DataController.OnFilterRecord := GridTableViewTargetLanguagesDataControllerFilterRecord;
+  GridTableViewFilteredTargetLanguages.DataController.OnFilterRecord := GridTableViewTargetLanguagesDataControllerFilterRecord;
 
   FFilterTargetLanguages := True;
 

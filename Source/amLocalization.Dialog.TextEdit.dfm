@@ -1,4 +1,5 @@
 inherited FormTextEditor: TFormTextEditor
+  ActiveControl = EditText
   BorderIcons = [biSystemMenu, biMaximize]
   BorderStyle = bsSizeToolWin
   Caption = 'Edit text'
@@ -15,8 +16,8 @@ inherited FormTextEditor: TFormTextEditor
     Top = 327
     Width = 597
     TabOrder = 1
-    ExplicitTop = 287
-    ExplicitWidth = 664
+    ExplicitTop = 327
+    ExplicitWidth = 597
     inherited ButtonOK: TcxButton
       Left = 430
       ExplicitLeft = 430
@@ -30,7 +31,7 @@ inherited FormTextEditor: TFormTextEditor
     Width = 597
     TabOrder = 0
     Visible = False
-    ExplicitWidth = 664
+    ExplicitWidth = 597
     inherited LabelHeader: TcxLabel
       ExplicitWidth = 575
       Width = 575
@@ -40,24 +41,24 @@ inherited FormTextEditor: TFormTextEditor
     Top = 65
     Width = 597
     Height = 262
-    ExplicitLeft = 334
-    ExplicitTop = 67
-    ExplicitWidth = 330
-    ExplicitHeight = 220
+    ExplicitTop = 65
+    ExplicitWidth = 597
+    ExplicitHeight = 262
     inherited LayoutControl: TdxLayoutControl
       Width = 581
       Height = 250
       ExplicitLeft = 8
-      ExplicitTop = 4
-      ExplicitWidth = 648
-      ExplicitHeight = 201
+      ExplicitWidth = 581
+      ExplicitHeight = 250
       object PanelEditors: TPanel [0]
         Left = 6
         Top = 6
         Width = 569
         Height = 238
         BevelOuter = bvNone
+        Color = 16053234
         FullRepaint = False
+        ParentBackground = False
         ShowCaption = False
         TabOrder = 0
         object EditSourceText: TcxRichEdit
@@ -76,7 +77,7 @@ inherited FormTextEditor: TFormTextEditor
           Width = 277
         end
         object EditText: TcxRichEdit
-          Left = 285
+          Left = 281
           Top = 0
           Align = alClient
           PopupMenu = PopupActionBar1
@@ -85,22 +86,15 @@ inherited FormTextEditor: TFormTextEditor
           Properties.ScrollBars = ssVertical
           Style.HotTrack = False
           TabOrder = 1
-          ExplicitLeft = 463
-          ExplicitTop = 6
-          ExplicitWidth = 227
-          ExplicitHeight = 179
           Height = 238
-          Width = 284
+          Width = 288
         end
         object SplitterEditors: TcxSplitter
           Left = 277
           Top = 0
-          Width = 8
+          Width = 4
           Height = 238
           HotZoneClassName = 'TcxSimpleStyle'
-          ExplicitLeft = 216
-          ExplicitTop = 44
-          ExplicitHeight = 100
         end
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
@@ -139,8 +133,6 @@ inherited FormTextEditor: TFormTextEditor
     Font.Style = []
     ParentFont = False
     Spacing = 0
-    ExplicitWidth = 664
-    ExplicitHeight = 28
   end
   object ImageListNormal: TcxImageList
     SourceDPI = 96

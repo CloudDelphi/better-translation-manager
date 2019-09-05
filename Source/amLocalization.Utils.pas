@@ -10,10 +10,31 @@
 
 interface
 
+// -----------------------------------------------------------------------------
+//
+//              Restart semaphore
+//
+// -----------------------------------------------------------------------------
+var
+  sRestartSemaphoreName: string = 'Local\amTM.Restart';
+
+function AcquireRestartSemaphore(Timeout: integer = 60000): boolean;
+procedure ReleaseRestartSemaphore;
+
+// -----------------------------------------------------------------------------
+//
+//              Skin
+//
+// -----------------------------------------------------------------------------
 function ComposeSkinName(const Name: string; const Filename: string = ''; Index: integer = -1): string;
 procedure DecomposeSkinName(const Value: string; var Name, Filename: string; var Index: integer);
 
 
+// -----------------------------------------------------------------------------
+//
+//              Captions and Format strings
+//
+// -----------------------------------------------------------------------------
 // Removes hotkeys and format specifiers
 type
   TSanitizeKind = (skAccelerator, skFormat);
@@ -31,16 +52,28 @@ function EscapeAccelerators(const Value: string): string;
 // Adds &. Assumes any existing & are escaped
 function AddAccelerator(const Value: string): string;
 
+const
+  cAcceleratorPrefix = '&'; // From menus.pas
+
+// -----------------------------------------------------------------------------
+//
+//              Misc
+//
+// -----------------------------------------------------------------------------
 function IsUppercase(const Value: string): boolean;
 function StartsWithUppercase(const Value: string): boolean;
 
-const
-  cAcceleratorPrefix = '&'; // From menus.pas
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 implementation
 
 uses
   System.Character,
+  Windows,
+  SyncObjs,
   StrUtils,
   SysUtils;
 
@@ -272,5 +305,48 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+//
+//              Restart semaphore
+//
+// -----------------------------------------------------------------------------
+var
+  FRestartSemaphore: TMutex = nil;
 
+// -----------------------------------------------------------------------------
+
+procedure ReleaseRestartSemaphore;
+begin
+  if (FRestartSemaphore = nil) then
+    exit;
+  try
+    try
+      FRestartSemaphore.Release;
+    finally
+      FreeAndNil(FRestartSemaphore);
+    end;
+  except
+    // Ignore. It's more important that we terminate properly.
+    // Error is probably "Attempt to release mutex not owned by caller" because we failed
+    // to acquire the mutex (can happen if other instance hangs during shutdown).
+  end;
+end;
+
+function AcquireRestartSemaphore(Timeout: integer = 60000): boolean;
+begin
+  ReleaseRestartSemaphore;
+
+  FRestartSemaphore := TMutex.Create(nil, True, sRestartSemaphoreName);
+
+  if (GetLastError = ERROR_ALREADY_EXISTS) then
+    Result := (FRestartSemaphore.WaitFor(Timeout) <> wrTimeout)
+  else
+    Result := True;
+end;
+
+// -----------------------------------------------------------------------------
+
+
+initialization
+finalization
+  ReleaseRestartSemaphore;
 end.

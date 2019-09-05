@@ -142,7 +142,7 @@ inherited FormSettings: TFormSettings
             OptionsItem.FocusControlOnItemCaptionClick = True
             object LabelEditingHeader: TcxLabel
               Left = 0
-              Top = 48
+              Top = 46
               AutoSize = False
               Caption = 'Editing'
               Style.HotTrack = False
@@ -155,29 +155,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckUseProposed: TcxCheckBox
               Left = 12
-              Top = 71
+              Top = 69
               Caption = 'Use Proposed status for new translations'
               ParentBackground = False
               ParentColor = False
-              Style.Color = 16053234
+              Style.Color = clBtnFace
               Style.TransparentBorder = False
               TabOrder = 3
               Transparent = True
             end
             object CheckBoxAtstart: TcxCheckBox
               Left = 12
-              Top = 127
+              Top = 123
               Caption = 'Display guide dialog when the application starts'
               ParentBackground = False
               ParentColor = False
-              Style.Color = 16053234
+              Style.Color = clBtnFace
               Style.TransparentBorder = False
               TabOrder = 5
               Transparent = True
             end
             object cxLabel2: TcxLabel
               Left = 0
-              Top = 104
+              Top = 100
               AutoSize = False
               Caption = 'Dialogs'
               Style.HotTrack = False
@@ -190,7 +190,7 @@ inherited FormSettings: TFormSettings
             end
             object ImageComboBoxSkin: TcxImageComboBox
               Left = 85
-              Top = 212
+              Top = 206
               Properties.DefaultDescription = '(none)'
               Properties.Images = ImageListSkin
               Properties.Items = <>
@@ -201,7 +201,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelApperance: TcxLabel
               Left = 0
-              Top = 189
+              Top = 183
               AutoSize = False
               Caption = 'User Interface'
               Style.HotTrack = False
@@ -214,7 +214,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonDialogsSuppressReset: TcxButton
               Left = 12
-              Top = 152
+              Top = 146
               Width = 197
               Height = 23
               Caption = 'Reset suppressed dialogs'
@@ -222,7 +222,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelLanguage: TcxLabel
               Left = 0
-              Top = 247
+              Top = 241
               AutoSize = False
               Caption = 'Language'
               Style.HotTrack = False
@@ -232,22 +232,6 @@ inherited FormSettings: TFormSettings
               Transparent = True
               Height = 17
               Width = 423
-            end
-            object ComboBoxDefaultTargetLanguage: TcxComboBox
-              Left = 136
-              Top = 297
-              Properties.DropDownListStyle = lsFixedList
-              Style.HotTrack = False
-              TabOrder = 11
-              Width = 287
-            end
-            object ComboBoxUILanguage: TcxComboBox
-              Left = 136
-              Top = 270
-              Properties.DropDownListStyle = lsFixedList
-              Style.HotTrack = False
-              TabOrder = 10
-              Width = 287
             end
             object LabelResourceModuleHeader: TcxLabel
               Left = 0
@@ -277,11 +261,46 @@ inherited FormSettings: TFormSettings
               TabOrder = 1
               Transparent = True
             end
+            object ComboBoxSourceLanguage: TcxExtLookupComboBox
+              Left = 138
+              Top = 264
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
+              Properties.ClearKey = 46
+              Properties.DropDownAutoSize = True
+              Properties.DropDownSizeable = True
+              Style.HotTrack = False
+              TabOrder = 10
+              Width = 145
+            end
+            object ComboBoxTargetLanguage: TcxExtLookupComboBox
+              Left = 138
+              Top = 291
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
+              Properties.ClearKey = 46
+              Properties.DropDownAutoSize = True
+              Properties.DropDownSizeable = True
+              Style.HotTrack = False
+              TabOrder = 11
+              Width = 145
+            end
+            object ComboBoxApplicationLanguage: TcxExtLookupComboBox
+              Left = 138
+              Top = 330
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
+              Properties.ClearKey = 46
+              Properties.DropDownAutoSize = True
+              Properties.DropDownSizeable = True
+              Properties.OnEditValueChanged = ComboBoxApplicationLanguagePropertiesEditValueChanged
+              Style.HotTrack = False
+              TabOrder = 12
+              Width = 145
+            end
             object dxLayoutGroup1: TdxLayoutGroup
               AlignHorz = ahParentManaged
               AlignVert = avParentManaged
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 4
               ShowBorder = False
               Index = -1
             end
@@ -299,7 +318,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               Control = CheckUseProposed
               ControlOptions.AutoColor = True
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -319,7 +338,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               Control = CheckBoxAtstart
               ControlOptions.AutoColor = True
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -424,30 +443,11 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
-            object dxLayoutItem28: TdxLayoutItem
-              Parent = dxLayoutGroup10
-              CaptionOptions.Text = 'Default target language:'
-              Control = ComboBoxDefaultTargetLanguage
-              ControlOptions.OriginalHeight = 21
-              ControlOptions.OriginalWidth = 121
-              ControlOptions.ShowBorder = False
-              Index = 1
-            end
-            object dxLayoutItem30: TdxLayoutItem
-              Parent = dxLayoutGroup10
-              CaptionOptions.Text = 'Application language:'
-              Control = ComboBoxUILanguage
-              ControlOptions.OriginalHeight = 21
-              ControlOptions.OriginalWidth = 121
-              ControlOptions.ShowBorder = False
-              Index = 0
-            end
             object LayoutGroupLanguage: TdxLayoutGroup
               Parent = dxLayoutGroup1
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Top = 8
-              Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
               ItemIndex = 1
@@ -461,6 +461,7 @@ inherited FormSettings: TFormSettings
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 3
               ShowBorder = False
               Index = 1
             end
@@ -475,10 +476,10 @@ inherited FormSettings: TFormSettings
             end
             object LayoutGroupResourceModules: TdxLayoutGroup
               Parent = dxLayoutGroup1
+              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 1
               ShowBorder = False
               Index = 0
             end
@@ -486,19 +487,55 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup9
               CaptionOptions.Visible = False
               Control = CheckBoxResourceModulesIncludeVersionInfo
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 115
               ControlOptions.ShowBorder = False
               Index = 0
             end
             object dxLayoutGroup9: TdxLayoutGroup
               Parent = LayoutGroupResourceModules
+              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Left = 12
               ButtonOptions.Buttons = <>
               Hidden = True
               ShowBorder = False
               Index = 1
+            end
+            object dxLayoutItem43: TdxLayoutItem
+              Parent = dxLayoutGroup10
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Default source language:'
+              Control = ComboBoxSourceLanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 145
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutSeparatorItem4: TdxLayoutSeparatorItem
+              Parent = dxLayoutGroup10
+              CaptionOptions.Text = 'Separator'
+              Index = 2
+            end
+            object dxLayoutItem28: TdxLayoutItem
+              Parent = dxLayoutGroup10
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Default target language:'
+              Control = ComboBoxTargetLanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 145
+              ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem30: TdxLayoutItem
+              Parent = dxLayoutGroup10
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Application language:'
+              Control = ComboBoxApplicationLanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 145
+              ControlOptions.ShowBorder = False
+              Index = 3
             end
           end
         end
@@ -548,7 +585,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 56
+              Top = 54
               AutoSize = False
               Caption = 'Microsoft Translator'
               Style.HotTrack = False
@@ -561,7 +598,7 @@ inherited FormSettings: TFormSettings
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
               Left = 58
-              Top = 79
+              Top = 77
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -608,7 +645,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup2
               CaptionOptions.Visible = False
               Control = CheckBoxTMLoadOnDemand
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 100
               ControlOptions.ShowBorder = False
               Index = 0
@@ -647,7 +684,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup8
               CaptionOptions.Text = 'API key:'
               Control = EditTranslatorMSAPIKey
-              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalHeight = 22
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -841,7 +878,7 @@ inherited FormSettings: TFormSettings
             end
             object EditAutoRecoveryInterval: TcxSpinEdit
               Left = 152
-              Top = 251
+              Top = 249
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 60.000000000000000000
               Properties.MinValue = 1.000000000000000000
@@ -854,7 +891,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoRecoveryReduced: TcxCheckBox
               Left = 12
-              Top = 278
+              Top = 276
               Hint = 
                 'Reduces the size of the saved document by excluding various non-' +
                 'essential parts such as images.'
@@ -866,7 +903,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel10: TcxLabel
               Left = 0
-              Top = 311
+              Top = 307
               Anchors = [akLeft, akTop, akRight]
               AutoSize = False
               Caption = 'Backup files'
@@ -880,7 +917,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 334
+              Top = 330
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -889,7 +926,7 @@ inherited FormSettings: TFormSettings
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 152
-              Top = 359
+              Top = 353
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
@@ -902,7 +939,7 @@ inherited FormSettings: TFormSettings
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 319
-              Top = 359
+              Top = 353
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -966,7 +1003,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 1
+              ItemIndex = 2
               ShowBorder = False
               Index = 0
             end
@@ -1003,7 +1040,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup14
               CaptionOptions.Visible = False
               Control = CheckBoxAutoRecovery
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 174
               ControlOptions.ShowBorder = False
               Index = 0
@@ -1023,7 +1060,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup14
               CaptionOptions.Visible = False
               Control = CheckBoxAutoRecoveryReduced
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 216
               ControlOptions.ShowBorder = False
               Index = 2
@@ -1064,7 +1101,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup15
               CaptionOptions.Visible = False
               Control = CheckBoxHistoryBackup
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 133
               ControlOptions.ShowBorder = False
               Index = 0
@@ -1155,7 +1192,7 @@ inherited FormSettings: TFormSettings
               424)
             object CheckBoxProofingIgnoreNumbers: TcxCheckBox
               Left = 12
-              Top = 123
+              Top = 115
               Caption = 'Ignore words with numbers'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1177,7 +1214,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingIgnoreRepeatWords: TcxCheckBox
               Left = 12
-              Top = 98
+              Top = 92
               Caption = 'Ignore repeated words'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1186,7 +1223,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxProofingLanguages: TcxCheckComboBox
               Left = 189
-              Top = 160
+              Top = 150
               Properties.Items = <>
               Style.HotTrack = False
               TabOrder = 6
@@ -1194,7 +1231,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel13: TcxLabel
               Left = 0
-              Top = 216
+              Top = 206
               AutoSize = False
               Caption = 'AutoCorrect'
               Style.HotTrack = False
@@ -1207,7 +1244,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonProofingEditCustomDictionary: TcxButton
               Left = 260
-              Top = 187
+              Top = 177
               Width = 146
               Height = 23
               Anchors = [akTop, akRight]
@@ -1226,7 +1263,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingIgnoreUppercase: TcxCheckBox
               Left = 12
-              Top = 48
+              Top = 46
               Caption = 'Ignore words in UPPERCASE'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1235,7 +1272,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingIgnoreMixedCase: TcxCheckBox
               Left = 12
-              Top = 73
+              Top = 69
               Caption = 'Ignore words in MIXed caSE'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1244,7 +1281,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingCorrectSentenceCaps: TcxCheckBox
               Left = 28
-              Top = 264
+              Top = 252
               Caption = 'Capitalize first letter of &sentences'
               Enabled = False
               Style.HotTrack = False
@@ -1254,7 +1291,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingCorrectCapsLock: TcxCheckBox
               Left = 28
-              Top = 314
+              Top = 298
               Caption = 'Correct accidental usage of cAPS &LOCK key'
               Enabled = False
               Style.HotTrack = False
@@ -1264,7 +1301,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingDisableCapsLock: TcxCheckBox
               Left = 28
-              Top = 339
+              Top = 321
               Caption = 'Disable Caps Lock'
               Enabled = False
               Style.HotTrack = False
@@ -1274,7 +1311,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingCorrectAutoReplace: TcxCheckBox
               Left = 28
-              Top = 376
+              Top = 356
               Caption = 'Correct text as you type'
               Enabled = False
               Style.HotTrack = False
@@ -1284,7 +1321,7 @@ inherited FormSettings: TFormSettings
             end
             object ListViewProofingAutoCorrectReplacements: TcxListView
               Left = 46
-              Top = 426
+              Top = 404
               Width = 266
               Height = 85
               Anchors = [akLeft, akTop, akRight]
@@ -1311,7 +1348,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonProofingAutoCorrectAdd: TcxButton
               Left = 318
-              Top = 426
+              Top = 404
               Width = 88
               Height = 23
               Action = ActionProofingAdd
@@ -1321,7 +1358,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonProofingAutoCorrectDelete: TcxButton
               Left = 318
-              Top = 455
+              Top = 433
               Width = 88
               Height = 23
               Action = ActionProofingDelete
@@ -1331,7 +1368,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingCorrectAutomaticallyUseSuggestions: TcxCheckBox
               Left = 46
-              Top = 517
+              Top = 495
               Caption = 'Automatically use suggestions from the spell checker'
               Enabled = False
               Style.HotTrack = False
@@ -1341,7 +1378,7 @@ inherited FormSettings: TFormSettings
             end
             object EditProofingAutoCorrectReplacementFrom: TcxTextEdit
               Left = 93
-              Top = 401
+              Top = 379
               Enabled = False
               Properties.OnChange = EditProofingAutoCorrectReplacementFromPropertiesChange
               Style.HotTrack = False
@@ -1351,7 +1388,7 @@ inherited FormSettings: TFormSettings
             end
             object EditProofingAutoCorrectReplacementTo: TcxTextEdit
               Left = 241
-              Top = 401
+              Top = 379
               Anchors = [akLeft, akTop, akRight]
               Enabled = False
               Style.HotTrack = False
@@ -1361,7 +1398,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingAutoCorrect: TcxCheckBox
               Left = 12
-              Top = 239
+              Top = 229
               Caption = 'Enable AutoCorrect'
               Properties.OnChange = CheckBoxProofingAutoCorrectPropertiesChange
               Style.HotTrack = False
@@ -1371,7 +1408,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonProofingAutoCorrectExceptions: TcxButton
               Left = 260
-              Top = 264
+              Top = 252
               Width = 146
               Height = 23
               Caption = 'Exceptions...'
@@ -1381,7 +1418,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProofingCorrectInitialCaps: TcxCheckBox
               Left = 28
-              Top = 289
+              Top = 275
               Caption = 'Correct TWo &INitial CApitals'
               Enabled = False
               Style.HotTrack = False
@@ -1403,7 +1440,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup3
               CaptionOptions.Visible = False
               Control = CheckBoxProofingIgnoreNumbers
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 4
@@ -1421,7 +1458,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup3
               CaptionOptions.Visible = False
               Control = CheckBoxProofingIgnoreRepeatWords
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 3
@@ -1496,7 +1533,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup3
               CaptionOptions.Visible = False
               Control = CheckBoxProofingSpellCheck
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -1505,7 +1542,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup3
               CaptionOptions.Visible = False
               Control = CheckBoxProofingIgnoreUppercase
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 1
@@ -1514,7 +1551,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup3
               CaptionOptions.Visible = False
               Control = CheckBoxProofingIgnoreMixedCase
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 2
@@ -1524,7 +1561,7 @@ inherited FormSettings: TFormSettings
               AlignHorz = ahClient
               CaptionOptions.Visible = False
               Control = CheckBoxProofingCorrectSentenceCaps
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -1533,7 +1570,7 @@ inherited FormSettings: TFormSettings
               Parent = LayoutGroupProofingAutoCorrect
               CaptionOptions.Visible = False
               Control = CheckBoxProofingCorrectCapsLock
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 1
@@ -1542,7 +1579,7 @@ inherited FormSettings: TFormSettings
               Parent = LayoutGroupProofingAutoCorrect
               CaptionOptions.Visible = False
               Control = CheckBoxProofingDisableCapsLock
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 2
@@ -1563,8 +1600,8 @@ inherited FormSettings: TFormSettings
               AlignHorz = ahLeft
               CaptionOptions.Visible = False
               Control = CheckBoxProofingCorrectAutoReplace
-              ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 140
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 139
               ControlOptions.ShowBorder = False
               Index = 4
             end
@@ -1621,7 +1658,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutGroup5
               CaptionOptions.Visible = False
               Control = CheckBoxProofingCorrectAutomaticallyUseSuggestions
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 2
@@ -1663,8 +1700,8 @@ inherited FormSettings: TFormSettings
               AlignHorz = ahLeft
               CaptionOptions.Visible = False
               Control = CheckBoxProofingAutoCorrect
-              ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 115
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 114
               ControlOptions.ShowBorder = False
               Index = 0
             end
@@ -1699,7 +1736,7 @@ inherited FormSettings: TFormSettings
               Parent = dxLayoutAutoCreatedGroup5
               CaptionOptions.Visible = False
               Control = CheckBoxProofingCorrectInitialCaps
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 1
@@ -1733,7 +1770,7 @@ inherited FormSettings: TFormSettings
             object LabelAutoUpdateIntro: TcxLabel
               AlignWithMargins = True
               Left = 12
-              Top = 139
+              Top = 137
               Margins.Left = 12
               Margins.Top = 6
               Margins.Right = 12
@@ -1743,7 +1780,7 @@ inherited FormSettings: TFormSettings
                 'l updates as they become available. You will always be asked to ' +
                 'accept an update before it is downloaded and installed.'
               ParentColor = False
-              Style.Color = 16053234
+              Style.Color = clBtnFace
               Properties.ShowAccelChar = False
               Properties.WordWrap = True
               Transparent = True
@@ -1753,6 +1790,7 @@ inherited FormSettings: TFormSettings
               Left = 12
               Top = 23
               Caption = 'Use single instance of the application'
+              Properties.OnChange = CheckBoxSingleInstancePropertiesChange
               Style.HotTrack = False
               Style.TransparentBorder = False
               TabOrder = 1
@@ -1760,7 +1798,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel4: TcxLabel
               Left = 0
-              Top = 56
+              Top = 54
               AutoSize = False
               Caption = 'File types'
               Style.HotTrack = False
@@ -1773,15 +1811,16 @@ inherited FormSettings: TFormSettings
             end
             object ButtonRegisterFiletypes: TcxButton
               Left = 12
-              Top = 79
+              Top = 77
               Width = 253
               Height = 23
               Caption = 'Restore Translation Manager file associations'
               TabOrder = 3
+              OnClick = ButtonRegisterFiletypesClick
             end
             object cxLabel11: TcxLabel
               Left = 0
-              Top = 116
+              Top = 114
               AutoSize = False
               Caption = 'Auto Update'
               Style.HotTrack = False
@@ -1795,7 +1834,7 @@ inherited FormSettings: TFormSettings
             object CheckBoxAutoUpdateEnabled: TcxCheckBox
               AlignWithMargins = True
               Left = 12
-              Top = 188
+              Top = 186
               Margins.Left = 12
               Margins.Top = 6
               Margins.Right = 12
@@ -1808,7 +1847,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonAutoUpdateNow: TcxButton
               Left = 12
-              Top = 258
+              Top = 254
               Width = 197
               Height = 23
               Caption = 'Check for updates now'
@@ -1816,7 +1855,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonAutoUpdateReset: TcxButton
               Left = 12
-              Top = 229
+              Top = 225
               Width = 197
               Height = 23
               Caption = 'Reset declined updates'
@@ -1848,7 +1887,7 @@ inherited FormSettings: TFormSettings
               Parent = LayoutControlAdvancedGroup9
               CaptionOptions.Visible = False
               Control = CheckBoxSingleInstance
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 0
@@ -1877,7 +1916,6 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Top = 8
-              Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
               ShowBorder = False
@@ -1916,7 +1954,7 @@ inherited FormSettings: TFormSettings
               Parent = LayoutControlAdvancedGroup6
               CaptionOptions.Visible = False
               Control = CheckBoxAutoUpdateEnabled
-              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalHeight = 17
               ControlOptions.OriginalWidth = 121
               ControlOptions.ShowBorder = False
               Index = 1
@@ -1977,7 +2015,6 @@ inherited FormSettings: TFormSettings
               Parent = LayoutControlAdvancedGroup_Root
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
-              Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
               ShowBorder = False
@@ -2010,7 +2047,6 @@ inherited FormSettings: TFormSettings
         Height = 469
         BevelKind = bkFlat
         BevelOuter = bvNone
-        Color = 16053234
         FullRepaint = False
         ParentBackground = False
         ShowCaption = False
@@ -2185,7 +2221,6 @@ inherited FormSettings: TFormSettings
       Caption = 'Advanced'
       GroupIndex = 1
       ShortCut = 16437
-      Visible = False
       OnExecute = ActionCategoryExecute
       OnUpdate = ActionCategoryUpdate
     end
