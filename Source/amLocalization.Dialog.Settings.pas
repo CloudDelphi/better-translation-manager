@@ -1154,7 +1154,8 @@ begin
     end;
 
     LoadSkinFolder(SkinFolder(SkinFolderUser));
-    LoadSkinFolder(SkinFolder(SkinFolderSystem));
+    if (not AnsiSameText(SkinFolder(SkinFolderUser), SkinFolder(SkinFolderSystem))) then
+      LoadSkinFolder(SkinFolder(SkinFolderSystem));
 
     FSkinList.Sort(TComparer<TSkinDetails>.Construct(function(const Left, Right: TSkinDetails): Integer
       begin
