@@ -225,9 +225,9 @@ type
     FDefaultSourceLanguage: LCID;
     FApplicationLanguage: LCID;
     FSafeMode: boolean;
-    FHasBeenRun: boolean;
-    FLastBootCompleted: boolean;
     FFirstRun: boolean;
+    FFirstRunThisVersion: boolean;
+    FLastBootCompleted: boolean;
   private
     FBooting: boolean;
     FBootCount: integer;
@@ -236,6 +236,8 @@ type
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
   public
+    constructor Create(AOwner: TConfigurationSection); override;
+
     procedure BeginBoot;
     procedure EndBoot;
 
@@ -244,11 +246,11 @@ type
 
     property SafeMode: boolean read FSafeMode;
 
-    /// <summary>FirstRun is True if the current major version of the application has never run before.</summary>
+    /// <summary>FirstRun is True if the application has never run before.</summary>
     property FirstRun: boolean read FFirstRun;
 
-    /// <summary>HasBeenRun is True if application has been run at least once.</summary>
-    property HasBeenRun: boolean read FHasBeenRun;
+    /// <summary>FirstRunThisVersion is True if the current major version of the application has never run before.</summary>
+    property FirstRunThisVersion: boolean read FFirstRunThisVersion;
 
     procedure SetSafeMode;
   published
@@ -751,6 +753,14 @@ end;
 
 { TTranslationManagerSystemSettings }
 
+constructor TTranslationManagerSystemSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+
+  FFirstRun := True;
+  FFirstRunThisVersion := True;
+end;
+
 procedure TTranslationManagerSystemSettings.BeginBoot;
 begin
   Inc(FBootCount);
@@ -792,7 +802,7 @@ begin
 
   FSafeMode := Registry.ReadBoolean(Key, 'SafeMode', FSafeMode);
   FLastBootCompleted := not Registry.ReadBoolean(Key, 'Booting', False);
-  FHasBeenRun := Registry.ReadBoolean(Key, 'HasBeenRun', False);
+  FFirstRun := not Registry.ReadBoolean(Key, 'HasBeenRun', False);
 
   SavedVersionMajor := TVersionInfo.VersionMajor(TVersionInfo.StringToVersion(TTranslationManagerSettings(Owner).Version));
   VersionInfo := TVersionInfo.Create(Application.ExeName);
@@ -801,7 +811,7 @@ begin
   finally
     VersionInfo.Free;
   end;
-  FFirstRun := (FFirstRun) or (not FHasBeenRun) or (ThisVersionMajor <> SavedVersionMajor);
+  FFirstRunThisVersion := (FFirstRunThisVersion) or (FFirstRun) or (ThisVersionMajor <> SavedVersionMajor);
 end;
 
 procedure TTranslationManagerSystemSettings.WriteSection(const Key: string);

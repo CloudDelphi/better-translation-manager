@@ -43,21 +43,6 @@ type
 const
   sLocalizationFileformatRoot = 'xlat';
 
-const
-  // Shell registration AppIDs and ProgIDs
-  sApplicationShellAppID = 'Melander.TranslationManager.Application.1.0.0.0';
-  sApplicationShellProgID = 'Melander.TranslationManager.Application.1.0.0.0.ProgID';
-resourcestring
-  sProjectFileDescription = 'Translation project';
-const
-  // File types
-  sProjectFileType = '.xlat';
-  sLocalizationFiletype = '.xlat';
-const
-  // File type classes
-  sProjectFileClass = 'translation.project';
-
-
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------

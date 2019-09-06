@@ -535,6 +535,7 @@ uses
   amLocalization.Import.XLIFF,
   amLocalization.Data.Main,
   amLocalization.Utils,
+  amLocalization.Shell,
   amLocalization.Settings,
   amLocalization.Translator.Microsoft.Version3,
   amLocalization.Dialog.TextEdit,
@@ -2031,6 +2032,10 @@ begin
   // Release semaphore once SingleInstance handling has been set up and the boot marker has been cleared
   ReleaseRestartSemaphore;
 
+  // Register shell integration on first run
+  if (TranslationManagerSettings.System.FirstRun) then
+    TranslationManagerShell.RegisterShellIntegration;
+
 
   InitializeProject('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
 
@@ -2258,7 +2263,7 @@ begin
   Filename := FProjectFilename;
 
   if (Filename = '') then
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, sLocalizationFiletype);
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sProjectFileType);
 
   SaveDialogProject.InitialDir := TPath.GetDirectoryName(Filename);
   SaveDialogProject.FileName := TPath.GetFileName(Filename);
@@ -2279,7 +2284,7 @@ begin
     begin
       i := 0;
       repeat
-        TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, sLocalizationFiletype]);
+        TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, TranslationManagerShell.sProjectFileType]);
         Inc(i);
       until (not TFile.Exists(TempFilename));
     end;
