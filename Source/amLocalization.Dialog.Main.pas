@@ -489,6 +489,7 @@ type
     procedure SetSkin(const Value: string);
     property Skin: string read FSkin write SetSkin;
   public
+    constructor Create(AOwner: TComponent); override;
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
     property TargetLanguage: TTargetLanguage read GetTargetLanguage;
@@ -597,6 +598,13 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+constructor TFormMain.Create(AOwner: TComponent);
+begin
+  SaveCursor(crAppStart);
+
+  inherited;
+end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);
 begin

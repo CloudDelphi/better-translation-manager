@@ -592,7 +592,9 @@ begin
         if (TargetField = nil) then
           TargetField := AddField(TargetLocaleItem);
 
-        TableTranslationMemory.CopyDataSet(Clone, [coStructure, coRestart, coAppend]);
+        TableTranslationMemory.Open;
+
+        TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
       finally
         Clone.Free;
       end;
@@ -601,7 +603,7 @@ begin
     Result := Add(SourceField, SourceValue, TargetField, TargetValue, Stats, DuplicateAction);
 
   finally
-    TableTranslationMemory.EnableConstraints;
+    TableTranslationMemory.EnableControls;
   end;
 end;
 
@@ -756,7 +758,10 @@ begin
 
         // Now all fields has been created. Reload the old data..
         if (Merge) then
-          TableTranslationMemory.CopyDataSet(Clone, [coStructure, coRestart, coAppend]);
+        begin
+          TableTranslationMemory.Open;
+          TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+        end;
 
       finally
         Clone.Free;
