@@ -98,6 +98,10 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Width = 702
     Visible = False
     ExplicitWidth = 702
+    inherited LabelHeader: TcxLabel
+      ExplicitWidth = 680
+      Width = 680
+    end
   end
   inherited PanelMain: TPanel
     Width = 702
@@ -161,6 +165,12 @@ inherited FormTranslationMemory: TFormTranslationMemory
     inherited ActionCancel: TAction
       Enabled = False
     end
+    object ActionDeleteLanguage: TAction
+      Category = 'TM'
+      Caption = 'Delete language...'
+      OnExecute = ActionDeleteLanguageExecute
+      OnUpdate = ActionDeleteLanguageUpdate
+    end
   end
   object OpenDialogTMX: TOpenDialog
     Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
@@ -173,5 +183,25 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
     Left = 232
     Top = 224
+  end
+  object GridPopupMenu: TcxGridPopupMenu
+    Grid = GridTM
+    PopupMenus = <
+      item
+        GridView = GridTMDBTableView
+        HitTypes = [gvhtColumnHeader]
+        Index = 0
+        OnPopup = GridPopupMenuPopupMenus0Popup
+        PopupMenu = PopupMenuHeader
+      end>
+    Left = 396
+    Top = 115
+  end
+  object PopupMenuHeader: TPopupMenu
+    Left = 396
+    Top = 159
+    object MenuItemDeleteLanguage: TMenuItem
+      Action = ActionDeleteLanguage
+    end
   end
 end

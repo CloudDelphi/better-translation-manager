@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -68,6 +67,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -129,6 +129,8 @@ object FormMain: TFormMain
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
+    ExplicitTop = 125
+    ExplicitHeight = 495
   end
   object PanelModules: TPanel
     Left = 0
@@ -692,7 +694,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 347
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -979,6 +981,10 @@ object FormMain: TFormMain
       FloatClientWidth = 0
       FloatClientHeight = 0
       ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'BarEditItemSearch'
+        end
         item
           Visible = True
           ItemName = 'BarButtonFeedback'
@@ -1328,6 +1334,16 @@ object FormMain: TFormMain
           Visible = True
           ItemName = 'BarButtonFeedbackHide'
         end>
+    end
+    object BarEditItemSearch: TcxBarEditItem
+      Caption = 'Search'
+      Category = 0
+      Hint = 'Search'
+      Visible = ivAlways
+      PropertiesClassName = 'TdxOfficeSearchBoxProperties'
+      Properties.BarManager = BarManager
+      Properties.Ribbon = RibbonMain
+      Properties.SearchSource = RibbonMain
     end
   end
   object SkinController: TdxSkinController

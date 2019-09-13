@@ -12,16 +12,19 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.StdCtrls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, Data.DB,
+  Vcl.Controls, Vcl.StdCtrls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.ExtCtrls,
+  Data.DB,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxStyles, dxSkinsCore,
   cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, cxNavigator, dxDateRanges,
   cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, dxLayoutControlAdapters, dxLayoutContainer,
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
-  cxGridDBTableView, cxGrid, cxEditRepositoryItems,
+  cxGridDBTableView, cxGrid, cxEditRepositoryItems, dxLayoutcxEditAdapters, cxContainer, cxLabel,
+  dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu,
 
   amLocalization.Dialog,
-  amLocalization.Translator.TM, dxLayoutcxEditAdapters, cxContainer, System.Actions, Vcl.ActnList, Vcl.ExtCtrls, cxLabel;
+  amLocalization.Translator.TM;
 
 type
   TFormTranslationMemory = class(TFormDialog)
@@ -37,13 +40,21 @@ type
     ButtonSaveAs: TcxButton;
     dxLayoutItem4: TdxLayoutItem;
     ButtonLoad: TcxButton;
+    GridPopupMenu: TcxGridPopupMenu;
+    PopupMenuHeader: TPopupMenu;
+    MenuItemDeleteLanguage: TMenuItem;
+    ActionDeleteLanguage: TAction;
     procedure ButtonLoadClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
     procedure ButtonSaveAsClick(Sender: TObject);
+    procedure ActionDeleteLanguageExecute(Sender: TObject);
+    procedure ActionDeleteLanguageUpdate(Sender: TObject);
+    procedure GridPopupMenuPopupMenus0Popup(ASenderMenu: TComponent; AHitTest: TcxCustomGridHitTest; X, Y: Integer);
   private
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
+    FPoupMenuColumn: TcxGridColumn;
   protected
     procedure CreateColumns;
     procedure SaveLayout;
@@ -69,6 +80,7 @@ uses
   IOUtils,
   UITypes,
   amCursorService,
+  amLocale,
   amLocalization.Settings,
   amLocalization.Data.Main;
 
@@ -106,6 +118,60 @@ begin
   SaveLayout;
 
   Result := True;
+end;
+
+procedure TFormTranslationMemory.ActionDeleteLanguageExecute(Sender: TObject);
+var
+  LocaleItem: TLocaleItem;
+  Field: TField;
+  Clone: TFDMemTable;
+resourcestring
+  sDeleteLanguage = 'Are you sure you want to delete the "%s" language from the Translation Memory?';
+begin
+  Field := TcxGridDBColumn(FPoupMenuColumn).DataBinding.Field;
+  LocaleItem := TLocaleItems.FindLCID(Field.Tag);
+  Assert(LocaleItem <> nil);
+
+  if (MessageDlg(Format(sDeleteLanguage, [LocaleItem.LanguageName]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  GridTMDBTableView.BeginUpdate;
+  try
+    // Start by removing the column
+    FPoupMenuColumn.Free;
+
+    // Then remove the field
+    if (FDataModuleTranslationMemory.TableTranslationMemory.Fields.Count > 1) then
+    begin
+      FDataModuleTranslationMemory.TableTranslationMemory.DisableControls;
+      try
+        Clone := TFDMemTable.Create(nil);
+        try
+          Clone.CopyDataSet(FDataModuleTranslationMemory.TableTranslationMemory, [coStructure, coRestart, coAppend]);
+
+          FDataModuleTranslationMemory.TableTranslationMemory.Close;
+
+          Field.Free;
+
+          FDataModuleTranslationMemory.TableTranslationMemory.Open;
+
+          FDataModuleTranslationMemory.TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+        finally
+          Clone.Free;
+        end;
+      finally
+        FDataModuleTranslationMemory.TableTranslationMemory.EnableControls;
+      end;
+    end else
+      Field.Free;
+  finally
+    GridTMDBTableView.EndUpdate;
+  end;
+end;
+
+procedure TFormTranslationMemory.ActionDeleteLanguageUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FPoupMenuColumn <> nil);
 end;
 
 procedure TFormTranslationMemory.ButtonLoadClick(Sender: TObject);
@@ -206,6 +272,23 @@ begin
   GridTMDBTableView.DataController.CreateAllItems(True);
 end;
 
+procedure TFormTranslationMemory.GridPopupMenuPopupMenus0Popup(ASenderMenu: TComponent; AHitTest: TcxCustomGridHitTest; X,
+  Y: Integer);
+begin
+  if (AHitTest is TcxGridColumnHeaderHitTest) then
+  begin
+    FPoupMenuColumn := TcxGridColumnHeaderHitTest(AHitTest).Column;
+
+    // If we have an OnPopup event handler then the popupmenu isn't displayed...
+    // Really intuitive logic DevExpress....
+    // ...so we have to display is manually.
+
+    PopupMenuHeader.PopupComponent := GridTMDBTableView;
+    PopupMenuHeader.Popup(X, Y);
+  end else
+    FPoupMenuColumn := nil;
+end;
+
 procedure TFormTranslationMemory.GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
   AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
 begin
@@ -213,6 +296,8 @@ begin
 
   // We've sneakily stored the language charset in the field tag
   ACanvas.Font.Charset := TcxGridDBColumn(AViewInfo.Item).DataBinding.Field.Tag;
+
+  // ...Also we no longer store the charset in the tag
 *)
 end;
 

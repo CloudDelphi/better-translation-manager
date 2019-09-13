@@ -543,7 +543,7 @@ function TDataModuleTranslationMemory.Add(SourceLanguage: Word; const SourceValu
 
     Result.FieldName := LocaleItem.LocaleSName;
     Result.DisplayLabel := LocaleItem.LanguageName;
-    Result.Tag := LocaleItem.CharSet;
+    Result.Tag := LocaleItem.Locale;
     Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
 
     Result.DataSet := TableTranslationMemory;
@@ -583,7 +583,8 @@ begin
     begin
       Clone := TFDMemTable.Create(nil);
       try
-        Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
+        if (TableTranslationMemory.Fields.Count > 0) then
+          Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
         TableTranslationMemory.Close;
 
@@ -594,7 +595,8 @@ begin
 
         TableTranslationMemory.Open;
 
-        TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+        if (Clone.Fields.Count > 0) then
+          TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
       finally
         Clone.Free;
       end;
@@ -679,7 +681,7 @@ begin
       else
         Clone := nil;
       try
-        if (Clone <> nil) then
+        if (Clone <> nil) and (TableTranslationMemory.Fields.Count > 0) then
           Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
         FLoaded := False;
@@ -725,7 +727,7 @@ begin
                     if (LocaleItem <> nil) then
                     begin
                       Field.DisplayLabel := LocaleItem.LanguageName;
-                      Field.Tag := LocaleItem.CharSet;
+                      Field.Tag := LocaleItem.Locale;
                     end else
                       ShowMessageFmt('Unknown language: %s', [Language]);
 
@@ -760,7 +762,8 @@ begin
         if (Merge) then
         begin
           TableTranslationMemory.Open;
-          TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+          if (Clone.Fields.Count > 0) then
+            TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
         end;
 
       finally
