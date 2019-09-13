@@ -46,9 +46,20 @@ type
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
   protected
     procedure CreateColumns;
+    procedure SaveLayout;
+    procedure RestoreLayout;
   public
     function Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
   end;
+
+resourcestring
+  sTranslationMemoryAddCompleteTitle = 'Translation added';
+  sTranslationMemoryAddMergeCompleteTitle = 'Merge completed';
+  sTranslationMemoryAddComplete = 'The translations were added to the Translation Memory.'#13#13+
+    'Values added: %.0n'#13+
+    'Values merged: %.0n'#13+
+    'Values skipped: %.0n'#13+
+    'Duplicate values: %.0n';
 
 implementation
 
@@ -56,9 +67,22 @@ implementation
 
 uses
   IOUtils,
+  UITypes,
   amCursorService,
   amLocalization.Settings,
   amLocalization.Data.Main;
+
+procedure TFormTranslationMemory.RestoreLayout;
+begin
+  if (TranslationManagerSettings.Layout.TranslationMemory.Valid) then
+    GridTMDBTableView.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, [gsoUseFilter], TranslationManagerSettings.Layout.TranslationMemory.Name);
+end;
+
+procedure TFormTranslationMemory.SaveLayout;
+begin
+  GridTMDBTableView.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, [gsoUseFilter], TranslationManagerSettings.Layout.TranslationMemory.Name);
+  TranslationManagerSettings.Layout.TranslationMemory.Valid := True;
+end;
 
 function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
 begin
@@ -75,12 +99,24 @@ begin
     GridTMDBTableView.EndUpdate;
   end;
 
+  RestoreLayout;
+
   ShowModal;
+
+  SaveLayout;
 
   Result := True;
 end;
 
 procedure TFormTranslationMemory.ButtonLoadClick(Sender: TObject);
+var
+  Merge: boolean;
+  Res: Word;
+  Stats: TTranslationMemoryMergeStats;
+resourcestring
+  sLoadTranslationMemoryMergeTitle = 'Merge translation memory';
+  sLoadTranslationMemoryMerge = 'Do you want to merge the selected file into your existing translation memory?'+#13#13+
+      'If you answer No then your current translation memory will be closed and the specified file will be opened instead.';
 begin
   if (not FDataModuleTranslationMemory.CheckSave) then
     Exit;
@@ -91,16 +127,42 @@ begin
   if (not OpenDialogTMX.Execute(Handle)) then
     Exit;
 
+  if (FDataModuleTranslationMemory.TableTranslationMemory.Active) and (FDataModuleTranslationMemory.TableTranslationMemory.RecordCount > 0) then
+  begin
+    Res := TaskMessageDlg(sLoadTranslationMemoryMergeTitle, sLoadTranslationMemoryMerge, mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
+
+    if (Res = mrCancel) then
+      Exit;
+
+    Merge := (Res = mrYes);
+  end else
+    Merge := False;
+
   SaveCursor(crHourGlass);
+
+
+  SaveLayout;
 
   GridTMDBTableView.BeginUpdate;
   try
-    FDataModuleTranslationMemory.LoadTranslationMemory(OpenDialogTMX.FileName);
-    TranslationManagerSettings.Translators.TranslationMemory.Filename := OpenDialogTMX.FileName;
+    Stats := FDataModuleTranslationMemory.LoadTranslationMemory(OpenDialogTMX.FileName, Merge);
+
+    if (not Merge) then
+      TranslationManagerSettings.Translators.TranslationMemory.Filename := OpenDialogTMX.FileName;
 
     CreateColumns;
+
   finally
     GridTMDBTableView.EndUpdate;
+  end;
+
+  RestoreLayout;
+
+  if (Merge) then
+  begin
+    TaskMessageDlg(sTranslationMemoryAddMergeCompleteTitle,
+      Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+      mtInformation, [mbOK], 0);
   end;
 end;
 

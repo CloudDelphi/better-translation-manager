@@ -15,8 +15,8 @@ inherited FormSettings: TFormSettings
     Width = 595
     Height = 75
     TabOrder = 1
-    ExplicitTop = 532
-    ExplicitWidth = 605
+    ExplicitTop = 522
+    ExplicitWidth = 595
     ExplicitHeight = 75
     inherited ButtonOK: TcxButton
       Left = 411
@@ -86,7 +86,7 @@ inherited FormSettings: TFormSettings
     Width = 595
     TabOrder = 2
     Visible = False
-    ExplicitWidth = 605
+    ExplicitWidth = 595
     inherited LabelHeader: TcxLabel
       ExplicitWidth = 573
       Width = 573
@@ -97,14 +97,14 @@ inherited FormSettings: TFormSettings
     Height = 483
     TabOrder = 0
     ExplicitTop = 39
-    ExplicitWidth = 605
-    ExplicitHeight = 493
+    ExplicitWidth = 595
+    ExplicitHeight = 483
     inherited LayoutControl: TdxLayoutControl
       Width = 579
       Height = 471
       ExplicitLeft = 8
-      ExplicitWidth = 589
-      ExplicitHeight = 481
+      ExplicitWidth = 579
+      ExplicitHeight = 471
       object PageControl: TcxPageControl [0]
         Left = 134
         Top = 6
@@ -130,8 +130,6 @@ inherited FormSettings: TFormSettings
           Margins.Right = 12
           Margins.Bottom = 8
           Caption = 'General'
-          ExplicitWidth = 423
-          ExplicitHeight = 424
           object LayoutControlGeneral: TdxLayoutControl
             Left = 0
             Top = 0
@@ -143,8 +141,6 @@ inherited FormSettings: TFormSettings
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
             OptionsItem.FocusControlOnItemCaptionClick = True
-            ExplicitWidth = 423
-            ExplicitHeight = 424
             object LabelEditingHeader: TcxLabel
               Left = 0
               Top = 48
@@ -552,8 +548,6 @@ inherited FormSettings: TFormSettings
           Margins.Bottom = 8
           Caption = 'Translators'
           ImageIndex = 5
-          ExplicitWidth = 423
-          ExplicitHeight = 424
           object LayoutControlTranslators: TdxLayoutControl
             Left = 0
             Top = 0
@@ -565,8 +559,6 @@ inherited FormSettings: TFormSettings
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
             OptionsItem.FocusControlOnItemCaptionClick = True
-            ExplicitWidth = 423
-            ExplicitHeight = 424
             object LabelTranslatorTM: TcxLabel
               Left = 0
               Top = 0
@@ -717,8 +709,6 @@ inherited FormSettings: TFormSettings
           Margins.Right = 12
           Margins.Bottom = 12
           Caption = 'Files'
-          ExplicitWidth = 423
-          ExplicitHeight = 420
           object LayoutControlFiles: TdxLayoutControl
             Left = 0
             Top = 0
@@ -729,8 +719,6 @@ inherited FormSettings: TFormSettings
             TabOrder = 0
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
-            ExplicitWidth = 423
-            ExplicitHeight = 420
             DesignSize = (
               413
               410)
@@ -902,21 +890,9 @@ inherited FormSettings: TFormSettings
               Value = 1
               Width = 53
             end
-            object CheckBoxAutoRecoveryReduced: TcxCheckBox
-              Left = 12
-              Top = 278
-              Hint = 
-                'Reduces the size of the saved document by excluding various non-' +
-                'essential parts such as images.'
-              Caption = 'Save a reduced version of the document'
-              Style.HotTrack = False
-              Style.TransparentBorder = False
-              TabOrder = 7
-              Transparent = True
-            end
             object cxLabel10: TcxLabel
               Left = 0
-              Top = 311
+              Top = 286
               Anchors = [akLeft, akTop, akRight]
               AutoSize = False
               Caption = 'Backup files'
@@ -930,29 +906,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 334
+              Top = 309
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 9
+              TabOrder = 8
               Transparent = True
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 152
-              Top = 359
+              Top = 334
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 10
+              TabOrder = 9
               Value = 1
               Width = 53
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 319
-              Top = 359
+              Top = 334
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -961,7 +937,7 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 11
+              TabOrder = 10
               Value = 100
               Width = 78
             end
@@ -1069,15 +1045,6 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 1
             end
-            object dxLayoutItem38: TdxLayoutItem
-              Parent = dxLayoutGroup14
-              CaptionOptions.Visible = False
-              Control = CheckBoxAutoRecoveryReduced
-              ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 216
-              ControlOptions.ShowBorder = False
-              Index = 2
-            end
             object LayoutGroupRecovery: TdxLayoutGroup
               Parent = dxLayoutGroup11
               CaptionOptions.Text = 'Hidden Group'
@@ -1097,7 +1064,7 @@ inherited FormSettings: TFormSettings
               Offsets.Left = 12
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 2
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -1189,8 +1156,6 @@ inherited FormSettings: TFormSettings
           Margins.Bottom = 8
           Caption = 'Proofing'
           ImageIndex = 6
-          ExplicitWidth = 423
-          ExplicitHeight = 424
           object LayoutControlProofing: TdxLayoutControl
             Left = 0
             Top = 0
@@ -1202,8 +1167,6 @@ inherited FormSettings: TFormSettings
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
             OptionsItem.FocusControlOnItemCaptionClick = True
-            ExplicitWidth = 423
-            ExplicitHeight = 424
             DesignSize = (
               413
               414)
@@ -1773,8 +1736,6 @@ inherited FormSettings: TFormSettings
           Margins.Bottom = 8
           Caption = 'Advanced'
           ImageIndex = 5
-          ExplicitWidth = 423
-          ExplicitHeight = 424
           object LayoutControlAdvanced: TdxLayoutControl
             Left = 0
             Top = 0
@@ -1786,8 +1747,6 @@ inherited FormSettings: TFormSettings
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
             OptionsItem.FocusControlOnItemCaptionClick = True
-            ExplicitWidth = 423
-            ExplicitHeight = 424
             object LabelAutoUpdateIntro: TcxLabel
               AlignWithMargins = True
               Left = 12
@@ -2069,6 +2028,7 @@ inherited FormSettings: TFormSettings
         BevelOuter = bvNone
         Color = 16053234
         FullRepaint = False
+        ParentBackground = False
         ShowCaption = False
         TabOrder = 0
         object ButtonCategoryGeneral: TcxButton
@@ -2089,9 +2049,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 0
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitLeft = 2
-          ExplicitTop = 2
-          ExplicitWidth = 114
         end
         object ButtonCategoryFiles: TcxButton
           AlignWithMargins = True
@@ -2111,9 +2068,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 2
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitLeft = 2
-          ExplicitTop = 56
-          ExplicitWidth = 114
         end
         object ButtonCategoryAdvanced: TcxButton
           AlignWithMargins = True
@@ -2133,9 +2087,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 4
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitLeft = 2
-          ExplicitTop = 110
-          ExplicitWidth = 114
         end
         object ButtonCategoryProofing: TcxButton
           AlignWithMargins = True
@@ -2155,9 +2106,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 3
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitLeft = 2
-          ExplicitTop = 83
-          ExplicitWidth = 114
         end
         object ButtonCategoryTranslators: TcxButton
           AlignWithMargins = True
@@ -2177,9 +2125,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 1
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitLeft = 2
-          ExplicitTop = 29
-          ExplicitWidth = 114
         end
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup

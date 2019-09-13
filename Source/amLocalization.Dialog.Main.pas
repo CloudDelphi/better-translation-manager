@@ -751,13 +751,13 @@ begin
   if (TranslationManagerSettings.Layout.ModuleTree.Valid) then
   begin
     // Tree.RestoreFromRegistry fails if data doesn't exist
-    TreeListModules.RestoreFromRegistry(TranslationManagerSettings.Layout.ModuleTree.Owner.KeyPath, False, False, TranslationManagerSettings.Layout.ModuleTree.Name);
+    TreeListModules.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.ModuleTree.Name);
     TranslationManagerSettings.Layout.ModuleTree.ReadFilter(TreeListModules.Filter);
   end;
 
   if (TranslationManagerSettings.Layout.ItemTree.Valid) then
   begin
-    TreeListItems.RestoreFromRegistry(TranslationManagerSettings.Layout.ItemTree.Owner.KeyPath, False, False, TranslationManagerSettings.Layout.ItemTree.Name);
+    TreeListItems.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.ItemTree.Name);
     TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
   end;
 
@@ -774,11 +774,11 @@ begin
 
   TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
 
-  TreeListModules.StoreToRegistry(TranslationManagerSettings.Layout.ModuleTree.Owner.KeyPath, False, TranslationManagerSettings.Layout.ModuleTree.Name);
+  TreeListModules.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.ModuleTree.Name);
   TranslationManagerSettings.Layout.ModuleTree.WriteFilter(TreeListModules.Filter);
   TranslationManagerSettings.Layout.ModuleTree.Valid := True;
 
-  TreeListItems.StoreToRegistry(TranslationManagerSettings.Layout.ItemTree.Owner.KeyPath, False, TranslationManagerSettings.Layout.ItemTree.Name);
+  TreeListItems.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.ItemTree.Name);
   TranslationManagerSettings.Layout.ItemTree.WriteFilter(TreeListItems.Filter);
   TranslationManagerSettings.Layout.ItemTree.Valid := True;
 
@@ -1044,9 +1044,13 @@ var
   Item: TCustomLocalizerItem;
   Count, ElegibleCount: integer;
   ElegibleWarning: string;
+  Stats, OneStats: TTranslationMemoryMergeStats;
+  DuplicateAction: TTranslationMemoryDuplicateAction;
+  Progress: IProgress;
 resourcestring
   sAddToDictionaryPromptTitle = 'Add to Translation Memory?';
   sAddToDictionaryPrompt = 'Do you want to add the selected %d values to the Translation Memory?%s';
+  sProgressAddingTranslationMemory = 'Adding to Translation Memory...';
 begin
   Count := 0;
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
@@ -1071,6 +1075,11 @@ begin
     mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
 
+  Stats := Default(TTranslationMemoryMergeStats);
+  Progress := ShowProgress(sProgressAddingTranslationMemory);
+  Progress.EnableAbort := True;
+  Count := 0;
+
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
@@ -1078,10 +1087,30 @@ begin
       function(Prop: TLocalizerProperty): boolean
       begin
         if (Prop.EffectiveStatus = ItemStatusTranslate) then
-          FDataModuleTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage]);
-        Result := True;
+        begin
+          DuplicateAction := FDataModuleTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage], OneStats, DuplicateAction);
+
+          Inc(Stats.Added, OneStats.Added);
+          Inc(Stats.Merged, OneStats.Merged);
+          Inc(Stats.Skipped, OneStats.Skipped);
+          Inc(Stats.Duplicate, OneStats.Duplicate);
+
+          Inc(Count);
+          Progress.Progress(psProgress, Count, ElegibleCount);
+        end;
+
+        Result := (DuplicateAction <> tmDupActionAbort) and (not Progress.Aborted);
       end, False);
+
+    if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
+      break;
   end;
+
+  Progress.Hide;
+
+  TaskMessageDlg(sTranslationMemoryAddCompleteTitle,
+    Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+    mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionAutomationMemoryAddUpdate(Sender: TObject);
@@ -1177,7 +1206,7 @@ begin
 
             Inc(Count);
 
-            SourceValue := SanitizeText(Prop.Value);
+            SourceValue := Prop.Value;
             if (Prop.HasTranslation(TargetLanguage)) then
               TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
             else

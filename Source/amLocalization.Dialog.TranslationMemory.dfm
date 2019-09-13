@@ -98,10 +98,6 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Width = 702
     Visible = False
     ExplicitWidth = 702
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 680
-      Width = 680
-    end
   end
   inherited PanelMain: TPanel
     Width = 702
@@ -168,14 +164,12 @@ inherited FormTranslationMemory: TFormTranslationMemory
   end
   object OpenDialogTMX: TOpenDialog
     Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
-    FilterIndex = 4
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 120
     Top = 224
   end
   object SaveDialogTMX: TSaveDialog
     Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
-    FilterIndex = 4
     Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
     Left = 232
     Top = 224

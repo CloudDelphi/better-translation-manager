@@ -26,10 +26,10 @@ type
   TDuplicateAction = (daPrompt, daFirst, daFirstAll, daSkip, daSkipAll, daAbort);
 
   TFormSelectDuplicate = class(TFormDialog)
-    dxLayoutItem1: TdxLayoutItem;
-    LabelSourceValue: TcxLabel;
+    LayoutItemSourceValue: TdxLayoutItem;
+    LabelSourceValue: TLabel;
     ListViewDuplicates: TcxListView;
-    dxLayoutItem2: TdxLayoutItem;
+    LayoutItemTranslationList: TdxLayoutItem;
     CheckBoxAll: TcxCheckBox;
     dxLayoutItem5: TdxLayoutItem;
     ComboBoxAction: TcxComboBox;
@@ -37,8 +37,8 @@ type
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
     dxLayoutGroup2: TdxLayoutGroup;
     dxLayoutEmptySpaceItem3: TdxLayoutEmptySpaceItem;
-    dxLayoutItem7: TdxLayoutItem;
-    LabelContext: TcxLabel;
+    LayoutItemContext: TdxLayoutItem;
+    LabelContext: TLabel;
     dxLayoutItem8: TdxLayoutItem;
     CheckBoxApplyToIdentical: TcxCheckBox;
     procedure ActionCancelExecute(Sender: TObject);
@@ -121,7 +121,9 @@ begin
   if (not(FDuplicateAction in [daSkipAll, daFirstAll])) then
   begin
     LabelContext.Caption := Format('%s\%s\%s', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name]);
-    LabelSourceValue.Caption := Prop.Value;
+    LabelContext.Hint := LabelContext.Caption;
+    LabelSourceValue.Caption := StringReplace(Prop.Value, #13, ' ', [rfReplaceAll]);
+    LabelSourceValue.Hint := Prop.Value;
     CheckBoxAll.Checked := (FDuplicateAction in [daSkipAll, daFirstAll]);
     CheckBoxApplyToIdentical.Checked := True;
     case FDuplicateAction of
@@ -141,6 +143,7 @@ begin
     ListViewDuplicates.Items.Clear;
     for s in Duplicates do
       ListViewDuplicates.Items.Add.Caption := s;
+    ListViewDuplicates.ItemIndex := 0;
 
     Result := (ShowModal <> mrCancel);
   end else

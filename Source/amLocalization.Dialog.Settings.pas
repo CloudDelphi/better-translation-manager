@@ -228,8 +228,6 @@ type
     CheckBoxAutoRecovery: TcxCheckBox;
     dxLayoutItem37: TdxLayoutItem;
     EditAutoRecoveryInterval: TcxSpinEdit;
-    dxLayoutItem38: TdxLayoutItem;
-    CheckBoxAutoRecoveryReduced: TcxCheckBox;
     LayoutGroupRecovery: TdxLayoutGroup;
     dxLayoutGroup14: TdxLayoutGroup;
     dxLayoutItem39: TdxLayoutItem;

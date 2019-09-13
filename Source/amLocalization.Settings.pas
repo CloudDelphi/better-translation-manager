@@ -202,16 +202,41 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
+  TTranslationManagerLayoutGridSettings = class(TConfigurationSection)
+  private
+    FValid: boolean;
+  public
+  published
+    property Valid: boolean read FValid write FValid;
+  end;
+
   TTranslationManagerLayoutSettings = class(TConfigurationSection)
   private
     FItemTree: TTranslationManagerLayoutTreeSettings;
     FModuleTree: TTranslationManagerLayoutTreeSettings;
+    FTranslationMemory: TTranslationManagerLayoutGridSettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
   published
     property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
     property ItemTree: TTranslationManagerLayoutTreeSettings read FItemTree;
+    property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
+  end;
+
+
+  TTranslationManagerBackupSettings = class(TConfigurationSection)
+  private
+    FAutoRecoverInterval: integer;
+    FMaxCount: integer;
+    FMaxSize: int64;
+    FAutoRecover: boolean;
+  public
+  published
+    property MaxCount: integer read FMaxCount write FMaxCount default 5;
+    property MaxSize: int64 read FMaxSize write FMaxSize default 10; // In Mb
+    property AutoRecover: boolean read FAutoRecover write FAutoRecover;
+    property AutoRecoverInterval: integer read FAutoRecoverInterval write FAutoRecoverInterval;
   end;
 
 
@@ -279,6 +304,7 @@ type
     FTranslators: TTranslationManagerTranslatorSettings;
     FProofing: TTranslationManagerProofingSettings;
     FLayout: TTranslationManagerLayoutSettings;
+    FBackup: TTranslationManagerBackupSettings;
   private
   protected
   public
@@ -295,6 +321,7 @@ type
     property Translators: TTranslationManagerTranslatorSettings read FTranslators;
     property Proofing: TTranslationManagerProofingSettings read FProofing;
     property Layout: TTranslationManagerLayoutSettings read FLayout;
+    property Backup: TTranslationManagerBackupSettings read FBackup;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -536,6 +563,7 @@ begin
   FTranslators := TTranslationManagerTranslatorSettings.Create(Self);
   FProofing := TTranslationManagerProofingSettings.Create(Self);
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
+  FBackup := TTranslationManagerBackupSettings.Create(Self);
 end;
 
 destructor TTranslationManagerSettings.Destroy;
@@ -546,6 +574,7 @@ begin
   FTranslators.Free;
   FProofing.Free;
   FLayout.Free;
+  FBackup.Free;
 
   inherited;
 end;
@@ -710,12 +739,14 @@ begin
 
   FItemTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FModuleTree := TTranslationManagerLayoutTreeSettings.Create(Self);
+  FTranslationMemory := TTranslationManagerLayoutGridSettings.Create(Self);
 end;
 
 destructor TTranslationManagerLayoutSettings.Destroy;
 begin
   FItemTree.Free;
   FModuleTree.Free;
+  FTranslationMemory.Free;
 
   inherited;
 end;

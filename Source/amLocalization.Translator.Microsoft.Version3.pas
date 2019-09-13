@@ -52,6 +52,7 @@ uses
   System.json.Types,
   System.json.Writers,
   Dialogs,
+  amLocalization.Utils,
   amLocalization.Settings;
 
 
@@ -103,7 +104,7 @@ begin
   RESTRequestTranslate.Body.JSONWriter.WriteStartArray;
   RESTRequestTranslate.Body.JSONWriter.WriteStartObject;
   RESTRequestTranslate.Body.JSONWriter.WritePropertyName('Text');
-  RESTRequestTranslate.Body.JSONWriter.WriteValue(SourceValue);
+  RESTRequestTranslate.Body.JSONWriter.WriteValue(SanitizeText(SourceValue, False));
   RESTRequestTranslate.Body.JSONWriter.WriteEndObject;
   RESTRequestTranslate.Body.JSONWriter.WriteEndArray;
 

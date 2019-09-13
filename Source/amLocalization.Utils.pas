@@ -40,7 +40,8 @@ type
   TSanitizeKind = (skAccelerator, skFormat);
   TSanitizeKinds = set of TSanitizeKind;
 
-function SanitizeText(const Value: string; Kind: TSanitizeKinds = [skAccelerator, skFormat]): string;
+function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
+function SanitizeText(const Value: string; Kind: TSanitizeKinds;  ReduceToNothing: boolean = True): string; overload;
 
 // Replacement for menus.StripHotKey
 // Does not allow multiple hotkeys. E.g.: "&This && &that"
@@ -183,7 +184,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function SanitizeText(const Value: string; Kind: TSanitizeKinds): string;
+function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
+begin
+  Result := SanitizeText(Value, [skAccelerator, skFormat], ReduceToNothing);
+end;
+
+function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing: boolean): string;
 var
   n: integer;
 begin
@@ -244,6 +250,9 @@ begin
       n := PosEx('%', Result, n);
     end;
   end;
+
+  if (not ReduceToNothing) and (Result.Trim.IsEmpty) then
+    Exit(Value);
 end;
 
 // -----------------------------------------------------------------------------

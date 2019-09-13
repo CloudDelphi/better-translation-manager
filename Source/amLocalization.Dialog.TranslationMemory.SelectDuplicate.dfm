@@ -40,23 +40,25 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
       Width = 486
       Height = 256
       ExplicitLeft = 8
-      ExplicitTop = 4
       ExplicitWidth = 486
       ExplicitHeight = 256
-      object LabelSourceValue: TcxLabel [0]
+      object LabelSourceValue: TLabel [0]
         Left = 73
-        Top = 72
+        Top = 69
+        Width = 407
+        Height = 14
+        AutoSize = False
         Caption = '-'
-        Style.HotTrack = False
-        Properties.ShowAccelChar = False
-        Properties.ShowEndEllipsis = True
+        EllipsisPosition = epEndEllipsis
+        ShowAccelChar = False
         Transparent = True
+        Layout = tlCenter
       end
       object ListViewDuplicates: TcxListView [1]
         Left = 73
-        Top = 95
+        Top = 89
         Width = 407
-        Height = 128
+        Height = 136
         ColumnClick = False
         Columns = <
           item
@@ -66,7 +68,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         ReadOnly = True
         RowSelect = True
         ShowColumnHeaders = False
-        TabOrder = 4
+        TabOrder = 2
         ViewStyle = vsReport
         OnDblClick = ListViewDuplicatesDblClick
       end
@@ -93,36 +95,39 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         Text = 'Use the translation I select'
         Width = 192
       end
-      object LabelContext: TcxLabel [4]
+      object LabelContext: TLabel [4]
         Left = 73
         Top = 49
+        Width = 407
+        Height = 14
+        AutoSize = False
         Caption = '-'
-        Style.HotTrack = False
-        Properties.ShowAccelChar = False
-        Properties.ShowEndEllipsis = True
+        EllipsisPosition = epPathEllipsis
+        ShowAccelChar = False
         Transparent = True
+        Layout = tlCenter
       end
       object CheckBoxApplyToIdentical: TcxCheckBox [5]
         Left = 73
-        Top = 229
+        Top = 231
         Caption = '&Use this translation for identical conflicts'
         Style.HotTrack = False
-        TabOrder = 5
+        TabOrder = 3
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
         ItemIndex = 5
       end
-      object dxLayoutItem1: TdxLayoutItem
+      object LayoutItemSourceValue: TdxLayoutItem
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = 'Source text:'
         Control = LabelSourceValue
-        ControlOptions.OriginalHeight = 17
+        ControlOptions.OriginalHeight = 14
         ControlOptions.OriginalWidth = 46
         ControlOptions.ShowBorder = False
         Index = 3
       end
-      object dxLayoutItem2: TdxLayoutItem
+      object LayoutItemTranslationList: TdxLayoutItem
         Parent = LayoutControlGroup_Root
         AlignVert = avClient
         CaptionOptions.AlignVert = tavTop
@@ -138,8 +143,8 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         CaptionOptions.Text = 'cxCheckBox1'
         CaptionOptions.Visible = False
         Control = CheckBoxAll
-        ControlOptions.OriginalHeight = 21
-        ControlOptions.OriginalWidth = 129
+        ControlOptions.OriginalHeight = 19
+        ControlOptions.OriginalWidth = 126
         ControlOptions.ShowBorder = False
         Enabled = False
         Index = 2
@@ -176,11 +181,11 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         SizeOptions.Width = 10
         Index = 1
       end
-      object dxLayoutItem7: TdxLayoutItem
+      object LayoutItemContext: TdxLayoutItem
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = 'Context:'
         Control = LabelContext
-        ControlOptions.OriginalHeight = 17
+        ControlOptions.OriginalHeight = 14
         ControlOptions.OriginalWidth = 8
         ControlOptions.ShowBorder = False
         Index = 2
@@ -189,7 +194,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = ' '
         Control = CheckBoxApplyToIdentical
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 85
         ControlOptions.ShowBorder = False
         Index = 5
