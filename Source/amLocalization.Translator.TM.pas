@@ -78,10 +78,12 @@ type
     function DoAdd(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
   protected
+    function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStringList): boolean;
+  protected
     // ITranslationService
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     procedure EndLookup;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
     function GetServiceName: string;
   public
     function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
@@ -225,7 +227,7 @@ var
   i: integer;
 begin
   for i := 0 to TableTranslationMemory.FieldCount-1 do
-    if (SameText(LocaleItem.LocaleName, TableTranslationMemory.Fields[i].FieldName)) then
+    if (AnsiSameText(LocaleItem.LocaleName, TableTranslationMemory.Fields[i].FieldName)) then
       Exit(TableTranslationMemory.Fields[i]);
   Result := nil;
 end;
@@ -1012,14 +1014,44 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStringList): boolean;
 var
-  SourceField: TField;
-  TargetField: TField;
-  Duplicates: TStringList;
-  RecordIndex: integer;
   List: TList<integer>;
-  i: integer;
+  RecordIndex: integer;
+  TargetValue: string;
+begin
+  Result := False;
+
+  if (not HasData) then
+    Exit;
+
+  Assert(FLookupIndex <> nil);
+
+  if (not FLookupIndex.TryGetValue(SanitizeText(Prop.Value, False), List)) then
+    Exit;
+
+  for RecordIndex in List do
+  begin
+    TableTranslationMemory.RecNo := RecordIndex+1;
+
+    TargetValue := TargetField.AsString;
+
+    if (TargetValue = '') then
+      continue;
+
+    // Ignore exact duplicates
+    if (Translations.IndexOf(TargetValue) <> -1) then
+      continue;
+
+    Result := True;
+    Translations.Add(TargetValue);
+  end;
+end;
+
+function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+var
+  TargetField: TField;
+  Translations: TStringList;
 begin
   Result := False;
   TargetValue := '';
@@ -1030,63 +1062,33 @@ begin
   if (not HasData) then
     Exit;
 
-  SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
-  if (SourceField = nil) or (TargetField = nil) then
-    // One or both languages doesn't exist in TM
+  if (TargetField = nil) then
     Exit;
 
-  Duplicates := nil;
+  Translations := TStringList.Create;
   try
 
-    if (FLookupIndex.TryGetValue(SanitizeText(SourceValue, False), List)) then
+    Result := FindTranslations(Prop, TargetField, Translations);
+
+    if (not Result) then
+      Exit;
+
+    Assert(Translations.Count > 0);
+
+    if (Translations.Count > 1) then
     begin
-      Result := True;
-
-      if (List.Count > 1) then
-        Duplicates := TStringList.Create;
-
-      for RecordIndex in List do
-      begin
-        TableTranslationMemory.RecNo := RecordIndex+1;
-
-        TargetValue := TargetField.AsString;
-
-        if (Duplicates <> nil) then
-        begin
-          // Ignore exact duplicates
-          for i := 0 to Duplicates.Count-1 do
-            if (Duplicates[i] = TargetValue) then
-            begin
-              TargetValue := '';
-              break;
-            end;
-          if (TargetValue <> '') then
-            Duplicates.Add(TargetValue);
-        end;
-      end;
-    end else
-      Exit(False);
-
-    if (Duplicates <> nil) and (Duplicates.Count > 0) then
-    begin
-      if (Duplicates.Count = 1) then
-      begin
-        TargetValue := Duplicates[0];
-        Exit;
-      end;
-
       // Attempt to resolve using previously resolved conflicts
       if (FConflictResolution.TryGetValue(Prop.Value, TargetValue)) then
-        Exit(True);
+        Exit;
 
       if (FFormSelectDuplicate = nil) then
         FFormSelectDuplicate := TFormSelectDuplicate.Create(nil);
 
       FFormSelectDuplicate.DuplicateAction := FDuplicateAction;
 
-      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Duplicates, TargetValue)) then
+      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Translations, TargetValue)) then
         Abort;
 
       FDuplicateAction := FFormSelectDuplicate.DuplicateAction;
@@ -1095,10 +1097,11 @@ begin
         FConflictResolution.Add(Prop.Value, TargetValue);
 
       Result := (not (FDuplicateAction in [daSkip, daSkipAll]));
-    end;
+    end else
+      TargetValue := Translations[0];
 
   finally
-    Duplicates.Free;
+    Translations.Free;
   end;
 end;
 
@@ -1109,7 +1112,6 @@ var
   SourceField: TField;
   TargetField: TField;
   SourceValue: string;
-  RecordIndex: integer;
   List: TList<integer>;
 begin
   FDuplicateAction := daPrompt;
@@ -1119,37 +1121,35 @@ begin
   if (not CheckLoaded) then
     Exit(False);
 
+  // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
+  if (not HasData) then
+    Exit(True);
+
   SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
-  // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
-  if (HasData) then
+  if (SourceField = nil) or (TargetField = nil) or (SourceField = TargetField) then
+    // One or both languages doesn't exist in TM
+    Exit(False);
+
+  // Create dictionary of source terms
+  TableTranslationMemory.First;
+
+  while (not TableTranslationMemory.EOF) do
   begin
-    if (SourceField = nil) or (TargetField = nil) then
-      // One or both languages doesn't exist in TM
-      Exit(False);
-
-    // Create dictionary of source terms
-    TableTranslationMemory.First;
-    RecordIndex := 0;
-    while (not TableTranslationMemory.EOF) do
+    if (not TargetField.IsNull) and (not SourceField.IsNull) then
     begin
-      if (not TargetField.IsNull) and (not SourceField.IsNull) then
+      SourceValue := SanitizeText(SourceField.AsString, False);
+
+      if (not FLookupIndex.TryGetValue(SourceValue, List)) then
       begin
-        SourceValue := AnsiUppercase(SanitizeText(SourceField.AsString, False));
-
-        if (not FLookupIndex.TryGetValue(SourceValue, List)) then
-        begin
-          List := TList<integer>.Create;
-          FLookupIndex.Add(SourceValue, List);
-        end;
-        List.Add(RecordIndex);
+        List := TList<integer>.Create;
+        FLookupIndex.Add(SourceValue, List);
       end;
-
-      Inc(RecordIndex);
-
-      TableTranslationMemory.Next;
+      List.Add(TableTranslationMemory.RecNo);
     end;
+
+    TableTranslationMemory.Next;
   end;
 
   Result := True;

@@ -1150,6 +1150,7 @@ var
   Count, ElegibleCount: integer;
   TranslatedCount, UpdatedCount: integer;
   ElegibleWarning: string;
+  Translation: TLocalizerTranslation;
 resourcestring
   sTranslateAutoProgress = 'Translating using %s...';
   sTranslateAutoPromptTitle = 'Translate using %s?';
@@ -1228,7 +1229,7 @@ begin
             // Perform translation
             // Note: It is the responsibility of the translation service to return True/False to indicate
             // if SourceValue=TargetValue is in fact a translation.
-            if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, SourceValue, Value)) then
+            if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, Value)) then
             begin
               if (not Value.IsEmpty) then
               begin
@@ -1238,7 +1239,7 @@ begin
                 else
                 // If source starts with an Uppercase letter the target should also do so
                 if (StartsWithUppercase(SourceValue)) then
-                  Value := Value[1].ToUpper+Copy(Value, 2, MaxInt);
+                  Value := MakeStartWithUppercase(Value);
 
                 // Handle accelerator keys
                 if (HasAccelerator(Prop.Value)) then
@@ -1256,11 +1257,16 @@ begin
 
               Inc(TranslatedCount);
 
-              if (Prop.HasTranslation(TargetLanguage)) and (Prop.TranslatedValue[TargetLanguage] <> Value) then
+              if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then
                 Inc(UpdatedCount);
 
               // Set value regardless of current value so we get the correct Status set
-              Prop.TranslatedValue[TargetLanguage] := Value;
+              if (Translation <> nil) then
+                Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
+              else
+                Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
+
+              Translation.UpdateWarnings;
 
               ReloadProperty(Prop);
             end;

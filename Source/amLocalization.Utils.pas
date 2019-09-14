@@ -63,6 +63,7 @@ const
 // -----------------------------------------------------------------------------
 function IsUppercase(const Value: string): boolean;
 function StartsWithUppercase(const Value: string): boolean;
+function MakeStartWithUppercase(const Value: string): string;
 
 
 // -----------------------------------------------------------------------------
@@ -263,16 +264,37 @@ var
 begin
   Result := False;
   for i := 1 to Length(Value) do
-    if (Value[i].IsLower) then
-      Exit(False)
-    else
-    if (not Result) and (Value[i].IsUpper) then
-      Result := True;
+    if (Value[i].IsLetter) then
+    begin
+      if (Value[i].IsLower) then
+        Exit(False)
+      else
+      if (not Result) and (Value[i].IsUpper) then
+        Result := True;
+    end;
 end;
 
 function StartsWithUppercase(const Value: string): boolean;
+var
+  i: integer;
 begin
-  Result := (Value.Length >= 2) and (Value[1].IsUpper) and (Value[2].IsLower);
+  Result := False;
+  for i := 1 to Length(Value)-1 do
+    if (Value[i].IsLetter) and (Value[i+1].IsLetter) and (Value[i].IsUpper) and (Value[i+1].IsLower) then
+      Exit(True);
+end;
+
+function MakeStartWithUppercase(const Value: string): string;
+var
+  i: integer;
+begin
+  Result := Value;
+  for i := 1 to Length(Result)-1 do
+    if (Result[i].IsLetter) and (Result[i+1].IsLetter) then
+    begin
+      Result[i] := Result[i].ToUpper;
+      Exit;
+    end;
 end;
 
 // -----------------------------------------------------------------------------

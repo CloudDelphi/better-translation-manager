@@ -36,7 +36,7 @@ type
     // ITranslationService
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     procedure EndLookup;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string; var TargetValue: string): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
     function GetServiceName: string;
 
     // ITranslationServiceMS
@@ -88,8 +88,7 @@ begin
   Result := sTranslatorNameMS;
 end;
 
-function TDataModuleTranslatorMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; const SourceValue: string;
-  var TargetValue: string): boolean;
+function TDataModuleTranslatorMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
 var
   JsonResultArray: TJsonArray;
   JsonTranslationItem: TJsonObject;
@@ -104,7 +103,7 @@ begin
   RESTRequestTranslate.Body.JSONWriter.WriteStartArray;
   RESTRequestTranslate.Body.JSONWriter.WriteStartObject;
   RESTRequestTranslate.Body.JSONWriter.WritePropertyName('Text');
-  RESTRequestTranslate.Body.JSONWriter.WriteValue(SanitizeText(SourceValue, False));
+  RESTRequestTranslate.Body.JSONWriter.WriteValue(SanitizeText(Prop.Value, False));
   RESTRequestTranslate.Body.JSONWriter.WriteEndObject;
   RESTRequestTranslate.Body.JSONWriter.WriteEndArray;
 
@@ -130,7 +129,7 @@ begin
     JsonTranslationItemArray := JsonTranslationItem.GetValue('translations') as TJsonArray;
     TargetValue :=  JsonTranslationItemArray.Items[0].GetValue<string>('text');
 
-    Result := (not AnsiSameText(SourceValue, TargetValue));
+    Result := (not AnsiSameText(Prop.Value, TargetValue));
   end;
 end;
 

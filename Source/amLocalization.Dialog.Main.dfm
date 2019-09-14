@@ -1342,8 +1342,10 @@ object FormMain: TFormMain
       Visible = ivAlways
       PropertiesClassName = 'TdxOfficeSearchBoxProperties'
       Properties.BarManager = BarManager
+      Properties.Nullstring = '(search)'
       Properties.Ribbon = RibbonMain
       Properties.SearchSource = RibbonMain
+      Properties.UseNullString = True
     end
   end
   object SkinController: TdxSkinController
