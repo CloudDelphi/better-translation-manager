@@ -114,7 +114,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetGeneral
+        Properties.ActivePage = TabSheetTranslationServices
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -575,6 +575,7 @@ inherited FormSettings: TFormSettings
             object CheckBoxTMLoadOnDemand: TcxCheckBox
               Left = 12
               Top = 23
+              Hint = 'Load Translation Memory from disk the first time it is used.'
               Caption = 'Load on demand'
               ParentBackground = False
               ParentColor = False
@@ -586,7 +587,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 56
+              Top = 81
               AutoSize = False
               Caption = 'Microsoft Translator'
               Style.HotTrack = False
@@ -599,7 +600,7 @@ inherited FormSettings: TFormSettings
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
               Left = 58
-              Top = 79
+              Top = 104
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -611,8 +612,23 @@ inherited FormSettings: TFormSettings
               Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
               Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
               Style.HotTrack = False
-              TabOrder = 3
+              TabOrder = 4
               Width = 355
+            end
+            object CheckBoxTMBackgroundQuery: TcxCheckBox
+              Left = 12
+              Top = 48
+              Hint = 
+                'Searches the Translation Memory for matching translations while ' +
+                'you work and indicates if matches are found.'
+              Caption = 'Query Translation Memory in the background'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 2
+              Transparent = True
             end
             object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
@@ -658,6 +674,7 @@ inherited FormSettings: TFormSettings
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -698,6 +715,15 @@ inherited FormSettings: TFormSettings
               ButtonOptions.Buttons = <>
               Hidden = True
               ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem38: TdxLayoutItem
+              Parent = dxLayoutGroup2
+              CaptionOptions.Visible = False
+              Control = CheckBoxTMBackgroundQuery
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 100
+              ControlOptions.ShowBorder = False
               Index = 1
             end
           end

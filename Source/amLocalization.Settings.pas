@@ -161,12 +161,14 @@ type
   private
     FFilename: string;
     FLoadOnDemand: boolean;
+    FBackgroundQuery: boolean;
   protected
     procedure ApplyDefault; override;
   public
   published
     property Filename: string read FFilename write FFilename;
-    property LoadOnDemand: boolean read FLoadOnDemand write FLoadOnDemand;
+    property LoadOnDemand: boolean read FLoadOnDemand write FLoadOnDemand default True;
+    property BackgroundQuery: boolean read FBackgroundQuery write FBackgroundQuery default True;
   end;
 
   TTranslationManagerTranslatorSettings = class(TConfigurationSection)

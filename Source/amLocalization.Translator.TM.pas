@@ -12,7 +12,8 @@ interface
 
 uses
   Generics.Collections,
-  System.SysUtils, System.Classes, Data.DB,
+  SyncObjs,
+  System.SysUtils, System.Classes, Windows, Data.DB,
 
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
@@ -38,6 +39,13 @@ type
     tmDupActionRejectAll        // Reject all duplicates
   );
 
+type
+  ITranslationMemoryPeek = interface
+    ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
+    procedure EnqueueQuery(Prop: TLocalizerProperty);
+    procedure Cancel;
+  end;
+
 // -----------------------------------------------------------------------------
 //
 // TDataModuleTranslationMemory
@@ -56,6 +64,7 @@ type
     FConflictResolution: TDictionary<string, string>;
     FModified: boolean;
     FCreateDate: TDateTime;
+    FRefreshEvent: TEvent;
   private type
     TDuplicate = record
       SourceValue: string;
@@ -77,8 +86,15 @@ type
     function GetAvailable: boolean;
     function DoAdd(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
+    function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
   protected
-    function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStringList): boolean;
+    // Threaded lookup
+    procedure PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
+    // Protect against TM modifications. It is assumed that the TM table properties (data, fields, etc) are stable outside the lock.
+    procedure Lock;
+    procedure Unlock;
+
+    property RefreshEvent: TEvent read FRefreshEvent;
   protected
     // ITranslationService
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
@@ -86,6 +102,9 @@ type
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
     function GetServiceName: string;
   public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
     function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
     function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
@@ -93,6 +112,9 @@ type
     procedure SaveTranslationMemory(const Filename: string);
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
+
+    function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 
     property IsLoaded: boolean read FLoaded;
     property IsAvailable: boolean read GetAvailable;
@@ -118,7 +140,6 @@ uses
   DateUtils,
   StrUtils,
   Variants,
-  Windows,
   XMLDoc, XMLIntf,
   Forms,
   cxGraphics,
@@ -138,9 +159,278 @@ type
 
 // -----------------------------------------------------------------------------
 //
+// TPeekDictionaryThread
+//
+// -----------------------------------------------------------------------------
+type
+  TPeekDictionaryThread = class(TThread)
+  private
+    FTranslationMemory: TDataModuleTranslationMemory;
+    FSourceField, FTargetField: TField;
+    FQueryQueue: TList<TLocalizerProperty>;
+    FResultQueue: TList<TLocalizerProperty>;
+    FQueueEvent: TEvent;
+    FDictionary: TStringList;
+    FResultHandler: TNotifyEvent;
+  protected
+    procedure Execute; override;
+    procedure TerminatedSet; override;
+
+    procedure Prepare;
+    procedure ResultReady;
+  public
+    constructor Create(ATranslationMemory: TDataModuleTranslationMemory; ASourceField, ATargetField: TField; AResultHandler: TNotifyEvent);
+    destructor Destroy; override;
+
+    procedure EnqueueQuery(Prop: TLocalizerProperty);
+    procedure ClearQueues;
+
+    function DequeueResult: TLocalizerProperty;
+  end;
+
+constructor TPeekDictionaryThread.Create(ATranslationMemory: TDataModuleTranslationMemory; ASourceField, ATargetField: TField; AResultHandler: TNotifyEvent);
+begin
+  inherited Create(True);
+
+  FTranslationMemory := ATranslationMemory;
+  FResultHandler := AResultHandler;
+  FSourceField := ASourceField;
+  FTargetField := ATargetField;
+
+  FQueryQueue := TList<TLocalizerProperty>.Create;
+  FResultQueue := TList<TLocalizerProperty>.Create;
+  FQueueEvent := TEvent.Create(nil, False, False, '');
+  FDictionary := TStringList.Create;
+  FDictionary.CaseSensitive := False;
+  FDictionary.Duplicates := dupIgnore;
+end;
+
+destructor TPeekDictionaryThread.Destroy;
+begin
+  FQueryQueue.Free;
+  FResultQueue.Free;
+  FQueueEvent.Free;
+  FDictionary.Free;
+  inherited;
+end;
+
+procedure TPeekDictionaryThread.ClearQueues;
+begin
+  System.TMonitor.Enter(FQueryQueue);
+  try
+    FQueryQueue.Clear;
+  finally
+    System.TMonitor.Exit(FQueryQueue);
+  end;
+
+  System.TMonitor.Enter(FResultQueue);
+  try
+    FResultQueue.Clear;
+  finally
+    System.TMonitor.Exit(FResultQueue);
+  end;
+end;
+
+function TPeekDictionaryThread.DequeueResult: TLocalizerProperty;
+begin
+  System.TMonitor.Enter(FResultQueue);
+  try
+    if (FResultQueue.Count > 0) then
+    begin
+      Result := FResultQueue.Last;
+      FResultQueue.Count := FResultQueue.Count-1;
+    end else
+      Result := nil;
+  finally
+    System.TMonitor.Exit(FResultQueue);
+  end;
+end;
+
+procedure TPeekDictionaryThread.EnqueueQuery(Prop: TLocalizerProperty);
+begin
+  System.TMonitor.Enter(FQueryQueue);
+  try
+    if (FQueryQueue.Contains(Prop)) then
+      Exit;
+
+    FQueryQueue.Add(Prop);
+  finally
+    System.TMonitor.Exit(FQueryQueue);
+  end;
+  // Signal thread that there's work to do
+  FQueueEvent.SetEvent;
+end;
+
+procedure TPeekDictionaryThread.Execute;
+var
+  Prop: TLocalizerProperty;
+  WaitObject: THandleObject;
+  ProcessQueue: boolean;
+begin
+
+  // Initial index load
+  Prepare;
+
+  FQueueEvent.SetEvent;
+
+  while (THandleObject.WaitForMultiple([FTranslationMemory.RefreshEvent, FQueueEvent], INFINITE, False, WaitObject) = wrSignaled) and (not Terminated) do
+  begin
+    if (WaitObject = FTranslationMemory.RefreshEvent) then
+    begin
+      // TM has changed. Reload index.
+      Prepare;
+      continue;
+    end else
+    if (WaitObject <> FQueueEvent) then
+      continue;
+
+    ProcessQueue := True;
+
+    while (ProcessQueue) do
+    begin
+
+      // Dequeue a job
+      System.TMonitor.Enter(FQueryQueue);
+      try
+        if (FQueryQueue.Count = 0) then
+        begin
+          // Queue is empty - wait for a query to be queued
+          ProcessQueue := False;
+          continue;
+        end;
+
+        Prop := FQueryQueue.Last;
+        FQueryQueue.Count := FQueryQueue.Count-1;
+      finally
+        System.TMonitor.Exit(FQueryQueue);
+      end;
+
+      // Perform lookup
+      System.TMonitor.Enter(FDictionary);
+      try
+        if (FDictionary.IndexOf(SanitizeText(Prop.Value, False)) = -1) then
+          continue;
+      finally
+        System.TMonitor.Exit(FDictionary);
+      end;
+
+      // Found match - put in result queue
+      System.TMonitor.Enter(FResultQueue);
+      try
+        FResultQueue.Add(Prop);
+      finally
+        System.TMonitor.Exit(FResultQueue);
+      end;
+
+      // Notify client
+      if (Assigned(FResultHandler)) then
+        Queue(ResultReady);
+
+    end;
+  end;
+end;
+
+procedure TPeekDictionaryThread.Prepare;
+begin
+  System.TMonitor.Enter(FDictionary);
+  try
+
+    FDictionary.Sorted := False;
+
+    FTranslationMemory.PopulateDictionary(FSourceField, FTargetField, FDictionary);
+
+    FDictionary.Sorted := True;
+
+  finally
+    System.TMonitor.Exit(FDictionary);
+  end;
+end;
+
+procedure TPeekDictionaryThread.ResultReady;
+var
+  Prop: TLocalizerProperty;
+begin
+  if (not Assigned(FResultHandler)) then
+    Exit;
+
+  Prop := DequeueResult;
+
+  FResultHandler(Prop);
+end;
+
+procedure TPeekDictionaryThread.TerminatedSet;
+begin
+  inherited;
+
+  // Wake thread so it can terminate
+  FQueueEvent.SetEvent;
+end;
+
+// -----------------------------------------------------------------------------
+//
+// TTranslationMemoryLookup
+//
+// -----------------------------------------------------------------------------
+type
+  TTranslationMemoryPeek = class(TInterfacedObject, ITranslationMemoryPeek)
+  private
+    FThread: TPeekDictionaryThread;
+  protected
+    // ITranslationMemoryPeek
+    procedure EnqueueQuery(Prop: TLocalizerProperty);
+    procedure Cancel;
+  public
+    constructor Create(ATranslationMemory: TDataModuleTranslationMemory; SourceField, TargetField: TField; AResultHandler: TNotifyEvent);
+    destructor Destroy; override;
+  end;
+
+constructor TTranslationMemoryPeek.Create(ATranslationMemory: TDataModuleTranslationMemory; SourceField, TargetField: TField; AResultHandler: TNotifyEvent);
+begin
+  inherited Create;
+  FThread := TPeekDictionaryThread.Create(ATranslationMemory, SourceField, TargetField, AResultHandler);
+  FThread.Start;
+end;
+
+destructor TTranslationMemoryPeek.Destroy;
+begin
+  FThread.Terminate;
+  FThread.WaitFor;
+  FThread.Free;
+  inherited;
+end;
+
+procedure TTranslationMemoryPeek.EnqueueQuery(Prop: TLocalizerProperty);
+begin
+  FThread.EnqueueQuery(Prop);
+end;
+
+procedure TTranslationMemoryPeek.Cancel;
+begin
+  FThread.ClearQueues;
+end;
+
+
+// -----------------------------------------------------------------------------
+//
 // TDataModuleTranslationMemory
 //
 // -----------------------------------------------------------------------------
+constructor TDataModuleTranslationMemory.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  FRefreshEvent := TEvent.Create(nil, False, False, '');
+end;
+
+destructor TDataModuleTranslationMemory.Destroy;
+begin
+  FRefreshEvent.Free;
+
+  inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
 function TDataModuleTranslationMemory.GetServiceName: string;
 resourcestring
   sTranslatorNameTM = 'Translation Memory';
@@ -174,8 +464,11 @@ begin
         // ...and load it
         LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
       end else
+      begin
         // Pretend we have loaded to avoid further prompts
         FLoaded := True;
+//        TableTranslationMemory.CreateDataSet;
+      end;
     end else
       LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
   end;
@@ -211,6 +504,31 @@ begin
       Result := True;
   end else
     Result := True;
+end;
+
+function TDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+var
+  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
+  SourceField, TargetField: TField;
+begin
+  if (SourceLanguage = TargetLanguage) then
+    Exit(nil);
+
+  if (SourceLanguage = 0) or (TargetLanguage = 0) then
+    Exit(nil);
+
+  if (not CheckLoaded) then
+    Exit(nil);
+
+  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguage);
+  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguage);
+  Assert(SourceLocaleItem <> nil);
+  Assert(TargetLocaleItem <> nil);
+
+  SourceField := FindField(SourceLocaleItem);
+  TargetField := FindField(TargetLocaleItem);
+
+  Result := TTranslationMemoryPeek.Create(Self, SourceField, TargetField, AResultHandler);
 end;
 
 // -----------------------------------------------------------------------------
@@ -401,35 +719,45 @@ begin
     Dec(DuplicateValues.EmptyCount);
 
     // Edit existing entry
-    TableTranslationMemory.RecNo := Duplicate.RecordID;
-    TableTranslationMemory.Resync([rmExact]);
-    TableTranslationMemory.Edit;
+    Lock;
     try
-      // Source field already has the desired value
-      // SourceField.AsString := SourceValue;
+      TableTranslationMemory.RecNo := Duplicate.RecordID;
+      TableTranslationMemory.Resync([rmExact]);
+      TableTranslationMemory.Edit;
+      try
+        // Source field already has the desired value
+        // SourceField.AsString := SourceValue;
 
-      TargetField.AsString := TargetValue;
+        TargetField.AsString := TargetValue;
 
-      TableTranslationMemory.Post;
+        TableTranslationMemory.Post;
 
-    except
-      TableTranslationMemory.Cancel;
-      raise;
+      except
+        TableTranslationMemory.Cancel;
+        raise;
+      end;
+    finally
+      Unlock;
     end;
     Inc(Stats.Merged);
   end else
   begin
     // Add new entry
-    TableTranslationMemory.Append;
+    Lock;
     try
-      SourceField.AsString := SourceValue;
-      TargetField.AsString := TargetValue;
+      TableTranslationMemory.Append;
+      try
+        SourceField.AsString := SourceValue;
+        TargetField.AsString := TargetValue;
 
-      TableTranslationMemory.Post;
+        TableTranslationMemory.Post;
 
-    except
-      TableTranslationMemory.Cancel;
-      raise;
+      except
+        TableTranslationMemory.Cancel;
+        raise;
+      end;
+    finally
+      Unlock;
     end;
     Inc(Stats.Added);
 
@@ -490,6 +818,7 @@ begin
     Duplicates := TDuplicates.Create([doOwnsValues]);
     try
       Duplicate.SourceValue := SourceValue;
+
       TableTranslationMemory.First;
       while (not TableTranslationMemory.EOF) do
       begin
@@ -585,20 +914,25 @@ begin
     begin
       Clone := TFDMemTable.Create(nil);
       try
-        if (TableTranslationMemory.Fields.Count > 0) then
-          Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
+        Lock;
+        try
+          if (TableTranslationMemory.Fields.Count > 0) then
+            Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
-        TableTranslationMemory.Close;
+          TableTranslationMemory.Close;
 
-        if (SourceField = nil) then
-          SourceField := AddField(SourceLocaleItem);
-        if (TargetField = nil) then
-          TargetField := AddField(TargetLocaleItem);
+          if (SourceField = nil) then
+            SourceField := AddField(SourceLocaleItem);
+          if (TargetField = nil) then
+            TargetField := AddField(TargetLocaleItem);
 
-        TableTranslationMemory.Open;
+          TableTranslationMemory.Open;
 
-        if (Clone.Fields.Count > 0) then
-          TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+          if (Clone.Fields.Count > 0) then
+            TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+        finally
+          Unlock;
+        end;
       finally
         Clone.Free;
       end;
@@ -675,241 +1009,246 @@ begin
 
   TableTranslationMemory.DisableControls;
   try
-    Translations := TObjectList<TTerms>.Create;
+    Lock;
     try
-
-      if (Merge) then
-        Clone := TFDMemTable.Create(nil)
-      else
-        Clone := nil;
+      Translations := TObjectList<TTerms>.Create;
       try
-        if (Clone <> nil) and (TableTranslationMemory.Fields.Count > 0) then
-          Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
-        FLoaded := False;
-        TableTranslationMemory.Close;
-
-        Languages := TDictionary<string, TField>.Create(TTextComparer.Create);
+        if (Merge) then
+          Clone := TFDMemTable.Create(nil)
+        else
+          Clone := nil;
         try
+          if (Clone <> nil) and (TableTranslationMemory.Fields.Count > 0) then
+            Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
+
+          FLoaded := False;
+          TableTranslationMemory.Close;
+
+          Languages := TDictionary<string, TField>.Create(TTextComparer.Create);
+          try
+
+            if (Merge) then
+            begin
+              for i := 0 to TableTranslationMemory.Fields.Count-1 do
+                Languages.Add(TableTranslationMemory.Fields[i].FieldName, TableTranslationMemory.Fields[i]);
+            end else
+              TableTranslationMemory.Fields.Clear;
+
+            ItemNode := Body.ChildNodes.First;
+            while (ItemNode <> nil) do
+            begin
+              Progress.AdvanceProgress;
+
+              if (ItemNode.NodeName = 'tu') then
+              begin
+                Terms := TTerms.Create;
+                Translations.Add(Terms);
+
+                LanguageNode := ItemNode.ChildNodes.First;
+                while (LanguageNode <> nil) do
+                begin
+                  if (LanguageNode.NodeName = 'tuv') then
+                  begin
+                    Language := LanguageNode.Attributes['xml:lang'];
+
+                    LocaleItem := TLocaleItems.FindLocaleName(Language);
+                    if (LocaleItem <> nil) then
+                      LanguageName := LocaleItem.LocaleSName
+                    else
+                      LanguageName := Language;
+
+                    if (not Languages.TryGetValue(LanguageName, Field)) then
+                    begin
+                      Field := TWideMemoField.Create(TableTranslationMemory);
+
+                      if (LocaleItem <> nil) then
+                      begin
+                        Field.DisplayLabel := LocaleItem.LanguageName;
+                        Field.Tag := LocaleItem.Locale;
+                      end else
+                        ShowMessageFmt('Unknown language: %s', [Language]);
+
+                      Field.FieldName := LanguageName;
+                      Field.DataSet := TableTranslationMemory;
+                      Field.DisplayWidth := 100;
+                      Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
+
+                      Languages.Add(Language, Field);
+                    end;
+
+                    Term.Field := Field;
+                    Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
+
+                    Terms.Add(Term);
+                  end;
+
+                  LanguageNode := LanguageNode.NextSibling;
+                end;
+              end;
+
+              ItemNode := ItemNode.NextSibling;
+            end;
+
+            Progress.Progress(psEnd, 1, 1);
+
+          finally
+            Languages.Free;
+          end;
+
+          // Now all fields has been created. Reload the old data..
+          if (Merge) then
+          begin
+            TableTranslationMemory.Open;
+            if (Clone.Fields.Count > 0) then
+              TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
+          end;
+
+        finally
+          Clone.Free;
+        end;
+
+        if (not TableTranslationMemory.Active) then
+          TableTranslationMemory.Open;
+
+        (*
+        ** Create index of duplicates per languag
+        *)
+        Duplicates := TDuplicates.Create([doOwnsValues]);
+        try
+          if (Merge) then
+          begin
+            Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sIndexingTerms);
+
+            // Create one term list per language.
+            // Assume language[0] is the source language.
+            // A term list holds the target language terms that correspond to a given source language term.
+            SetLength(DuplicateTermsList, TableTranslationMemory.Fields.Count);
+
+            DuplicateTermsList[0] := nil;
+            for i := 1 to TableTranslationMemory.Fields.Count-1 do
+            begin
+              DuplicateTerms := TDuplicateTerms.Create([doOwnsValues], TTextComparer.Create);
+              DuplicateTermsList[i] := DuplicateTerms;
+              Duplicates.Add(TableTranslationMemory.Fields[i], DuplicateTerms);
+            end;
+
+            Field := TableTranslationMemory.Fields[0];
+
+            TableTranslationMemory.First;
+            while (not TableTranslationMemory.EOF) do
+            begin
+              Progress.AdvanceProgress;
+
+              // For each source language term...
+              SourceValue := Field.AsString;
+              SanitizedSourceValue := SanitizeText(SourceValue, False);
+
+              // ..., For each target language...
+              for i := 1 to TableTranslationMemory.Fields.Count-1 do
+              begin
+                // ... save the target term in the term list of the source language term
+                if (not DuplicateTermsList[i].TryGetValue(SanitizedSourceValue, DuplicateValues)) then
+                begin
+                  DuplicateValues := TDuplicateValues.Create;
+                  DuplicateTermsList[i].Add(SanitizedSourceValue, DuplicateValues);
+                end;
+
+                Duplicate.SourceValue := SourceValue;
+                Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
+                Duplicate.RecordID := TableTranslationMemory.RecNo;
+
+                DuplicateValues.Add(Duplicate);
+
+                if (Duplicate.Value.IsEmpty) then
+                  Inc(DuplicateValues.EmptyCount);
+              end;
+
+              TableTranslationMemory.Next;
+            end;
+            Progress.Progress(psEnd, 1, 1);
+          end;
+
 
           if (Merge) then
           begin
-            for i := 0 to TableTranslationMemory.Fields.Count-1 do
-              Languages.Add(TableTranslationMemory.Fields[i].FieldName, TableTranslationMemory.Fields[i]);
-          end else
-            TableTranslationMemory.Fields.Clear;
+            // Post all terms to the dataset as individual source/target values
+            FModified := True;
 
-          ItemNode := Body.ChildNodes.First;
-          while (ItemNode <> nil) do
-          begin
-            Progress.AdvanceProgress;
+            Progress.Progress(psBegin, 0, Translations.Count, sAddingTerms);
 
-            if (ItemNode.NodeName = 'tu') then
+            SourceField := TableTranslationMemory.Fields[0];
+            DuplicateAction := tmDupActionPrompt;
+
+            for i := 0 to Translations.Count-1 do
             begin
-              Terms := TTerms.Create;
-              Translations.Add(Terms);
+              Progress.AdvanceProgress;
 
-              LanguageNode := ItemNode.ChildNodes.First;
-              while (LanguageNode <> nil) do
-              begin
-                if (LanguageNode.NodeName = 'tuv') then
+              // Find source value
+              SourceIndex := -1;
+              for j := 0 to Translations[i].Count-1 do
+                if (Translations[i][j].Field = SourceField) then
                 begin
-                  Language := LanguageNode.Attributes['xml:lang'];
-
-                  LocaleItem := TLocaleItems.FindLocaleName(Language);
-                  if (LocaleItem <> nil) then
-                    LanguageName := LocaleItem.LocaleSName
-                  else
-                    LanguageName := Language;
-
-                  if (not Languages.TryGetValue(LanguageName, Field)) then
-                  begin
-                    Field := TWideMemoField.Create(TableTranslationMemory);
-
-                    if (LocaleItem <> nil) then
-                    begin
-                      Field.DisplayLabel := LocaleItem.LanguageName;
-                      Field.Tag := LocaleItem.Locale;
-                    end else
-                      ShowMessageFmt('Unknown language: %s', [Language]);
-
-                    Field.FieldName := LanguageName;
-                    Field.DataSet := TableTranslationMemory;
-                    Field.DisplayWidth := 100;
-                    Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
-
-                    Languages.Add(Language, Field);
-                  end;
-
-                  Term.Field := Field;
-                  Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
-
-                  Terms.Add(Term);
+                  SourceIndex := j;
+                  break;
                 end;
 
-                LanguageNode := LanguageNode.NextSibling;
-              end;
-            end;
-
-            ItemNode := ItemNode.NextSibling;
-          end;
-
-          Progress.Progress(psEnd, 1, 1);
-
-        finally
-          Languages.Free;
-        end;
-
-        // Now all fields has been created. Reload the old data..
-        if (Merge) then
-        begin
-          TableTranslationMemory.Open;
-          if (Clone.Fields.Count > 0) then
-            TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
-        end;
-
-      finally
-        Clone.Free;
-      end;
-
-      if (not TableTranslationMemory.Active) then
-        TableTranslationMemory.Open;
-
-      (*
-      ** Create index of duplicates per languag
-      *)
-      Duplicates := TDuplicates.Create([doOwnsValues]);
-      try
-        if (Merge) then
-        begin
-          Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sIndexingTerms);
-
-          // Create one term list per language.
-          // Assume language[0] is the source language.
-          // A term list holds the target language terms that correspond to a given source language term.
-          SetLength(DuplicateTermsList, TableTranslationMemory.Fields.Count);
-
-          DuplicateTermsList[0] := nil;
-          for i := 1 to TableTranslationMemory.Fields.Count-1 do
-          begin
-            DuplicateTerms := TDuplicateTerms.Create([doOwnsValues], TTextComparer.Create);
-            DuplicateTermsList[i] := DuplicateTerms;
-            Duplicates.Add(TableTranslationMemory.Fields[i], DuplicateTerms);
-          end;
-
-          Field := TableTranslationMemory.Fields[0];
-
-          TableTranslationMemory.First;
-          while (not TableTranslationMemory.EOF) do
-          begin
-            Progress.AdvanceProgress;
-
-            // For each source language term...
-            SourceValue := Field.AsString;
-            SanitizedSourceValue := SanitizeText(SourceValue, False);
-
-            // ..., For each target language...
-            for i := 1 to TableTranslationMemory.Fields.Count-1 do
-            begin
-              // ... save the target term in the term list of the source language term
-              if (not DuplicateTermsList[i].TryGetValue(SanitizedSourceValue, DuplicateValues)) then
-              begin
-                DuplicateValues := TDuplicateValues.Create;
-                DuplicateTermsList[i].Add(SanitizedSourceValue, DuplicateValues);
-              end;
-
-              Duplicate.SourceValue := SourceValue;
-              Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
-              Duplicate.RecordID := TableTranslationMemory.RecNo;
-
-              DuplicateValues.Add(Duplicate);
-
-              if (Duplicate.Value.IsEmpty) then
-                Inc(DuplicateValues.EmptyCount);
-            end;
-
-            TableTranslationMemory.Next;
-          end;
-          Progress.Progress(psEnd, 1, 1);
-        end;
-
-
-        if (Merge) then
-        begin
-          // Post all terms to the dataset as individual source/target values
-          FModified := True;
-
-          Progress.Progress(psBegin, 0, Translations.Count, sAddingTerms);
-
-          SourceField := TableTranslationMemory.Fields[0];
-          DuplicateAction := tmDupActionPrompt;
-
-          for i := 0 to Translations.Count-1 do
-          begin
-            Progress.AdvanceProgress;
-
-            // Find source value
-            SourceIndex := -1;
-            for j := 0 to Translations[i].Count-1 do
-              if (Translations[i][j].Field = SourceField) then
-              begin
-                SourceIndex := j;
-                break;
-              end;
-
-            // Ignore if no source value
-            if (SourceIndex = -1) then
-              continue;
-
-            SourceValue := Translations[i][SourceIndex].Value;
-            SanitizedSourceValue := SanitizeText(SourceValue, False);
-
-            for j := 0 to Translations[i].Count-1 do
-            begin
-              Field := Translations[i][j].Field;
-
-              if (Field = SourceField) then
+              // Ignore if no source value
+              if (SourceIndex = -1) then
                 continue;
 
-              DuplicateAction := DoAdd(SourceField, SourceValue, SanitizedSourceValue, Field, Translations[i][j].Value, Duplicates, Result, DuplicateAction);
+              SourceValue := Translations[i][SourceIndex].Value;
+              SanitizedSourceValue := SanitizeText(SourceValue, False);
 
+              for j := 0 to Translations[i].Count-1 do
+              begin
+                Field := Translations[i][j].Field;
+
+                if (Field = SourceField) then
+                  continue;
+
+                DuplicateAction := DoAdd(SourceField, SourceValue, SanitizedSourceValue, Field, Translations[i][j].Value, Duplicates, Result, DuplicateAction);
+
+                if (DuplicateAction = tmDupActionAbort) then
+                  break;
+              end;
               if (DuplicateAction = tmDupActionAbort) then
                 break;
             end;
-            if (DuplicateAction = tmDupActionAbort) then
-              break;
-          end;
-          Progress.Progress(psEnd, 1, 1);
-        end else
-        begin
-          Progress.Progress(psBegin, 0, Translations.Count, sLoadingTerms);
-
-          // Post all terms to the dataset, one row at a time
-          for i := 0 to Translations.Count-1 do
+            Progress.Progress(psEnd, 1, 1);
+          end else
           begin
-            Progress.AdvanceProgress;
+            Progress.Progress(psBegin, 0, Translations.Count, sLoadingTerms);
 
-            TableTranslationMemory.Append;
-            try
+            // Post all terms to the dataset, one row at a time
+            for i := 0 to Translations.Count-1 do
+            begin
+              Progress.AdvanceProgress;
 
-              for j := 0 to Translations[i].Count-1 do
-                Translations[i][j].Field.AsString := Translations[i][j].Value;
+              TableTranslationMemory.Append;
+              try
 
-              TableTranslationMemory.Post;
-            except
-              TableTranslationMemory.Cancel;
-              raise;
+                for j := 0 to Translations[i].Count-1 do
+                  Translations[i][j].Field.AsString := Translations[i][j].Value;
+
+                TableTranslationMemory.Post;
+              except
+                TableTranslationMemory.Cancel;
+                raise;
+              end;
             end;
+            Progress.Progress(psEnd, 1, 1);
+            FModified := False;
           end;
-          Progress.Progress(psEnd, 1, 1);
-          FModified := False;
+        finally
+          Duplicates.Free;
         end;
-      finally
-        Duplicates.Free;
-      end;
 
+      finally
+        Translations.Free;
+      end;
     finally
-      Translations.Free;
+      Unlock;
     end;
   finally
     TableTranslationMemory.EnableControls;
@@ -1010,11 +1349,12 @@ end;
 procedure TDataModuleTranslationMemory.TableTranslationMemoryAfterModify(DataSet: TDataSet);
 begin
   FModified := True;
+  FRefreshEvent.SetEvent;
 end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStringList): boolean;
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean;
 var
   List: TList<integer>;
   RecordIndex: integer;
@@ -1032,7 +1372,7 @@ begin
 
   for RecordIndex in List do
   begin
-    TableTranslationMemory.RecNo := RecordIndex+1;
+    TableTranslationMemory.RecNo := RecordIndex;
 
     TargetValue := TargetField.AsString;
 
@@ -1047,6 +1387,49 @@ begin
     Translations.Add(TargetValue);
   end;
 end;
+
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+var
+  SourceField: TField;
+  TargetField: TField;
+  SourceValue: string;
+begin
+  if (not CheckLoaded) then
+    Exit(False);
+
+  // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
+  if (not HasData) then
+    Exit(True);
+
+  SourceField := FindField(SourceLanguage);
+  TargetField := FindField(TargetLanguage);
+
+  if (SourceField = nil) or (TargetField = nil) or (SourceField = TargetField) then
+    // One or both languages doesn't exist in TM
+    Exit(False);
+
+  SourceValue := SanitizeText(Prop.Value, False);
+  Result := False;
+
+  // Create list of matching target terms
+  TableTranslationMemory.First;
+
+  while (not TableTranslationMemory.EOF) do
+  begin
+    if (not TargetField.IsNull) and (not SourceField.IsNull) then
+    begin
+      if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString, False))) then
+      begin
+        Result := True;
+        Translations.Add(TargetField.AsString);
+      end;
+    end;
+
+    TableTranslationMemory.Next;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
 
 function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
 var
@@ -1102,6 +1485,66 @@ begin
 
   finally
     Translations.Free;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TDataModuleTranslationMemory.Lock;
+begin
+  System.TMonitor.Enter(Self);
+end;
+
+procedure TDataModuleTranslationMemory.Unlock;
+begin
+  System.TMonitor.Exit(Self);
+end;
+
+procedure TDataModuleTranslationMemory.PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
+var
+  Clone: TFDMemTable;
+  SourceValue: string;
+begin
+  // It is the responsibility of the caller to lock Dictionary
+  Dictionary.Clear;
+
+  if (SourceField = nil) or (TargetField = nil) or (SourceField = TargetField) then
+    Exit;
+
+  Clone := TFDMemTable.Create(nil);
+  try
+    // Lock for the duration - we need the data to be stable while we iterate through it
+    // (clone shares data with source).
+    Lock;
+    try
+
+      Clone.CloneCursor(TableTranslationMemory);
+
+      SourceField := Clone.Fields.FieldByName(SourceField.FieldName);
+      TargetField := Clone.Fields.FieldByName(TargetField.FieldName);
+
+      // Create dictionary of source terms that has translations
+      Clone.First;
+
+      while (not Clone.EOF) do
+      begin
+        if (not TargetField.IsNull) and (not SourceField.IsNull) then
+        begin
+          SourceValue := SanitizeText(SourceField.AsString, False);
+
+          Dictionary.Add(SourceValue);
+        end;
+
+        Clone.Next;
+      end;
+
+    finally
+      Unlock;
+    end;
+
+
+  finally
+    Clone.Free;
   end;
 end;
 

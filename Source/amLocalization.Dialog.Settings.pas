@@ -258,6 +258,8 @@ type
     ComboBoxTargetLanguage: TcxExtLookupComboBox;
     dxLayoutItem30: TdxLayoutItem;
     ComboBoxApplicationLanguage: TcxExtLookupComboBox;
+    dxLayoutItem38: TdxLayoutItem;
+    CheckBoxTMBackgroundQuery: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -483,6 +485,7 @@ begin
   ** Translators section
   *)
   CheckBoxTMLoadOnDemand.Checked := TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand;
+  CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery;
 
   EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
   if (TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated) then
@@ -534,6 +537,7 @@ begin
   ** Translators section
   *)
   TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
+  TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
 
   TranslationManagerSettings.Translators.MicrosoftV3.APIKey := EditTranslatorMSAPIKey.Text;
   TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated := (EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex = 1);

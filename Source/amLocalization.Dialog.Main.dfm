@@ -246,6 +246,7 @@ object FormMain: TFormMain
         Top = 6
         AutoSize = False
         Caption = '0'
+        ParentFont = False
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taRightJustify
@@ -260,6 +261,7 @@ object FormMain: TFormMain
         Top = 26
         AutoSize = False
         Caption = '0'
+        ParentFont = False
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taRightJustify
@@ -273,6 +275,7 @@ object FormMain: TFormMain
         Left = 132
         Top = 6
         Caption = ' '
+        ParentFont = False
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taLeftJustify
@@ -373,6 +376,7 @@ object FormMain: TFormMain
     Styles.OnGetContentStyle = TreeListItemsStylesGetContentStyle
     TabOrder = 4
     OnClick = TreeListItemsClick
+    OnCustomDrawDataCell = TreeListItemsCustomDrawDataCell
     OnCustomDrawIndicatorCell = TreeListItemsCustomDrawIndicatorCell
     OnEditing = TreeListItemsEditing
     OnEditValueChanged = TreeListItemsEditValueChanged
@@ -380,6 +384,8 @@ object FormMain: TFormMain
     OnExit = TreeListModulesExit
     OnGetCellHint = TreeListItemsGetCellHint
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
+    OnMouseDown = TreeListItemsMouseDown
+    OnMouseMove = TreeListItemsMouseMove
     ExplicitTop = 125
     ExplicitHeight = 495
     object TreeListColumnItemName: TcxTreeListColumn
@@ -1349,6 +1355,7 @@ object FormMain: TFormMain
     end
   end
   object SkinController: TdxSkinController
+    Kind = lfOffice11
     NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
@@ -5577,5 +5584,66 @@ object FormMain: TFormMain
     Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
     Left = 556
     Top = 416
+  end
+  object TimerHint: TTimer
+    Enabled = False
+    OnTimer = TimerHintTimer
+    Left = 616
+    Top = 244
+  end
+  object HintStyleController: TcxHintStyleController
+    Global = False
+    HintStyleClassName = 'TdxScreenTipStyle'
+    HintStyle.ScreenTipLinks = <>
+    HintStyle.ScreenTipActionLinks = <>
+    HintHidePause = 5000
+    Left = 616
+    Top = 332
+  end
+  object ScreenTipRepository: TdxScreenTipRepository
+    AssignedFonts = [stbFooter]
+    FooterFont.Charset = DEFAULT_CHARSET
+    FooterFont.Color = clGray
+    FooterFont.Height = -12
+    FooterFont.Name = 'Segoe UI'
+    FooterFont.Style = []
+    Left = 616
+    Top = 288
+    PixelsPerInch = 96
+    object ScreenTipTranslationMemory: TdxScreenTip
+      Header.Glyph.SourceDPI = 96
+      Header.Glyph.Data = {
+        89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+        610000000F744558745469746C65004E6F74653B54657874D1F89A4D00000232
+        49444154785EA591CD4B156114879F3333F763EE47A586646569044260B98808
+        325C18148651B8095A45D0A24DED5BB6AAA05DB42808FA07C2A042EA22641F64
+        2415292582D026B145E9ED7E78E7BEEFE93A776671C55D3F38735ECE99F3CCEF
+        BCE3A92AFF234F1A021C40A2E0E0C895E4DEC367AE5B712F4B229B0F82DA9F72
+        F1F7C5A93BE75ED294058C36E401CEF4BDB182E3CA9028284AA1D8C39C97A54A
+        9ED3473B09EAA6F3D1E30F4FDFDF3D8B88432D30538357C78781C0035CC76168
+        60F43CA8052CB7EEFB9C38798089D78BB802DF974B94CA01DBFBFAE9EEED62E6
+        D9C471C08B01A2464195DAD78728502C5E2030864C5B1B0F9ECC51AD5428FD5A
+        E0E7C7E7EC6A1F24BA3721A288B596B0E62643D0F0CE6F145EE4C8F5F4D3D1BD
+        9B85E94906BC4F54D7A05E176CDD6E042808E026C27469609EC5F115DECECE10
+        AC55E84BFD60A46B9E7436D70018ACB1000E3140C382205E0A05D2C08DD16566
+        3F7F6169E92F6A2DF92D19B675E45171316693154225D2080A809F4871E8482F
+        FB4B358AAB15829AC1CF2431564207AD00A3200E783E0268D44D7A8A9BCAE0E7
+        F2D48DC51A83E3A5D7730BC0693A7090D881086813E326C0492929AB185D0766
+        894C4ACB1D88E7E3F81DC40A41B19FE8E92248622BBA7105AD2B7859C4DFB1E9
+        3008A2D167BD1CD66ACB5FC0580B8D8664F74573DA0C51203A139F85F63DBDC0
+        243120582D076F0A37AF1D0389DE8D07435A93873679C04A257807ACC580EAD8
+        ED57A780142051C4125A15EF55052A00FF0033C70420B6E7BAAB000000004945
+        4E44AE426082}
+      Header.Text = 'Translation Memory'
+      Description.PlainText = False
+      Description.Text = 
+        '{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fnil\fcharset0 Segoe ' +
+        'UI;}{\f1\fnil\fcharset2 Symbol;}}'#13#10'{\colortbl ;\red76\green76\bl' +
+        'ue76;\red0\green128\blue255;}'#13#10'\viewkind4\uc1\pard\cf1\lang1030\' +
+        'f0\fs18 Lorem ipsum dolor:\par'#13#10'\pard{\pntext\f1\'#39'B7\tab}{\*\pn\' +
+        'pnlvlblt\pnf1\pnindent0{\pntxtb\'#39'B7}}\fi-200\li200\cf2 One\cf1\p' +
+        'ar'#13#10'\cf2{\pntext\f1\'#39'B7\tab}Two\cf1\par'#13#10'}'#13#10
+      Footer.Text = 'Click to translate from Translation Memory'
+    end
   end
 end
