@@ -19,6 +19,7 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
   amLocale,
+  amProgressForm,
   amLocalization.Model,
   amLocalization.Translator,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
@@ -108,7 +109,8 @@ type
     function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
     function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
-    function LoadTranslationMemory(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats;
+    function LoadTranslationMemory(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
+    function LoadTranslationMemory(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
     procedure SaveTranslationMemory(const Filename: string);
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
@@ -121,6 +123,16 @@ type
     property HasData: boolean read GetHasData;
     property Modified: boolean read FModified;
   end;
+
+// -----------------------------------------------------------------------------
+
+resourcestring
+  sTranslationMemoryLoading = 'Loading Translation Memory';
+  sTranslationMemoryReadingTerms = 'Reading terms...';
+  sTranslationMemoryIndexingTerms = 'Indexing terms...';
+  sTranslationMemoryAddingTerms = 'Adding terms...';
+  sTranslationMemoryLoadingTerms = 'Loading terms...';
+  sTranslationMemorySaving = 'Saving Translation Memory';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -145,7 +157,6 @@ uses
   cxGraphics,
   amCursorService,
   amVersionInfo,
-  amProgressForm,
   amLocalization.Settings,
   amLocalization.Utils;
 
@@ -949,6 +960,14 @@ end;
 
 function TDataModuleTranslationMemory.LoadTranslationMemory(const Filename: string; Merge: boolean): TTranslationMemoryMergeStats;
 var
+  DuplicateAction: TTranslationMemoryDuplicateAction;
+begin
+  DuplicateAction := tmDupActionPrompt;
+  Result := LoadTranslationMemory(Filename, DuplicateAction, Merge);
+end;
+
+function TDataModuleTranslationMemory.LoadTranslationMemory(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean; const Progress: IProgress): TTranslationMemoryMergeStats;
+var
   Duplicates: TDuplicates;
   DuplicateTermsList: array of TDuplicateTerms;
   DuplicateTerms: TDuplicateTerms;
@@ -971,16 +990,10 @@ var
   s: string;
   SourceValue, SanitizedSourceValue: string;
   SourceIndex: integer;
-  SourceField: TField;
+  SourceLanguage, SourceLanguageTU: string;
+  SourceField, SourceFieldTU: TField;
   FieldMap: array of integer;
-  DuplicateAction: TTranslationMemoryDuplicateAction;
-  Progress: IProgress;
-resourcestring
-  sLoading = 'Loading Translation Memory';
-  sReadingTerms = 'Reading terms...';
-  sIndexingTerms = 'Indexing terms...';
-  sAddingTerms = 'Adding terms...';
-  sLoadingTerms = 'Loading terms...';
+  LocalProgress: IProgress;
 begin
   Result := Default(TTranslationMemoryMergeStats);
 
@@ -992,9 +1005,23 @@ begin
   if (XML.DocumentElement.NodeName <> 'tmx') then
     raise Exception.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
 
+  SourceLanguage := '';
+
   Node := XML.DocumentElement.ChildNodes.FindNode('header');
   if (Node <> nil) and (not Merge) then
   begin
+    SourceLanguage := VarToStr(Node.Attributes['srclang']);
+    if (AnsisameText(SourceLanguage, '*all*')) then
+      // *all* is pretty meaningless for us, so ignore it
+      SourceLanguage := '';
+
+    if (SourceLanguage <> '') then
+    begin
+      LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
+      if (LocaleItem <> nil) then
+        SourceLanguage := LocaleItem.LocaleSName;
+    end;
+
     s := VarToStr(Node.Attributes['creationdate']);
     if (s.IsEmpty) or (not TryISO8601ToDate(s, FCreateDate, True)) then
       FCreateDate := Now;
@@ -1004,8 +1031,15 @@ begin
   if (Body = nil) then
     raise Exception.Create('xliff node not found: tmx\body');
 
-  Progress := ShowProgress(sLoading);
-  Progress.Progress(psBegin, 0, Body.ChildNodes.Count, sReadingTerms);
+  if (Progress = nil) then
+    LocalProgress := ShowProgress(sTranslationMemoryLoading)
+  else
+    LocalProgress := nil;
+
+  if (Progress <> nil) then
+    Progress.UpdateMessage(sTranslationMemoryLoading)
+  else
+    LocalProgress.Progress(psBegin, 0, Body.ChildNodes.Count, sTranslationMemoryReadingTerms);
 
   TableTranslationMemory.DisableControls;
   try
@@ -1035,22 +1069,31 @@ begin
             end else
               TableTranslationMemory.Fields.Clear;
 
+            SourceLanguageTU := '';
+
             ItemNode := Body.ChildNodes.First;
             while (ItemNode <> nil) do
             begin
-              Progress.AdvanceProgress;
+              if (LocalProgress <> nil) then
+                LocalProgress.AdvanceProgress;
 
               if (ItemNode.NodeName = 'tu') then
               begin
                 Terms := TTerms.Create;
                 Translations.Add(Terms);
 
+                // If header didn't specify a source language, then the individual translation unit must do so
+                if (SourceLanguage = '') then
+                  SourceLanguageTU := VarToStr(ItemNode.Attributes['srclang']);
+
                 LanguageNode := ItemNode.ChildNodes.First;
                 while (LanguageNode <> nil) do
                 begin
                   if (LanguageNode.NodeName = 'tuv') then
                   begin
-                    Language := LanguageNode.Attributes['xml:lang'];
+                    Language := VarToStr(LanguageNode.Attributes['xml:lang']);
+                    if (Language = '') then
+                      Language := VarToStr(LanguageNode.Attributes['lang']); // Seen in the EU TMX files
 
                     LocaleItem := TLocaleItems.FindLocaleName(Language);
                     if (LocaleItem <> nil) then
@@ -1074,13 +1117,17 @@ begin
                       Field.DisplayWidth := 100;
                       Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
 
-                      Languages.Add(Language, Field);
+                      Languages.Add(LanguageName, Field);
                     end;
 
                     Term.Field := Field;
                     Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
 
-                    Terms.Add(Term);
+                    if (Terms.Count > 0) and (SourceLanguageTU = Language) then
+                      // Identify per-TU source language as the first in the first
+                      Terms.Insert(0, Term)
+                    else
+                      Terms.Add(Term);
                   end;
 
                   LanguageNode := LanguageNode.NextSibling;
@@ -1090,7 +1137,8 @@ begin
               ItemNode := ItemNode.NextSibling;
             end;
 
-            Progress.Progress(psEnd, 1, 1);
+            if (LocalProgress <> nil) then
+              LocalProgress.Progress(psEnd, 1, 1);
 
           finally
             Languages.Free;
@@ -1118,7 +1166,10 @@ begin
         try
           if (Merge) then
           begin
-            Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sIndexingTerms);
+            if (Progress <> nil) then
+              Progress.UpdateMessage(sTranslationMemoryIndexingTerms)
+            else
+              LocalProgress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sTranslationMemoryIndexingTerms);
 
             // Create one term list per language.
             // Assume language[0] is the source language.
@@ -1138,7 +1189,8 @@ begin
             TableTranslationMemory.First;
             while (not TableTranslationMemory.EOF) do
             begin
-              Progress.AdvanceProgress;
+              if (LocalProgress <> nil) then
+                LocalProgress.AdvanceProgress;
 
               // For each source language term...
               SourceValue := Field.AsString;
@@ -1166,7 +1218,8 @@ begin
 
               TableTranslationMemory.Next;
             end;
-            Progress.Progress(psEnd, 1, 1);
+            if (LocalProgress <> nil) then
+              LocalProgress.Progress(psEnd, 1, 1);
           end;
 
 
@@ -1175,23 +1228,41 @@ begin
             // Post all terms to the dataset as individual source/target values
             FModified := True;
 
-            Progress.Progress(psBegin, 0, Translations.Count, sAddingTerms);
+            if (Progress <> nil) then
+              Progress.UpdateMessage(sTranslationMemoryAddingTerms)
+            else
+              LocalProgress.Progress(psBegin, 0, Translations.Count, sTranslationMemoryAddingTerms);
 
-            SourceField := TableTranslationMemory.Fields[0];
-            DuplicateAction := tmDupActionPrompt;
+            // Find the source field corresponding to the source language specified in the header
+            if (SourceLanguage <> '') then
+              SourceField := TableTranslationMemory.Fields.FindField(SourceLanguage)
+            else
+              SourceField := nil;
 
             for i := 0 to Translations.Count-1 do
             begin
-              Progress.AdvanceProgress;
+              if (LocalProgress <> nil) then
+                LocalProgress.AdvanceProgress;
 
-              // Find source value
-              SourceIndex := -1;
-              for j := 0 to Translations[i].Count-1 do
-                if (Translations[i][j].Field = SourceField) then
-                begin
-                  SourceIndex := j;
-                  break;
-                end;
+              if (SourceField <> nil) then
+              begin
+                // Find source value
+                SourceIndex := -1;
+                for j := 0 to Translations[i].Count-1 do
+                  if (Translations[i][j].Field = SourceField) then
+                  begin
+                    SourceIndex := j;
+                    break;
+                  end;
+                SourceFieldTU := SourceField;
+              end else
+              if (Translations[i].Count > 0) then
+              begin
+                // Assume first language is source
+                SourceIndex := 0;
+                SourceFieldTU := Translations[i][0].Field;
+              end else
+                continue;
 
               // Ignore if no source value
               if (SourceIndex = -1) then
@@ -1204,10 +1275,10 @@ begin
               begin
                 Field := Translations[i][j].Field;
 
-                if (Field = SourceField) then
+                if (Field = SourceFieldTU) then
                   continue;
 
-                DuplicateAction := DoAdd(SourceField, SourceValue, SanitizedSourceValue, Field, Translations[i][j].Value, Duplicates, Result, DuplicateAction);
+                DuplicateAction := DoAdd(SourceFieldTU, SourceValue, SanitizedSourceValue, Field, Translations[i][j].Value, Duplicates, Result, DuplicateAction);
 
                 if (DuplicateAction = tmDupActionAbort) then
                   break;
@@ -1215,15 +1286,20 @@ begin
               if (DuplicateAction = tmDupActionAbort) then
                 break;
             end;
-            Progress.Progress(psEnd, 1, 1);
+            if (LocalProgress <> nil) then
+              LocalProgress.Progress(psEnd, 1, 1);
           end else
           begin
-            Progress.Progress(psBegin, 0, Translations.Count, sLoadingTerms);
+            if (Progress <> nil) then
+              Progress.UpdateMessage(sTranslationMemoryLoadingTerms)
+            else
+              LocalProgress.Progress(psBegin, 0, Translations.Count, sTranslationMemoryLoadingTerms);
 
             // Post all terms to the dataset, one row at a time
             for i := 0 to Translations.Count-1 do
             begin
-              Progress.AdvanceProgress;
+              if (LocalProgress <> nil) then
+                LocalProgress.AdvanceProgress;
 
               TableTranslationMemory.Append;
               try
@@ -1236,8 +1312,10 @@ begin
                 TableTranslationMemory.Cancel;
                 raise;
               end;
+              Inc(Result.Added);
             end;
-            Progress.Progress(psEnd, 1, 1);
+            if (LocalProgress <> nil) then
+              LocalProgress.Progress(psEnd, 1, 1);
             FModified := False;
           end;
         finally
@@ -1267,6 +1345,7 @@ var
   LanguageNode: IXMLNode;
   i: integer;
   TempFilename, BackupFilename: string;
+  Progress: IProgress;
 begin
   XML := TXMLDocument.Create(nil);
   XML.Active := True;
@@ -1291,25 +1370,46 @@ begin
 
   if (HasData) then
   begin
-    TableTranslationMemory.First;
+    SaveCursor(crAppStart);
 
-    while (not TableTranslationMemory.EOF) do
-    begin
-      ItemNode := Body.AddChild('tu');
+    Progress := ShowProgress(sTranslationMemorySaving);
+    Progress.EnableAbort := True;
 
-      for i := 0 to TableTranslationMemory.FieldCount-1 do
+    Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount);
+
+    TableTranslationMemory.DisableControls;
+    try
+      TableTranslationMemory.First;
+
+      while (not TableTranslationMemory.EOF) and (not Progress.Aborted) do
       begin
-        if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
-        begin
-          LanguageNode := ItemNode.AddChild('tuv');
-          LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-          LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
-        end;
-      end;
+        Progress.AdvanceProgress;
 
-      TableTranslationMemory.Next;
+        ItemNode := Body.AddChild('tu');
+
+        for i := 0 to TableTranslationMemory.FieldCount-1 do
+        begin
+          if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
+          begin
+            LanguageNode := ItemNode.AddChild('tuv');
+            LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
+            LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
+          end;
+        end;
+
+        TableTranslationMemory.Next;
+      end;
+    finally
+      TableTranslationMemory.EnableControls;
     end;
+
+    if (Progress.Aborted) then
+      Exit;
+
+    Progress.Progress(psEnd, 1, 1);
   end;
+
+  SaveCursor(crHourglass);
 
   TempFilename := Filename;
 

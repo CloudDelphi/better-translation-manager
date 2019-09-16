@@ -66,6 +66,7 @@ type
 resourcestring
   sTranslationMemoryAddCompleteTitle = 'Translation added';
   sTranslationMemoryAddMergeCompleteTitle = 'Merge completed';
+  sTranslationMemoryAddOpenCompleteTitle = 'Translation Memory opened';
   sTranslationMemoryAddComplete = 'The translations were added to the Translation Memory.'#13#13+
     'Values added: %.0n'#13+
     'Values merged: %.0n'#13+
@@ -81,6 +82,7 @@ uses
   UITypes,
   amCursorService,
   amLocale,
+  amProgressForm,
   amLocalization.Settings,
   amLocalization.Data.Main;
 
@@ -178,7 +180,12 @@ procedure TFormTranslationMemory.ButtonLoadClick(Sender: TObject);
 var
   Merge: boolean;
   Res: Word;
-  Stats: TTranslationMemoryMergeStats;
+  Stats, OneStats: TTranslationMemoryMergeStats;
+  Filename: string;
+  First: boolean;
+  Title: string;
+  DuplicateAction: TTranslationMemoryDuplicateAction;
+  Progress: IProgress;
 resourcestring
   sLoadTranslationMemoryMergeTitle = 'Merge translation memory';
   sLoadTranslationMemoryMerge = 'Do you want to merge the selected file into your existing translation memory?'+#13#13+
@@ -206,15 +213,48 @@ begin
 
   SaveCursor(crHourGlass);
 
-
   SaveLayout;
 
   GridTMDBTableView.BeginUpdate;
   try
-    Stats := FDataModuleTranslationMemory.LoadTranslationMemory(OpenDialogTMX.FileName, Merge);
+    Stats := Default(TTranslationMemoryMergeStats);
+    First := True;
+    DuplicateAction := tmDupActionPrompt;
+    if (OpenDialogTMX.Files.Count > 1) then
+    begin
+      Progress := ShowProgress(sTranslationMemoryLoading);
+      Progress.EnableAbort := True;
+      Progress.Progress(psBegin, 0, OpenDialogTMX.Files.Count);
+      SaveCursor(crAppStart);
+    end else
+    begin
+      Progress := nil;
+      SaveCursor(crHourGlass);
+    end;
 
-    if (not Merge) then
-      TranslationManagerSettings.Translators.TranslationMemory.Filename := OpenDialogTMX.FileName;
+    for Filename in OpenDialogTMX.Files do
+    begin
+      if (Progress <> nil) then
+        Progress.AdvanceProgress;
+      OneStats := FDataModuleTranslationMemory.LoadTranslationMemory(Filename, DuplicateAction, Merge, Progress);
+
+      if (First) and (not Merge) then
+        TranslationManagerSettings.Translators.TranslationMemory.Filename := Filename;
+      First := False;
+
+      Merge := True; // Additional files will be merged
+
+      Inc(Stats.Added, OneStats.Added);
+      Inc(Stats.Merged, OneStats.Merged);
+      Inc(Stats.Skipped, OneStats.Skipped);
+      Inc(Stats.Duplicate, OneStats.Duplicate);
+
+      if (DuplicateAction = tmDupActionAbort) or ((Progress <> nil) and (Progress.Aborted)) then
+        break;
+    end;
+
+    if (Progress <> nil) then
+      Progress.Progress(psEnd, 1, 1);
 
     CreateColumns;
 
@@ -222,14 +262,18 @@ begin
     GridTMDBTableView.EndUpdate;
   end;
 
+  Progress := nil;
+
   RestoreLayout;
 
   if (Merge) then
-  begin
-    TaskMessageDlg(sTranslationMemoryAddMergeCompleteTitle,
-      Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
-      mtInformation, [mbOK], 0);
-  end;
+    Title := sTranslationMemoryAddMergeCompleteTitle
+  else
+    Title := sTranslationMemoryAddOpenCompleteTitle;
+
+  TaskMessageDlg(Title,
+    Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+    mtInformation, [mbOK], 0);
 end;
 
 procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);

@@ -491,6 +491,7 @@ type
     procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure DisplayModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
+    procedure TranslationAdded(Prop: TLocalizerProperty);
   protected
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
@@ -1455,11 +1456,25 @@ begin
     Exit;
   end;
 
-  if (FTranslationMemoryPeek = nil) or (Force) then
+  if (FProject.Modules.Count > 0) and ((FTranslationMemoryPeek = nil) or (Force)) then
   begin
     FTranslationMemoryPeek := FDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguageID, TargetLanguageID, TranslationMemoryPeekHandler);
     QueueTranslationMemoryPeek;
   end;
+end;
+
+procedure TFormMain.TranslationAdded(Prop: TLocalizerProperty);
+begin
+  (*
+  ** 1. Check if translation doesn't exist in TM and
+  **    a) Other identical translations of same term exist.
+  **    b) Term exist in TM but with other translation.
+  ** 2. Suggest to user that translation be added to TM:
+  **    "The translation you just made appears to be common.
+  **     It is suggested that you add this translation to the Translation Memory
+  **     so it can be reused for future translations."
+  **
+  *)
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
@@ -2832,6 +2847,8 @@ begin
     TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
 
     LoadItem(Prop);
+
+    TranslationAdded(Prop);
   end;
 end;
 
@@ -2853,6 +2870,8 @@ begin
     TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
 
     LoadItem(Prop);
+
+    TranslationAdded(Prop);
   end;
 end;
 
@@ -4499,26 +4518,31 @@ end;
 
 procedure TFormMain.TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
 var
+  Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  if (AColumn = TreeListColumnTarget) then
-  begin
-    if (FUpdateLockCount > 0) then
-      exit;
+  if (AColumn <> TreeListColumnTarget) then
+    Exit;
 
-    LockUpdates;
-    try
+  if (FUpdateLockCount > 0) then
+    Exit;
 
-      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguage, VarToStr(Sender.InplaceEditor.EditValue));
-      Translation.UpdateWarnings;
+  Prop := FocusedProperty;
 
-      TreeListItems.FocusedNode.Data := pointer(TTranslationMemoryPeekResult.prNone);
+  LockUpdates;
+  try
 
-      LoadFocusedPropertyNode;
-    finally
-      UnlockUpdates;
-    end;
+    Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, VarToStr(Sender.InplaceEditor.EditValue));
+    Translation.UpdateWarnings;
+
+    TreeListItems.FocusedNode.Data := pointer(TTranslationMemoryPeekResult.prNone);
+
+    LoadFocusedPropertyNode;
+  finally
+    UnlockUpdates;
   end;
+
+  TranslationAdded(Prop);
 end;
 
 procedure TFormMain.TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);

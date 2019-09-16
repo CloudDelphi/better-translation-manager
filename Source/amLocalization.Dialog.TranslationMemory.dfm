@@ -174,7 +174,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
   end
   object OpenDialogTMX: TOpenDialog
     Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
-    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Options = [ofHideReadOnly, ofAllowMultiSelect, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 120
     Top = 224
   end
