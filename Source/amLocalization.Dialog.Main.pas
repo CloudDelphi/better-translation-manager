@@ -273,6 +273,8 @@ type
     HintStyleController: TcxHintStyleController;
     ScreenTipRepository: TdxScreenTipRepository;
     ScreenTipTranslationMemory: TdxScreenTip;
+    dxBarButton35: TdxBarButton;
+    ActionAbout: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -370,6 +372,7 @@ type
     procedure TreeListItemsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure TimerHintTimer(Sender: TObject);
     procedure TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ActionAboutExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -572,6 +575,7 @@ uses
   amCursorService,
   amVersionInfo,
   amShell,
+  amSplash,
 
   amLocalization.Engine,
   amLocalization.ResourceWriter,
@@ -1153,6 +1157,21 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionAboutExecute(Sender: TObject);
+var
+  FormSplash: TFormSplash;
+begin
+  FormSplash := TFormSplash.Create(nil);
+  try
+    FormSplash.Version := TVersionInfo.FileVersionString(Application.ExeName);
+    FormSplash.DisplayBannerResource('CREDITS', 'TEXT');
+
+    FormSplash.Execute(False);
+  except
+    FormSplash.Free;
+  end;
+end;
 
 procedure TFormMain.ActionAutomationMemoryAddExecute(Sender: TObject);
 var

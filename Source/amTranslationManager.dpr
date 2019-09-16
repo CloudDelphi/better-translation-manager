@@ -19,6 +19,7 @@ uses
   Windows,
   amLocale,
   amVersionInfo,
+  amSplash,
   DelphiDabbler.SingleInstance,
   amLocalization.Dialog in 'amLocalization.Dialog.pas' {FormDialog},
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {FormMain},
@@ -265,6 +266,22 @@ begin
     TranslationManagerSettings.System.SetSafeMode;
 end;
 
+function GetApplicationTitle: string;
+var
+  VersionInfo: TVersionInfo;
+begin
+  VersionInfo := TVersionInfo.Create(Application.ExeName);
+  try
+
+    Result := VersionInfo['FileDescription'];
+    if (Result.IsEmpty) then
+      Result := VersionInfo['ProductName'];
+
+  finally
+    VersionInfo.Free;
+  end;
+end;
+
 begin
   // Grab restart semaphore.
   // If we were restarted then a previous instance of the application will have grabbed the semaphore before lauching this instance
@@ -299,6 +316,18 @@ begin
 
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
+  Application.Title := GetApplicationTitle;
+
+  if (ParamCount = 0) then//and (not IsDebuggerPresent) then
+  begin
+    with TFormSplash.Create(nil) do
+      Execute;
+  end;
+
   Application.CreateForm(TFormMain, FormMain);
+
+  // Make sure main form does not activate when it is shown as this would cause the
+  // splash to hide itself.
+  ShowWindow(FormMain.Handle, SW_SHOWNA);
   Application.Run;
 end.
