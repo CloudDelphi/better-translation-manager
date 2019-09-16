@@ -2054,7 +2054,6 @@ inherited FormSettings: TFormSettings
         BevelOuter = bvNone
         Color = 16053234
         FullRepaint = False
-        ParentBackground = False
         ShowCaption = False
         TabOrder = 0
         object ButtonCategoryGeneral: TcxButton

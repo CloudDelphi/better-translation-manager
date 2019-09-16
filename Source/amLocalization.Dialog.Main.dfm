@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -67,7 +68,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -1355,7 +1355,6 @@ object FormMain: TFormMain
     end
   end
   object SkinController: TdxSkinController
-    Kind = lfOffice11
     NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
