@@ -65,13 +65,14 @@ type
 
 resourcestring
   sTranslationMemoryAddCompleteTitle = 'Translation added';
-  sTranslationMemoryAddMergeCompleteTitle = 'Merge completed';
-  sTranslationMemoryAddOpenCompleteTitle = 'Translation Memory opened';
-  sTranslationMemoryAddComplete = 'The translations were added to the Translation Memory.'#13#13+
+  sTranslationMemoryMergeCompleteTitle = 'Merge completed';
+  sTranslationMemoryMergeComplete = 'The translations were added to the Translation Memory.'#13#13+
     'Values added: %.0n'#13+
     'Values merged: %.0n'#13+
     'Values skipped: %.0n'#13+
     'Duplicate values: %.0n';
+  sTranslationMemoryOpenCompleteTitle = 'Translation Memory opened';
+  sTranslationMemoryOpenComplete = 'Values read: %.0n';
 
 implementation
 
@@ -186,6 +187,7 @@ var
   Title: string;
   DuplicateAction: TTranslationMemoryDuplicateAction;
   Progress: IProgress;
+  MergeFile: boolean;
 resourcestring
   sLoadTranslationMemoryMergeTitle = 'Merge translation memory';
   sLoadTranslationMemoryMerge = 'Do you want to merge the selected file into your existing translation memory?'+#13#13+
@@ -232,17 +234,20 @@ begin
       SaveCursor(crHourGlass);
     end;
 
+    MergeFile := Merge;
+
     for Filename in OpenDialogTMX.Files do
     begin
       if (Progress <> nil) then
         Progress.AdvanceProgress;
-      OneStats := FDataModuleTranslationMemory.LoadTranslationMemory(Filename, DuplicateAction, Merge, Progress);
 
-      if (First) and (not Merge) then
+      OneStats := FDataModuleTranslationMemory.LoadTranslationMemory(Filename, DuplicateAction, MergeFile, Progress);
+
+      if (First) and (not MergeFile) then
         TranslationManagerSettings.Translators.TranslationMemory.Filename := Filename;
-      First := False;
 
-      Merge := True; // Additional files will be merged
+      First := False;
+      MergeFile := True; // Additional files will be merged
 
       Inc(Stats.Added, OneStats.Added);
       Inc(Stats.Merged, OneStats.Merged);
@@ -267,13 +272,16 @@ begin
   RestoreLayout;
 
   if (Merge) then
-    Title := sTranslationMemoryAddMergeCompleteTitle
-  else
-    Title := sTranslationMemoryAddOpenCompleteTitle;
-
-  TaskMessageDlg(Title,
-    Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
-    mtInformation, [mbOK], 0);
+  begin
+    TaskMessageDlg(sTranslationMemoryMergeCompleteTitle,
+      Format(sTranslationMemoryMergeComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+      mtInformation, [mbOK], 0);
+  end else
+  begin
+    TaskMessageDlg(sTranslationMemoryOpenCompleteTitle,
+      Format(sTranslationMemoryOpenComplete, [Stats.Added * 1.0]),
+      mtInformation, [mbOK], 0);
+  end;
 end;
 
 procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);

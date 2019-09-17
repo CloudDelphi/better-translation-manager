@@ -1246,7 +1246,7 @@ begin
   QueueTranslationMemoryPeek;
 
   TaskMessageDlg(sTranslationMemoryAddCompleteTitle,
-    Format(sTranslationMemoryAddComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+    Format(sTranslationMemoryMergeComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
     mtInformation, [mbOK], 0);
 end;
 
