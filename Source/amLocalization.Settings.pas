@@ -100,18 +100,29 @@ type
 
 
 type
-  TTranslationManagerFolder = (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
+  TTranslationManagerFolder = (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck, tmFolderTMX);
 
+type
   TTranslationManagerFolderSettings = class(TConfigurationSection)
   strict private
     FValid: boolean;
     FRecentFiles: TConfigurationStringList;
     FRecentApplications: TConfigurationStringList;
     FFolders: array[TTranslationManagerFolder] of string;
+  strict private const
+    sFolderDisplayName: array[TTranslationManagerFolder] of string = ( // TODO : Localization
+      'Skins (user)',
+      'Skins (system)',
+      'Spell Check dictionaries (user)',
+      'Spell Check dictionaries (system)',
+      'TMX translation memory files'
+      );
   private
     function GetFolder(Index: TTranslationManagerFolder): string;
     procedure SetFolder(Index: TTranslationManagerFolder; const Value: string);
+    function GetFolderName(Index: TTranslationManagerFolder): string;
     class function GetDocumentFolder: string; static;
+    function GetFolderReadOnly(Index: TTranslationManagerFolder): boolean;
   protected
     procedure ApplyDefault; override;
     procedure ReadSection(const Key: string); override;
@@ -123,6 +134,8 @@ type
     procedure ResetSettings;
 
     property Folder[Index: TTranslationManagerFolder]: string read GetFolder write SetFolder;
+    property FolderName[Index: TTranslationManagerFolder]: string read GetFolderName;
+    property FolderReadOnly[Index: TTranslationManagerFolder]: boolean read GetFolderReadOnly;
 
     class property DocumentFolder: string read GetDocumentFolder;
   published
@@ -132,19 +145,11 @@ type
     property FolderUserSkins: string index tmFolderUserSkins read GetFolder write SetFolder;
     property FolderSpellCheck: string index tmFolderSpellCheck read GetFolder write SetFolder;
     property FolderUserSpellCheck: string index tmFolderUserSpellCheck read GetFolder write SetFolder;
+    property FolderTMX: string index tmFolderTMX read GetFolder write SetFolder;
 
     property RecentFiles: TConfigurationStringList read FRecentFiles;
     property RecentApplications: TConfigurationStringList read FRecentApplications;
   end;
-
-const
-  // TODO : Localization
-  sFolderDisplayName: array[TTranslationManagerFolder] of string = (
-    'Skins (user)',
-    'Skins (system)',
-    'Spell Check dictionaries (user)',
-    'Spell Check dictionaries (system)'
-    );
 
 type
   TTranslationManagerTranslatorMicrosoftV3Settings = class(TConfigurationSection)
@@ -162,12 +167,14 @@ type
     FFilename: string;
     FLoadOnDemand: boolean;
     FBackgroundQuery: boolean;
+    FPromptToSave: boolean;
   protected
     procedure ApplyDefault; override;
   public
   published
     property Filename: string read FFilename write FFilename;
     property LoadOnDemand: boolean read FLoadOnDemand write FLoadOnDemand default True;
+    property PromptToSave: boolean read FPromptToSave write FPromptToSave default False;
     property BackgroundQuery: boolean read FBackgroundQuery write FBackgroundQuery default True;
   end;
 
@@ -233,8 +240,10 @@ type
     FMaxCount: integer;
     FMaxSize: int64;
     FAutoRecover: boolean;
+    FSaveBackups: boolean;
   public
   published
+    property SaveBackups: boolean read FSaveBackups write FSaveBackups default True;
     property MaxCount: integer read FMaxCount write FMaxCount default 5;
     property MaxSize: int64 read FMaxSize write FMaxSize default 10; // In Mb
     property AutoRecover: boolean read FAutoRecover write FAutoRecover;
@@ -335,7 +344,8 @@ uses
   Math,
   Types,
   cxPropertiesStore,
-  amVersionInfo;
+  amVersionInfo,
+  amLocalization.Translator.TM;
 
 //------------------------------------------------------------------------------
 //
@@ -520,6 +530,16 @@ begin
   Result := IncludeTrailingPathDelimiter(FFolders[Index]);
 end;
 
+function TTranslationManagerFolderSettings.GetFolderName(Index: TTranslationManagerFolder): string;
+begin
+  Result := sFolderDisplayName[Index];
+end;
+
+function TTranslationManagerFolderSettings.GetFolderReadOnly(Index: TTranslationManagerFolder): boolean;
+begin
+  Result := False; // For now...
+end;
+
 procedure TTranslationManagerFolderSettings.SetFolder(Index: TTranslationManagerFolder; const Value: string);
 begin
   FFolders[Index] := Value;
@@ -642,7 +662,7 @@ end;
 procedure TTranslationManagerTranslatorTMX.ApplyDefault;
 begin
   inherited;
-  FFilename := TTranslationManagerFolderSettings.DocumentFolder + TPath.GetFileNameWithoutExtension(Application.ExeName) + '.tmx';
+  FFilename := TTranslationManagerFolderSettings.DocumentFolder + sTranslationMemoryFilename;
 end;
 
 { TTranslationManagerProofingSettings }

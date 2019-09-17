@@ -10,6 +10,9 @@
 
 interface
 
+{.$define TM_BENCHMARK}
+{$define TM_BINARYFORMAT}
+
 uses
   Generics.Collections,
   SyncObjs,
@@ -17,6 +20,9 @@ uses
 
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+{$ifndef TM_BINARYFORMAT}
+  FireDAC.Stan.StorageBin,
+{$endif TM_BINARYFORMAT}
 
   amLocale,
   amProgressForm,
@@ -59,6 +65,7 @@ type
     procedure TableTranslationMemoryAfterModify(DataSet: TDataSet);
   private
     FLoaded: boolean;
+    FEnabled: boolean;
     FFormSelectDuplicate: TFormSelectDuplicate;
     FDuplicateAction: TDuplicateAction;
     FLookupIndex: TDictionary<string, TList<integer>>;
@@ -106,12 +113,17 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure SaveToStream(Stream: TStream);
+    procedure SaveToFile(const Filename: string);
+    procedure LoadFromStream(Stream: TStream);
+    procedure LoadFromFile(const Filename: string);
+
     function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
     function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
-    function LoadTranslationMemory(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
-    function LoadTranslationMemory(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
-    procedure SaveTranslationMemory(const Filename: string);
+    function LoadTMX(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
+    function LoadTMX(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
+    procedure SaveTMX(const Filename: string);
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
 
@@ -122,9 +134,17 @@ type
     property IsAvailable: boolean read GetAvailable;
     property HasData: boolean read GetHasData;
     property Modified: boolean read FModified;
+    property Enabled: boolean read FEnabled write FEnabled;
   end;
 
+type
+  ETranslationMemory = class(Exception);
+  ETranslationMemoryTMX = class(ETranslationMemory);
+
 // -----------------------------------------------------------------------------
+
+const
+  sTranslationMemoryFilename = 'TranslationMemory.dat';
 
 resourcestring
   sTranslationMemoryLoading = 'Loading Translation Memory';
@@ -154,11 +174,16 @@ uses
   Variants,
   XMLDoc, XMLIntf,
   Forms,
+  Diagnostics,
   cxGraphics,
   amCursorService,
   amVersionInfo,
+  amFileUtils,
   amLocalization.Settings,
   amLocalization.Utils;
+
+const
+  sTMFileSignature: AnsiString = 'amTranslationManagerTM';
 
 type
   TTerm = record
@@ -431,6 +456,7 @@ begin
   inherited;
 
   FRefreshEvent := TEvent.Create(nil, False, False, '');
+  FEnabled := True;
 end;
 
 destructor TDataModuleTranslationMemory.Destroy;
@@ -456,33 +482,42 @@ var
   Res: integer;
 resourcestring
   sLocalizerNoTMFileTitle = 'Translation Memory does not exist';
-  sLocalizerNoTMFile = 'The Translation Memory file does not exist.'#13#13'Filename: %s'#13#13'A new file will be created when you save the Translation Memory.'#13#13'Do you want to save an new empty file now?';
+  sLocalizerNoTMFile = 'The Translation Memory database does not exist.'#13#13'Filename: %s'#13#13'A new database will be created when you save the Translation Memory.'#13#13'Do you want to save an new empty database now?';
 begin
   if (not FLoaded) and ((Force) or (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand)) then
   begin
+    if (not FEnabled) and (not Force) then
+      Exit(False);
+
     if (not TFile.Exists(TranslationManagerSettings.Translators.TranslationMemory.Filename)) then
     begin
-      Res := TaskMessageDlg(sLocalizerNoTMFileTitle, Format(sLocalizerNoTMFile, [TranslationManagerSettings.Translators.TranslationMemory.Filename]),
+      Res := TaskMessageDlg(sLocalizerNoTMFileTitle,
+        Format(sLocalizerNoTMFile, [TranslationManagerSettings.Translators.TranslationMemory.Filename]),
         mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbNo);
 
       if (Res = mrCancel) then
-        Exit(False);
-
+      begin
+        FEnabled := False;
+      end else
       if (Res = mrYes) then
       begin
         // Save empty
-        SaveTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+        SaveToFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
         // ...and load it
-        LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+        LoadFromFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
       end else
       begin
         // Pretend we have loaded to avoid further prompts
         FLoaded := True;
-//        TableTranslationMemory.CreateDataSet;
+        // Mark as dirty so new file will be saved
+        FModified := True;
       end;
     end else
-      LoadTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+      LoadFromFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
   end;
+
+  if (FLoaded) then
+    FEnabled := True;
 
   Result := FLoaded;
 end;
@@ -496,23 +531,25 @@ resourcestring
   sLocalizerSaveTMPromptTitle = 'Translation Memory has not been saved';
   sLocalizerSaveTMPrompt = 'Your changes to the Translation Memory has not been saved.'#13#13'Do you want to save them now?';
 begin
-  if (Modified) then
+  if (IsLoaded) and (Modified) then
   begin
-    Res := TaskMessageDlg(sLocalizerSaveTMPromptTitle, sLocalizerSaveTMPrompt,
-      mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
-
-    if (Res = mrCancel) then
-      Exit(False);
-
-    if (Res = mrYes) then
+    if (TranslationManagerSettings.Translators.TranslationMemory.PromptToSave) then
     begin
-      SaveCursor(crHourGlass);
+      Res := TaskMessageDlg(sLocalizerSaveTMPromptTitle, sLocalizerSaveTMPrompt,
+        mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
 
-      SaveTranslationMemory(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+      if (Res = mrCancel) then
+        Exit(False)
+      else
+      if (Res = mrNo) then
+        Exit(True);
+    end;
 
-      Result := (not Modified);
-    end else
-      Result := True;
+    SaveCursor(crHourGlass);
+
+    SaveToFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+
+    Result := (not Modified);
   end else
     Result := True;
 end;
@@ -538,6 +575,9 @@ begin
 
   SourceField := FindField(SourceLocaleItem);
   TargetField := FindField(TargetLocaleItem);
+
+  if (SourceField = nil) or (TargetField = nil) then
+    Exit(nil);
 
   Result := TTranslationMemoryPeek.Create(Self, SourceField, TargetField, AResultHandler);
 end;
@@ -565,7 +605,7 @@ end;
 
 function TDataModuleTranslationMemory.GetAvailable: boolean;
 begin
-  Result := (FLoaded) or (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand);
+  Result := (FLoaded) or ((FEnabled) and (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand));
 end;
 
 function TDataModuleTranslationMemory.GetHasData: boolean;
@@ -958,15 +998,243 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.LoadTranslationMemory(const Filename: string; Merge: boolean): TTranslationMemoryMergeStats;
+function TDataModuleTranslationMemory.LoadTMX(const Filename: string; Merge: boolean): TTranslationMemoryMergeStats;
 var
   DuplicateAction: TTranslationMemoryDuplicateAction;
 begin
   DuplicateAction := tmDupActionPrompt;
-  Result := LoadTranslationMemory(Filename, DuplicateAction, Merge);
+  Result := LoadTMX(Filename, DuplicateAction, Merge);
 end;
 
-function TDataModuleTranslationMemory.LoadTranslationMemory(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean; const Progress: IProgress): TTranslationMemoryMergeStats;
+procedure TDataModuleTranslationMemory.LoadFromFile(const Filename: string);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(Filename, fmOpenRead);
+  try
+    LoadFromStream(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TDataModuleTranslationMemory.LoadFromStream(Stream: TStream);
+{$ifdef TM_BINARYFORMAT}
+var
+  Signature: AnsiString;
+  Reader: TReader;
+  i: integer;
+  n: integer;
+  s: string;
+  Field: TField;
+{$endif TM_BINARYFORMAT}
+{$ifdef TM_BENCHMARK}
+var
+  StopWatch: TStopWatch;
+{$endif TM_BENCHMARK}
+begin
+{$ifdef TM_BINARYFORMAT}
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  SetLength(Signature, Length(sTMFileSignature)); // Signature
+  if (Stream.Read(Signature[1], Length(sTMFileSignature)) <> Length(sTMFileSignature)) or (Signature <> sTMFileSignature) then
+    raise ETranslationMemory.Create('Invalid TM file signature');
+
+  TableTranslationMemory.Close;
+  TableTranslationMemory.Fields.Clear;
+  TableTranslationMemory.FieldDefs.Clear;
+
+  Reader := TReader.Create(Stream, 8192);
+  try
+    n := Reader.ReadInteger; // Stream version
+    if (n <> 1) then
+      raise ETranslationMemory.CreateFmt('Invalid TM file format version: %d', [n]);
+
+    Reader.ReadInteger; // Field list
+    Reader.ReadListBegin;
+    while (not Reader.EndOfList) do
+    begin
+      Field := TWideMemoField.Create(TableTranslationMemory);
+
+      Field.Tag := Reader.ReadInteger;
+      Field.FieldName := Reader.ReadString;
+      Field.DisplayLabel := Reader.ReadString;
+
+      Field.DataSet := TableTranslationMemory;
+      Field.DisplayWidth := 100;
+      Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
+    end;
+    Reader.ReadListEnd;
+
+    if (TableTranslationMemory.Fields.Count > 0) then
+      TableTranslationMemory.CreateDataSet; // Apperently one cannot create a dataset without fields
+
+    TableTranslationMemory.DisableControls;
+    try
+      Reader.ReadInteger; // Row list
+      Reader.ReadListBegin;
+      while (not Reader.EndOfList) do
+      begin
+        TableTranslationMemory.Append;
+        try
+
+          Reader.ReadListBegin;
+          begin
+            for i := 0 to TableTranslationMemory.Fields.Count-1 do
+            begin
+              s := Reader.ReadString;
+              if (s <> '') then
+                TableTranslationMemory.Fields[i].AsString := s;
+            end;
+          end;
+          Reader.ReadListEnd;
+
+          TableTranslationMemory.Post;
+        except
+          TableTranslationMemory.Cancel;
+          raise;
+        end;
+      end;
+      Reader.ReadListEnd;
+    finally
+      TableTranslationMemory.EnableControls;
+    end;
+  finally
+    Reader.Free;
+  end;
+
+{$ifdef TM_BENCHMARK}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Read TM via TReader: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
+{$endif TM_BENCHMARK}
+{$endif TM_BINARYFORMAT}
+
+{$ifndef TM_BINARYFORMAT}
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  TableTranslationMemory.LoadFromStream(Stream, sfBinary);
+  TableTranslationMemory.FieldDefs.Clear;
+
+{$ifdef TM_BENCHMARK}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Read TM via FireDAC: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
+{$endif TM_BENCHMARK}
+{$endif TM_BINARYFORMAT}
+
+  FModified := False;
+  FLoaded := True;
+end;
+
+procedure TDataModuleTranslationMemory.SaveToFile(const Filename: string);
+begin
+  SafeReplaceFile(Filename,
+    function(const Filename: string): boolean
+    var
+      Stream: TStream;
+    begin
+      Stream := TFileStream.Create(Filename, fmCreate);
+      try
+        SaveToStream(Stream);
+      finally
+        Stream.Free;
+      end;
+      Result := True;
+    end, TranslationManagerSettings.Backup.SaveBackups);
+end;
+
+procedure TDataModuleTranslationMemory.SaveToStream(Stream: TStream);
+var
+  Writer: TWriter;
+  i: integer;
+{$ifdef TM_BENCHMARK}
+var
+  StopWatch: TStopWatch;
+{$endif TM_BENCHMARK}
+begin
+{$ifdef TM_BINARYFORMAT}
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  Stream.Write(sTMFileSignature[1], Length(sTMFileSignature)); // Signature
+
+  Writer := TWriter.Create(Stream, 8192);
+  try
+    Writer.WriteInteger(1); // Stream version
+
+    Writer.WriteInteger(TableTranslationMemory.Fields.Count); // Field list
+    Writer.WriteListBegin;
+    begin
+      for i := 0 to TableTranslationMemory.Fields.Count-1 do
+      begin
+        Writer.WriteInteger(TableTranslationMemory.Fields[i].Tag); // LCID
+        Writer.WriteString(TableTranslationMemory.Fields[i].FieldName); // Locale short name
+        Writer.WriteString(TableTranslationMemory.Fields[i].DisplayName); // Locale name
+      end;
+    end;
+    Writer.WriteListEnd;
+
+    if (TableTranslationMemory.Active) then
+    begin
+      Writer.WriteInteger(TableTranslationMemory.RecordCount); // Row list
+      Writer.WriteListBegin;
+      begin
+        TableTranslationMemory.DisableControls;
+        try
+          TableTranslationMemory.First;
+          while (not TableTranslationMemory.Eof) do
+          begin
+            Writer.WriteListBegin;
+            begin
+              for i := 0 to TableTranslationMemory.Fields.Count-1 do
+                Writer.WriteString(TableTranslationMemory.Fields[i].AsString); // Field value
+            end;
+            Writer.WriteListEnd;
+
+            TableTranslationMemory.Next;
+          end;
+        finally
+          TableTranslationMemory.EnableControls;
+        end;
+      end;
+      Writer.WriteListEnd;
+    end else
+    begin
+      Writer.WriteInteger(0);
+      Writer.WriteListBegin;
+      Writer.WriteListEnd;
+    end;
+  finally
+    Writer.Free;
+  end;
+
+{$ifdef TM_BENCHMARK}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Save TM via TWriter: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
+{$endif TM_BENCHMARK}
+{$endif TM_BINARYFORMAT}
+
+{$ifndef TM_BINARYFORMAT}
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  TableTranslationMemory.SaveToStream(Stream, sfBinary);
+
+{$ifdef TM_BENCHMARK}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Save TM via FireDAC: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
+{$endif TM_BENCHMARK}
+{$endif TM_BINARYFORMAT}
+
+  FModified := False;
+end;
+
+function TDataModuleTranslationMemory.LoadTMX(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean; const Progress: IProgress): TTranslationMemoryMergeStats;
 var
   Duplicates: TDuplicates;
   DuplicateTermsList: array of TDuplicateTerms;
@@ -1003,7 +1271,7 @@ begin
   XML.LoadFromFile(Filename);
 
   if (XML.DocumentElement.NodeName <> 'tmx') then
-    raise Exception.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
+    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
 
   SourceLanguage := '';
 
@@ -1029,7 +1297,7 @@ begin
 
   Body := XML.DocumentElement.ChildNodes.FindNode('body');
   if (Body = nil) then
-    raise Exception.Create('xliff node not found: tmx\body');
+    raise ETranslationMemoryTMX.Create('xliff node not found: tmx\body');
 
   if (Progress = nil) then
     LocalProgress := ShowProgress(sTranslationMemoryLoading)
@@ -1056,7 +1324,6 @@ begin
           if (Clone <> nil) and (TableTranslationMemory.Fields.Count > 0) then
             Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
-          FLoaded := False;
           TableTranslationMemory.Close;
 
           Languages := TDictionary<string, TField>.Create(TTextComparer.Create);
@@ -1110,6 +1377,7 @@ begin
                         Field.DisplayLabel := LocaleItem.LanguageName;
                         Field.Tag := LocaleItem.Locale;
                       end else
+                        // TODO : We should ignore language instead
                         ShowMessageFmt('Unknown language: %s', [Language]);
 
                       Field.FieldName := LanguageName;
@@ -1226,8 +1494,6 @@ begin
           if (Merge) then
           begin
             // Post all terms to the dataset as individual source/target values
-            FModified := True;
-
             if (Progress <> nil) then
               Progress.UpdateMessage(sTranslationMemoryAddingTerms)
             else
@@ -1332,19 +1598,19 @@ begin
     TableTranslationMemory.EnableControls;
   end;
 
+  FModified := True;
   FLoaded := True;
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TDataModuleTranslationMemory.SaveTranslationMemory(const Filename: string);
+procedure TDataModuleTranslationMemory.SaveTMX(const Filename: string);
 var
   XML: IXMLDocument;
   Node, Body: IXMLNode;
   ItemNode: IXMLNode;
   LanguageNode: IXMLNode;
   i: integer;
-  TempFilename, BackupFilename: string;
   Progress: IProgress;
 begin
   XML := TXMLDocument.Create(nil);
@@ -1411,37 +1677,12 @@ begin
 
   SaveCursor(crHourglass);
 
-  TempFilename := Filename;
-
-  // Save to temporary file if destination file already exist
-  if (TFile.Exists(Filename)) then
-  begin
-    i := 0;
-    repeat
-      TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, '.tmx']);
-      Inc(i);
-    until (not TFile.Exists(TempFilename));
-  end;
-
-  // Save file
-  XML.SaveToFile(TempFilename);
-
-  // Save existing file as backup
-  if (TempFilename <> Filename) then
-  begin
-    i := 0;
-    repeat
-      BackupFilename := Format('%s.$%.4X', [Filename, i]);
-      Inc(i);
-    until (not TFile.Exists(BackupFilename));
-
-    TFile.Move(Filename, BackupFilename);
-
-    // Rename temporary file to final file
-    TFile.Move(TempFilename, Filename);
-  end;
-
-  FModified := False;
+  SafeReplaceFile(Filename,
+    function(const Filename: string): boolean
+    begin
+      XML.SaveToFile(Filename);
+      Result := True;
+    end, TranslationManagerSettings.Backup.SaveBackups);
 end;
 
 // -----------------------------------------------------------------------------

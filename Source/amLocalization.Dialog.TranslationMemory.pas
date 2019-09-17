@@ -44,14 +44,17 @@ type
     PopupMenuHeader: TPopupMenu;
     MenuItemDeleteLanguage: TMenuItem;
     ActionDeleteLanguage: TAction;
-    procedure ButtonLoadClick(Sender: TObject);
+    TaskDialogOpen: TTaskDialog;
+    ActionExport: TAction;
+    ActionImport: TAction;
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
-    procedure ButtonSaveAsClick(Sender: TObject);
     procedure ActionDeleteLanguageExecute(Sender: TObject);
     procedure ActionDeleteLanguageUpdate(Sender: TObject);
     procedure GridPopupMenuPopupMenus0Popup(ASenderMenu: TComponent; AHitTest: TcxCustomGridHitTest; X, Y: Integer);
+    procedure ActionExportExecute(Sender: TObject);
+    procedure ActionImportExecute(Sender: TObject);
   private
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
@@ -103,13 +106,25 @@ function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModul
 begin
   FDataModuleTranslationMemory := ADataModuleTranslationMemory;
 
-  FDataModuleTranslationMemory.CheckLoaded(True);
+  try
+
+    if (not FDataModuleTranslationMemory.CheckLoaded(True)) then
+      Exit(false);
+
+  except
+    on E: ETranslationMemory do
+    begin
+      if (MessageDlg(E.Message, mtWarning, [mbIgnore, mbAbort], 0, mbAbort) = mrAbort) then
+        Exit(False)
+    end;
+  end;
 
   GridTMDBTableView.BeginUpdate;
   try
-    GridTMDBTableView.DataController.DataSource := FDataModuleTranslationMemory.DataSourceTranslationMemory;
 
+    GridTMDBTableView.DataController.DataSource := FDataModuleTranslationMemory.DataSourceTranslationMemory;
     CreateColumns;
+
   finally
     GridTMDBTableView.EndUpdate;
   end;
@@ -177,30 +192,45 @@ begin
   TAction(Sender).Enabled := (FPoupMenuColumn <> nil);
 end;
 
-procedure TFormTranslationMemory.ButtonLoadClick(Sender: TObject);
+procedure TFormTranslationMemory.ActionExportExecute(Sender: TObject);
+begin
+  SaveDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  SaveDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+
+  if (not SaveDialogTMX.Execute(Handle)) then
+    Exit;
+
+  SaveCursor(crHourGlass);
+
+  FDataModuleTranslationMemory.SaveTMX(SaveDialogTMX.FileName);
+end;
+
+procedure TFormTranslationMemory.ActionImportExecute(Sender: TObject);
 var
   Merge: boolean;
   Res: Word;
   Stats, OneStats: TTranslationMemoryMergeStats;
   Filename: string;
   First: boolean;
-  Title: string;
   DuplicateAction: TTranslationMemoryDuplicateAction;
   Progress: IProgress;
   MergeFile: boolean;
 resourcestring
-  sLoadTranslationMemoryMergeTitle = 'Merge translation memory';
-  sLoadTranslationMemoryMerge = 'Do you want to merge the selected file into your existing translation memory?'+#13#13+
-      'If you answer No then your current translation memory will be closed and the specified file will be opened instead.';
+  sLoadTranslationMemoryMergeTitle = 'Merge Translation Memory?';
+  sLoadTranslationMemoryMerge = 'Do you want to merge the selected file(s) into your existing Translation Memory?'+#13#13+
+      'If you answer No then your current Translation Memory will be emptied and replaced with the translations in the specified file.';
 begin
   if (not FDataModuleTranslationMemory.CheckSave) then
     Exit;
 
-  OpenDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
-  OpenDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  if (OpenDialogTMX.InitialDir = '') then
+    OpenDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderTMX;
 
   if (not OpenDialogTMX.Execute(Handle)) then
     Exit;
+
+  // Remember folder for next time
+  OpenDialogTMX.InitialDir := TPath.GetDirectoryName(OpenDialogTMX.FileName);
 
   if (FDataModuleTranslationMemory.TableTranslationMemory.Active) and (FDataModuleTranslationMemory.TableTranslationMemory.RecordCount > 0) then
   begin
@@ -241,13 +271,10 @@ begin
       if (Progress <> nil) then
         Progress.AdvanceProgress;
 
-      OneStats := FDataModuleTranslationMemory.LoadTranslationMemory(Filename, DuplicateAction, MergeFile, Progress);
-
-      if (First) and (not MergeFile) then
-        TranslationManagerSettings.Translators.TranslationMemory.Filename := Filename;
+      OneStats := FDataModuleTranslationMemory.LoadTMX(Filename, DuplicateAction, MergeFile, Progress);
 
       First := False;
-      MergeFile := True; // Additional files will be merged
+      MergeFile := True; // Additional files will be merged regardless of choice
 
       Inc(Stats.Added, OneStats.Added);
       Inc(Stats.Merged, OneStats.Merged);
@@ -282,19 +309,6 @@ begin
       Format(sTranslationMemoryOpenComplete, [Stats.Added * 1.0]),
       mtInformation, [mbOK], 0);
   end;
-end;
-
-procedure TFormTranslationMemory.ButtonSaveAsClick(Sender: TObject);
-begin
-  SaveDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
-  SaveDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
-
-  if (not SaveDialogTMX.Execute(Handle)) then
-    Exit;
-
-  SaveCursor(crHourGlass);
-
-  FDataModuleTranslationMemory.SaveTranslationMemory(SaveDialogTMX.FileName);
 end;
 
 procedure TFormTranslationMemory.CreateColumns;

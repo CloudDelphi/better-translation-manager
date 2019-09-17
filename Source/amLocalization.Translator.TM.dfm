@@ -13,7 +13,8 @@ object DataModuleTranslationMemory: TDataModuleTranslationMemory
     AfterDelete = TableTranslationMemoryAfterModify
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
-    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.AssignedValues = [rvStoreItems, rvSilentMode]
+    ResourceOptions.StoreItems = [siMeta, siData]
     ResourceOptions.SilentMode = True
     UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
     UpdateOptions.CheckRequired = False

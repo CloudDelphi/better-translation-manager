@@ -21,7 +21,7 @@ uses
   cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit,
 
   amLocalization.Dialog,
-  amLocalization.Model, Vcl.ExtCtrls, cxLabel;
+  amLocalization.Model, Vcl.ExtCtrls, cxLabel, dxBar;
 
 type
   ILocalizerSearchHost = interface
@@ -32,6 +32,7 @@ type
     property TargetLanguage: TTargetLanguage read GetTargetLanguage;
 
     procedure ViewItem(Item: TLocalizerProperty);
+    procedure InvalidateItem(Item: TLocalizerProperty);
   end;
 
   ILocalizerSearchProvider = interface
@@ -93,6 +94,17 @@ type
     LayoutItemClose: TdxLayoutItem;
     ButtonClose: TcxButton;
     LayoutItemStatus: TdxLayoutLabeledItem;
+    dxLayoutItem7: TdxLayoutItem;
+    ButtonMark: TcxButton;
+    ActionMark: TAction;
+    PopupMenuMark: TdxBarPopupMenu;
+    BarManagerSearch: TdxBarManager;
+    dxBarButton1: TdxBarButton;
+    dxBarButton2: TdxBarButton;
+    dxBarButton3: TdxBarButton;
+    ActionMarkTranslate: TAction;
+    ActionMarkHold: TAction;
+    ActionMarkDontTranslate: TAction;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -110,6 +122,9 @@ type
     procedure ActionOptionRegExpUpdate(Sender: TObject);
     procedure SpinEditFuzzyPropertiesChange(Sender: TObject);
     procedure ActionAbortExecute(Sender: TObject);
+    procedure ActionMarkExecute(Sender: TObject);
+    procedure ActionMarkUpdate(Sender: TObject);
+    procedure ActionMarkSetExecute(Sender: TObject);
   private
     FSearchText: string;
     FRegExp: TRegEx;
@@ -521,7 +536,33 @@ end;
 
 procedure TFormSearch.ActionGoToUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (ListViewResult.Selected <> nil);
+  TAction(Sender).Enabled := (ListViewResult.SelCount = 1);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ActionMarkExecute(Sender: TObject);
+begin
+  PostMessage(ButtonMark.Handle, DXM_DROPDOWNPOPUPMENU, 0, 0);
+end;
+
+procedure TFormSearch.ActionMarkSetExecute(Sender: TObject);
+var
+  i: integer;
+begin
+  for i := 0 to ListViewResult.Items.Count-1 do
+    if (ListViewResult.Items[i].Selected) then
+    begin
+      TLocalizerProperty(ListViewResult.Items[i].Data).Status := TLocalizerItemStatus(TAction(Sender).Tag);
+
+      if (FSearchHost <> nil) then
+        FSearchHost.InvalidateItem(TLocalizerProperty(ListViewResult.Items[i].Data));
+    end;
+end;
+
+procedure TFormSearch.ActionMarkUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (ListViewResult.SelCount > 0);
 end;
 
 // -----------------------------------------------------------------------------

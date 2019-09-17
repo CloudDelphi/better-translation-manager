@@ -575,7 +575,9 @@ inherited FormSettings: TFormSettings
             object CheckBoxTMLoadOnDemand: TcxCheckBox
               Left = 12
               Top = 23
-              Hint = 'Load Translation Memory from disk the first time it is used.'
+              Hint = 
+                'Silently load Translation Memory from disk the first time it is ' +
+                'needed.'
               Caption = 'Load on demand'
               ParentBackground = False
               ParentColor = False
@@ -587,7 +589,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 81
+              Top = 106
               AutoSize = False
               Caption = 'Microsoft Translator'
               Style.HotTrack = False
@@ -600,7 +602,7 @@ inherited FormSettings: TFormSettings
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
               Left = 58
-              Top = 104
+              Top = 129
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -612,16 +614,29 @@ inherited FormSettings: TFormSettings
               Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
               Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
               Style.HotTrack = False
-              TabOrder = 4
+              TabOrder = 5
               Width = 355
             end
             object CheckBoxTMBackgroundQuery: TcxCheckBox
               Left = 12
-              Top = 48
+              Top = 73
               Hint = 
-                'Searches the Translation Memory for matching translations while ' +
-                'you work and indicates if matches are found.'
+                'Search the Translation Memory for matching translations while yo' +
+                'u work and indicate if matches are found.'
               Caption = 'Query Translation Memory in the background'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 3
+              Transparent = True
+            end
+            object CheckBoxTMPromptToSave: TcxCheckBox
+              Left = 12
+              Top = 48
+              Hint = 'Ask before the Translation Memory is saved'
+              Caption = 'Prompt to save'
               ParentBackground = False
               ParentColor = False
               Style.Color = 16053234
@@ -723,6 +738,15 @@ inherited FormSettings: TFormSettings
               Control = CheckBoxTMBackgroundQuery
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 100
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutItem44: TdxLayoutItem
+              Parent = dxLayoutGroup2
+              CaptionOptions.Visible = False
+              Control = CheckBoxTMPromptToSave
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 94
               ControlOptions.ShowBorder = False
               Index = 1
             end
@@ -932,29 +956,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 309
+              Top = 334
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 8
+              TabOrder = 9
               Transparent = True
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 152
-              Top = 334
+              Top = 359
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 9
+              TabOrder = 10
               Value = 1
               Width = 53
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 319
-              Top = 334
+              Top = 359
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -963,9 +987,21 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 10
+              TabOrder = 11
               Value = 100
               Width = 78
+            end
+            object CheckBoxSaveBackup: TcxCheckBox
+              Left = 12
+              Top = 309
+              Hint = 
+                'Save a backup of existing files when they are replaced with newe' +
+                'r files'
+              Caption = 'Create backup of saved files'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 8
+              Transparent = True
             end
             object LayoutControlFilesGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
@@ -1018,7 +1054,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 2
+              ItemIndex = 3
               ShowBorder = False
               Index = 0
             end
@@ -1029,6 +1065,7 @@ inherited FormSettings: TFormSettings
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -1106,18 +1143,18 @@ inherited FormSettings: TFormSettings
             object dxLayoutItem40: TdxLayoutItem
               Parent = dxLayoutGroup15
               CaptionOptions.Visible = False
+              Visible = False
               Control = CheckBoxHistoryBackup
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 133
               ControlOptions.ShowBorder = False
-              Index = 0
+              Index = 1
             end
             object LayoutGroupBackup: TdxLayoutGroup
               Parent = dxLayoutGroup11
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Top = 8
-              Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
               ItemIndex = 1
@@ -1131,7 +1168,7 @@ inherited FormSettings: TFormSettings
               Offsets.Left = 12
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 1
+              ItemIndex = 2
               ShowBorder = False
               Index = 1
             end
@@ -1158,12 +1195,13 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Left = 20
+              Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
               ItemIndex = 1
               LayoutDirection = ldHorizontal
               ShowBorder = False
-              Index = 1
+              Index = 2
             end
             object dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem
               Parent = dxLayoutGroup16
@@ -1171,6 +1209,15 @@ inherited FormSettings: TFormSettings
               SizeOptions.Height = 10
               SizeOptions.Width = 10
               Index = 1
+            end
+            object dxLayoutItem45: TdxLayoutItem
+              Parent = dxLayoutGroup15
+              CaptionOptions.Visible = False
+              Control = CheckBoxSaveBackup
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 158
+              ControlOptions.ShowBorder = False
+              Index = 0
             end
           end
         end

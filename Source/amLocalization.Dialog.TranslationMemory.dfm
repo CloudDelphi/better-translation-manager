@@ -39,18 +39,16 @@ inherited FormTranslationMemory: TFormTranslationMemory
       Top = 11
       Width = 75
       Height = 25
-      Caption = 'Save as...'
+      Action = ActionExport
       TabOrder = 1
-      OnClick = ButtonSaveAsClick
     end
     object ButtonLoad: TcxButton [4]
       Left = 11
       Top = 11
       Width = 75
       Height = 25
-      Caption = 'Load TM...'
+      Action = ActionImport
       TabOrder = 0
-      OnClick = ButtonLoadClick
     end
     inherited LayoutItemButtonOK: TdxLayoutItem
       Visible = False
@@ -171,6 +169,16 @@ inherited FormTranslationMemory: TFormTranslationMemory
       OnExecute = ActionDeleteLanguageExecute
       OnUpdate = ActionDeleteLanguageUpdate
     end
+    object ActionExport: TAction
+      Category = 'TM'
+      Caption = 'Export...'
+      OnExecute = ActionExportExecute
+    end
+    object ActionImport: TAction
+      Category = 'TM'
+      Caption = 'Import...'
+      OnExecute = ActionImportExecute
+    end
   end
   object OpenDialogTMX: TOpenDialog
     Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
@@ -203,5 +211,29 @@ inherited FormTranslationMemory: TFormTranslationMemory
     object MenuItemDeleteLanguage: TMenuItem
       Action = ActionDeleteLanguage
     end
+  end
+  object TaskDialogOpen: TTaskDialog
+    Buttons = <
+      item
+        Caption = 'Replace'
+        Default = True
+        CommandLinkHint = 'Close current TM and open the specified file instead'
+        ModalResult = 100
+      end
+      item
+        Caption = 'Merge'
+        CommandLinkHint = 'Add the translations to the current TM'
+        ModalResult = 101
+      end>
+    Caption = 'Open Translation Memory'
+    CommonButtons = [tcbCancel]
+    Flags = [tfAllowDialogCancellation, tfUseCommandLinksNoIcon]
+    RadioButtons = <>
+    Text = 
+      'Do you want to merge the selected file into your existing transl' +
+      'ation memory?'
+    Title = 'Replace or Merge Translation Memory'
+    Left = 128
+    Top = 135
   end
 end

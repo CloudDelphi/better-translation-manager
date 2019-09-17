@@ -118,8 +118,6 @@ type
     TreeListColumnType: TcxTreeListColumn;
     TreeListColumnStatus: TcxTreeListColumn;
     TreeListColumnState: TcxTreeListColumn;
-    ImageListSmall: TcxImageList;
-    ImageListLarge: TcxImageList;
     ActionList: TActionList;
     ActionProjectOpen: TAction;
     ActionProjectNew: TAction;
@@ -133,7 +131,6 @@ type
     OpenDialogProject: TOpenDialog;
     dxBarButton3: TdxBarButton;
     ActionProjectPurge: TAction;
-    ImageListTree: TcxImageList;
     BarManagetBarTranslationStatus: TdxBar;
     BarButton4: TdxBarButton;
     dxBarButton4: TdxBarButton;
@@ -176,7 +173,7 @@ type
     TreeListModules: TcxTreeList;
     TreeListColumnModuleName: TcxTreeListColumn;
     TreeListColumnModuleStatus: TcxTreeListColumn;
-    BarManagerBarLookup: TdxBar;
+    BarManagerBarMachineTranslation: TdxBar;
     dxBarLargeButton6: TdxBarLargeButton;
     dxBarButton15: TdxBarButton;
     BarButtonGotoNext: TdxBarSubItem;
@@ -211,10 +208,9 @@ type
     dxLayoutItem1: TdxLayoutItem;
     LabelCountPending: TcxLabel;
     ActionAutomationWebLookup: TAction;
-    ImageListState: TcxImageList;
-    ActionAutomationMemory: TAction;
-    ActionAutomationMemoryAdd: TAction;
-    ActionAutomationMemoryTranslate: TAction;
+    ActionTranslationMemory: TAction;
+    ActionTranslationMemoryAdd: TAction;
+    ActionTranslationMemoryTranslate: TAction;
     dxBarButton25: TdxBarButton;
     ActionFindNext: TAction;
     dxBarButton26: TdxBarButton;
@@ -336,7 +332,7 @@ type
     procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
-    procedure ActionAutomationMemoryExecute(Sender: TObject);
+    procedure ActionTranslationMemoryExecute(Sender: TObject);
     procedure TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
     procedure TreeListItemsClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
@@ -351,13 +347,13 @@ type
     procedure StatusBarMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionValidateExecute(Sender: TObject);
-    procedure ActionAutomationMemoryAddExecute(Sender: TObject);
+    procedure ActionTranslationMemoryAddExecute(Sender: TObject);
     procedure ActionHasPropertyFocusedUpdate(Sender: TObject);
-    procedure ActionAutomationMemoryTranslateExecute(Sender: TObject);
+    procedure ActionTranslationMemoryTranslateExecute(Sender: TObject);
     procedure ActionGotoNextStatusExecute(Sender: TObject);
     procedure ActionGotoNextStateExecute(Sender: TObject);
-    procedure ActionAutomationMemoryTranslateUpdate(Sender: TObject);
-    procedure ActionAutomationMemoryAddUpdate(Sender: TObject);
+    procedure ActionTranslationMemoryTranslateUpdate(Sender: TObject);
+    procedure ActionTranslationMemoryAddUpdate(Sender: TObject);
     procedure ButtonOpenRecentClick(Sender: TObject);
     procedure ActionSettingsExecute(Sender: TObject);
     procedure ActionImportFileTargetUpdate(Sender: TObject);
@@ -527,6 +523,7 @@ type
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
     function ILocalizerSearchHost.GetTargetLanguage = GetTargetLanguage;
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
+    procedure ILocalizerSearchHost.InvalidateItem = ReloadProperty;
   private
     FSkin: string;
     FColorSchemeAccent: integer;
@@ -576,6 +573,7 @@ uses
   amVersionInfo,
   amShell,
   amSplash,
+  amFileUtils,
 
   amLocalization.Engine,
   amLocalization.ResourceWriter,
@@ -1173,7 +1171,7 @@ begin
   end;
 end;
 
-procedure TFormMain.ActionAutomationMemoryAddExecute(Sender: TObject);
+procedure TFormMain.ActionTranslationMemoryAddExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
@@ -1201,6 +1199,9 @@ begin
       end, False);
   end;
 
+  if (ElegibleCount = 0) then
+    Exit;
+
   if (ElegibleCount < Count) then
     ElegibleWarning :=  #13#13 + Format(sTranslateEligibleWarning, [Count-ElegibleCount])
   else
@@ -1210,10 +1211,13 @@ begin
     mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
 
+  if (FTranslationMemoryPeek <> nil) then
+    FTranslationMemoryPeek.Cancel;
+
   Stats := Default(TTranslationMemoryMergeStats);
   Progress := ShowProgress(sProgressAddingTranslationMemory);
   Progress.EnableAbort := True;
-  Count := 0;
+  Progress.Progress(psProgress, 0, ElegibleCount);
 
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
@@ -1230,8 +1234,7 @@ begin
           Inc(Stats.Skipped, OneStats.Skipped);
           Inc(Stats.Duplicate, OneStats.Duplicate);
 
-          Inc(Count);
-          Progress.Progress(psProgress, Count, ElegibleCount);
+          Progress.AdvanceProgress;
         end;
 
         Result := (DuplicateAction <> tmDupActionAbort) and (not Progress.Aborted);
@@ -1245,12 +1248,15 @@ begin
 
   QueueTranslationMemoryPeek;
 
+  if (DuplicateAction = tmDupActionAbort) and (ElegibleCount = 1) then
+    Exit; // Nothing to report
+
   TaskMessageDlg(sTranslationMemoryAddCompleteTitle,
     Format(sTranslationMemoryMergeComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
     mtInformation, [mbOK], 0);
 end;
 
-procedure TFormMain.ActionAutomationMemoryAddUpdate(Sender: TObject);
+procedure TFormMain.ActionTranslationMemoryAddUpdate(Sender: TObject);
 var
   Enabled: boolean;
   Count: integer;
@@ -1280,10 +1286,13 @@ begin
   TAction(Sender).Enabled := Enabled;
 end;
 
-procedure TFormMain.ActionAutomationMemoryExecute(Sender: TObject);
+procedure TFormMain.ActionTranslationMemoryExecute(Sender: TObject);
 var
   FormTranslationMemory: TFormTranslationMemory;
 begin
+  // Kill thread. We might delete fields and other nasty stuff which it can't handle.
+  FTranslationMemoryPeek := nil;
+
   FormTranslationMemory := TFormTranslationMemory.Create(nil);
   try
 
@@ -1344,99 +1353,108 @@ begin
 
   if (not TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem)) then
     Exit;
+
+  // Abort any pending TM peek - we will requeue them all when we're done
+  if (FTranslationMemoryPeek <> nil) then
+    FTranslationMemoryPeek.Cancel;
   try
-
-    TranslatedCount := 0;
-    UpdatedCount := 0;
-    Count := 0;
-
-    SaveCursor(crHourGlass);
-    Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.ServiceName]));
-    Progress.EnableAbort := True;
-
-    FProject.BeginUpdate;
     try
 
-      for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-      begin
-        Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      TranslatedCount := 0;
+      UpdatedCount := 0;
+      Count := 0;
 
-        Item.Traverse(
-          function(Prop: TLocalizerProperty): boolean
-          var
-            Value, SourceValue, TranslatedValue: string;
-          begin
-            if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
-              Exit(True);
+      SaveCursor(crHourGlass);
+      Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.ServiceName]));
+      Progress.EnableAbort := True;
 
-            Inc(Count);
+      FProject.BeginUpdate;
+      try
 
-            SourceValue := Prop.Value;
-            if (Prop.HasTranslation(TargetLanguage)) then
-              TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
-            else
-              TranslatedValue := SourceValue;
+        for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+        begin
+          Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
 
-            Progress.Progress(psProgress, Count, ElegibleCount, SourceValue);
-            if (Progress.Aborted) then
-              Exit(False);
-
-            // Perform translation
-            // Note: It is the responsibility of the translation service to return True/False to indicate
-            // if SourceValue=TargetValue is in fact a translation.
-            if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, Value)) then
+          Item.Traverse(
+            function(Prop: TLocalizerProperty): boolean
+            var
+              Value, SourceValue, TranslatedValue: string;
             begin
-              if (not Value.IsEmpty) then
-              begin
-                // If source is all UPPERCASE the target should also be so
-                if (IsUppercase(SourceValue)) then
-                  Value := AnsiUpperCase(Value)
-                else
-                // If source starts with an Uppercase letter the target should also do so
-                if (StartsWithUppercase(SourceValue)) then
-                  Value := MakeStartWithUppercase(Value);
+              if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
+                Exit(True);
 
-                // Handle accelerator keys
-                if (HasAccelerator(Prop.Value)) then
-                begin
-                  if (not HasAccelerator(Value)) then
-                    // If source had an accelerator then make sure the target also has one
-                    Value := AddAccelerator(EscapeAccelerators(Value));
-                end else
-                begin
-                  if (HasAccelerator(Value)) then
-                    // If source doesn't have an accelerator then make sure the target also doesn't have one
-                    Value := SanitizeText(Value, [skAccelerator]);
-                end;
-              end;
+              Inc(Count);
 
-              Inc(TranslatedCount);
-
-              if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then
-                Inc(UpdatedCount);
-
-              // Set value regardless of current value so we get the correct Status set
-              if (Translation <> nil) then
-                Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
+              SourceValue := Prop.Value;
+              if (Prop.HasTranslation(TargetLanguage)) then
+                TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
               else
-                Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
+                TranslatedValue := SourceValue;
 
-              Translation.UpdateWarnings;
+              Progress.Progress(psProgress, Count, ElegibleCount, SourceValue);
+              if (Progress.Aborted) then
+                Exit(False);
 
-              ReloadProperty(Prop);
-            end;
-            Result := True;
-          end, False);
+              // Perform translation
+              // Note: It is the responsibility of the translation service to return True/False to indicate
+              // if SourceValue=TargetValue is in fact a translation.
+              if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, Value)) then
+              begin
+                if (not Value.IsEmpty) then
+                begin
+                  // If source is all UPPERCASE the target should also be so
+                  if (IsUppercase(SourceValue)) then
+                    Value := AnsiUpperCase(Value)
+                  else
+                  // If source starts with an Uppercase letter the target should also do so
+                  if (StartsWithUppercase(SourceValue)) then
+                    Value := MakeStartWithUppercase(Value);
+
+                  // Handle accelerator keys
+                  if (HasAccelerator(Prop.Value)) then
+                  begin
+                    if (not HasAccelerator(Value)) then
+                      // If source had an accelerator then make sure the target also has one
+                      Value := AddAccelerator(EscapeAccelerators(Value));
+                  end else
+                  begin
+                    if (HasAccelerator(Value)) then
+                      // If source doesn't have an accelerator then make sure the target also doesn't have one
+                      Value := SanitizeText(Value, [skAccelerator]);
+                  end;
+                end;
+
+                Inc(TranslatedCount);
+
+                if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then
+                  Inc(UpdatedCount);
+
+                // Set value regardless of current value so we get the correct Status set
+                if (Translation <> nil) then
+                  Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
+                else
+                  Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
+
+                Translation.UpdateWarnings;
+
+                ReloadProperty(Prop);
+              end;
+              Result := True;
+            end, False);
+        end;
+
+        Progress.Progress(psEnd, Count, ElegibleCount);
+
+      finally
+        FProject.EndUpdate;
       end;
 
-      Progress.Progress(psEnd, Count, ElegibleCount);
-
     finally
-      FProject.EndUpdate;
+      TranslationService.EndLookup;
     end;
 
   finally
-    TranslationService.EndLookup;
+    QueueTranslationMemoryPeek;
   end;
 
   Progress.Hide;
@@ -1446,7 +1464,7 @@ begin
     mtInformation, [mbOK], 0);
 end;
 
-procedure TFormMain.ActionAutomationMemoryTranslateExecute(Sender: TObject);
+procedure TFormMain.ActionTranslationMemoryTranslateExecute(Sender: TObject);
 var
   TranslationService: ITranslationService;
 begin
@@ -1455,7 +1473,7 @@ begin
   TranslateSelected(TranslationService);
 end;
 
-procedure TFormMain.ActionAutomationMemoryTranslateUpdate(Sender: TObject);
+procedure TFormMain.ActionTranslationMemoryTranslateUpdate(Sender: TObject);
 var
   Item: TCustomLocalizerItem;
 begin
@@ -1469,7 +1487,7 @@ end;
 
 procedure TFormMain.CreateTranslationMemoryPeeker(Force: boolean);
 begin
-  if (not TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery) then
+  if (not TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery) or (TranslationManagerSettings.System.SafeMode) then
   begin
     FTranslationMemoryPeek := nil;
     Exit;
@@ -1477,6 +1495,7 @@ begin
 
   if (FProject.Modules.Count > 0) and ((FTranslationMemoryPeek = nil) or (Force)) then
   begin
+    FTranslationMemoryPeek := nil;
     FTranslationMemoryPeek := FDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguageID, TargetLanguageID, TranslationMemoryPeekHandler);
     QueueTranslationMemoryPeek;
   end;
@@ -1502,7 +1521,7 @@ var
 begin
   Node := TreeListItems.NodeFromHandle(Sender);
   Node.Data := pointer(TTranslationMemoryPeekResult.prFound);
-  Node.Invalidate;
+  Node.Repaint(False);
 end;
 
 procedure TFormMain.QueueTranslationMemoryPeek;
@@ -1516,7 +1535,7 @@ begin
   for i := 0 to TreeListItems.Count-1 do
   begin
     TreeListItems.Items[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
-    TreeListItems.Items[i].Invalidate;
+    TreeListItems.Items[i].Repaint(False);
   end;
 end;
 
@@ -1534,6 +1553,9 @@ begin
 
   if (Prop = nil) or (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TargetLanguage)) then
     Exit;
+
+  if (TTranslationMemoryPeekResult(Node.Data) = TTranslationMemoryPeekResult.prFound) then
+    Node.Repaint(False);
 
   Node.Data := pointer(TTranslationMemoryPeekResult.prQueued);
   FTranslationMemoryPeek.EnqueueQuery(Prop);
@@ -2305,6 +2327,18 @@ begin
   // Release semaphore once SingleInstance handling has been set up and the boot marker has been cleared
   ReleaseRestartSemaphore;
 
+  if (not TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand) and (not TranslationManagerSettings.System.SafeMode) then
+  begin
+    try
+
+      FDataModuleTranslationMemory.CheckLoaded(True);
+
+    except
+      on E: ETranslationMemory do
+        MessageDlg(E.Message, mtWarning, [mbOK], 0);
+    end;
+  end;
+
   // Register shell integration on first run
   if (TranslationManagerSettings.System.FirstRun) then
     TranslationManagerShell.RegisterShellIntegration;
@@ -2524,8 +2558,7 @@ end;
 
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 var
-  Filename, TempFilename, BackupFilename: string;
-  i: integer;
+  Filename: string;
   Progress: IProgress;
 resourcestring
   sProgressProjectLoading = 'Loading project...';
@@ -2550,35 +2583,12 @@ begin
   try
     Progress.Marquee := True;
 
-    TempFilename := Filename;
-
-    // Save to temporary file if destination file already exist
-    if (TFile.Exists(Filename)) then
-    begin
-      i := 0;
-      repeat
-        TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, TranslationManagerShell.sProjectFileType]);
-        Inc(i);
-      until (not TFile.Exists(TempFilename));
-    end;
-
-    // Save file
-    TLocalizationProjectFiler.SaveToFile(FProject, TempFilename);
-
-    // Save existing file as backup
-    if (TempFilename <> Filename) then
-    begin
-      i := 0;
-      repeat
-        BackupFilename := Format('%s.$%.4X', [Filename, i]);
-        Inc(i);
-      until (not TFile.Exists(BackupFilename));
-
-      TFile.Move(Filename, BackupFilename);
-
-      // Rename temporary file to final file
-      TFile.Move(TempFilename, Filename);
-    end;
+    SafeReplaceFile(Filename,
+      function(const Filename: string): boolean
+      begin
+        TLocalizationProjectFiler.SaveToFile(FProject, Filename);
+        Result := True;
+      end, TranslationManagerSettings.Backup.SaveBackups);
 
     FProjectFilename := Filename;
     FProject.Modified := False;
@@ -2716,6 +2726,13 @@ begin
 
     Item.Status := ItemStatusDontTranslate;
 
+    // TODO : This should be done in LoadItem()
+    if (Item = FocusedModule) then
+      QueueTranslationMemoryPeek
+    else
+    if (Item is TLocalizerProperty) then
+      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+
     LoadItem(Item, True);
   end;
 end;
@@ -2741,6 +2758,13 @@ begin
 
     Item.Status := ItemStatusHold;
 
+    // TODO : This should be done in LoadItem()
+    if (Item = FocusedModule) then
+      QueueTranslationMemoryPeek
+    else
+    if (Item is TLocalizerProperty) then
+      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+
     LoadItem(Item, True);
   end;
 end;
@@ -2765,6 +2789,13 @@ begin
       continue;
 
     Item.Status := ItemStatusTranslate;
+
+    // TODO : This should be done in LoadItem()
+    if (Item = FocusedModule) then
+      QueueTranslationMemoryPeek
+    else
+    if (Item is TLocalizerProperty) then
+      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
 
     LoadItem(Item, True);
   end;
@@ -4489,8 +4520,8 @@ begin
     // Get TM status for prop once node becomes visible. If we're drawign the indicator, then the node must be visuble
     QueueTranslationMemoryPeek(AViewInfo.Node);
 
-    r.Top := (AViewInfo.BoundsRect.Top + AViewInfo.BoundsRect.Bottom - ImageListSmall.Height) div 2;
-    r.Left := AViewInfo.BoundsRect.Right - ImageListSmall.Width;
+    r.Top := (AViewInfo.BoundsRect.Top + AViewInfo.BoundsRect.Bottom - DataModuleMain.ImageListSmall.Height) div 2;
+    r.Left := AViewInfo.BoundsRect.Right - DataModuleMain.ImageListSmall.Width;
 
     for Flag := FlagBookmark9 downto FlagBookmark0 do
     begin
@@ -4502,7 +4533,7 @@ begin
       begin
         ImageIndex := ImageIndexBookmark0 + Ord(Flag)-Ord(FlagBookmark0);
 
-        ACanvas.DrawImage(ImageListSmall, r.Left, r.Top, ImageIndex);
+        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
 
         Dec(r.Left, OffsetNumeric);
       end;
@@ -4518,7 +4549,7 @@ begin
       begin
         ImageIndex := ImageIndexBookmarkA + Ord(Flag)-Ord(FlagBookmarkA);
 
-        ACanvas.DrawImage(ImageListSmall, r.Left, r.Top, ImageIndex);
+        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
 
         Dec(r.Left, OffsetFlag);
       end;
@@ -4664,7 +4695,7 @@ begin
 
   TreeListItems.Select(Node);
 
-  ActionAutomationMemoryTranslate.Execute;
+  ActionTranslationMemoryTranslate.Execute;
 end;
 
 procedure TFormMain.TreeListItemsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);

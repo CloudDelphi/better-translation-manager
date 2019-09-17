@@ -260,6 +260,10 @@ type
     ComboBoxApplicationLanguage: TcxExtLookupComboBox;
     dxLayoutItem38: TdxLayoutItem;
     CheckBoxTMBackgroundQuery: TcxCheckBox;
+    dxLayoutItem44: TdxLayoutItem;
+    CheckBoxTMPromptToSave: TcxCheckBox;
+    dxLayoutItem45: TdxLayoutItem;
+    CheckBoxSaveBackup: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -375,7 +379,7 @@ uses
 
 const
   FolderOrder: array[Ord(Low(TTranslationManagerFolder))..Ord(High(TTranslationManagerFolder))] of TTranslationManagerFolder =
-    (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
+    (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck, tmFolderTMX);
 
 { TFormSettings }
 
@@ -445,8 +449,8 @@ begin
   try
     for i := Low(FolderOrder) to High(FolderOrder) do
     begin
-      GridFoldersTableView.DataController.Values[i, 0] := sFolderDisplayName[FolderOrder[i]];
-      GridFoldersTableView.DataController.Values[i, 2] := False; // Read-only
+      GridFoldersTableView.DataController.Values[i, 0] := TranslationManagerSettings.Folders.FolderName[FolderOrder[i]];
+      GridFoldersTableView.DataController.Values[i, 2] := TranslationManagerSettings.Folders.FolderReadOnly[FolderOrder[i]]; // Read-only
     end;
   finally
     GridFoldersTableView.DataController.EndUpdate;
@@ -485,6 +489,7 @@ begin
   ** Translators section
   *)
   CheckBoxTMLoadOnDemand.Checked := TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand;
+  CheckBoxTMPromptToSave.Checked := TranslationManagerSettings.Translators.TranslationMemory.PromptToSave;
   CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery;
 
   EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
@@ -495,6 +500,7 @@ begin
   ** Files section
   *)
   LoadFolders;
+  CheckBoxSaveBackup.Checked := TranslationManagerSettings.Backup.SaveBackups;
 
   (*
   ** Proofing section
@@ -537,6 +543,7 @@ begin
   ** Translators section
   *)
   TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
+  TranslationManagerSettings.Translators.TranslationMemory.PromptToSave := CheckBoxTMPromptToSave.Checked;
   TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
 
   TranslationManagerSettings.Translators.MicrosoftV3.APIKey := EditTranslatorMSAPIKey.Text;
@@ -546,6 +553,7 @@ begin
   ** Files section
   *)
   ApplyFolders;
+  TranslationManagerSettings.Backup.SaveBackups := CheckBoxSaveBackup.Checked;
 
   (*
   ** Proofing section
@@ -1255,7 +1263,8 @@ var
   i: integer;
 begin
   for i := Low(FolderOrder) to High(FolderOrder) do
-    TranslationManagerSettings.Folders.Folder[FolderOrder[i]] := VarToStr(GridFoldersTableView.DataController.Values[i, 1]);
+    if (not TranslationManagerSettings.Folders.FolderReadOnly[FolderOrder[i]]) then
+      TranslationManagerSettings.Folders.Folder[FolderOrder[i]] := VarToStr(GridFoldersTableView.DataController.Values[i, 1]);
 end;
 
 // -----------------------------------------------------------------------------

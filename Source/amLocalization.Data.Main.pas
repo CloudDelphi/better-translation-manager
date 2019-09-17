@@ -11,12 +11,12 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, Data.DB,
-  Datasnap.DBClient,
+  System.SysUtils, System.Classes, System.ImageList, Vcl.ImgList, Vcl.Controls,
+  Data.DB, Datasnap.DBClient,
   cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels, cxEditRepositoryItems,
-  cxDBExtLookupComboBox,
+  cxDBExtLookupComboBox, cxImageList,
   amLocalization.Model;
 
 type
@@ -45,6 +45,10 @@ type
     LayoutSkinLookAndFeelHeader: TdxLayoutSkinLookAndFeel;
     EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem;
     EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem;
+    ImageListTree: TcxImageList;
+    ImageListState: TcxImageList;
+    ImageListSmall: TcxImageList;
+    ImageListLarge: TcxImageList;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
