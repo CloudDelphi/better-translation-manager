@@ -59,6 +59,9 @@ type
     procedure CreateParams(var Params: TCreateParams); override;
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
     procedure WMActivate(var Message: TWMActivate); message WM_ACTIVATE;
+    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
+    procedure WMPrint(var Message: TWMPrint); message WM_PRINT;
+    procedure WMShow(var Message: TMessage); message WM_SHOWWINDOW;
     procedure MMNotify(var Message: TMessage); message MM_MCINOTIFY;
     property ShouldAnimate: boolean read FShouldAnimate;
   public
@@ -373,10 +376,14 @@ end;
 constructor TFormSplash.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  ControlStyle := ControlStyle + [csOpaque]; // Background covers whole form
   FSplashBitmap := TBitmap.Create;
   FBannerScroll := 1;
   FBannerFadeZone := 32;
   FAnimate := saLocal;
+
+  if (Screen.Fonts.IndexOf(Font.Name) = -1) then
+    Font.Name := Screen.MessageFont.Name;
 end;
 
 //------------------------------------------------------------------------------
@@ -384,7 +391,13 @@ end;
 procedure TFormSplash.CreateParams(var Params: TCreateParams);
 begin
   inherited CreateParams(Params);
-  Params.ExStyle := WS_EX_LAYERED or WS_EX_TOPMOST;
+
+  // Enable alpha (required by AnimateWindow)
+  Params.ExStyle := WS_EX_LAYERED;
+
+  // Make window topmost unless [Ctrl] is pressed or debugging
+  if (GetAsyncKeyState(VK_CONTROL) and $8000 = 0) xor (DebugHook <> 0) then
+    Params.ExStyle := Params.ExStyle or WS_EX_TOPMOST;
 
   // Make splash visible on the task bar in case the main form takes a while to appear.
   // This also ensures that the application doesn't "disappear" from the user if
@@ -414,8 +427,6 @@ begin
   FBanner := Value;
   FBanner := StringReplace(FBanner, '<version>', FVersion, [rfReplaceAll, rfIgnoreCase]);
   FBannerOffset := 0;
-
-  TimerBanner.Enabled := True;
 end;
 
 procedure TFormSplash.DisplayBannerResource(const ResName, ResType: UnicodeString);
@@ -473,7 +484,6 @@ begin
   end;
 
 
-
   // Resize form to fit bitmap
   ClientWidth := FSplashBitmap.Width;
   ClientHeight := FSplashBitmap.Height;
@@ -498,6 +508,8 @@ begin
 
   if (ShouldAnimate) then
   begin
+    // AnimateWindowProc(Handle, 1000, AW_BLEND or AW_ACTIVATE);
+
     // ... and action!
     Ticks := 0;
     while (BlendFunction.SourceConstantAlpha < 255) and (not FAbort) do
@@ -523,7 +535,10 @@ begin
   if (FAbort) then
     Close
   else
+  begin
     TimerSplash.Enabled := Timeout;
+    TimerBanner.Enabled := (FBanner <> '');
+  end;
 end;
 
 //------------------------------------------------------------------------------
@@ -636,7 +651,7 @@ begin
 
   dec(FBannerOffset, FBannerScroll);
 
-  FBannerBitmap.Canvas.Brush.Color := Self.Color;
+  FBannerBitmap.Canvas.Brush.Color := clWhite;
   FBannerBitmap.Canvas.Font.Assign(Self.Font);
 
   FBannerBitmap.Canvas.FillRect(FBannerBitmap.Canvas.ClipRect);
@@ -668,11 +683,11 @@ begin
       if (Scale <= 255) then
       begin
         // Fade
-        if (Row <= FBannerFadeZone) then
+        if (Row < FBannerFadeZone) then
           Scale := 255 - ((255-Scale) * (Row+1) div FBannerFadeZone)
         else
-        if (Row > FBannerBitmap.Width-FBannerFadeZone) then
-          Scale := 255 - ((255-Scale) * (FBannerBitmap.Width-Row) div FBannerFadeZone);
+        if (Row > FBannerBitmap.Height-FBannerFadeZone) then
+          Scale := 255 - ((255-Scale) * (FBannerBitmap.Height-Row) div FBannerFadeZone);
       end;
 
       if (Scale = 255) then
@@ -701,8 +716,7 @@ begin
   BlendFunction.BlendFlags := 0;
   BlendFunction.SourceConstantAlpha := 255;
   BlendFunction.AlphaFormat := AC_SRC_ALPHA;
-  UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FBannerBitmap.Canvas.Handle,
-    @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+  UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FBannerBitmap.Canvas.Handle, @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
 end;
 
 //------------------------------------------------------------------------------
@@ -776,9 +790,45 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure TFormSplash.WMEraseBkgnd(var Message: TWmEraseBkgnd);
+begin
+  Message.Result := 1; // Avoid flicker
+end;
+
+//------------------------------------------------------------------------------
+
 procedure TFormSplash.WMNCHitTest(var Message: TWMNCHitTest);
 begin
   Message.Result := HTCAPTION;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TFormSplash.WMPrint(var Message: TWMPrint);
+begin
+  // AnimateWindow requires that WM_PRINT is implemented.
+  try
+    PaintTo(Message.DC, 0, 0);
+  except
+    // Kill range check errors
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TFormSplash.WMShow(var Message: TMessage);
+begin
+(*
+  // WM_SHOWWINDOW is received after OnShow has fired and the window position
+  // has been set, but before the window is actually visible.
+  if (Message.wParam <> 0) and (not IsWindowVisible(Handle)) then
+  begin
+    if (FShouldAnimate) then
+      AnimateWindowProc(Handle, 1000, AW_BLEND or AW_ACTIVATE);
+//    HideBootLogger;
+  end;
+*)
+  inherited;
 end;
 
 //------------------------------------------------------------------------------

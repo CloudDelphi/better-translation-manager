@@ -1,6 +1,7 @@
 object FormSplash: TFormSplash
   Left = 0
   Top = 0
+  Cursor = crHourGlass
   BorderStyle = bsNone
   Caption = 'Splash!'
   ClientHeight = 200
@@ -9,9 +10,9 @@ object FormSplash: TFormSplash
   DefaultMonitor = dmMainForm
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clBlack
-  Font.Height = -11
-  Font.Name = 'Tahoma'
-  Font.Style = []
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  Font.Style = [fsBold]
   KeyPreview = True
   OldCreateOrder = False
   PopupMode = pmExplicit
@@ -20,7 +21,7 @@ object FormSplash: TFormSplash
   OnClose = FormClose
   OnKeyPress = FormKeyPress
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 17
   object TimerSplash: TTimer
     Enabled = False
     Interval = 100
