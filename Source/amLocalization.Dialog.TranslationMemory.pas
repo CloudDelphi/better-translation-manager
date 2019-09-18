@@ -88,7 +88,9 @@ uses
   amLocale,
   amProgressForm,
   amLocalization.Settings,
-  amLocalization.Data.Main;
+  amLocalization.Data.Main,
+  amLocalization.TranslationMemory.FileFormats,
+  amLocalization.TranslationMemory.FileFormats.TMX;
 
 procedure TFormTranslationMemory.RestoreLayout;
 begin
@@ -193,16 +195,26 @@ begin
 end;
 
 procedure TFormTranslationMemory.ActionExportExecute(Sender: TObject);
+var
+  TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
 begin
-  SaveDialogTMX.InitialDir := TPath.GetDirectoryName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
-  SaveDialogTMX.FileName := TPath.GetFileName(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+  if (SaveDialogTMX.InitialDir = '') then
+    SaveDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderTMX;
+  SaveDialogTMX.FileName := TPath.GetFileName(SaveDialogTMX.FileName);
 
   if (not SaveDialogTMX.Execute(Handle)) then
     Exit;
 
   SaveCursor(crHourGlass);
 
-  FDataModuleTranslationMemory.SaveTMX(SaveDialogTMX.FileName);
+  TranslationMemoryFileFormat := TTranslationMemoryFileFormatTMX.Create(FDataModuleTranslationMemory);
+  try
+
+    TranslationMemoryFileFormat.SaveToFile(SaveDialogTMX.FileName);
+
+  finally
+    TranslationMemoryFileFormat.Free;
+  end;
 end;
 
 procedure TFormTranslationMemory.ActionImportExecute(Sender: TObject);
@@ -211,7 +223,7 @@ var
   Res: Word;
   Stats, OneStats: TTranslationMemoryMergeStats;
   Filename: string;
-  First: boolean;
+  TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
   DuplicateAction: TTranslationMemoryDuplicateAction;
   Progress: IProgress;
   MergeFile: boolean;
@@ -250,7 +262,6 @@ begin
   GridTMDBTableView.BeginUpdate;
   try
     Stats := Default(TTranslationMemoryMergeStats);
-    First := True;
     DuplicateAction := tmDupActionPrompt;
     if (OpenDialogTMX.Files.Count > 1) then
     begin
@@ -266,24 +277,31 @@ begin
 
     MergeFile := Merge;
 
-    for Filename in OpenDialogTMX.Files do
-    begin
-      if (Progress <> nil) then
-        Progress.AdvanceProgress;
+    TranslationMemoryFileFormat := TTranslationMemoryFileFormatTMX.Create(FDataModuleTranslationMemory);
+    try
+      for Filename in OpenDialogTMX.Files do
+      begin
+        if (Progress <> nil) then
+          Progress.AdvanceProgress;
 
-      OneStats := FDataModuleTranslationMemory.LoadTMX(Filename, DuplicateAction, MergeFile, Progress);
+        OneStats := TranslationMemoryFileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
 
-      First := False;
-      MergeFile := True; // Additional files will be merged regardless of choice
+        MergeFile := True; // Additional files will be merged regardless of choice
 
-      Inc(Stats.Added, OneStats.Added);
-      Inc(Stats.Merged, OneStats.Merged);
-      Inc(Stats.Skipped, OneStats.Skipped);
-      Inc(Stats.Duplicate, OneStats.Duplicate);
+        Inc(Stats.Added, OneStats.Added);
+        Inc(Stats.Merged, OneStats.Merged);
+        Inc(Stats.Skipped, OneStats.Skipped);
+        Inc(Stats.Duplicate, OneStats.Duplicate);
 
-      if (DuplicateAction = tmDupActionAbort) or ((Progress <> nil) and (Progress.Aborted)) then
-        break;
+        if (DuplicateAction = tmDupActionAbort) or ((Progress <> nil) and (Progress.Aborted)) then
+          break;
+      end;
+    finally
+      TranslationMemoryFileFormat.Free;
     end;
+
+    if (not Merge) then
+      FDataModuleTranslationMemory.SetLoaded;
 
     if (Progress <> nil) then
       Progress.Progress(psEnd, 1, 1);

@@ -47,10 +47,37 @@ type
   );
 
 type
+  TDuplicate = record
+    SourceValue: string;
+    Value: string;
+    RecordID: int64;
+  end;
+  TDuplicateValues = class(TList<TDuplicate>)
+  public
+    EmptyCount: integer;
+  end;
+
+  TDuplicateTerms = TObjectDictionary<string, TDuplicateValues>;
+
+  TDuplicates = TObjectDictionary<TField, TDuplicateTerms>;
+
+type
   ITranslationMemoryPeek = interface
     ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
     procedure EnqueueQuery(Prop: TLocalizerProperty);
     procedure Cancel;
+  end;
+
+  ITranslationMemory = interface
+    ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
+    function CreateField(LocaleItem: TLocaleItem): TField;
+    function SaveTableTranslationMemoryClone: IInterface;
+    function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
+      Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
+    procedure Lock;
+    procedure Unlock;
+    function GetTableTranslationMemory: TDataSet;
+    property TableTranslationMemory: TDataSet read GetTableTranslationMemory;
   end;
 
 // -----------------------------------------------------------------------------
@@ -59,7 +86,7 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TDataModuleTranslationMemory = class(TDataModule, ITranslationService)
+  TDataModuleTranslationMemory = class(TDataModule, ITranslationService, ITranslationMemory)
     DataSourceTranslationMemory: TDataSource;
     TableTranslationMemory: TFDMemTable;
     procedure TableTranslationMemoryAfterModify(DataSet: TDataSet);
@@ -71,28 +98,13 @@ type
     FLookupIndex: TDictionary<string, TList<integer>>;
     FConflictResolution: TDictionary<string, string>;
     FModified: boolean;
-    FCreateDate: TDateTime;
     FRefreshEvent: TEvent;
-  private type
-    TDuplicate = record
-      SourceValue: string;
-      Value: string;
-      RecordID: int64;
-    end;
-    TDuplicateValues = class(TList<TDuplicate>)
-    public
-      EmptyCount: integer;
-    end;
-
-    TDuplicateTerms = TObjectDictionary<string, TDuplicateValues>;
-
-    TDuplicates = TObjectDictionary<TField, TDuplicateTerms>;
   private
     function FindField(LocaleItem: TLocaleItem): TField;
     function GetHasData: boolean;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
     function GetAvailable: boolean;
-    function DoAdd(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
+    function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
     function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
   protected
@@ -103,6 +115,14 @@ type
     procedure Unlock;
 
     property RefreshEvent: TEvent read FRefreshEvent;
+  protected
+    // ITranslationMemory
+    function CreateField(LocaleItem: TLocaleItem): TField;
+    function SaveTableTranslationMemoryClone: IInterface;
+    function GetTableTranslationMemory: TDataSet;
+    function ITranslationMemory.AddTerm = AddTerm;
+    procedure ITranslationMemory.Lock = Lock;
+    procedure ITranslationMemory.Unlock = Unlock;
   protected
     // ITranslationService
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
@@ -121,11 +141,9 @@ type
     function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
     function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
-    function LoadTMX(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
-    function LoadTMX(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
-    procedure SaveTMX(const Filename: string);
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
+    procedure SetLoaded; // For use when loading TMX as main TM
 
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
@@ -185,13 +203,6 @@ uses
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
 
-type
-  TTerm = record
-    Field: TField;
-    Value: string;
-  end;
-
-  TTerms = TList<TTerm>;
 
 // -----------------------------------------------------------------------------
 //
@@ -584,6 +595,73 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TDataModuleTranslationMemory.CreateField(LocaleItem: TLocaleItem): TField;
+begin
+  if (LocaleItem = nil) then
+    Exit(nil);
+
+  Result := TWideMemoField.Create(TableTranslationMemory);
+
+  Result.DisplayLabel := LocaleItem.LanguageName;
+  Result.Tag := LocaleItem.Locale;
+  Result.FieldName := LocaleItem.LocaleSName;
+  Result.DataSet := TableTranslationMemory;
+  Result.DisplayWidth := 100;
+  Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
+end;
+
+function TDataModuleTranslationMemory.GetTableTranslationMemory: TDataSet;
+begin
+  Result := TableTranslationMemory;
+end;
+
+type
+  TTableTranslationMemoryClone = class(TInterfacedObject)
+  private
+    FOriginal: TFDMemTable;
+    FClone: TFDMemTable;
+  public
+    constructor Create(AOriginal: TFDMemTable);
+    destructor Destroy; override;
+  end;
+
+constructor TTableTranslationMemoryClone.Create(AOriginal: TFDMemTable);
+begin
+  inherited Create;
+  FOriginal := AOriginal;
+  FClone := TFDMemTable.Create(nil);
+  try
+    if (FOriginal.Fields.Count > 0) then
+      FClone.CopyDataSet(FOriginal, [coStructure, coRestart, coAppend]);
+  except
+    FreeAndNil(FClone);
+    raise;
+  end;
+  FOriginal.Close;
+end;
+
+destructor TTableTranslationMemoryClone.Destroy;
+begin
+  try
+    if (FOriginal.Fields.Count > 0) then
+      FOriginal.Open;
+
+    if (FClone <> nil) and (FClone.Fields.Count > 0) then
+      FOriginal.CopyDataSet(FClone, [coAppend]);
+  finally
+    FClone.Free;
+  end;
+
+  inherited;
+end;
+
+function TDataModuleTranslationMemory.SaveTableTranslationMemoryClone: IInterface;
+begin
+  Result := TTableTranslationMemoryClone.Create(TableTranslationMemory);
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TDataModuleTranslationMemory.FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
 begin
   Text := Sender.AsString;
@@ -615,7 +693,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.DoAdd(SourceField: TField; const SourceValue, SanitizedSourceValue: string;
+function TDataModuleTranslationMemory.AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string;
   TargetField: TField; const TargetValue: string;
   Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
 
@@ -906,7 +984,7 @@ begin
         TableTranslationMemory.Next;
       end;
 
-      Result := DoAdd(SourceField, SourceValue, SanitizedSourceValue, TargetField, TargetValue, Duplicates, Stats, DuplicateAction);
+      Result := AddTerm(SourceField, SourceValue, SanitizedSourceValue, TargetField, TargetValue, Duplicates, Stats, DuplicateAction);
 
     finally
       Duplicates.Free;
@@ -918,20 +996,6 @@ begin
 end;
 
 function TDataModuleTranslationMemory.Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction;
-
-  function AddField(LocaleItem: TLocaleItem): TField;
-  begin
-    Result := TWideMemoField.Create(TableTranslationMemory);
-
-    Result.FieldName := LocaleItem.LocaleSName;
-    Result.DisplayLabel := LocaleItem.LanguageName;
-    Result.Tag := LocaleItem.Locale;
-    Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
-
-    Result.DataSet := TableTranslationMemory;
-    Result.DisplayWidth := 100;
-  end;
-
 var
   SourceLocaleItem, TargetLocaleItem: TLocaleItem;
   SourceField: TField;
@@ -973,9 +1037,9 @@ begin
           TableTranslationMemory.Close;
 
           if (SourceField = nil) then
-            SourceField := AddField(SourceLocaleItem);
+            SourceField := CreateField(SourceLocaleItem);
           if (TargetField = nil) then
-            TargetField := AddField(TargetLocaleItem);
+            TargetField := CreateField(TargetLocaleItem);
 
           TableTranslationMemory.Open;
 
@@ -997,14 +1061,6 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
-
-function TDataModuleTranslationMemory.LoadTMX(const Filename: string; Merge: boolean): TTranslationMemoryMergeStats;
-var
-  DuplicateAction: TTranslationMemoryDuplicateAction;
-begin
-  DuplicateAction := tmDupActionPrompt;
-  Result := LoadTMX(Filename, DuplicateAction, Merge);
-end;
 
 procedure TDataModuleTranslationMemory.LoadFromFile(const Filename: string);
 var
@@ -1234,455 +1290,9 @@ begin
   FModified := False;
 end;
 
-function TDataModuleTranslationMemory.LoadTMX(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean; const Progress: IProgress): TTranslationMemoryMergeStats;
-var
-  Duplicates: TDuplicates;
-  DuplicateTermsList: array of TDuplicateTerms;
-  DuplicateTerms: TDuplicateTerms;
-  DuplicateValues: TDuplicateValues;
-  Duplicate: TDuplicate;
-  XML: IXMLDocument;
-  Body: IXMLNode;
-  Node, ItemNode: IXMLNode;
-  LanguageNode: IXMLNode;
-  Language: string;
-  LanguageName: string;
-  Languages: TDictionary<string, TField>;
-  Clone: TFDMemTable;
-  Translations: TObjectList<TTerms>;
-  Term: TTerm;
-  Terms: TTerms;
-  LocaleItem: TLocaleItem;
-  i, j: integer;
-  Field: TField;
-  s: string;
-  SourceValue, SanitizedSourceValue: string;
-  SourceIndex: integer;
-  SourceLanguage, SourceLanguageTU: string;
-  SourceField, SourceFieldTU: TField;
-  FieldMap: array of integer;
-  LocalProgress: IProgress;
+procedure TDataModuleTranslationMemory.SetLoaded;
 begin
-  Result := Default(TTranslationMemoryMergeStats);
-
-  XML := TXMLDocument.Create(nil);
-  XML.Active := True;
-
-  XML.LoadFromFile(Filename);
-
-  if (XML.DocumentElement.NodeName <> 'tmx') then
-    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
-
-  SourceLanguage := '';
-
-  Node := XML.DocumentElement.ChildNodes.FindNode('header');
-  if (Node <> nil) and (not Merge) then
-  begin
-    SourceLanguage := VarToStr(Node.Attributes['srclang']);
-    if (AnsisameText(SourceLanguage, '*all*')) then
-      // *all* is pretty meaningless for us, so ignore it
-      SourceLanguage := '';
-
-    if (SourceLanguage <> '') then
-    begin
-      LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
-      if (LocaleItem <> nil) then
-        SourceLanguage := LocaleItem.LocaleSName;
-    end;
-
-    s := VarToStr(Node.Attributes['creationdate']);
-    if (s.IsEmpty) or (not TryISO8601ToDate(s, FCreateDate, True)) then
-      FCreateDate := Now;
-  end;
-
-  Body := XML.DocumentElement.ChildNodes.FindNode('body');
-  if (Body = nil) then
-    raise ETranslationMemoryTMX.Create('xliff node not found: tmx\body');
-
-  if (Progress = nil) then
-    LocalProgress := ShowProgress(sTranslationMemoryLoading)
-  else
-    LocalProgress := nil;
-
-  if (Progress <> nil) then
-    Progress.UpdateMessage(sTranslationMemoryLoading)
-  else
-    LocalProgress.Progress(psBegin, 0, Body.ChildNodes.Count, sTranslationMemoryReadingTerms);
-
-  TableTranslationMemory.DisableControls;
-  try
-    Lock;
-    try
-      Translations := TObjectList<TTerms>.Create;
-      try
-
-        if (Merge) then
-          Clone := TFDMemTable.Create(nil)
-        else
-          Clone := nil;
-        try
-          if (Clone <> nil) and (TableTranslationMemory.Fields.Count > 0) then
-            Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
-
-          TableTranslationMemory.Close;
-
-          Languages := TDictionary<string, TField>.Create(TTextComparer.Create);
-          try
-
-            if (Merge) then
-            begin
-              for i := 0 to TableTranslationMemory.Fields.Count-1 do
-                Languages.Add(TableTranslationMemory.Fields[i].FieldName, TableTranslationMemory.Fields[i]);
-            end else
-              TableTranslationMemory.Fields.Clear;
-
-            SourceLanguageTU := '';
-
-            ItemNode := Body.ChildNodes.First;
-            while (ItemNode <> nil) do
-            begin
-              if (LocalProgress <> nil) then
-                LocalProgress.AdvanceProgress;
-
-              if (ItemNode.NodeName = 'tu') then
-              begin
-                Terms := TTerms.Create;
-                Translations.Add(Terms);
-
-                // If header didn't specify a source language, then the individual translation unit must do so
-                if (SourceLanguage = '') then
-                  SourceLanguageTU := VarToStr(ItemNode.Attributes['srclang']);
-
-                LanguageNode := ItemNode.ChildNodes.First;
-                while (LanguageNode <> nil) do
-                begin
-                  if (LanguageNode.NodeName = 'tuv') then
-                  begin
-                    Language := VarToStr(LanguageNode.Attributes['xml:lang']);
-                    if (Language = '') then
-                      Language := VarToStr(LanguageNode.Attributes['lang']); // Seen in the EU TMX files
-
-                    LocaleItem := TLocaleItems.FindLocaleName(Language);
-                    if (LocaleItem <> nil) then
-                      LanguageName := LocaleItem.LocaleSName
-                    else
-                      LanguageName := Language;
-
-                    if (not Languages.TryGetValue(LanguageName, Field)) then
-                    begin
-                      Field := TWideMemoField.Create(TableTranslationMemory);
-
-                      if (LocaleItem <> nil) then
-                      begin
-                        Field.DisplayLabel := LocaleItem.LanguageName;
-                        Field.Tag := LocaleItem.Locale;
-                      end else
-                        // TODO : We should ignore language instead
-                        ShowMessageFmt('Unknown language: %s', [Language]);
-
-                      Field.FieldName := LanguageName;
-                      Field.DataSet := TableTranslationMemory;
-                      Field.DisplayWidth := 100;
-                      Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
-
-                      Languages.Add(LanguageName, Field);
-                    end;
-
-                    Term.Field := Field;
-                    Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
-
-                    if (Terms.Count > 0) and (SourceLanguageTU = Language) then
-                      // Identify per-TU source language as the first in the first
-                      Terms.Insert(0, Term)
-                    else
-                      Terms.Add(Term);
-                  end;
-
-                  LanguageNode := LanguageNode.NextSibling;
-                end;
-              end;
-
-              ItemNode := ItemNode.NextSibling;
-            end;
-
-            if (LocalProgress <> nil) then
-              LocalProgress.Progress(psEnd, 1, 1);
-
-          finally
-            Languages.Free;
-          end;
-
-          // Now all fields has been created. Reload the old data..
-          if (Merge) then
-          begin
-            TableTranslationMemory.Open;
-            if (Clone.Fields.Count > 0) then
-              TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
-          end;
-
-        finally
-          Clone.Free;
-        end;
-
-        if (not TableTranslationMemory.Active) then
-          TableTranslationMemory.Open;
-
-        (*
-        ** Create index of duplicates per languag
-        *)
-        Duplicates := TDuplicates.Create([doOwnsValues]);
-        try
-          if (Merge) then
-          begin
-            if (Progress <> nil) then
-              Progress.UpdateMessage(sTranslationMemoryIndexingTerms)
-            else
-              LocalProgress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sTranslationMemoryIndexingTerms);
-
-            // Create one term list per language.
-            // Assume language[0] is the source language.
-            // A term list holds the target language terms that correspond to a given source language term.
-            SetLength(DuplicateTermsList, TableTranslationMemory.Fields.Count);
-
-            DuplicateTermsList[0] := nil;
-            for i := 1 to TableTranslationMemory.Fields.Count-1 do
-            begin
-              DuplicateTerms := TDuplicateTerms.Create([doOwnsValues], TTextComparer.Create);
-              DuplicateTermsList[i] := DuplicateTerms;
-              Duplicates.Add(TableTranslationMemory.Fields[i], DuplicateTerms);
-            end;
-
-            Field := TableTranslationMemory.Fields[0];
-
-            TableTranslationMemory.First;
-            while (not TableTranslationMemory.EOF) do
-            begin
-              if (LocalProgress <> nil) then
-                LocalProgress.AdvanceProgress;
-
-              // For each source language term...
-              SourceValue := Field.AsString;
-              SanitizedSourceValue := SanitizeText(SourceValue, False);
-
-              // ..., For each target language...
-              for i := 1 to TableTranslationMemory.Fields.Count-1 do
-              begin
-                // ... save the target term in the term list of the source language term
-                if (not DuplicateTermsList[i].TryGetValue(SanitizedSourceValue, DuplicateValues)) then
-                begin
-                  DuplicateValues := TDuplicateValues.Create;
-                  DuplicateTermsList[i].Add(SanitizedSourceValue, DuplicateValues);
-                end;
-
-                Duplicate.SourceValue := SourceValue;
-                Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
-                Duplicate.RecordID := TableTranslationMemory.RecNo;
-
-                DuplicateValues.Add(Duplicate);
-
-                if (Duplicate.Value.IsEmpty) then
-                  Inc(DuplicateValues.EmptyCount);
-              end;
-
-              TableTranslationMemory.Next;
-            end;
-            if (LocalProgress <> nil) then
-              LocalProgress.Progress(psEnd, 1, 1);
-          end;
-
-
-          if (Merge) then
-          begin
-            // Post all terms to the dataset as individual source/target values
-            if (Progress <> nil) then
-              Progress.UpdateMessage(sTranslationMemoryAddingTerms)
-            else
-              LocalProgress.Progress(psBegin, 0, Translations.Count, sTranslationMemoryAddingTerms);
-
-            // Find the source field corresponding to the source language specified in the header
-            if (SourceLanguage <> '') then
-              SourceField := TableTranslationMemory.Fields.FindField(SourceLanguage)
-            else
-              SourceField := nil;
-
-            for i := 0 to Translations.Count-1 do
-            begin
-              if (LocalProgress <> nil) then
-                LocalProgress.AdvanceProgress;
-
-              if (SourceField <> nil) then
-              begin
-                // Find source value
-                SourceIndex := -1;
-                for j := 0 to Translations[i].Count-1 do
-                  if (Translations[i][j].Field = SourceField) then
-                  begin
-                    SourceIndex := j;
-                    break;
-                  end;
-                SourceFieldTU := SourceField;
-              end else
-              if (Translations[i].Count > 0) then
-              begin
-                // Assume first language is source
-                SourceIndex := 0;
-                SourceFieldTU := Translations[i][0].Field;
-              end else
-                continue;
-
-              // Ignore if no source value
-              if (SourceIndex = -1) then
-                continue;
-
-              SourceValue := Translations[i][SourceIndex].Value;
-              SanitizedSourceValue := SanitizeText(SourceValue, False);
-
-              for j := 0 to Translations[i].Count-1 do
-              begin
-                Field := Translations[i][j].Field;
-
-                if (Field = SourceFieldTU) then
-                  continue;
-
-                DuplicateAction := DoAdd(SourceFieldTU, SourceValue, SanitizedSourceValue, Field, Translations[i][j].Value, Duplicates, Result, DuplicateAction);
-
-                if (DuplicateAction = tmDupActionAbort) then
-                  break;
-              end;
-              if (DuplicateAction = tmDupActionAbort) then
-                break;
-            end;
-            if (LocalProgress <> nil) then
-              LocalProgress.Progress(psEnd, 1, 1);
-          end else
-          begin
-            if (Progress <> nil) then
-              Progress.UpdateMessage(sTranslationMemoryLoadingTerms)
-            else
-              LocalProgress.Progress(psBegin, 0, Translations.Count, sTranslationMemoryLoadingTerms);
-
-            // Post all terms to the dataset, one row at a time
-            for i := 0 to Translations.Count-1 do
-            begin
-              if (LocalProgress <> nil) then
-                LocalProgress.AdvanceProgress;
-
-              TableTranslationMemory.Append;
-              try
-
-                for j := 0 to Translations[i].Count-1 do
-                  Translations[i][j].Field.AsString := Translations[i][j].Value;
-
-                TableTranslationMemory.Post;
-              except
-                TableTranslationMemory.Cancel;
-                raise;
-              end;
-              Inc(Result.Added);
-            end;
-            if (LocalProgress <> nil) then
-              LocalProgress.Progress(psEnd, 1, 1);
-            FModified := False;
-          end;
-        finally
-          Duplicates.Free;
-        end;
-
-      finally
-        Translations.Free;
-      end;
-    finally
-      Unlock;
-    end;
-  finally
-    TableTranslationMemory.EnableControls;
-  end;
-
-  FModified := True;
   FLoaded := True;
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TDataModuleTranslationMemory.SaveTMX(const Filename: string);
-var
-  XML: IXMLDocument;
-  Node, Body: IXMLNode;
-  ItemNode: IXMLNode;
-  LanguageNode: IXMLNode;
-  i: integer;
-  Progress: IProgress;
-begin
-  XML := TXMLDocument.Create(nil);
-  XML.Active := True;
-
-  XML.Options := [doNodeAutoIndent];
-  XML.Active := True;
-
-  XML.AddChild('tmx');
-  XML.DocumentElement.Attributes['version'] := '1.4';
-
-  Node := XML.DocumentElement.AddChild('header');
-  Node.Attributes['creationtool'] := TPath.GetFileNameWithoutExtension(ParamStr(0));
-  Node.Attributes['creationtoolversion'] := TVersionInfo.FileVersionString(ParamStr(0));
-  Node.Attributes['datatype'] := 'plaintext';
-  Node.Attributes['segtype'] := 'sentence';
-  Node.Attributes['adminlang'] := 'en-us';
-  Node.Attributes['srclang'] := '*all*'; // This is tecnically incorrect since we're treating the first language as the source language
-  Node.Attributes['creationdate'] := DateToISO8601(FCreateDate, True);
-  Node.Attributes['changedate'] := DateToISO8601(Now, False);
-
-  Body := XML.DocumentElement.AddChild('body');
-
-  if (HasData) then
-  begin
-    SaveCursor(crAppStart);
-
-    Progress := ShowProgress(sTranslationMemorySaving);
-    Progress.EnableAbort := True;
-
-    Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount);
-
-    TableTranslationMemory.DisableControls;
-    try
-      TableTranslationMemory.First;
-
-      while (not TableTranslationMemory.EOF) and (not Progress.Aborted) do
-      begin
-        Progress.AdvanceProgress;
-
-        ItemNode := Body.AddChild('tu');
-
-        for i := 0 to TableTranslationMemory.FieldCount-1 do
-        begin
-          if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
-          begin
-            LanguageNode := ItemNode.AddChild('tuv');
-            LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-            LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
-          end;
-        end;
-
-        TableTranslationMemory.Next;
-      end;
-    finally
-      TableTranslationMemory.EnableControls;
-    end;
-
-    if (Progress.Aborted) then
-      Exit;
-
-    Progress.Progress(psEnd, 1, 1);
-  end;
-
-  SaveCursor(crHourglass);
-
-  SafeReplaceFile(Filename,
-    function(const Filename: string): boolean
-    begin
-      XML.SaveToFile(Filename);
-      Result := True;
-    end, TranslationManagerSettings.Backup.SaveBackups);
 end;
 
 // -----------------------------------------------------------------------------

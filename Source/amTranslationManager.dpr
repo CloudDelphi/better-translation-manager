@@ -45,7 +45,9 @@ uses
   amLocalization.CommandLine in 'amLocalization.CommandLine.pas',
   amLocalization.System.SingleInst in 'amLocalization.System.SingleInst.pas',
   amLocalization.Dialog.Feedback in 'amLocalization.Dialog.Feedback.pas' {FormFeedback},
-  amLocalization.Shell in 'amLocalization.Shell.pas';
+  amLocalization.Shell in 'amLocalization.Shell.pas',
+  amLocalization.TranslationMemory.FileFormats.TMX in 'amLocalization.TranslationMemory.FileFormats.TMX.pas',
+  amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas';
 
 {$R *.res}
 
@@ -325,7 +327,6 @@ begin
   end;
 
   Application.CreateForm(TFormMain, FormMain);
-
   // Make sure main form does not activate when it is shown as this would cause the
   // splash to hide itself.
   ShowWindow(FormMain.Handle, SW_SHOWNA);
