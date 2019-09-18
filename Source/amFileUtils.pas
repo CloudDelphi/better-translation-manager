@@ -14,8 +14,16 @@ interface
 type
   TSaveFileDelegate = reference to function(const Filename: string): boolean;
 
-function SafeReplaceFile(const Filename: string; SaveFileDelegate: TSaveFileDelegate; Backup: boolean = True; const BackupTemplate: string = '%s.$%.4X'): boolean;
+// Format template:
+// 0: folder
+// 1: file name
+// 2: file type
+// 3: unique id
 
+function SafeReplaceFile(const Filename: string; SaveFileDelegate: TSaveFileDelegate; Backup: boolean = True; const BackupTemplate: string = '%0:s\%1:s%2:s.$%3:.4X'): boolean;
+
+var
+  sSafeReplaceFileTempTemplate: string = '%0:s\savefile%3:.4X%2:s';
 
 implementation
 
@@ -24,6 +32,12 @@ uses
   SysUtils;
 
 function SafeReplaceFile(const Filename: string; SaveFileDelegate: TSaveFileDelegate; Backup: boolean; const BackupTemplate: string): boolean;
+
+  function ApplyTemplate(const Template: string; ID: integer): string;
+  begin
+    Result := Format(Template, [TPath.GetDirectoryName(Filename), TPath.GetFileNameWithoutExtension(Filename), TPath.GetExtension(Filename), ID]);
+  end;
+
 var
   i: integer;
   TempFilename, BackupFilename: string;
@@ -35,9 +49,13 @@ begin
   begin
     i := 0;
     repeat
-      TempFilename := Format('%s\savefile%.4X%s', [TPath.GetDirectoryName(Filename), i, '.tmx']);
+      TempFilename := ApplyTemplate(sSafeReplaceFileTempTemplate, i);
       Inc(i);
-    until (not TFile.Exists(TempFilename));
+    until (i = MaxInt) or (not TFile.Exists(TempFilename));
+
+    if (i = MaxInt) then
+      // Give up and hope for the best
+      TempFilename := Filename;
   end;
 
   // Save file
@@ -51,9 +69,13 @@ begin
   begin
     i := 0;
     repeat
-      BackupFilename := Format(BackupTemplate, [Filename, i]);
+      BackupFilename := ApplyTemplate(BackupTemplate, i);
       Inc(i);
-    until (not TFile.Exists(BackupFilename));
+    until (i = MaxInt) or (not TFile.Exists(BackupFilename));
+
+    if (i = MaxInt) then
+      // Just create some random unique name
+      BackupFilename := TPath.GetGUIDFileName;
 
     TFile.Move(Filename, BackupFilename);
 
