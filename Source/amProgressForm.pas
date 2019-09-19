@@ -1,4 +1,4 @@
-unit amProgressForm;
+﻿unit amProgressForm;
 
 (*
  * Copyright © 2012 Anders Melander
@@ -24,6 +24,11 @@ uses
   ExtCtrls,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit, dxSkinsCore, cxLabel,
   Diagnostics;
+
+// The reason I'm not using a DevExpress progress bar is that their control has means to manuall request
+// an update of the animation (required for marquee style). The DevExpress control relies solely on timer
+// messages for marquee animation.
+// https://www.devexpress.com/Support/Center/Question/Details/T461955/provide-a-method-to-manually-update-the-animation-of-a-progress-bar
 
 //------------------------------------------------------------------------------
 //

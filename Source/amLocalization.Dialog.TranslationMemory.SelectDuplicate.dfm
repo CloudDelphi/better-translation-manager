@@ -80,6 +80,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         Properties.OnChange = CheckBoxAllPropertiesChange
         Style.HotTrack = False
         TabOrder = 1
+        Transparent = True
       end
       object ComboBoxAction: TcxComboBox [3]
         Left = 73
@@ -113,6 +114,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         Caption = '&Use this translation for identical conflicts'
         Style.HotTrack = False
         TabOrder = 3
+        Transparent = True
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
@@ -144,7 +146,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         CaptionOptions.Visible = False
         Control = CheckBoxAll
         ControlOptions.OriginalHeight = 19
-        ControlOptions.OriginalWidth = 126
+        ControlOptions.OriginalWidth = 127
         ControlOptions.ShowBorder = False
         Enabled = False
         Index = 2

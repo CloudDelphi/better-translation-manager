@@ -181,13 +181,13 @@ inherited FormTranslationMemory: TFormTranslationMemory
     end
   end
   object OpenDialogTMX: TOpenDialog
-    Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
+    Filter = '|All files (*.*)|*.*'
     Options = [ofHideReadOnly, ofAllowMultiSelect, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 120
     Top = 224
   end
   object SaveDialogTMX: TSaveDialog
-    Filter = 'Translation Memory files (*.tmx)|*.tmx|All files (*.*)|*.*'
+    Filter = '|All files (*.*)|*.*'
     Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
     Left = 232
     Top = 224

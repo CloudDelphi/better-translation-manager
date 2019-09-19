@@ -166,6 +166,7 @@ const
 
 resourcestring
   sTranslationMemoryLoading = 'Loading Translation Memory';
+  sTranslationMemoryLoad = 'Loading...';
   sTranslationMemoryReadingTerms = 'Reading terms...';
   sTranslationMemoryIndexingTerms = 'Indexing terms...';
   sTranslationMemoryAddingTerms = 'Adding terms...';

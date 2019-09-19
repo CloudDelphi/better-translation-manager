@@ -160,6 +160,7 @@ object FormMain: TFormMain
       Navigator.Buttons.CustomButtons = <>
       OptionsBehavior.CellHints = True
       OptionsBehavior.ImmediateEditor = False
+      OptionsBehavior.ExpandOnDblClick = False
       OptionsBehavior.RecordScrollMode = rsmByRecord
       OptionsCustomizing.BandCustomizing = False
       OptionsCustomizing.BandMoving = False
@@ -177,10 +178,11 @@ object FormMain: TFormMain
       OptionsView.ShowRoot = False
       OptionsView.TreeLineStyle = tllsNone
       PopupMenu = PopupMenuTree
-      Styles.Inactive = StyleSelected
+      Styles.Inactive = StyleInactive
       Styles.Selection = StyleSelected
       Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
       TabOrder = 0
+      OnDblClick = TreeListDblClick
       OnEnter = TreeListModulesEnter
       OnExit = TreeListModulesExit
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
@@ -205,6 +207,8 @@ object FormMain: TFormMain
       end
       object TreeListColumnModuleStatus: TcxTreeListColumn
         PropertiesClassName = 'TcxImageComboBoxProperties'
+        Properties.ImmediatePost = True
+        Properties.ImmediateUpdateText = True
         Properties.Items = <
           item
             Description = 'Translate'
@@ -213,10 +217,12 @@ object FormMain: TFormMain
           end
           item
             Description = 'Hold'
+            ImageIndex = 5
             Value = 1
           end
           item
             Description = 'Don'#39't translate'
+            ImageIndex = 2
             Value = 2
           end>
         Properties.OnEditValueChanged = TreeListColumnModuleStatusPropertiesEditValueChanged
@@ -335,9 +341,9 @@ object FormMain: TFormMain
     end
   end
   object TreeListItems: TcxVirtualTreeList
-    Left = 244
+    Left = 252
     Top = 158
-    Width = 720
+    Width = 712
     Height = 462
     Align = alClient
     Bands = <
@@ -347,7 +353,11 @@ object FormMain: TFormMain
     Images = DataModuleMain.ImageListTree
     Navigator.Buttons.CustomButtons = <>
     OptionsBehavior.CellHints = True
+    OptionsBehavior.GoToNextCellOnEnter = True
+    OptionsBehavior.GoToNextCellOnTab = True
     OptionsBehavior.ImmediateEditor = False
+    OptionsBehavior.ExpandOnDblClick = False
+    OptionsBehavior.FocusCellOnCycle = True
     OptionsBehavior.RecordScrollMode = rsmByRecord
     OptionsCustomizing.BandCustomizing = False
     OptionsCustomizing.BandMoving = False
@@ -370,13 +380,15 @@ object FormMain: TFormMain
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
     StateImages = DataModuleMain.ImageListState
-    Styles.Inactive = StyleSelected
+    Styles.Inactive = StyleInactive
     Styles.Selection = StyleSelected
     Styles.OnGetContentStyle = TreeListItemsStylesGetContentStyle
+    Styles.UseOddEvenStyles = bFalse
     TabOrder = 4
     OnClick = TreeListItemsClick
     OnCustomDrawDataCell = TreeListItemsCustomDrawDataCell
     OnCustomDrawIndicatorCell = TreeListItemsCustomDrawIndicatorCell
+    OnDblClick = TreeListDblClick
     OnEditing = TreeListItemsEditing
     OnEditValueChanged = TreeListItemsEditValueChanged
     OnEnter = TreeListModulesEnter
@@ -463,10 +475,12 @@ object FormMain: TFormMain
         end
         item
           Description = 'Hold'
+          ImageIndex = 5
           Value = 1
         end
         item
           Description = 'Don'#39't translate'
+          ImageIndex = 2
           Value = 2
         end>
       Properties.OnEditValueChanged = TreeListColumnStatusPropertiesEditValueChanged
@@ -490,10 +504,12 @@ object FormMain: TFormMain
         end
         item
           Description = 'Hold'
+          ImageIndex = 5
           Value = 1
         end
         item
           Description = 'Don'#39't translate'
+          ImageIndex = 2
           Value = 2
         end>
       Properties.ReadOnly = True
@@ -514,19 +530,22 @@ object FormMain: TFormMain
       Properties.Items = <
         item
           Description = 'Obsolete'
-          ImageIndex = 0
+          ImageIndex = 7
           Value = 0
         end
         item
           Description = 'Pending'
+          ImageIndex = 6
           Value = 1
         end
         item
           Description = 'Proposed'
+          ImageIndex = 3
           Value = 2
         end
         item
           Description = 'Translated'
+          ImageIndex = 4
           Value = 3
         end>
       Properties.OnEditValueChanged = TreeListColumnStatePropertiesEditValueChanged
@@ -614,17 +633,17 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'dxBarLargeButton1'
+          ItemName = 'BarButtonOpenProject'
         end
         item
           BeginGroup = True
           ViewLevels = [ivlLargeControlOnly, ivlSmallIconWithText, ivlSmallIcon, ivlControlOnly]
           Visible = True
-          ItemName = 'dxBarLargeButton2'
+          ItemName = 'BarButtonNewProject'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton1'
+          ItemName = 'BarButtonSaveProject'
         end>
       OneOnRow = False
       Row = 0
@@ -644,15 +663,15 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'dxBarLargeButton3'
+          ItemName = 'BarButtonUpdateProject'
         end
         item
           Visible = True
-          ItemName = 'dxBarLargeButton4'
+          ItemName = 'BarButtonBuildProject'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton3'
+          ItemName = 'BarButtonPurgeProject'
         end>
       OneOnRow = False
       Row = 0
@@ -732,15 +751,15 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'BarButton4'
+          ItemName = 'BarButtonStatusTranslate'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton4'
+          ItemName = 'BarButtonStatusDontTranslate'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton5'
+          ItemName = 'BarButtonStatusHold'
         end>
       OneOnRow = False
       Row = 0
@@ -760,15 +779,15 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'dxBarButton6'
+          ItemName = 'BarButtonStatePropose'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton7'
+          ItemName = 'BarButtonStateAccept'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton8'
+          ItemName = 'BarButtonStateReject'
         end>
       OneOnRow = False
       Row = 0
@@ -885,19 +904,19 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'dxBarLargeButton6'
+          ItemName = 'BarButtonMTWeb'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton15'
+          ItemName = 'BarButtonTM'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton23'
+          ItemName = 'BarButtonTMAdd'
         end
         item
           Visible = True
-          ItemName = 'dxBarButton24'
+          ItemName = 'BarButtonTMLookup'
         end>
       OneOnRow = False
       Row = 0
@@ -1004,26 +1023,26 @@ object FormMain: TFormMain
       Visible = True
       WholeRow = False
     end
-    object dxBarLargeButton1: TdxBarLargeButton
+    object BarButtonOpenProject: TdxBarLargeButton
       Action = ActionProjectOpen
       Category = 0
       ButtonStyle = bsDropDown
       DropDownMenu = PopupMenuRecentFiles
     end
-    object dxBarLargeButton2: TdxBarLargeButton
+    object BarButtonNewProject: TdxBarLargeButton
       Action = ActionProjectNew
       Category = 0
     end
-    object dxBarButton1: TdxBarButton
+    object BarButtonSaveProject: TdxBarButton
       Action = ActionProjectSave
       Category = 0
       LargeImageIndex = 2
     end
-    object dxBarLargeButton3: TdxBarLargeButton
+    object BarButtonUpdateProject: TdxBarLargeButton
       Action = ActionProjectUpdate
       Category = 0
     end
-    object dxBarLargeButton4: TdxBarLargeButton
+    object BarButtonBuildProject: TdxBarLargeButton
       Action = ActionBuild
       Category = 0
     end
@@ -1054,38 +1073,38 @@ object FormMain: TFormMain
       Properties.OnInitPopup = BarEditItemTargetLanguagePropertiesInitPopup
       RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemFilteredTargetLanguage
     end
-    object dxBarButton3: TdxBarButton
+    object BarButtonPurgeProject: TdxBarButton
       Action = ActionProjectPurge
       Category = 0
     end
-    object BarButton4: TdxBarButton
+    object BarButtonStatusTranslate: TdxBarButton
       Action = ActionStatusTranslate
       Category = 0
       ButtonStyle = bsChecked
       GroupIndex = 1
       Down = True
     end
-    object dxBarButton4: TdxBarButton
+    object BarButtonStatusDontTranslate: TdxBarButton
       Action = ActionStatusDontTranslate
       Category = 0
       ButtonStyle = bsChecked
       GroupIndex = 1
     end
-    object dxBarButton5: TdxBarButton
+    object BarButtonStatusHold: TdxBarButton
       Action = ActionStatusHold
       Category = 0
       ButtonStyle = bsChecked
       GroupIndex = 1
     end
-    object dxBarButton6: TdxBarButton
+    object BarButtonStatePropose: TdxBarButton
       Action = ActionTranslationStatePropose
       Category = 0
     end
-    object dxBarButton7: TdxBarButton
+    object BarButtonStateAccept: TdxBarButton
       Action = ActionTranslationStateAccept
       Category = 0
     end
-    object dxBarButton8: TdxBarButton
+    object BarButtonStateReject: TdxBarButton
       Action = ActionTranslationStateReject
       Category = 0
     end
@@ -1122,11 +1141,11 @@ object FormMain: TFormMain
       Action = ActionFindReplace
       Category = 0
     end
-    object dxBarLargeButton6: TdxBarLargeButton
+    object BarButtonMTWeb: TdxBarLargeButton
       Action = ActionAutomationWebLookup
       Category = 0
     end
-    object dxBarButton15: TdxBarButton
+    object BarButtonTM: TdxBarButton
       Action = ActionTranslationMemory
       Category = 0
     end
@@ -1204,11 +1223,11 @@ object FormMain: TFormMain
       Hint = 'Import from Excel'
       Visible = ivAlways
     end
-    object dxBarButton23: TdxBarButton
+    object BarButtonTMAdd: TdxBarButton
       Action = ActionTranslationMemoryAdd
       Category = 0
     end
-    object dxBarButton24: TdxBarButton
+    object BarButtonTMLookup: TdxBarButton
       Action = ActionTranslationMemoryTranslate
       Category = 0
     end
@@ -1803,28 +1822,28 @@ object FormMain: TFormMain
     ItemLinks = <
       item
         Visible = True
-        ItemName = 'BarButton4'
+        ItemName = 'BarButtonStatusTranslate'
       end
       item
         Visible = True
-        ItemName = 'dxBarButton4'
+        ItemName = 'BarButtonStatusDontTranslate'
       end
       item
         Visible = True
-        ItemName = 'dxBarButton5'
+        ItemName = 'BarButtonStatusHold'
       end
       item
         BeginGroup = True
         Visible = True
-        ItemName = 'dxBarButton6'
+        ItemName = 'BarButtonStatePropose'
       end
       item
         Visible = True
-        ItemName = 'dxBarButton7'
+        ItemName = 'BarButtonStateAccept'
       end
       item
         Visible = True
-        ItemName = 'dxBarButton8'
+        ItemName = 'BarButtonStateReject'
       end
       item
         BeginGroup = True
@@ -1879,8 +1898,13 @@ object FormMain: TFormMain
     end
     object StyleFocused: TcxStyle
       AssignedValues = [svColor, svTextColor]
-      Color = clHotLight
+      Color = clHighlight
       TextColor = clHighlightText
+    end
+    object StyleInactive: TcxStyle
+      AssignedValues = [svColor, svTextColor]
+      Color = 12884335
+      TextColor = clBlack
     end
   end
   object PopupMenuBookmark: TdxRibbonPopupMenu

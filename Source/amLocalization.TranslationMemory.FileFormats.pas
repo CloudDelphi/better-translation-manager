@@ -24,7 +24,12 @@ uses
 //
 // -----------------------------------------------------------------------------
 type
+  TTranslationMemoryFileFormat = class;
+  TTranslationMemoryFileFormatClass = class of TTranslationMemoryFileFormat;
+
   TTranslationMemoryFileFormat = class abstract
+  private
+    class var FFileFormatRegistry: TList<TTranslationMemoryFileFormatClass>;
   private
     FTranslationMemory: ITranslationMemory;
     FTableTranslationMemory: TDataSet;
@@ -37,18 +42,20 @@ type
     TTerms = TList<TTerm>;
     TTranslations = TObjectList<TTerms>;
     TLanguageFields = TDictionary<string, TField>;
-    TTranslationMemoryLoadTermsDelegate = reference to function(const Progress: IProgress; DetailedProgress: boolean; Translations: TTranslations;
-      Languages: TLanguageFields; Merge: boolean): boolean;
   protected
-    procedure CreateTermIndex(Duplicates: TDuplicates; SourceField: TField; const Progress: IProgress; DetailedProgress: boolean);
-
     function DoLoadFromStream(Stream: TStream; const Progress: IProgress; DetailedProgress: boolean; Translations: TTranslations;
-      Languages: TLanguageFields; Merge: boolean): boolean; virtual; abstract;
+      Languages: TLanguageFields; Merge: boolean; var SourceLanguage: string): boolean; virtual; abstract;
+
+    procedure CreateTermIndex(Duplicates: TDuplicates; SourceField: TField; const Progress: IProgress; DetailedProgress: boolean);
 
     property TranslationMemory: ITranslationMemory read FTranslationMemory;
     property TableTranslationMemory: TDataSet read FTableTranslationMemory;
+
+  protected
+    class procedure RegisterFileFormat(FileFormatClass: TTranslationMemoryFileFormatClass);
   public
     constructor Create(const ATranslationMemory: ITranslationMemory); virtual;
+    class destructor Destroy;
 
     function LoadFromStream(Stream: TStream; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
     function LoadFromStream(Stream: TStream; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
@@ -60,6 +67,13 @@ type
     procedure SaveToFile(const Filename: string);
 
     property FileCreateDate: TDateTime read FFileCreateDate write FFileCreateDate;
+
+    class function FileFormatFileDescription: string; virtual;
+    class function FileFormatFileType: string; virtual; abstract;
+    class function FileFormatFileFilter: string; virtual;
+    class function FileFormatFileFilters(IncludeAllFilter: boolean = True): string;
+
+    class function FindFileFormat(const Filename: string; Default: TTranslationMemoryFileFormatClass = nil): TTranslationMemoryFileFormatClass;
   end;
 
 // -----------------------------------------------------------------------------
@@ -98,6 +112,83 @@ begin
   FTranslationMemory := ATranslationMemory;
   FTableTranslationMemory := FTranslationMemory.TableTranslationMemory; // Cache for performance
   FFileCreateDate := Now;
+end;
+
+class destructor TTranslationMemoryFileFormat.Destroy;
+begin
+  FreeAndNil(FFileFormatRegistry);
+end;
+
+// -----------------------------------------------------------------------------
+
+class function TTranslationMemoryFileFormat.FileFormatFileDescription: string;
+begin
+  Result := FileFormatFileType;
+end;
+
+
+class function TTranslationMemoryFileFormat.FileFormatFileFilter: string;
+resourcestring
+  sFileFilterGeneric = '%0:s files (*.%1:s)|*.%1:s';
+begin
+  Result := Format(sFileFilterGeneric, [FileFormatFileDescription, FileFormatFileType]);
+end;
+
+class function TTranslationMemoryFileFormat.FileFormatFileFilters(IncludeAllFilter: boolean): string;
+var
+  FileFormatClass: TTranslationMemoryFileFormatClass;
+  AllFilter: string;
+resourcestring
+  sFileFilterAll = 'All supported files (%0:s)|%0:s';
+begin
+  Result := '';
+  if (FFileFormatRegistry = nil) then
+    Exit;
+
+  AllFilter := '';
+
+  for FileFormatClass in FFileFormatRegistry do
+  begin
+    if (Result <> '') then
+    begin
+      Result := Result + '|';
+      if (IncludeAllFilter) then
+        AllFilter := AllFilter + ';';
+    end;
+
+    Result := Result + FileFormatClass.FileFormatFileFilter;
+    if (IncludeAllFilter) then
+      AllFilter := AllFilter + '*.'+FileFormatClass.FileFormatFileType;
+  end;
+  if (IncludeAllFilter) then
+    Result := Format(sFileFilterAll, [AllFilter]) + '|' + Result;
+end;
+
+class function TTranslationMemoryFileFormat.FindFileFormat(const Filename: string; Default: TTranslationMemoryFileFormatClass): TTranslationMemoryFileFormatClass;
+var
+  FileFormatClass: TTranslationMemoryFileFormatClass;
+  FileType: string;
+begin
+  if (FFileFormatRegistry = nil) then
+    Exit(nil);
+
+  FileType := Copy(TPath.GetExtension(Filename), 2, MaxInt);
+
+  for FileFormatClass in FFileFormatRegistry do
+    if (AnsiSameText(FileType, FileFormatClass.FileFormatFileType)) then
+      Exit(FileFormatClass);
+
+  Result := Default;
+end;
+
+// -----------------------------------------------------------------------------
+
+class procedure TTranslationMemoryFileFormat.RegisterFileFormat(FileFormatClass: TTranslationMemoryFileFormatClass);
+begin
+  if (FFileFormatRegistry = nil) then
+    FFileFormatRegistry := TList<TTranslationMemoryFileFormatClass>.Create;
+
+  FFileFormatRegistry.Add(FileFormatClass);
 end;
 
 // -----------------------------------------------------------------------------
@@ -275,7 +366,8 @@ begin
             (*
             ** Call derived class to read terms from import file
             *)
-            if (not DoLoadFromStream(Stream, LocalProgress, DetailedProgress, Translations, Languages, Merge)) then
+            SourceLanguage := '';
+            if (not DoLoadFromStream(Stream, LocalProgress, DetailedProgress, Translations, Languages, Merge, SourceLanguage)) then
               Exit;
 
             if (DetailedProgress) then

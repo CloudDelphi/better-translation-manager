@@ -1,4 +1,4 @@
-﻿unit amLocalization.TranslationMemory.FileFormats.TMX;
+﻿unit amLocalization.TranslationMemory.FileFormats.TBX;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -17,11 +17,11 @@ uses
 
 // -----------------------------------------------------------------------------
 //
-// TTranslationMemoryFileFormatTMX
+// TTranslationMemoryFileFormatTBX
 //
 // -----------------------------------------------------------------------------
 type
-  TTranslationMemoryFileFormatTMX = class(TTranslationMemoryFileFormat)
+  TTranslationMemoryFileFormatTBX = class(TTranslationMemoryFileFormat)
   private
   protected
     function DoLoadFromStream(Stream: TStream; const Progress: IProgress; DetailedProgress: boolean; Translations: TTranslationMemoryFileFormat.TTranslations;
@@ -58,48 +58,45 @@ uses
 
 // -----------------------------------------------------------------------------
 //
-// TTranslationMemoryFileFormatTMX
+// TTranslationMemoryFileFormatTBX
 //
 // -----------------------------------------------------------------------------
-class constructor TTranslationMemoryFileFormatTMX.Create;
+class constructor TTranslationMemoryFileFormatTBX.Create;
 begin
-  RegisterFileFormat(TTranslationMemoryFileFormatTMX);
+  RegisterFileFormat(TTranslationMemoryFileFormatTBX);
 end;
 
 // -----------------------------------------------------------------------------
 
-class function TTranslationMemoryFileFormatTMX.FileFormatFileDescription: string;
+class function TTranslationMemoryFileFormatTBX.FileFormatFileDescription: string;
 resourcestring
-  sFileFormatTMXDescription = 'Translation Memory Exchange';
+  sFileFormatTBXDescription = 'TermBase eXchange';
 begin
-  Result := sFileFormatTMXDescription;
+  Result := sFileFormatTBXDescription;
 end;
 
-class function TTranslationMemoryFileFormatTMX.FileFormatFileType: string;
+class function TTranslationMemoryFileFormatTBX.FileFormatFileType: string;
 begin
-  Result := 'tmx';
+  Result := 'tbx';
 end;
 
 // -----------------------------------------------------------------------------
 
-function TTranslationMemoryFileFormatTMX.DoLoadFromStream(Stream: TStream; const Progress: IProgress; DetailedProgress: boolean;
+function TTranslationMemoryFileFormatTBX.DoLoadFromStream(Stream: TStream; const Progress: IProgress; DetailedProgress: boolean;
   Translations: TTranslationMemoryFileFormat.TTranslations; Languages: TTranslationMemoryFileFormat.TLanguageFields; Merge: boolean;
   var SourceLanguage: string): boolean;
 var
   ProgressStream: TStream;
   XML: IXMLDocument;
-  Body: IXMLNode;
-  Node, ItemNode: IXMLNode;
-  LanguageNode: IXMLNode;
-  SourceLanguageTU: string;
-  CreateDate: TDateTime;
+  HeaderNode, BodyNode: IXMLNode;
+  TermEntryNode, LanguageNode, TermGroupNode: IXMLNode;
+  Node: IXMLNode;
   Term: TTerm;
   Terms: TTerms;
   LocaleItem: TLocaleItem;
   Language: string;
   LanguageName: string;
   Field: TField;
-  s: string;
 begin
   XML := TXMLDocument.Create(nil);
   XML.Active := True;
@@ -112,106 +109,105 @@ begin
     if (DetailedProgress) then
       Progress.UpdateMessage(sTranslationMemoryLoad);
 
-    XML.LoadFromStream(ProgressStream);
+    XML.LoadFromStream(Stream);
 
   finally
     if (DetailedProgress) then
       ProgressStream.Free;
   end;
 
-  if (XML.DocumentElement.NodeName <> 'tmx') then
-    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
+  if (XML.DocumentElement.NodeName <> 'martif') then
+    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "martif": %s', [XML.DocumentElement.NodeName]);
+
+  HeaderNode := XML.DocumentElement.ChildNodes.FindNode('martifheader');
+  if (HeaderNode <> nil) then
+  begin
+  end;
+
+  Node := XML.DocumentElement.ChildNodes.FindNode('text');
+  if (Node = nil) then
+    raise ETranslationMemoryTMX.Create('Required node not found: martif\text');
+
+  BodyNode := Node.ChildNodes.FindNode('body');
+  if (BodyNode = nil) then
+    raise ETranslationMemoryTMX.Create('Required node not found: martif\text\body');
 
   SourceLanguage := '';
 
-  Node := XML.DocumentElement.ChildNodes.FindNode('header');
-  if (Node <> nil) and (not Merge) then
-  begin
-    SourceLanguage := VarToStr(Node.Attributes['srclang']);
-    if (AnsisameText(SourceLanguage, '*all*')) then
-      // *all* is pretty meaningless for us, so ignore it
-      SourceLanguage := '';
-
-    if (SourceLanguage <> '') then
-    begin
-      LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
-      if (LocaleItem <> nil) then
-        SourceLanguage := LocaleItem.LocaleSName;
-    end;
-
-    s := VarToStr(Node.Attributes['creationdate']);
-    if (s.IsEmpty) or (not TryISO8601ToDate(s, CreateDate, True)) then
-      CreateDate := Now;
-    FileCreateDate := CreateDate;
-  end;
-
-  Body := XML.DocumentElement.ChildNodes.FindNode('body');
-  if (Body = nil) then
-    raise ETranslationMemoryTMX.Create('Required node not found: tmx\body');
-
   if (DetailedProgress) then
-    Progress.Progress(psBegin, 0, Body.ChildNodes.Count, sTranslationMemoryReadingTerms);
+    Progress.Progress(psBegin, 0, BodyNode.ChildNodes.Count, sTranslationMemoryReadingTerms);
 
-  ItemNode := Body.ChildNodes.First;
-  while (ItemNode <> nil) do
+  TermEntryNode := BodyNode.ChildNodes.First;
+  while (TermEntryNode <> nil) do
   begin
     if (DetailedProgress) then
       Progress.AdvanceProgress
     else
       Progress.ProcessMessages;
 
-    if (ItemNode.NodeName = 'tu') then
+    if (TermEntryNode.NodeName = 'termEntry') then
     begin
       Terms := TTerms.Create;
       Translations.Add(Terms);
 
-      // If header didn't specify a source language, then the individual translation unit must do so
-      SourceLanguageTU := VarToStr(ItemNode.Attributes['srclang']);
-      if (SourceLanguageTU <> '') then
-      begin
-        LocaleItem := TLocaleItems.FindLocaleName(SourceLanguageTU);
-        if (LocaleItem <> nil) then
-          SourceLanguage := LocaleItem.LocaleSName
-        else
-          SourceLanguage := SourceLanguageTU;
-      end;
-
-      LanguageNode := ItemNode.ChildNodes.First;
+      LanguageNode := TermEntryNode.ChildNodes.First;
       while (LanguageNode <> nil) do
       begin
-        if (LanguageNode.NodeName = 'tuv') then
+        if (LanguageNode.NodeName = 'langSet') then
         begin
           Language := VarToStr(LanguageNode.Attributes['xml:lang']);
           if (Language = '') then
-            Language := VarToStr(LanguageNode.Attributes['lang']); // Seen in the EU TMX files
+            Language := VarToStr(LanguageNode.Attributes['lang']);
 
-          LocaleItem := TLocaleItems.FindLocaleName(Language);
-          if (LocaleItem <> nil) then
-            LanguageName := LocaleItem.LocaleSName
+          if (Language <> '') then
+            LocaleItem := TLocaleItems.FindLocaleName(Language)
           else
-            LanguageName := Language; // TODO : We should ignore language instead
+            LocaleItem := nil; // Ignore unknown language
 
-          if (not Languages.TryGetValue(LanguageName, Field)) then
+          TermGroupNode := nil;
+          if (LocaleItem <> nil) then
           begin
-            Field := TranslationMemory.CreateField(LocaleItem);
-            Languages.Add(LanguageName, Field);
+            LanguageName := LocaleItem.LocaleSName;
+
+            // First language becomes the source language
+            if (SourceLanguage = '') then
+              SourceLanguage := LanguageName;
+
+            // <tig><term>
+            TermGroupNode := LanguageNode.ChildNodes.FindNode('tig');
+            if (TermGroupNode = nil) then
+            begin
+              // <tig><ntig><termGrp><term>
+              Node := LanguageNode.ChildNodes.FindNode('ntig');
+              if (Node <> nil) then
+                TermGroupNode := Node.ChildNodes.FindNode('termGrp');
+            end;
           end;
 
-          Term.Field := Field;
-          Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
+          if (TermGroupNode <> nil) then
+          begin
+            if (not Languages.TryGetValue(LanguageName, Field)) then
+            begin
+              Field := TranslationMemory.CreateField(LocaleItem);
+              Languages.Add(LanguageName, Field);
+            end;
 
-          if (Terms.Count > 0) and (SourceLanguage = LanguageName) then
-            // Identify per-TU source language as the first in the first
-            Terms.Insert(0, Term)
-          else
-            Terms.Add(Term);
+            Term.Field := Field;
+            Term.Value := VarToStr(TermGroupNode.ChildValues['term']);
+
+            if (Terms.Count > 0) and (SourceLanguage = LanguageName) then
+              // Identify source language as the first in the first
+              Terms.Insert(0, Term)
+            else
+              Terms.Add(Term);
+          end;
         end;
 
         LanguageNode := LanguageNode.NextSibling;
       end;
     end;
 
-    ItemNode := ItemNode.NextSibling;
+    TermEntryNode := TermEntryNode.NextSibling;
   end;
 
   if (DetailedProgress) then
@@ -222,12 +218,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TTranslationMemoryFileFormatTMX.SaveToStream(Stream: TStream);
+procedure TTranslationMemoryFileFormatTBX.SaveToStream(Stream: TStream);
 var
   XML: IXMLDocument;
-  Node, Body: IXMLNode;
-  ItemNode: IXMLNode;
-  LanguageNode: IXMLNode;
+  HeaderNode, Node, BodyNode: IXMLNode;
+  TermEntryNode: IXMLNode;
+  LangSetNode: IXMLNode;
   i: integer;
   Progress: IProgress;
 begin
@@ -237,20 +233,17 @@ begin
   XML.Options := [doNodeAutoIndent];
   XML.Active := True;
 
-  XML.AddChild('tmx');
-  XML.DocumentElement.Attributes['version'] := '1.4';
+  XML.AddChild('martif');
+  XML.DocumentElement.Attributes['type'] := 'TBX';
+  XML.DocumentElement.Attributes['xml:lang'] := 'en-US';
 
-  Node := XML.DocumentElement.AddChild('header');
-  Node.Attributes['creationtool'] := TPath.GetFileNameWithoutExtension(ParamStr(0));
-  Node.Attributes['creationtoolversion'] := TVersionInfo.FileVersionString(ParamStr(0));
-  Node.Attributes['datatype'] := 'plaintext';
-  Node.Attributes['segtype'] := 'sentence';
-  Node.Attributes['adminlang'] := 'en-us';
-  Node.Attributes['srclang'] := '*all*'; // This is tecnically incorrect since we're mostly treating the first language as the source language
-  Node.Attributes['creationdate'] := DateToISO8601(FileCreateDate, True);
-  Node.Attributes['changedate'] := DateToISO8601(Now, False);
+  HeaderNode := XML.DocumentElement.AddChild('martifHeader');
+  Node := HeaderNode.AddChild('fileDesc');
+  Node.AddChild('titleStmt').AddChild('title').Text := 'Translation Memory Export';
+  Node.AddChild('sourceDesc').AddChild('p').Text := 'Translation Memory';
 
-  Body := XML.DocumentElement.AddChild('body');
+  Node := XML.DocumentElement.AddChild('text');
+  BodyNode := Node.AddChild('body');
 
   if (TableTranslationMemory.Active) and (TableTranslationMemory.RecordCount > 0) then
   begin
@@ -269,15 +262,15 @@ begin
       begin
         Progress.AdvanceProgress;
 
-        ItemNode := Body.AddChild('tu');
+        TermEntryNode := BodyNode.AddChild('termEntry');
 
         for i := 0 to TableTranslationMemory.FieldCount-1 do
         begin
           if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
           begin
-            LanguageNode := ItemNode.AddChild('tuv');
-            LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-            LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
+            LangSetNode := TermEntryNode.AddChild('langSet');
+            LangSetNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
+            LangSetNode.AddChild('tig').AddChild('term').Text := TableTranslationMemory.Fields[i].AsString;
           end;
         end;
 
@@ -305,5 +298,5 @@ end;
 
 initialization
   // Ensure reference to class so class constructor gets called
-  TTranslationMemoryFileFormatTMX.ClassName;
+  TTranslationMemoryFileFormatTBX.ClassName;
 end.

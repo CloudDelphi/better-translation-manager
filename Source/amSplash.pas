@@ -10,6 +10,8 @@
 
 interface
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 uses
   MMSystem,
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
@@ -55,6 +57,7 @@ type
     FVersion: string;
     FAnimate: TSplashAnimate;
     FShouldAnimate: boolean;
+    FAnimating: boolean;
   protected
     procedure CreateParams(var Params: TCreateParams); override;
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
@@ -512,16 +515,21 @@ begin
 
     // ... and action!
     Ticks := 0;
-    while (BlendFunction.SourceConstantAlpha < 255) and (not FAbort) do
-    begin
-      while (Ticks = GetTickCount) do
-        Sleep(10); // Don't fade too fast
-      Ticks := GetTickCount;
-      inc(BlendFunction.SourceConstantAlpha,
-        (255-BlendFunction.SourceConstantAlpha) div 32+1); // Fade in
-      UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FSplashBitmap.Canvas.Handle,
-        @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
-      Application.ProcessMessages;
+    FAnimating := True;
+    try
+      while (BlendFunction.SourceConstantAlpha < 255) and (not FAbort) do
+      begin
+        while (Ticks = GetTickCount) do
+          Sleep(10); // Don't fade too fast
+        Ticks := GetTickCount;
+        inc(BlendFunction.SourceConstantAlpha,
+          (255-BlendFunction.SourceConstantAlpha) div 32+1); // Fade in
+        UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FSplashBitmap.Canvas.Handle,
+          @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+        Application.ProcessMessages; // Warning: UI recursion here!
+      end;
+    finally
+      FAnimating := False;
     end;
   end else
   begin
@@ -546,7 +554,16 @@ end;
 procedure TFormSplash.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   TimerBanner.Enabled := False;
-  Action := caFree;
+  TimerSplash.Enabled := False;
+
+  if (FAnimating) then
+  begin
+    // Not safe to destroy - Hide instead and wait to be closed again
+    FAbort := True;
+    Action := caHide;
+  end else
+    // Safe to destroy
+    Action := caFree;
 end;
 
 //------------------------------------------------------------------------------
@@ -755,16 +772,21 @@ begin
 
       // ... and action!
       Ticks := 0;
-      while (BlendFunction.SourceConstantAlpha > 0) and (not FAbort) do
-      begin
-        while (Ticks = GetTickCount) do
-          Sleep(10); // Don't fade too fast
-        Ticks := GetTickCount;
-        dec(BlendFunction.SourceConstantAlpha,
-          BlendFunction.SourceConstantAlpha div 16+1); // Fade out
-        UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, Bitmap.Canvas.Handle,
-          @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
-        Application.ProcessMessages;
+      FAnimating := True; // Attempt to work around spurious errors involving UpdateLayeredWindow and Bitmap.Canvas.Handle
+      try
+        while (BlendFunction.SourceConstantAlpha > 0) and (not FAbort) do
+        begin
+          while (Ticks = GetTickCount) do
+            Sleep(10); // Don't fade too fast
+          Ticks := GetTickCount;
+          dec(BlendFunction.SourceConstantAlpha,
+            BlendFunction.SourceConstantAlpha div 16+1); // Fade out
+          UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, Bitmap.Canvas.Handle,
+            @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+          Application.ProcessMessages;
+        end;
+      finally
+        FAnimating := False;
       end;
     end;
 

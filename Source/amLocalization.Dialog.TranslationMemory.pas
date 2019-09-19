@@ -10,6 +10,8 @@
 
 interface
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.StdCtrls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.ExtCtrls,
@@ -196,6 +198,7 @@ end;
 
 procedure TFormTranslationMemory.ActionExportExecute(Sender: TObject);
 var
+  TranslationMemoryFileFormatClass: TTranslationMemoryFileFormatClass;
   TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
 begin
   if (SaveDialogTMX.InitialDir = '') then
@@ -207,7 +210,10 @@ begin
 
   SaveCursor(crHourGlass);
 
-  TranslationMemoryFileFormat := TTranslationMemoryFileFormatTMX.Create(FDataModuleTranslationMemory);
+  TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(SaveDialogTMX.FileName, TTranslationMemoryFileFormatTMX);
+  Assert(TranslationMemoryFileFormatClass <> nil);
+
+  TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
   try
 
     TranslationMemoryFileFormat.SaveToFile(SaveDialogTMX.FileName);
@@ -223,6 +229,7 @@ var
   Res: Word;
   Stats, OneStats: TTranslationMemoryMergeStats;
   Filename: string;
+  TranslationMemoryFileFormatClass: TTranslationMemoryFileFormatClass;
   TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
   DuplicateAction: TTranslationMemoryDuplicateAction;
   Progress: IProgress;
@@ -277,7 +284,10 @@ begin
 
     MergeFile := Merge;
 
-    TranslationMemoryFileFormat := TTranslationMemoryFileFormatTMX.Create(FDataModuleTranslationMemory);
+    TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(OpenDialogTMX.FileName, TTranslationMemoryFileFormatTMX);
+    Assert(TranslationMemoryFileFormatClass <> nil);
+
+    TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
     try
       for Filename in OpenDialogTMX.Files do
       begin
@@ -353,6 +363,8 @@ end;
 
 procedure TFormTranslationMemory.FormCreate(Sender: TObject);
 begin
+  OpenDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters + OpenDialogTMX.Filter;
+  SaveDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters + SaveDialogTMX.Filter;
   GridTMDBTableView.DataController.CreateAllItems(True);
 end;
 

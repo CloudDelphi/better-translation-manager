@@ -100,12 +100,12 @@ type
     StatusBar: TdxRibbonStatusBar;
     SkinController: TdxSkinController;
     BarManagerBarFile: TdxBar;
-    dxBarLargeButton1: TdxBarLargeButton;
-    dxBarLargeButton2: TdxBarLargeButton;
-    dxBarButton1: TdxBarButton;
+    BarButtonOpenProject: TdxBarLargeButton;
+    BarButtonNewProject: TdxBarLargeButton;
+    BarButtonSaveProject: TdxBarButton;
     BarManagerBarProject: TdxBar;
-    dxBarLargeButton3: TdxBarLargeButton;
-    dxBarLargeButton4: TdxBarLargeButton;
+    BarButtonUpdateProject: TdxBarLargeButton;
+    BarButtonBuildProject: TdxBarLargeButton;
     BarManagerBarImport: TdxBar;
     dxBarButton2: TdxBarButton;
     RibbonTabTranslation: TdxRibbonTab;
@@ -129,16 +129,16 @@ type
     BarEditItemSourceLanguage: TcxBarEditItem;
     BarEditItemTargetLanguage: TcxBarEditItem;
     OpenDialogProject: TOpenDialog;
-    dxBarButton3: TdxBarButton;
+    BarButtonPurgeProject: TdxBarButton;
     ActionProjectPurge: TAction;
     BarManagetBarTranslationStatus: TdxBar;
-    BarButton4: TdxBarButton;
-    dxBarButton4: TdxBarButton;
-    dxBarButton5: TdxBarButton;
+    BarButtonStatusTranslate: TdxBarButton;
+    BarButtonStatusDontTranslate: TdxBarButton;
+    BarButtonStatusHold: TdxBarButton;
     BarManagetBarTranslationState: TdxBar;
-    dxBarButton6: TdxBarButton;
-    dxBarButton7: TdxBarButton;
-    dxBarButton8: TdxBarButton;
+    BarButtonStatePropose: TdxBarButton;
+    BarButtonStateAccept: TdxBarButton;
+    BarButtonStateReject: TdxBarButton;
     ActionTranslationStatePropose: TAction;
     ActionTranslationStateAccept: TAction;
     ActionTranslationStateReject: TAction;
@@ -174,8 +174,8 @@ type
     TreeListColumnModuleName: TcxTreeListColumn;
     TreeListColumnModuleStatus: TcxTreeListColumn;
     BarManagerBarMachineTranslation: TdxBar;
-    dxBarLargeButton6: TdxBarLargeButton;
-    dxBarButton15: TdxBarButton;
+    BarButtonMTWeb: TdxBarLargeButton;
+    BarButtonTM: TdxBarButton;
     BarButtonGotoNext: TdxBarSubItem;
     ActionMain: TAction;
     ActionGotoNextUntranslated: TAction;
@@ -197,8 +197,8 @@ type
     dxBarButton20: TdxBarButton;
     dxBarButton21: TdxBarButton;
     dxBarButton22: TdxBarButton;
-    dxBarButton23: TdxBarButton;
-    dxBarButton24: TdxBarButton;
+    BarButtonTMAdd: TdxBarButton;
+    BarButtonTMLookup: TdxBarButton;
     StyleSelected: TcxStyle;
     PanelModules: TPanel;
     LayoutControlModulesGroup_Root: TdxLayoutGroup;
@@ -271,6 +271,7 @@ type
     ScreenTipTranslationMemory: TdxScreenTip;
     dxBarButton35: TdxBarButton;
     ActionAbout: TAction;
+    StyleInactive: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -369,6 +370,7 @@ type
     procedure TimerHintTimer(Sender: TObject);
     procedure TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionAboutExecute(Sender: TObject);
+    procedure TreeListDblClick(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -595,7 +597,7 @@ resourcestring
   sLocalizerFindNoMore = 'No more found';
 
 resourcestring
-  sTranslateEligibleWarning = 'Note: %d of the selected values are not elegible for translation.';
+  sTranslateEligibleWarning = #13#13'Note: %d of the selected values are not elegible for translation.';
 
 resourcestring
   sProjectUpdatedTitle = 'Project updated';
@@ -644,6 +646,7 @@ type
 
 type
   TcxTreeListNodeCracker = class(TcxTreeListNode);
+  TcxTreeListCracker = class(TcxTreeList);
 
 type
   TcxCustomEditCracker = class(TcxCustomEdit);
@@ -809,6 +812,10 @@ begin
 
   FSkin := '';
   FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
+
+  // Not possible to set [fsBold] at design time without also setting font name.
+  StyleFocused.Font.Assign(TreeListItems.Font);
+  StyleFocused.Font.Style := [fsBold];
 
   if (TranslationManagerSettings.System.SafeMode) then
     Caption := Caption + ' [SAFE MODE]';
@@ -1336,7 +1343,7 @@ begin
       function(Prop: TLocalizerProperty): boolean
       begin
         Inc(Count);
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TargetLanguage)) then
           Inc(ElegibleCount);
         Result := True;
       end, False);
@@ -1380,7 +1387,7 @@ begin
             var
               Value, SourceValue, TranslatedValue: string;
             begin
-              if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
+              if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) or (Prop.HasTranslation(TargetLanguage)) then
                 Exit(True);
 
               Inc(Count);
@@ -2233,11 +2240,11 @@ end;
 
 procedure TFormMain.LoadFromFile(const Filename: string);
 var
+  Stream: TStream;
+  ProgressStream: TStream;
   BestLanguage: TTargetLanguage;
   i: integer;
   Progress: IProgress;
-resourcestring
-  sProgressProjectLoading = 'Loading project...';
 begin
   SaveCursor(crHourGlass);
 
@@ -2249,7 +2256,7 @@ begin
 
   Progress := ShowProgress(sProgressProjectLoading);
   try
-    Progress.Marquee := True;
+//    Progress.Marquee := True;
 
     FProject.BeginUpdate;
     try
@@ -2257,7 +2264,19 @@ begin
       FProjectFilename := Filename;
       try
 
-        TLocalizationProjectFiler.LoadFromFile(FProject, FProjectFilename);
+        Stream := TFileStream.Create(FProjectFilename, fmOpenRead);
+        try
+          ProgressStream := TProgressStream.Create(Stream, Progress);
+          try
+
+            TLocalizationProjectFiler.LoadFromStream(FProject, ProgressStream, Progress);
+
+          finally
+            ProgressStream.Free;
+          end;
+        finally
+          Stream.Free;
+        end;
 
       except
         FProjectFilename := '';
@@ -4560,6 +4579,14 @@ begin
   ADone := True;
 end;
 
+procedure TFormMain.TreeListDblClick(Sender: TObject);
+begin
+  // Double click starts edit mode.
+  // This works around DevExpress' unintuitive "very slow double click to edit"
+  if (TcxTreeList(Sender).FocusedColumn.Options.Editing) then
+    TcxTreeListCracker(Sender).Controller.ShowEdit([], 0, 0);
+end;
+
 procedure TFormMain.TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
 begin
   // Only allow inline editing of property nodes
@@ -4876,12 +4903,17 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused) or ((AColumn.Focused) and (not AColumn.TreeList.Focused))) then
+  if (ANode.Selected) and (not Sender.Focused) then
+  begin
+    AStyle := StyleInactive;
+    Exit;
+  end else
+  if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then
   begin
     AStyle := StyleSelected;
     Exit;
   end else
-  if (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (AColumn.TreeList.Focused) and (not AColumn.Editing) then
+  if (Sender.Focused) and (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (not AColumn.Editing) then
   begin
     AStyle := StyleFocused;
     Exit;
@@ -5043,12 +5075,17 @@ procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeLi
 var
   Module: TLocalizerModule;
 begin
-  if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused) or ((AColumn.Focused) and (not AColumn.TreeList.Focused))) then
+  if (ANode.Selected) and (not Sender.Focused) then
+  begin
+    AStyle := StyleInactive;
+    Exit;
+  end else
+  if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then
   begin
     AStyle := StyleSelected;
     Exit;
   end else
-  if (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (AColumn.TreeList.Focused) and (not AColumn.Editing) then
+  if (Sender.Focused) and (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (not AColumn.Editing) then
   begin
     AStyle := StyleFocused;
     Exit;

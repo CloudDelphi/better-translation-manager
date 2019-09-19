@@ -12,6 +12,8 @@ interface
 
 uses
   Classes,
+  SysUtils,
+  amProgressForm,
   amLocalization.Model;
 
 // -----------------------------------------------------------------------------
@@ -33,15 +35,24 @@ type
     class function EncodeString(const Value: string): string;
     class function DecodeString(const Value: string): string;
   public
-    class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream);
-    class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string);
+    class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
+    class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress = nil);
 
-    class procedure SaveToStream(Project: TLocalizerProject; Stream: TStream);
-    class procedure SaveToFile(Project: TLocalizerProject; const Filename: string);
+    class procedure SaveToStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
+    class procedure SaveToFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress = nil);
   end;
+
+type
+  ELocalizationPersistence = class(Exception);
+
 
 const
   sLocalizationFileformatRoot = 'xlat';
+
+resourcestring
+  sProgressProjectLoading = 'Loading Project';
+  sProgressProjectLoad = 'Loading...';
+  sProgressProjectReadModules = 'Processing modules...';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -50,7 +61,6 @@ const
 implementation
 
 uses
-  SysUtils,
   DateUtils,
   IOUtils,
   Windows,
@@ -83,13 +93,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.LoadFromFile(Project: TLocalizerProject; const Filename: string);
+class procedure TLocalizationProjectFiler.LoadFromFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress);
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead);
   try
-    LoadFromStream(Project, Stream);
+    LoadFromStream(Project, Stream, Progress);
   finally
     Stream.Free;
   end;
@@ -97,7 +107,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProject; Stream: TStream);
+class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress);
 
   function StringToModuleKind(const Value: string): TLocalizerModuleKind;
   begin
@@ -179,6 +189,9 @@ var
   TranslationStatus: TTranslationStatus;
   s: string;
 begin
+  if (Progress <> nil) then
+    Progress.UpdateMessage(sProgressProjectLoad);
+
   XML := TXMLDocument.Create(nil);
   XML.Options := XML.Options + [doAttrNull];
   XML.ParseOptions := XML.ParseOptions + [poPreserveWhiteSpace];
@@ -186,11 +199,11 @@ begin
 
   RootNode := XML.ChildNodes[sLocalizationFileformatRoot];
   if (RootNode = nil) then
-    raise Exception.CreateFmt('Malformed project file. Root element not found: %s', [sLocalizationFileformatRoot]);
+    raise ELocalizationPersistence.CreateFmt('Malformed project file. Root element not found: %s', [sLocalizationFileformatRoot]);
 
   ProjectNode := RootNode.ChildNodes['project'];
   if (ProjectNode = nil) then
-    raise Exception.CreateFmt('Malformed project file. Project element not found: %s', ['project']);
+    raise ELocalizationPersistence.CreateFmt('Malformed project file. Project element not found: %s', ['project']);
 
   Language := nil;
   CachedLanguage := '';
@@ -235,9 +248,15 @@ begin
     if (ModulesNode = nil) then
       exit;
 
+    if (Progress <> nil) then
+      Progress.Progress(psBegin, 0, ModulesNode.ChildNodes.Count, sProgressProjectReadModules);
+
     ModuleNode := ModulesNode.ChildNodes.First;
     while (ModuleNode <> nil) do
     begin
+      if (Progress <> nil) then
+        Progress.AdvanceProgress;
+
       if (ModuleNode.NodeName = 'module') then
       begin
         Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
@@ -305,6 +324,8 @@ begin
       end;
       ModuleNode := ModuleNode.NextSibling;
     end;
+    if (Progress <> nil) then
+      Progress.Progress(psEnd, 1, 1);
   finally
     Project.EndUpdate;
   end;
@@ -312,13 +333,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.SaveToFile(Project: TLocalizerProject; const Filename: string);
+class procedure TLocalizationProjectFiler.SaveToFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress);
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmCreate);
   try
-    SaveToStream(Project, Stream);
+    SaveToStream(Project, Stream, Progress);
   finally
     Stream.Free;
   end;
@@ -326,7 +347,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProject; Stream: TStream);
+class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress);
 
   procedure WriteItemState(const Node: IXMLNode; Item: TCustomLocalizerItem);
   var

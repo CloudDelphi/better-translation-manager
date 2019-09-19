@@ -47,7 +47,8 @@ uses
   amLocalization.Dialog.Feedback in 'amLocalization.Dialog.Feedback.pas' {FormFeedback},
   amLocalization.Shell in 'amLocalization.Shell.pas',
   amLocalization.TranslationMemory.FileFormats.TMX in 'amLocalization.TranslationMemory.FileFormats.TMX.pas',
-  amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas';
+  amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas',
+  amLocalization.TranslationMemory.FileFormats.TBX in 'amLocalization.TranslationMemory.FileFormats.TBX.pas';
 
 {$R *.res}
 
