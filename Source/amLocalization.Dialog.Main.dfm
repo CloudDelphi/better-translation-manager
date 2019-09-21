@@ -13,7 +13,7 @@ object FormMain: TFormMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  OnKeyDown = FormKeyDown
+  OnShortCut = FormShortCut
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -51,6 +50,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -187,6 +187,7 @@ object FormMain: TFormMain
       OnExit = TreeListModulesExit
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
+      OnSelectionChanged = TreeListModulesSelectionChanged
       ExplicitHeight = 436
       object TreeListColumnModuleName: TcxTreeListColumn
         BestFitMaxWidth = 200
@@ -341,9 +342,9 @@ object FormMain: TFormMain
     end
   end
   object TreeListItems: TcxVirtualTreeList
-    Left = 252
+    Left = 244
     Top = 158
-    Width = 712
+    Width = 720
     Height = 462
     Align = alClient
     Bands = <
@@ -718,7 +719,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 347
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -1433,7 +1434,7 @@ object FormMain: TFormMain
       Caption = 'New project'
       Hint = 'Create a new translation project'
       ImageIndex = 1
-      ShortCut = 16449
+      ShortCut = 16462
       OnExecute = ActionProjectNewExecute
     end
     object ActionProjectSave: TAction
@@ -1651,7 +1652,7 @@ object FormMain: TFormMain
       Caption = 'Next untranslated'
       Hint = 'Find the next untranslated item'
       ImageIndex = 50
-      ShortCut = 16462
+      ShortCut = 24654
       OnExecute = ActionGotoNextUntranslatedExecute
       OnUpdate = ActionHasModulesUpdate
     end

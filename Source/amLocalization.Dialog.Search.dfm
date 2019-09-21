@@ -8,6 +8,7 @@ inherited FormSearch: TFormSearch
   Constraints.MinWidth = 500
   OnClose = FormClose
   OnKeyPress = FormKeyPress
+  OnShortCut = FormShortCut
   ExplicitWidth = 723
   ExplicitHeight = 377
   PixelsPerInch = 96

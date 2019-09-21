@@ -327,7 +327,6 @@ type
     procedure ActionImportFileSourceExecute(Sender: TObject);
     procedure ActionImportFileTargetExecute(Sender: TObject);
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
-    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure ActionAutomationWebLookupExecute(Sender: TObject);
     procedure ActionAutomationWebLookupUpdate(Sender: TObject);
     procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
@@ -558,6 +557,7 @@ uses
   Generics.Defaults,
   System.Character,
   RegularExpressions,
+  Menus,
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
@@ -1010,11 +1010,14 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+procedure TFormMain.FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+var
+  TheShortCut: TShortCut;
 begin
-  if (Key = VK_F12) and (ssAlt in Shift) then
+  TheShortCut := ShortCutFromMessage(Msg);
+
+  if (TheShortCut = ShortCut(VK_F12, [ssAlt])) then
   begin
-    Key := 0;
     if (not CheckSave) then
       exit;
 
@@ -1024,7 +1027,25 @@ begin
     FProject.AddModule('TWO', mkForm).AddItem('Item2', 'TFooBar').AddProperty('Test2', 'value2');
 
     LoadProject(FProject, True);
+
+    Handled := True;
+  end else
+  if (TheShortCut = ShortCut(Ord('A'), [ssCtrl])) then
+  begin
+    if (TreeListItems.Focused) then
+    begin
+      TreeListItems.SelectAll;
+      Handled := True;
+    end else
+    if (TreeListModules.Focused) then
+    begin
+      TreeListModules.SelectAll;
+      Handled := True;
+    end;
   end;
+
+  if (not Handled) then
+    inherited;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1270,7 +1291,7 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  Enabled := (FocusedItem <> nil) and (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
+  Enabled := (FocusedNode <> nil) and (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
   if (Enabled) and (FocusedNode.TreeList.SelectionCount < 100) then
   begin
     // Require that at least one property is translated
@@ -4953,46 +4974,8 @@ begin
 end;
 
 procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
-var
-  OldNameVisible, NewNameVisible: boolean;
 begin
-  if (FTranslationMemoryPeek <> nil) then
-    FTranslationMemoryPeek.Cancel;
-
-  TreeListItems.BeginUpdate;
-  try
-
-    OldNameVisible := TreeListColumnValueName.Visible;
-
-    if (TreeListModules.SelectionCount = 1) then
-      FLocalizerDataSource.Module := FocusedModule
-    else
-      // Clear item treelist if more than one module is selected
-      FLocalizerDataSource.Module := nil;
-
-    // Hide property name column if module is resourcestrings
-    NewNameVisible := (FLocalizerDataSource.Module = nil) or (FLocalizerDataSource.Module.Kind = mkForm);
-    TreeListColumnValueName.Visible := NewNameVisible;
-
-    if (OldNameVisible <> NewNameVisible) then
-    begin
-      if (NewNameVisible) then
-        TreeListColumnItemName.Width := TreeListColumnItemName.Width - TreeListColumnValueName.Width
-      else
-        TreeListColumnItemName.Width := TreeListColumnItemName.Width + TreeListColumnValueName.Width;
-    end;
-
-  finally
-    TreeListItems.EndUpdate;
-  end;
-
-  if (TreeListItems.TopNode <> nil) then
-  begin
-    TreeListItems.TopNode.MakeVisible;
-    TreeListItems.TopNode.Focused := True;
-  end;
-
-  DisplayModuleStats;
+//
 end;
 
 procedure TFormMain.DisplayModuleStats;
@@ -5069,6 +5052,49 @@ begin
     AIndex := 5
   else
     AIndex := -1;
+end;
+
+procedure TFormMain.TreeListModulesSelectionChanged(Sender: TObject);
+var
+  OldNameVisible, NewNameVisible: boolean;
+begin
+  if (FTranslationMemoryPeek <> nil) then
+    FTranslationMemoryPeek.Cancel;
+
+  TreeListItems.BeginUpdate;
+  try
+
+    OldNameVisible := TreeListColumnValueName.Visible;
+
+    if (TreeListModules.SelectionCount = 1) then
+      FLocalizerDataSource.Module := FocusedModule
+    else
+      // Clear item treelist if more than one module is selected
+      FLocalizerDataSource.Module := nil;
+
+    // Hide property name column if module is resourcestrings
+    NewNameVisible := (FLocalizerDataSource.Module = nil) or (FLocalizerDataSource.Module.Kind = mkForm);
+    TreeListColumnValueName.Visible := NewNameVisible;
+
+    if (OldNameVisible <> NewNameVisible) then
+    begin
+      if (NewNameVisible) then
+        TreeListColumnItemName.Width := TreeListColumnItemName.Width - TreeListColumnValueName.Width
+      else
+        TreeListColumnItemName.Width := TreeListColumnItemName.Width + TreeListColumnValueName.Width;
+    end;
+
+  finally
+    TreeListItems.EndUpdate;
+  end;
+
+  if (TreeListItems.TopNode <> nil) then
+  begin
+    TreeListItems.TopNode.MakeVisible;
+    TreeListItems.TopNode.Focused := True;
+  end;
+
+  DisplayModuleStats;
 end;
 
 procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);

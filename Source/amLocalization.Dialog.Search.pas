@@ -125,6 +125,7 @@ type
     procedure ActionMarkExecute(Sender: TObject);
     procedure ActionMarkUpdate(Sender: TObject);
     procedure ActionMarkSetExecute(Sender: TObject);
+    procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
   private
     FSearchText: string;
     FRegExp: TRegEx;
@@ -638,6 +639,19 @@ procedure TFormSearch.FormKeyPress(Sender: TObject; var Key: Char);
 begin
   if (Key = #27) then
     Close;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+begin
+  if (ShortCutFromMessage(Msg) = ShortCut(Ord('A'), [ssCtrl])) then
+  begin
+    ListViewResult.SelectAll;
+    Handled := True;
+  end;
+  if (not Handled) then
+    inherited;
 end;
 
 // -----------------------------------------------------------------------------
