@@ -2258,6 +2258,8 @@ begin
     ProjectProcessor.Free;
   end;
 
+  CreateTranslationMemoryPeeker(False);
+
   Count := CountStuff;
 
   // Display update statistics
@@ -4914,7 +4916,7 @@ var
   Translations: TStringList;
   HintList: string;
 resourcestring
-  sTranslationMemoryHintHeader = 'The following matches has been found:';
+  sTranslationMemoryHintHeader = 'Translation suggestions:';
 const
   sTranslationMemoryHintTemplate = '{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}{\f1\fnil\fcharset2 Symbol;}}'+
     '{\colortbl ;\red76\green76\blue76;\red0\green128\blue255;}\viewkind4\uc1\pard\cf1\lang1030\f0\fs18%s\par\pard%s}';
