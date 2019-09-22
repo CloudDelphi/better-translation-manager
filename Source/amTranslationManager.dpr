@@ -285,6 +285,28 @@ begin
   end;
 end;
 
+procedure DisplaySplash;
+var
+  Splash: TFormSplash;
+begin
+  if (ParamCount = 0) then//and (not IsDebuggerPresent) then
+  begin
+    Splash := TFormSplash.Create(nil);
+    try
+      Splash.Version := TVersionInfo.FileVersionString(Application.ExeName);
+      Splash.DisplayBannerResource('CREDITS', 'TEXT', sbStatic);
+
+      Splash.Font.Size := 9;
+      Splash.Font.Style := [];
+      Splash.Execute;
+
+    except
+      Splash.Free;
+      raise;
+    end;
+  end;
+end;
+
 begin
   // Grab restart semaphore.
   // If we were restarted then a previous instance of the application will have grabbed the semaphore before lauching this instance
@@ -321,11 +343,7 @@ begin
   Application.MainFormOnTaskbar := True;
   Application.Title := GetApplicationTitle;
 
-  if (ParamCount = 0) then//and (not IsDebuggerPresent) then
-  begin
-    with TFormSplash.Create(nil) do
-      Execute;
-  end;
+  DisplaySplash;
 
   Application.CreateForm(TFormMain, FormMain);
   // Make sure main form does not activate when it is shown as this would cause the
