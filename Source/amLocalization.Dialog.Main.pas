@@ -363,13 +363,15 @@ type
     procedure ActionFeedbackHideExecute(Sender: TObject);
     procedure ActionFeedbackPositiveExecute(Sender: TObject);
     procedure ActionFeedbackNegativeExecute(Sender: TObject);
-    procedure TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo;
-      var ADone: Boolean);
+    procedure TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
     procedure TreeListItemsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure TimerHintTimer(Sender: TObject);
     procedure TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionAboutExecute(Sender: TObject);
     procedure TreeListDblClick(Sender: TObject);
+    procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+    procedure TreeListModulesSelectionChanged(Sender: TObject);
+    procedure StatusBarPanels1Click(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -402,6 +404,9 @@ type
     FHintNode: TcxTreeListNode;
     FHintColumn: TcxTreeListColumn;
     procedure HideHint;
+  private
+    // Warnings
+    FWarningCount: integer;
   private
     procedure SaveSettings;
     procedure LoadSettings;
@@ -448,6 +453,7 @@ type
     // Event handlers
     procedure OnProjectChanged(Sender: TObject);
     procedure OnModuleChanged(Module: TLocalizerModule);
+    procedure OnTranslationWarning(Translation: TLocalizerTranslation);
   private
     // Recent files
     procedure LoadRecentFiles;
@@ -626,8 +632,9 @@ const
 
 const
   StatusBarPanelHint = 0;
-  StatusBarPanelModified = 1;
-  StatusBarPanelStats = 2;
+  StatusBarPanelWarning = 1;
+  StatusBarPanelModified = 2;
+  StatusBarPanelStats = 3;
 
 const
   sDefaultSkinName = 'Office2016Colorful';
@@ -790,6 +797,7 @@ begin
   FProject := TLocalizerProject.Create('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
   FProject.OnChanged := OnProjectChanged;
   FProject.OnModuleChanged := OnModuleChanged;
+  FProject.OnTranslationWarning := OnTranslationWarning;
 
   FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
 
@@ -1196,6 +1204,7 @@ begin
     FormSplash.Execute(False);
   except
     FormSplash.Free;
+    raise;
   end;
 end;
 
@@ -2857,7 +2866,7 @@ var
   CurrentModule: TLocalizerModule;
 resourcestring
   sLocalizerWarningsNone = 'No validation problems found';
-  sLocalizerWarnings = 'Validation found %d problems in the project. Of these %d are new';
+  sLocalizerWarnings = 'Validation found %.0n problems in the project. Of these %.0n are new';
 begin
   SaveCursor(crHourGlass);
 
@@ -2905,7 +2914,7 @@ begin
   if (WarningCount = 0) then
     MessageDlg(sLocalizerWarningsNone, mtInformation, [mbOK], 0)
   else
-    MessageDlg(Format(sLocalizerWarnings, [WarningCount, NewWarningCount]), mtWarning, [mbOK], 0);
+    MessageDlg(Format(sLocalizerWarnings, [WarningCount*1.0, NewWarningCount*1.0]), mtWarning, [mbOK], 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -3245,6 +3254,7 @@ var
   Translation: TLocalizerTranslation;
   Warning: TTranslationWarning;
 const
+  // TODO : Localization
   sTranslationValidationWarnings: array[TTranslationWarning] of string = (
     'Source or translation is empty and the other is not',
     'Accelerator count mismatch',
@@ -3253,6 +3263,8 @@ const
     'Leading space count mismatch',
     'Trailing space count mismatch',
     'Translation is terminated differently than source');
+resourcestring
+  sValidationWarning = 'Translation has validation warnings:%s';
 begin
   Result := '';
 
@@ -3263,10 +3275,12 @@ begin
 
   if (Translation <> nil) and (Translation.Warnings <> []) then
   begin
-    Result := 'Translation has validation warnings:';
+    Result := '';
 
     for Warning in Translation.Warnings do
       Result := Result + #13 + '- ' + sTranslationValidationWarnings[Warning];
+
+    Result := Format(sValidationWarning, [Result]);
   end;
 end;
 
@@ -3611,6 +3625,9 @@ begin
     FProject.EndUpdate;
   end;
 
+  FWarningCount := 0;
+  StatusBar.Panels[StatusBarPanelWarning].Visible := False;
+
   UpdateProjectModifiedIndicator;
 
   RibbonMain.DocumentName := FProject.Name;
@@ -3768,6 +3785,25 @@ begin
   UpdateProjectModifiedIndicator;
 end;
 
+procedure TFormMain.OnTranslationWarning(Translation: TLocalizerTranslation);
+resourcestring
+  sValidationWarningHint = 'Project contains %.0n validation warnings';
+begin
+  if (Translation.Warnings <> []) then
+    Inc(FWarningCount)
+  else
+    Dec(FWarningCount);
+
+  if (FWarningCount > 0) then
+  begin
+    StatusBar.Panels[StatusBarPanelWarning].Visible := True;
+    FStatusBarPanelHint[StatusBarPanelWarning] := Format(sValidationWarningHint, [FWarningCount*1.0]);
+  end else
+    StatusBar.Panels[StatusBarPanelWarning].Visible := False;
+
+  // TODO : Maintain list of properties with warnings so we can display them in a list. Limit the size to something reasonable.
+end;
+
 procedure TFormMain.OnModuleChanged(Module: TLocalizerModule);
 var
   Node: TcxTreeListNode;
@@ -3844,6 +3880,11 @@ begin
   // See: DevPress ticket DS31900
   // http://www.devexpress.com/Support/Center/Question/Details/DS31900
   FStatusBarPanel := StatusBar.GetPanelAt(X, Y);
+end;
+
+procedure TFormMain.StatusBarPanels1Click(Sender: TObject);
+begin
+  // TODO : Display validation warning overview
 end;
 
 // -----------------------------------------------------------------------------

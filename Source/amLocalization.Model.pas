@@ -131,6 +131,7 @@ type
   TLocalizerProjectStates = set of TLocalizerProjectState;
 
   TLocalizerModuleEvent = procedure(Module: TLocalizerModule) of object;
+  TLocalizerTranslationEvent = procedure(Translation: TLocalizerTranslation) of object;
 
 
   TLocalizerProject = class(TBaseLocalizerItem)
@@ -148,6 +149,7 @@ type
     FUpdateCount: integer;
     FOnChanged: TNotifyEvent;
     FOnModuleChanged: TLocalizerModuleEvent;
+    FOnTranslationWarning: TLocalizerTranslationEvent;
   strict protected
     procedure SetModified(const Value: boolean);
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
@@ -155,6 +157,7 @@ type
   protected
     procedure UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
     procedure ModuleChanged(Module: TLocalizerModule);
+    procedure NotifyWarnings(Translation: TLocalizerTranslation);
     procedure DoChanged; override;
   public
     constructor Create(const AName: string; ASourceLanguageID: LCID);
@@ -193,6 +196,7 @@ type
 
     property OnChanged: TNotifyEvent read FOnChanged write FOnChanged;
     property OnModuleChanged: TLocalizerModuleEvent read FOnModuleChanged write FOnModuleChanged;
+    property OnTranslationWarning: TLocalizerTranslationEvent read FOnTranslationWarning write FOnTranslationWarning;
   end;
 
 
@@ -223,6 +227,7 @@ type
   protected
     procedure UpdateStatusCount(AStatus: TLocalizerItemStatus; Delta: integer);
     function CalculateEffectiveStatus(AStatus: TLocalizerItemStatus): TLocalizerItemStatus;
+    procedure NotifyWarnings(Translation: TLocalizerTranslation); virtual; abstract;
   public
     constructor Create(const AName: string);
 
@@ -256,6 +261,7 @@ type
     function GetInheritParentState: boolean; override;
     function GetEffectiveStatus: TLocalizerItemStatus; override;
   protected
+    procedure NotifyWarnings(Translation: TLocalizerTranslation); override;
     function GetParent: TParentClass;
     property Parent: TParentClass read GetParent;
   public
@@ -278,6 +284,7 @@ type
     procedure UpdateParentStatusCount(AStatus: TLocalizerItemStatus; Delta: integer); override;
     procedure DoChanged; override;
   protected
+    procedure NotifyWarnings(Translation: TLocalizerTranslation); override;
   public
     constructor Create(AProject: TLocalizerProject; const AName: string);
     destructor Destroy; override;
@@ -368,10 +375,12 @@ type
     FChanged: boolean;
     FWarnings: TTranslationWarnings;
   strict protected
+    procedure SetWarnings(const Value: TTranslationWarnings);
     function GetIsTranslated: boolean;
     procedure SetStatus(const Value: TTranslationStatus);
     procedure SetValue(const Value: string);
     procedure Changed;
+    procedure NotifyWarnings;
   public
     constructor Create(AOwner: TLocalizerProperty; ALanguage: TTargetLanguage);
     destructor Destroy; override;
@@ -388,7 +397,7 @@ type
     property Language: TTargetLanguage read FLanguage;
     property Status: TTranslationStatus read FStatus write SetStatus;
     property IsTranslated: boolean read GetIsTranslated;
-    property Warnings: TTranslationWarnings read FWarnings write FWarnings;
+    property Warnings: TTranslationWarnings read FWarnings write SetWarnings;
   end;
 
   TLocalizerTranslations = class
@@ -815,6 +824,13 @@ begin
   FParent.UpdateStatusCount(AStatus, Delta);
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TCustomLocalizerChildItem<TParentClass>.NotifyWarnings(Translation: TLocalizerTranslation);
+begin
+  FParent.NotifyWarnings(Translation);
+end;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -1066,6 +1082,14 @@ begin
     FOnModuleChanged(Module);
 
   Changed;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerProject.NotifyWarnings(Translation: TLocalizerTranslation);
+begin
+  if (Assigned(FOnTranslationWarning)) then
+    FOnTranslationWarning(Translation);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1397,6 +1421,13 @@ begin
         Result.ClearState(ItemStateUpdating);
         break;
       end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerModule.NotifyWarnings(Translation: TLocalizerTranslation);
+begin
+  FProject.NotifyWarnings(Translation);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1751,6 +1782,8 @@ begin
   if (IsTranslated) then
     Dec(FLanguage.FTranslatedCount);
 
+  Warnings := [];
+
   inherited;
 end;
 
@@ -1759,6 +1792,13 @@ end;
 function TLocalizerTranslation.GetIsTranslated: boolean;
 begin
   Result := (FStatus > tStatusPending);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerTranslation.NotifyWarnings;
+begin
+  FOwner.NotifyWarnings(Self);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1826,6 +1866,21 @@ begin
   UpdateWarnings;
 
   Changed;
+end;
+
+procedure TLocalizerTranslation.SetWarnings(const Value: TTranslationWarnings);
+var
+  OldWarnings: TTranslationWarnings;
+begin
+  if (FWarnings = Value) then
+    Exit;
+
+  OldWarnings := FWarnings;
+
+  FWarnings := Value;
+
+  if ((FWarnings = []) <> (OldWarnings = [])) then
+    NotifyWarnings;
 end;
 
 procedure TLocalizerTranslation.Update(const AValue: string; AStatus: TTranslationStatus);
@@ -2041,12 +2096,14 @@ procedure TLocalizerTranslation.UpdateWarnings;
   end;
 
 var
+  OldWarnings: TTranslationWarnings;
   SourceCountAccelerator, TargetCountAccelerator: integer;
   SourceCountFormat, TargetCountFormat: integer;
   SourceCountLineBreak, TargetCountLineBreak: integer;
   SourceCountLeadSpace, TargetCountLeadSpace: integer;
   SourceCountTrailSpace, TargetCountTrailSpace: integer;
 begin
+  OldWarnings := FWarnings;
   FWarnings := [];
 
   if (Value = Owner.Value) then
@@ -2081,6 +2138,9 @@ begin
 
   if (Value[Value.Length].IsPunctuation <> Owner.Value[Owner.Value.Length].IsPunctuation) then
     Include(FWarnings, tWarningTerminator);
+
+  if ((FWarnings = []) <> (OldWarnings = [])) then
+    NotifyWarnings;
 end;
 
 // -----------------------------------------------------------------------------

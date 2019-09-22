@@ -102,11 +102,19 @@ object FormMain: TFormMain
     Top = 620
     Width = 964
     Height = 23
+    Images = DataModuleMain.ImageListSmall
     Panels = <
       item
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
         PanelStyle.AutoHint = True
         Fixed = False
+      end
+      item
+        PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
+        PanelStyle.ImageIndex = 53
+        Visible = False
+        Width = 20
+        OnClick = StatusBarPanels1Click
       end
       item
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
