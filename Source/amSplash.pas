@@ -34,7 +34,17 @@ type
   end;
 
 type
-  TSplashAnimate = (saAlways, saNever, saLocal); // saLocal = Only animate if running locally (i.e. not remotely)
+  TSplashAnimate = (
+    saAlways,                   // Always animate
+    saNever,                    // Don't animate
+    saLocal                     // Only animate if running locally (i.e. not remotely)
+  );
+
+  TSplashBannerKind = (
+    sbStatic,                   // Fade splash in, then display centered banner
+    sbStaticFade,               // Static centered banner, fade in with splash
+    sbAnimate                   // Fade splash in, then scroll banner message
+  );
 
   TFormSplash = class(TForm)
     TimerSplash: TTimer;
@@ -50,6 +60,7 @@ type
     FMemoryFile: TMediaPlayerMemoryFile;
     FDisco: boolean;
     FBanner: string;
+    FBannerKind: TSplashBannerKind;
     FBannerOffset: integer;
     FBannerBitmap: TBitmap;
     FBannerScroll: integer;
@@ -66,14 +77,18 @@ type
     procedure WMPrint(var Message: TWMPrint); message WM_PRINT;
     procedure WMShow(var Message: TMessage); message WM_SHOWWINDOW;
     procedure MMNotify(var Message: TMessage); message MM_MCINOTIFY;
+    procedure DrawBannerImage(Alpha: Byte);
+    procedure DrawSplashImage(Alpha: Byte);
+    procedure DrawImage(Bitmap: TBitmap; Alpha: Byte);
+    procedure UpdateBannerImage;
     property ShouldAnimate: boolean read FShouldAnimate;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Execute(Timeout: boolean = True; const ResourceName: string = 'SPLASH'; const ResourceType: string = 'PNG');
     procedure PlayThatFunkyMusicWhiteBoy(const ResName, ResType: UnicodeString);
-    procedure DisplayBanner(const Value: string);
-    procedure DisplayBannerResource(const ResName, ResType: UnicodeString);
+    procedure DisplayBanner(const Value: string; Kind: TSplashBannerKind = sbAnimate);
+    procedure DisplayBannerResource(const ResName, ResType: UnicodeString; Kind: TSplashBannerKind = sbAnimate);
     property Disco: boolean read FDisco;
     property Version: string read FVersion write FVersion;
     property Animate: TSplashAnimate read FAnimate write FAnimate;
@@ -425,14 +440,15 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TFormSplash.DisplayBanner(const Value: string);
+procedure TFormSplash.DisplayBanner(const Value: string; Kind: TSplashBannerKind);
 begin
   FBanner := Value;
   FBanner := StringReplace(FBanner, '<version>', FVersion, [rfReplaceAll, rfIgnoreCase]);
   FBannerOffset := 0;
+  FBannerKind := Kind;
 end;
 
-procedure TFormSplash.DisplayBannerResource(const ResName, ResType: UnicodeString);
+procedure TFormSplash.DisplayBannerResource(const ResName, ResType: UnicodeString; Kind: TSplashBannerKind);
 var
   Banner: string;
   Resource: TResourceStream;
@@ -449,7 +465,120 @@ begin
     Resource.Free;
   end;
 
-  DisplayBanner(Banner);
+  DisplayBanner(Banner, Kind);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TFormSplash.UpdateBannerImage;
+
+  function Div255(n: Cardinal): Cardinal; inline;
+  begin
+    Result := (n * $8081) shr 23;
+
+    // Or maybe this:
+    //Result := (n + $32) shr 8;
+
+    // Or this:
+    // Result := (n * 257 + 257) shr 16;
+
+    // Or even:
+    // Result := Int64(n * $80808081) shr 39
+
+    // Result := ((n shr 8) + n + 1) shr 8;
+  end;
+
+var
+  r: TRect;
+  TextFormat: TTextFormat;
+  Row, Col: integer;
+  PixSrc, PixDst: PDWORD;
+  Scale: Byte;
+  RGB: DWORD;
+begin
+  if (FBannerBitmap = nil) then
+  begin
+    FBannerBitmap := TBitmap.Create;
+    FBannerBitmap.PixelFormat := pf32bit;
+    FBannerBitmap.SetSize(FSplashBitmap.Width, FSplashBitmap.Height);
+
+    if (FBannerKind = sbAnimate) then
+      FBannerOffset := FBannerBitmap.Height
+    else
+      FBannerOffset := 0;
+  end;
+
+  // Clear back buffer
+  FBannerBitmap.Canvas.Brush.Color := clWhite;
+  FBannerBitmap.Canvas.FillRect(FBannerBitmap.Canvas.ClipRect);
+
+  FBannerBitmap.Canvas.Font.Assign(Self.Font);
+
+  // Calculate size of banner message
+  r.Top := FBannerOffset;
+  r.Bottom := r.Top+FBannerBitmap.Height-1;
+  r.Left := 0;
+  r.Right := FBannerBitmap.Width-1;
+  TextFormat := [tfCalcRect, tfTop, tfCenter, tfNoPrefix, tfWordBreak];
+
+  FBannerBitmap.Canvas.TextRect(r, FBanner, TextFormat);
+
+  Exclude(TextFormat, tfCalcRect);
+  r.Right := FBannerBitmap.Width-1; // Center horizontally
+
+  if (FBannerKind = sbAnimate) then
+  begin
+    // Wrap around
+    if (r.Bottom < 0) then
+    begin
+      FBannerOffset := FBannerBitmap.Height - FBannerScroll;
+      OffsetRect(r, 0, FBannerOffset - r.top);
+    end;
+  end else
+    // Center vertically
+    OffsetRect(r, 0, (FBannerBitmap.Height - r.Height) div 2);
+
+  // Draw banner onto back buffer
+  FBannerBitmap.Canvas.TextRect(r, FBanner, TextFormat);
+
+  // Merge splash image onto with buffer
+  for Row := 0 to FBannerBitmap.Height-1 do
+  begin
+    PixSrc := PDWORD(FSplashBitmap.ScanLine[Row]);
+    PixDst := PDWORD(FBannerBitmap.ScanLine[Row]);
+
+    for Col := 0 to FBannerBitmap.Width-1 do
+    begin
+      Scale := ((PixDst^ and $FF) + (PixDst^ shr 8 and $FF) + (PixDst^ shr 16 and $FF)) div 3; // Must use average of all three to work around ClearType AA
+
+      if (Scale <= 255) then
+      begin
+        // Fade
+        if (Row < FBannerFadeZone) then
+          Scale := 255 - ((255-Scale) * (Row+1) div FBannerFadeZone)
+        else
+        if (Row > FBannerBitmap.Height-FBannerFadeZone) then
+          Scale := 255 - ((255-Scale) * (FBannerBitmap.Height-Row) div FBannerFadeZone);
+      end;
+
+      if (Scale = 255) then
+        PixDst^ := PixSrc^
+      else
+      if (Scale = 0) then
+        PixDst^ := PixSrc^ and $FF000000
+      else
+      begin
+        RGB := PixSrc^ and $00FFFFFF;
+        PixDst^ := (PixSrc^ and $FF000000) or
+          (Div255((RGB shr 16) * Scale) shl 16) or
+          (Div255((RGB shr 8 and $FF) * Scale) shl 8) or
+          (Div255((RGB and $FF) * Scale));
+      end;
+
+      Inc(PixSrc);
+      Inc(PixDst);
+    end;
+  end;
 end;
 
 //------------------------------------------------------------------------------
@@ -457,9 +586,7 @@ end;
 procedure TFormSplash.Execute(Timeout: boolean; const ResourceName: string; const ResourceType: string);
 var
   Ticks: DWORD;
-  BlendFunction: TBlendFunction;
-  BitmapPos: TPoint;
-  BitmapSize: TSize;
+  Alpha: Byte;
   exStyle: DWORD;
   PNG: TPngImage;
   Stream: TStream;
@@ -491,17 +618,6 @@ begin
   ClientWidth := FSplashBitmap.Width;
   ClientHeight := FSplashBitmap.Height;
 
-  // Position bitmap on form
-  BitmapPos := Point(0, 0);
-  BitmapSize.cx := FSplashBitmap.Width;
-  BitmapSize.cy := FSplashBitmap.Height;
-
-  // Setup alpha blending parameters
-  BlendFunction.BlendOp := AC_SRC_OVER;
-  BlendFunction.BlendFlags := 0;
-  BlendFunction.SourceConstantAlpha := 0; // Start completely transparent
-  BlendFunction.AlphaFormat := AC_SRC_ALPHA;
-
   if (Application.MainForm <> nil) then
     Caption := Application.MainForm.Caption
   else
@@ -517,25 +633,31 @@ begin
     Ticks := 0;
     FAnimating := True;
     try
-      while (BlendFunction.SourceConstantAlpha < 255) and (not FAbort) do
+      Alpha := 0; // Start completely transparent
+
+      while (Alpha < 255) and (not FAbort) do
       begin
         while (Ticks = GetTickCount) do
           Sleep(10); // Don't fade too fast
         Ticks := GetTickCount;
-        inc(BlendFunction.SourceConstantAlpha,
-          (255-BlendFunction.SourceConstantAlpha) div 32+1); // Fade in
-        UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FSplashBitmap.Canvas.Handle,
-          @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+        inc(Alpha, (255-Alpha) div 32+1); // Fade in
+        if (FBannerKind = sbStaticFade) and (FBanner <> '') then
+          DrawBannerImage(Alpha)
+        else
+          DrawSplashImage(Alpha);
         Application.ProcessMessages; // Warning: UI recursion here!
       end;
+      if (not FAbort) and (FBannerKind = sbStatic) and (FBanner <> '') then
+        DrawBannerImage(255);
     finally
       FAnimating := False;
     end;
   end else
   begin
-    BlendFunction.SourceConstantAlpha := 255;
-    UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FSplashBitmap.Canvas.Handle,
-      @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+    if (FBannerKind in [sbStatic, sbStaticFade]) and (FBanner <> '') then
+      DrawBannerImage(255)
+    else
+      DrawSplashImage(255);
   end;
 
   // Start timer to hide form after a short while
@@ -545,7 +667,7 @@ begin
   else
   begin
     TimerSplash.Enabled := Timeout;
-    TimerBanner.Enabled := (FBanner <> '');
+    TimerBanner.Enabled := (FBannerKind = sbAnimate) and (FBanner <> '');
   end;
 end;
 
@@ -631,109 +753,13 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TFormSplash.TimerBannerTimer(Sender: TObject);
-
-  function Div255(n: Cardinal): Cardinal; inline;
-  begin
-    Result := (n * $8081) shr 23;
-
-    // Or maybe this:
-    //Result := (n + $32) shr 8;
-
-    // Or this:
-    // Result := (n * 257 + 257) shr 16;
-
-    // Or even:
-    // Result := Int64(n * $80808081) shr 39
-
-    // Result := ((n shr 8) + n + 1) shr 8;
-  end;
-
-var
-  r: TRect;
-  Row, Col: integer;
-  PixSrc, PixDst: PDWORD;
-  BitmapPos: TPoint;
-  BitmapSize: TSize;
-  BlendFunction: TBlendFunction;
-  Scale: Byte;
-  RGB: DWORD;
 begin
-  if (FBannerBitmap = nil) then
-  begin
-    FBannerBitmap := TBitmap.Create;
-    FBannerBitmap.PixelFormat := pf32bit;
-    FBannerBitmap.SetSize(FSplashBitmap.Width, FSplashBitmap.Height);
-    FBannerOffset := FBannerBitmap.Height;
-  end;
+  // Scroll banner
+  if (FBannerBitmap <> nil) then
+    Dec(FBannerOffset, FBannerScroll);
 
-  dec(FBannerOffset, FBannerScroll);
-
-  FBannerBitmap.Canvas.Brush.Color := clWhite;
-  FBannerBitmap.Canvas.Font.Assign(Self.Font);
-
-  FBannerBitmap.Canvas.FillRect(FBannerBitmap.Canvas.ClipRect);
-
-  r.Top := FBannerOffset;
-  r.Left := 0;
-  r.Right := FBannerBitmap.Width-1;
-  FBannerBitmap.Canvas.TextRect(r, FBanner, [tfCalcRect, tfCenter, tfNoPrefix, tfTop, tfWordBreak]);
-
-  if (r.Bottom < 0) then
-  begin
-    FBannerOffset := FBannerBitmap.Height - FBannerScroll;
-
-    OffsetRect(r, 0, FBannerOffset - r.top);
-  end;
-
-  r.Right := FBannerBitmap.Width-1;
-  FBannerBitmap.Canvas.TextRect(r, FBanner, [tfCenter, tfNoPrefix, tfTop, tfWordBreak]);
-
-  for Row := 0 to FBannerBitmap.Height-1 do
-  begin
-    PixSrc := PDWORD(FSplashBitmap.ScanLine[Row]);
-    PixDst := PDWORD(FBannerBitmap.ScanLine[Row]);
-
-    for Col := 0 to FBannerBitmap.Width-1 do
-    begin
-      Scale := ((PixDst^ and $FF) + (PixDst^ shr 8 and $FF) + (PixDst^ shr 16 and $FF)) div 3; // Must use average of all three to work around ClearType AA
-
-      if (Scale <= 255) then
-      begin
-        // Fade
-        if (Row < FBannerFadeZone) then
-          Scale := 255 - ((255-Scale) * (Row+1) div FBannerFadeZone)
-        else
-        if (Row > FBannerBitmap.Height-FBannerFadeZone) then
-          Scale := 255 - ((255-Scale) * (FBannerBitmap.Height-Row) div FBannerFadeZone);
-      end;
-
-      if (Scale = 255) then
-        PixDst^ := PixSrc^
-      else
-      if (Scale = 0) then
-        PixDst^ := PixSrc^ and $FF000000
-      else
-      begin
-        RGB := PixSrc^ and $00FFFFFF;
-        PixDst^ := (PixSrc^ and $FF000000) or
-          (Div255((RGB shr 16) * Scale) shl 16) or
-          (Div255((RGB shr 8 and $FF) * Scale) shl 8) or
-          (Div255((RGB and $FF) * Scale));
-      end;
-
-      inc(PixSrc);
-      inc(PixDst);
-    end;
-  end;
-
-  BitmapPos := Point(0, 0);
-  BitmapSize.cx := FBannerBitmap.Width;
-  BitmapSize.cy := FBannerBitmap.Height;
-  BlendFunction.BlendOp := AC_SRC_OVER;
-  BlendFunction.BlendFlags := 0;
-  BlendFunction.SourceConstantAlpha := 255;
-  BlendFunction.AlphaFormat := AC_SRC_ALPHA;
-  UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, FBannerBitmap.Canvas.Handle, @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
+  UpdateBannerImage;
+  DrawBannerImage(255);
 end;
 
 //------------------------------------------------------------------------------
@@ -795,6 +821,41 @@ begin
 
   if (FAbort) then
     Close;
+end;
+
+procedure TFormSplash.DrawBannerImage(Alpha: Byte);
+begin
+  // Draw banner image (merge of banner text and splash image)
+
+  if (FBannerBitmap = nil) then
+    UpdateBannerImage;
+
+  DrawImage(FBannerBitmap, Alpha);
+end;
+
+procedure TFormSplash.DrawSplashImage(Alpha: Byte);
+begin
+  DrawImage(FSplashBitmap, Alpha);
+end;
+
+procedure TFormSplash.DrawImage(Bitmap: TBitmap; Alpha: Byte);
+var
+  BitmapPos: TPoint;
+  BitmapSize: TSize;
+  BlendFunction: TBlendFunction;
+begin
+  // Position bitmap on form
+  BitmapPos := Point(0, 0);
+  BitmapSize.cx := Bitmap.Width;
+  BitmapSize.cy := Bitmap.Height;
+
+  // Setup alpha blending parameters
+  BlendFunction.BlendOp := AC_SRC_OVER;
+  BlendFunction.BlendFlags := 0;
+  BlendFunction.SourceConstantAlpha := Alpha;
+  BlendFunction.AlphaFormat := AC_SRC_ALPHA;
+
+  UpdateLayeredWindow(Handle, 0, nil, @BitmapSize, Bitmap.Canvas.Handle, @BitmapPos, 0, @BlendFunction, ULW_ALPHA);
 end;
 
 //------------------------------------------------------------------------------
