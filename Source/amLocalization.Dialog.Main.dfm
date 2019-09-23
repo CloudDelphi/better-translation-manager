@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -86,10 +85,11 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
+      Active = True
       Caption = 'Tools'
       Groups = <
         item
-          ToolbarName = 'BarManagerBarImport'
+          ToolbarName = 'BarManagerBarMigrate'
         end
         item
           ToolbarName = 'BarManagerBarExport'
@@ -688,8 +688,8 @@ object FormMain: TFormMain
       Visible = True
       WholeRow = False
     end
-    object BarManagerBarImport: TdxBar
-      Caption = 'Import'
+    object BarManagerBarMigrate: TdxBar
+      Caption = 'Migration'
       CaptionButtons = <>
       DockedLeft = 0
       DockedTop = 0
@@ -727,7 +727,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 347
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2

@@ -24,6 +24,9 @@ uses
 //
 // -----------------------------------------------------------------------------
 type
+  TFileFormatCapability = (ffcLoad, ffcSave);
+  TFileFormatCapabilities = set of TFileFormatCapability;
+
   TTranslationMemoryFileFormat = class;
   TTranslationMemoryFileFormatClass = class of TTranslationMemoryFileFormat;
 
@@ -60,8 +63,10 @@ type
     function LoadFromStream(Stream: TStream; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
     function LoadFromStream(Stream: TStream; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
 
+    function Prepare(const Filename: string): boolean; virtual;
+
     function LoadFromFile(const Filename: string; Merge: boolean = False): TTranslationMemoryMergeStats; overload;
-    function LoadFromFile(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload;
+    function LoadFromFile(const Filename: string; var DuplicateAction: TTranslationMemoryDuplicateAction; Merge: boolean = False; const Progress: IProgress = nil): TTranslationMemoryMergeStats; overload; virtual;
 
     procedure SaveToStream(Stream: TStream); virtual; abstract;
     procedure SaveToFile(const Filename: string);
@@ -71,9 +76,10 @@ type
     class function FileFormatFileDescription: string; virtual;
     class function FileFormatFileType: string; virtual; abstract;
     class function FileFormatFileFilter: string; virtual;
-    class function FileFormatFileFilters(IncludeAllFilter: boolean = True): string;
+    class function FileFormatCapabilities: TFileFormatCapabilities; virtual; abstract;
 
-    class function FindFileFormat(const Filename: string; Default: TTranslationMemoryFileFormatClass = nil): TTranslationMemoryFileFormatClass;
+    class function FileFormatFileFilters(Capability: TFileFormatCapability; IncludeAllFilter: boolean = True): string;
+    class function FindFileFormat(const Filename: string; Capability: TFileFormatCapability; Default: TTranslationMemoryFileFormatClass = nil): TTranslationMemoryFileFormatClass;
   end;
 
 // -----------------------------------------------------------------------------
@@ -134,7 +140,7 @@ begin
   Result := Format(sFileFilterGeneric, [FileFormatFileDescription, FileFormatFileType]);
 end;
 
-class function TTranslationMemoryFileFormat.FileFormatFileFilters(IncludeAllFilter: boolean): string;
+class function TTranslationMemoryFileFormat.FileFormatFileFilters(Capability: TFileFormatCapability; IncludeAllFilter: boolean): string;
 var
   FileFormatClass: TTranslationMemoryFileFormatClass;
   AllFilter: string;
@@ -148,23 +154,25 @@ begin
   AllFilter := '';
 
   for FileFormatClass in FFileFormatRegistry do
-  begin
-    if (Result <> '') then
+    if (Capability in FileFormatClass.FileFormatCapabilities) then
     begin
-      Result := Result + '|';
+      if (Result <> '') then
+      begin
+        Result := Result + '|';
+        if (IncludeAllFilter) then
+          AllFilter := AllFilter + ';';
+      end;
+
+      Result := Result + FileFormatClass.FileFormatFileFilter;
       if (IncludeAllFilter) then
-        AllFilter := AllFilter + ';';
+        AllFilter := AllFilter + '*.'+FileFormatClass.FileFormatFileType;
     end;
 
-    Result := Result + FileFormatClass.FileFormatFileFilter;
-    if (IncludeAllFilter) then
-      AllFilter := AllFilter + '*.'+FileFormatClass.FileFormatFileType;
-  end;
   if (IncludeAllFilter) then
     Result := Format(sFileFilterAll, [AllFilter]) + '|' + Result;
 end;
 
-class function TTranslationMemoryFileFormat.FindFileFormat(const Filename: string; Default: TTranslationMemoryFileFormatClass): TTranslationMemoryFileFormatClass;
+class function TTranslationMemoryFileFormat.FindFileFormat(const Filename: string; Capability: TFileFormatCapability; Default: TTranslationMemoryFileFormatClass): TTranslationMemoryFileFormatClass;
 var
   FileFormatClass: TTranslationMemoryFileFormatClass;
   FileType: string;
@@ -175,7 +183,7 @@ begin
   FileType := Copy(TPath.GetExtension(Filename), 2, MaxInt);
 
   for FileFormatClass in FFileFormatRegistry do
-    if (AnsiSameText(FileType, FileFormatClass.FileFormatFileType)) then
+    if (Capability in FileFormatClass.FileFormatCapabilities) and (AnsiSameText(FileType, FileFormatClass.FileFormatFileType)) then
       Exit(FileFormatClass);
 
   Result := Default;
@@ -516,6 +524,13 @@ begin
   finally
     TableTranslationMemory.EnableControls;
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TTranslationMemoryFileFormat.Prepare(const Filename: string): boolean;
+begin
+  Result :=True;
 end;
 
 // -----------------------------------------------------------------------------

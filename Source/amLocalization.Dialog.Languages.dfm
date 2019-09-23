@@ -49,7 +49,7 @@ inherited FormLanguages: TFormLanguages
         RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
         Style.HotTrack = False
         TabOrder = 0
-        Width = 145
+        Width = 199
       end
       object CheckListBoxLanguages: TcxCheckListBox [1]
         Left = 99
@@ -89,7 +89,7 @@ inherited FormLanguages: TFormLanguages
         Control = ComboBoxSourceLanguage
         ControlOptions.AlignHorz = ahLeft
         ControlOptions.OriginalHeight = 21
-        ControlOptions.OriginalWidth = 145
+        ControlOptions.OriginalWidth = 199
         ControlOptions.ShowBorder = False
         Index = 0
       end

@@ -48,7 +48,9 @@ uses
   amLocalization.Shell in 'amLocalization.Shell.pas',
   amLocalization.TranslationMemory.FileFormats.TMX in 'amLocalization.TranslationMemory.FileFormats.TMX.pas',
   amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas',
-  amLocalization.TranslationMemory.FileFormats.TBX in 'amLocalization.TranslationMemory.FileFormats.TBX.pas';
+  amLocalization.TranslationMemory.FileFormats.TBX in 'amLocalization.TranslationMemory.FileFormats.TBX.pas',
+  amLocalization.TranslationMemory.FileFormats.MSGlossaryCSV in 'amLocalization.TranslationMemory.FileFormats.MSGlossaryCSV.pas',
+  amLocalization.Dialog.TargetLanguage in 'amLocalization.Dialog.TargetLanguage.pas' {FormTargetLanguage};
 
 {$R *.res}
 

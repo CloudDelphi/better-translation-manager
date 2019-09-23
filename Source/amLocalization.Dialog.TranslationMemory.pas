@@ -210,7 +210,7 @@ begin
 
   SaveCursor(crHourGlass);
 
-  TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(SaveDialogTMX.FileName, TTranslationMemoryFileFormatTMX);
+  TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(SaveDialogTMX.FileName, ffcSave, TTranslationMemoryFileFormatTMX);
   Assert(TranslationMemoryFileFormatClass <> nil);
 
   TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
@@ -284,7 +284,7 @@ begin
 
     MergeFile := Merge;
 
-    TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(OpenDialogTMX.FileName, TTranslationMemoryFileFormatTMX);
+    TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(OpenDialogTMX.FileName, ffcLoad, TTranslationMemoryFileFormatTMX);
     Assert(TranslationMemoryFileFormatClass <> nil);
 
     TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
@@ -293,6 +293,9 @@ begin
       begin
         if (Progress <> nil) then
           Progress.AdvanceProgress;
+
+        if (not TranslationMemoryFileFormat.Prepare(Filename)) then
+          break;
 
         OneStats := TranslationMemoryFileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
 
@@ -363,8 +366,8 @@ end;
 
 procedure TFormTranslationMemory.FormCreate(Sender: TObject);
 begin
-  OpenDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters + OpenDialogTMX.Filter;
-  SaveDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters + SaveDialogTMX.Filter;
+  OpenDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcLoad) + OpenDialogTMX.Filter;
+  SaveDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcSave) + SaveDialogTMX.Filter;
   GridTMDBTableView.DataController.CreateAllItems(True);
 end;
 

@@ -81,7 +81,7 @@ inherited FormNewProject: TFormNewProject
         Properties.DropDownSizeable = True
         Style.HotTrack = False
         TabOrder = 1
-        Width = 145
+        Width = 199
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         ItemIndex = 1
@@ -102,7 +102,7 @@ inherited FormNewProject: TFormNewProject
         Control = ComboBoxSourceLanguage
         ControlOptions.AlignHorz = ahLeft
         ControlOptions.OriginalHeight = 21
-        ControlOptions.OriginalWidth = 145
+        ControlOptions.OriginalWidth = 199
         ControlOptions.ShowBorder = False
         Index = 1
       end

@@ -106,7 +106,7 @@ type
     BarManagerBarProject: TdxBar;
     BarButtonUpdateProject: TdxBarLargeButton;
     BarButtonBuildProject: TdxBarLargeButton;
-    BarManagerBarImport: TdxBar;
+    BarManagerBarMigrate: TdxBar;
     dxBarButton2: TdxBarButton;
     RibbonTabTranslation: TdxRibbonTab;
     TreeListItems: TcxVirtualTreeList;

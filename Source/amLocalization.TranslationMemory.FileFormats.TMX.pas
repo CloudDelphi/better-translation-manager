@@ -32,6 +32,7 @@ type
     procedure SaveToStream(Stream: TStream); override;
     class function FileFormatFileDescription: string; override;
     class function FileFormatFileType: string; override;
+    class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
 
@@ -67,6 +68,11 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+class function TTranslationMemoryFileFormatTMX.FileFormatCapabilities: TFileFormatCapabilities;
+begin
+  Result := [ffcLoad, ffcSave];
+end;
 
 class function TTranslationMemoryFileFormatTMX.FileFormatFileDescription: string;
 resourcestring
@@ -187,24 +193,24 @@ begin
 
           LocaleItem := TLocaleItems.FindLocaleName(Language);
           if (LocaleItem <> nil) then
-            LanguageName := LocaleItem.LocaleSName
-          else
-            LanguageName := Language; // TODO : We should ignore language instead
-
-          if (not Languages.TryGetValue(LanguageName, Field)) then
           begin
-            Field := TranslationMemory.CreateField(LocaleItem);
-            Languages.Add(LanguageName, Field);
+            LanguageName := LocaleItem.LocaleSName;
+
+            if (not Languages.TryGetValue(LanguageName, Field)) then
+            begin
+              Field := TranslationMemory.CreateField(LocaleItem);
+              Languages.Add(LanguageName, Field);
+            end;
+
+            Term.Field := Field;
+            Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
+
+            if (Terms.Count > 0) and (SourceLanguage = LanguageName) then
+              // Identify per-TU source language as the first in the first
+              Terms.Insert(0, Term)
+            else
+              Terms.Add(Term);
           end;
-
-          Term.Field := Field;
-          Term.Value := VarToStr(LanguageNode.ChildValues['seg']);
-
-          if (Terms.Count > 0) and (SourceLanguage = LanguageName) then
-            // Identify per-TU source language as the first in the first
-            Terms.Insert(0, Term)
-          else
-            Terms.Add(Term);
         end;
 
         LanguageNode := LanguageNode.NextSibling;

@@ -32,6 +32,7 @@ type
     procedure SaveToStream(Stream: TStream); override;
     class function FileFormatFileDescription: string; override;
     class function FileFormatFileType: string; override;
+    class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
 
@@ -67,6 +68,11 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+class function TTranslationMemoryFileFormatTBX.FileFormatCapabilities: TFileFormatCapabilities;
+begin
+  Result := [ffcLoad, ffcSave];
+end;
 
 class function TTranslationMemoryFileFormatTBX.FileFormatFileDescription: string;
 resourcestring

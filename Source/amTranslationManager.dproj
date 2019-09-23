@@ -179,13 +179,14 @@
             <Form>FormFeedback</Form>
         </DCCReference>
         <DCCReference Include="amLocalization.Shell.pas"/>
-        <DCCReference Include="amLocalization.Dialog.Guide.pas">
-            <Form>FrameGuide</Form>
-            <DesignClass>TFrame</DesignClass>
-        </DCCReference>
         <DCCReference Include="amLocalization.TranslationMemory.FileFormats.TMX.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.FileFormats.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.FileFormats.TBX.pas"/>
+        <DCCReference Include="amLocalization.TranslationMemory.FileFormats.MSGlossaryCSV.pas"/>
+        <DCCReference Include="amLocalization.Dialog.TargetLanguage.pas">
+            <Form>FormTargetLanguage</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
