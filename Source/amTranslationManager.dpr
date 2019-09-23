@@ -295,8 +295,9 @@ begin
   begin
     Splash := TFormSplash.Create(nil);
     try
-      Splash.Version := TVersionInfo.FileVersionString(Application.ExeName);
-      Splash.DisplayBannerResource('CREDITS', 'TEXT', sbStatic);
+//      Splash.Version := TVersionInfo.FileVersionString(Application.ExeName);
+//      Splash.DisplayBannerResource('CREDITS', 'TEXT', sbStatic);
+      Splash.DisplayBanner(TVersionInfo.FileVersionString(Application.ExeName), sbStatic);
 
       Splash.Font.Size := 9;
       Splash.Font.Style := [];
