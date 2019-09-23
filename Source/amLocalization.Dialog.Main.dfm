@@ -1642,6 +1642,7 @@ object FormMain: TFormMain
     object ActionFindNext: TAction
       Category = 'Find'
       Caption = 'Find next'
+      Hint = 'Go to next search match'
       ImageIndex = 26
       ShortCut = 114
       OnExecute = ActionFindNextExecute

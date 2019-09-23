@@ -201,7 +201,7 @@ inherited FormSearch: TFormSearch
         TabOrder = 1
         Width = 367
       end
-      object CheckBoxSearchAll: TcxCheckBox [2]
+      object CheckBoxOptionSearchAll: TcxCheckBox [2]
         Left = 420
         Top = 6
         Action = ActionOptionGlobal
@@ -209,7 +209,7 @@ inherited FormSearch: TFormSearch
         TabOrder = 2
         Transparent = True
       end
-      object CheckBoxCaseSensitive: TcxCheckBox [3]
+      object CheckBoxOptionCaseSensitive: TcxCheckBox [3]
         Left = 420
         Top = 25
         Action = ActionOptionCaseSensitive
@@ -218,7 +218,7 @@ inherited FormSearch: TFormSearch
         TabOrder = 3
         Transparent = True
       end
-      object CheckBoxRegExp: TcxCheckBox [4]
+      object CheckBoxOptionRegExp: TcxCheckBox [4]
         Left = 420
         Top = 44
         Action = ActionOptionRegExp
@@ -278,9 +278,9 @@ inherited FormSearch: TFormSearch
       end
       object ListViewResult: TcxListView [6]
         Left = 6
-        Top = 71
+        Top = 90
         Width = 679
-        Height = 157
+        Height = 138
         ColumnClick = False
         Columns = <
           item
@@ -316,13 +316,13 @@ inherited FormSearch: TFormSearch
         MultiSelect = True
         ReadOnly = True
         RowSelect = True
-        TabOrder = 9
+        TabOrder = 10
         ViewStyle = vsReport
         OnDblClick = ListViewResultDblClick
         OnEnter = ListViewResultEnter
         OnExit = ListViewResultExit
       end
-      object CheckBoxIgnoreAccelerator: TcxCheckBox [7]
+      object CheckBoxOptionIgnoreAccelerator: TcxCheckBox [7]
         Left = 566
         Top = 6
         Action = ActionOptionIgnoreAccelerator
@@ -331,18 +331,18 @@ inherited FormSearch: TFormSearch
         TabOrder = 6
         Transparent = True
       end
-      object cxCheckBox1: TcxCheckBox [8]
+      object CheckBoxOptionFuzzy: TcxCheckBox [8]
         Left = 566
-        Top = 25
+        Top = 44
         Action = ActionOptionFuzzy
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 7
+        TabOrder = 8
         Transparent = True
       end
-      object SpinEditFuzzy: TcxSpinEdit [9]
+      object EditOptionFuzzy: TcxSpinEdit [9]
         Left = 640
-        Top = 44
+        Top = 63
         Properties.Alignment.Horz = taRightJustify
         Properties.LargeIncrement = 1.000000000000000000
         Properties.MaxValue = 5.000000000000000000
@@ -350,13 +350,21 @@ inherited FormSearch: TFormSearch
         Properties.UseLeftAlignmentOnEditing = False
         Properties.OnChange = SpinEditFuzzyPropertiesChange
         Style.HotTrack = False
-        TabOrder = 8
+        TabOrder = 9
         Value = 1
         Width = 45
       end
+      object CheckBoxOptionExact: TcxCheckBox [10]
+        Left = 566
+        Top = 25
+        Action = ActionOptionExact
+        Style.HotTrack = False
+        Style.TransparentBorder = True
+        TabOrder = 7
+        Transparent = True
+      end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
-        ItemIndex = 2
       end
       object dxLayoutItem1: TdxLayoutItem
         Parent = dxLayoutGroup7
@@ -390,7 +398,7 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem3: TdxLayoutItem
         Parent = dxLayoutGroup3
         CaptionOptions.Visible = False
-        Control = CheckBoxSearchAll
+        Control = CheckBoxOptionSearchAll
         ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 122
         ControlOptions.ShowBorder = False
@@ -399,7 +407,7 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem4: TdxLayoutItem
         Parent = dxLayoutGroup3
         CaptionOptions.Visible = False
-        Control = CheckBoxCaseSensitive
+        Control = CheckBoxOptionCaseSensitive
         ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 90
         ControlOptions.ShowBorder = False
@@ -408,7 +416,7 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem5: TdxLayoutItem
         Parent = dxLayoutGroup4
         CaptionOptions.Visible = False
-        Control = CheckBoxRegExp
+        Control = CheckBoxOptionRegExp
         ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 113
         ControlOptions.ShowBorder = False
@@ -427,6 +435,7 @@ inherited FormSearch: TFormSearch
         Parent = dxLayoutGroup1
         CaptionOptions.Text = 'New Group'
         ButtonOptions.Buttons = <>
+        ItemIndex = 2
         ShowBorder = False
         UseIndent = False
         Index = 0
@@ -457,7 +466,7 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem11: TdxLayoutItem
         Parent = dxLayoutGroup6
         CaptionOptions.Visible = False
-        Control = CheckBoxIgnoreAccelerator
+        Control = CheckBoxOptionIgnoreAccelerator
         ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 90
         ControlOptions.ShowBorder = False
@@ -493,11 +502,11 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem12: TdxLayoutItem
         Parent = dxLayoutGroup6
         CaptionOptions.Visible = False
-        Control = cxCheckBox1
+        Control = CheckBoxOptionFuzzy
         ControlOptions.OriginalHeight = 19
         ControlOptions.OriginalWidth = 85
         ControlOptions.ShowBorder = False
-        Index = 1
+        Index = 2
       end
       object dxLayoutItem13: TdxLayoutItem
         Parent = dxLayoutGroup6
@@ -505,16 +514,25 @@ inherited FormSearch: TFormSearch
         CaptionOptions.Text = 'Threshold:'
         Padding.Left = 18
         Padding.AssignedValues = [lpavLeft]
-        Control = SpinEditFuzzy
+        Control = EditOptionFuzzy
         ControlOptions.OriginalHeight = 21
         ControlOptions.OriginalWidth = 45
         ControlOptions.ShowBorder = False
-        Index = 2
+        Index = 3
       end
       object LayoutItemStatus: TdxLayoutLabeledItem
         Parent = LayoutControlGroup_Root
         CaptionOptions.ShowAccelChar = False
         Index = 2
+      end
+      object dxLayoutItem9: TdxLayoutItem
+        Parent = dxLayoutGroup6
+        CaptionOptions.Visible = False
+        Control = CheckBoxOptionExact
+        ControlOptions.OriginalHeight = 19
+        ControlOptions.OriginalWidth = 85
+        ControlOptions.ShowBorder = False
+        Index = 1
       end
     end
   end
@@ -611,6 +629,13 @@ inherited FormSearch: TFormSearch
       Caption = 'Don'#39't translate'
       ImageIndex = 12
       OnExecute = ActionMarkSetExecute
+    end
+    object ActionOptionExact: TAction
+      Category = 'Options'
+      AutoCheck = True
+      Caption = 'Exact match'
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionOptionExactUpdate
     end
   end
   object PopupMenuMark: TdxBarPopupMenu

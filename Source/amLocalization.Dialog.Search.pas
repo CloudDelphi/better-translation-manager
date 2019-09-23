@@ -25,6 +25,8 @@ uses
 
 type
   ILocalizerSearchHost = interface
+    function GetProject: TLocalizerProject;
+    property Project: TLocalizerProject read GetProject;
     function GetSelectedModule: TLocalizerModule;
     property SelectedModule: TLocalizerModule read GetSelectedModule;
 
@@ -55,11 +57,11 @@ type
     ComboBoxSearchScope: TcxCheckComboBox;
     dxLayoutGroup2: TdxLayoutGroup;
     dxLayoutItem3: TdxLayoutItem;
-    CheckBoxSearchAll: TcxCheckBox;
+    CheckBoxOptionSearchAll: TcxCheckBox;
     dxLayoutItem4: TdxLayoutItem;
-    CheckBoxCaseSensitive: TcxCheckBox;
+    CheckBoxOptionCaseSensitive: TcxCheckBox;
     dxLayoutItem5: TdxLayoutItem;
-    CheckBoxRegExp: TcxCheckBox;
+    CheckBoxOptionRegExp: TcxCheckBox;
     dxLayoutItem6: TdxLayoutItem;
     ButtonRegExHelp: TcxButton;
     dxLayoutGroup3: TdxLayoutGroup;
@@ -74,15 +76,15 @@ type
     ActionOptionCaseSensitive: TAction;
     ActionOptionGlobal: TAction;
     dxLayoutItem11: TdxLayoutItem;
-    CheckBoxIgnoreAccelerator: TcxCheckBox;
+    CheckBoxOptionIgnoreAccelerator: TcxCheckBox;
     ActionOptionIgnoreAccelerator: TAction;
     dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutGroup6: TdxLayoutGroup;
     dxLayoutGroup7: TdxLayoutGroup;
     dxLayoutItem12: TdxLayoutItem;
-    cxCheckBox1: TcxCheckBox;
+    CheckBoxOptionFuzzy: TcxCheckBox;
     ActionOptionFuzzy: TAction;
-    SpinEditFuzzy: TcxSpinEdit;
+    EditOptionFuzzy: TcxSpinEdit;
     dxLayoutItem13: TdxLayoutItem;
     ActionAbort: TAction;
     dxLayoutItem8: TdxLayoutItem;
@@ -105,6 +107,9 @@ type
     ActionMarkTranslate: TAction;
     ActionMarkHold: TAction;
     ActionMarkDontTranslate: TAction;
+    ActionOptionExact: TAction;
+    dxLayoutItem9: TdxLayoutItem;
+    CheckBoxOptionExact: TcxCheckBox;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -126,6 +131,7 @@ type
     procedure ActionMarkUpdate(Sender: TObject);
     procedure ActionMarkSetExecute(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
+    procedure ActionOptionExactUpdate(Sender: TObject);
   private
     FSearchText: string;
     FRegExp: TRegEx;
@@ -204,7 +210,7 @@ end;
 
 procedure TFormSearch.SpinEditFuzzyPropertiesChange(Sender: TObject);
 begin
-  FFuzzyThreshold := SpinEditFuzzy.Value;
+  FFuzzyThreshold := EditOptionFuzzy.Value;
 end;
 
 // -----------------------------------------------------------------------------
@@ -215,27 +221,32 @@ begin
 end;
 
 function TFormSearch.SelectNextResult: boolean;
+var
+  SelectedIndex: integer;
 begin
-  Result := False;
   if (ListViewResult.Items.Count = 0) then
-    exit;
+    Exit(False);
 
-  Result := True;
+  SelectedIndex := ListViewResult.ItemIndex;
 
-  if (ListViewResult.ItemIndex = -1) then
-    ListViewResult.ItemIndex := 0
+  if (SelectedIndex = -1) then
+    // Select first
+    SelectedIndex := 0
   else
-  if (ListViewResult.ItemIndex < ListViewResult.Items.Count-1) then
-    ListViewResult.ItemIndex := ListViewResult.ItemIndex + 1
+  if (SelectedIndex < ListViewResult.Items.Count-1) then
+    // Select next
+    Inc(SelectedIndex)
   else
     // Wrap around
-    ListViewResult.ItemIndex := 0;
+    SelectedIndex := 0;
 
-  if (Result) then
-  begin
-    ListViewResult.Selected.MakeVisible(False);
-    ActionGoTo.Execute;
-  end;
+  ListViewResult.ClearSelection;
+  ListViewResult.ItemIndex := SelectedIndex;
+
+  ListViewResult.Selected.MakeVisible(False);
+  ActionGoTo.Execute;
+
+  Result := True;
 end;
 
 // -----------------------------------------------------------------------------
@@ -346,6 +357,9 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
     if (ActionOptionFuzzy.Checked) then
       Result := FuzzyMatch(Value)
     else
+    if (ActionOptionExact.Checked) then
+      Result := (Value = FSearchText)
+    else
       Result := Value.Contains(FSearchText);
   end;
 
@@ -446,8 +460,8 @@ begin
 
   FSearchText := Trim(SearchString);
 
-  if (ActionOptionGlobal.Checked) then
-    SearchRoot := FSearchHost.SelectedModule.Project
+  if (ActionOptionGlobal.Checked) or (FSearchHost.SelectedModule = nil) then
+    SearchRoot := FSearchHost.Project
   else
     SearchRoot := FSearchHost.SelectedModule;
 
@@ -570,14 +584,21 @@ end;
 
 procedure TFormSearch.ActionOptionRegExpUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (not ActionOptionFuzzy.Checked);
+  TAction(Sender).Enabled := (not ActionOptionFuzzy.Checked) and (not ActionOptionExact.Checked);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ActionOptionExactUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not ActionOptionFuzzy.Checked) and (not ActionOptionRegExp.Checked);
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormSearch.ActionOptionFuzzyUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (not ActionOptionRegExp.Checked);
+  TAction(Sender).Enabled := (not ActionOptionRegExp.Checked) and (not ActionOptionExact.Checked);
 end;
 
 // -----------------------------------------------------------------------------
@@ -585,7 +606,7 @@ end;
 procedure TFormSearch.ActionSearchExecute(Sender: TObject);
 begin
   if (ActionOptionFuzzy.Checked) then
-    SpinEditFuzzy.Value := Max(1, Min(SpinEditFuzzy.Value, Length(EditSearchText.Text)-1));
+    EditOptionFuzzy.Value := Max(1, Min(EditOptionFuzzy.Value, Length(EditSearchText.Text)-1));
 
   DoSearch(EditSearchText.Text);
 
@@ -604,7 +625,7 @@ end;
 
 procedure TFormSearch.ActionSearchUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (EditSearchText.Text <> '') and (FSearchScope <> []);
+  TAction(Sender).Enabled := (EditSearchText.Text <> '') and (FSearchScope <> []) and (FSearchHost.Project <> nil);
 end;
 
 // -----------------------------------------------------------------------------
@@ -615,7 +636,7 @@ var
   RegExHelpURL: string;
 begin
   s := '';
-  if (not CheckBoxCaseSensitive.Checked) then
+  if (not CheckBoxOptionCaseSensitive.Checked) then
     s := s + 'i';
 
   RegExHelpURL := Format('https://regex101.com/?regex=%s&options=%s', [EditSearchText.Text, s]);

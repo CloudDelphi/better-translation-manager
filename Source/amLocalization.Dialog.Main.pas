@@ -469,6 +469,7 @@ type
     procedure ClearTargetLanguage;
     procedure UpdateTargetLanguage;
 
+    function GetProject: TLocalizerProject;
     function GetFocusedNode: TcxTreeListNode;
     function GetFocusedItem: TCustomLocalizerItem;
     function GetFocusedModule: TLocalizerModule;
@@ -527,6 +528,7 @@ type
     procedure RemoveTranslatedCount(Module: TLocalizerModule);
   protected
     // ILocalizerSearchHost
+    function ILocalizerSearchHost.GetProject = GetProject;
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
     function ILocalizerSearchHost.GetTargetLanguage = GetTargetLanguage;
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
@@ -3216,6 +3218,11 @@ begin
     Result := TLocalizerProperty(TreeListItems.HandleFromNode(Node))
   else
     Result := TLocalizerModule(Node.Data);
+end;
+
+function TFormMain.GetProject: TLocalizerProject;
+begin
+  Result := FProject;
 end;
 
 function TFormMain.GetFocusedItem: TCustomLocalizerItem;
