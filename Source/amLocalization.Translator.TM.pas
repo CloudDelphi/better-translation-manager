@@ -25,7 +25,7 @@ uses
 {$endif TM_BINARYFORMAT}
 
   amLocale,
-  amProgressForm,
+  amProgress,
   amLocalization.Model,
   amLocalization.Translator,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;

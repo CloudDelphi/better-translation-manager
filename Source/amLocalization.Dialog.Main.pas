@@ -28,7 +28,7 @@ uses
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
 
   amLocale,
-  amProgressForm,
+  amProgress,
   amLocalization.Model,
   amLocalization.Translator,
   amLocalization.Dialog.Search,

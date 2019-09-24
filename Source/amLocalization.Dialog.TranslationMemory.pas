@@ -88,7 +88,7 @@ uses
   UITypes,
   amCursorService,
   amLocale,
-  amProgressForm,
+  amProgress,
   amLocalization.Settings,
   amLocalization.Data.Main,
   amLocalization.TranslationMemory.FileFormats,

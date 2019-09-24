@@ -14,7 +14,7 @@ uses
   Generics.Collections,
   Classes,
   DB,
-  amProgressForm,
+  amProgress,
   amLocalization.Model,
   amLocalization.Translator.TM;
 

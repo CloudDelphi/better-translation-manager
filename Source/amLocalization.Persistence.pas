@@ -13,7 +13,7 @@ interface
 uses
   Classes,
   SysUtils,
-  amProgressForm,
+  amProgress,
   amLocalization.Model;
 
 // -----------------------------------------------------------------------------

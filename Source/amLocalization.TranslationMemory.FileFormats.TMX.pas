@@ -12,7 +12,7 @@ interface
 
 uses
   Classes,
-  amProgressForm,
+  amProgress,
   amLocalization.TranslationMemory.FileFormats;
 
 // -----------------------------------------------------------------------------

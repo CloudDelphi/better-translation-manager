@@ -14,7 +14,7 @@ uses
   Classes,
   SysUtils,
   Types,
-  amProgressForm;
+  amProgress;
 
 
 // -----------------------------------------------------------------------------
