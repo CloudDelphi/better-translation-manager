@@ -582,6 +582,7 @@ uses
   amCursorService,
   amVersionInfo,
   amShell,
+  amPath,
   amSplash,
   amFileUtils,
 
@@ -789,6 +790,27 @@ procedure TFormMain.FormCreate(Sender: TObject);
     end;
   end;
 
+  procedure LoadBanner;
+  var
+    Filename: string;
+  begin
+    // Look for custom ribbon background image
+    Filename := ExtractFilepath(Application.ExeName) + 'banner.png';
+    if (not FileExists(Filename)) then
+    begin
+      Filename := ExtractFilepath(Application.ExeName) + 'banner.bmp';
+      if (not FileExists(Filename)) then
+      begin
+        Filename := ExtractFilepath(Application.ExeName) + 'banner.jpg';
+        if (not FileExists(Filename)) then
+          Filename := '';
+      end;
+    end;
+
+    if (Filename <> '') then
+      RibbonMain.BackgroundImage.LoadFromFile(Filename);
+  end;
+
 var
   i: integer;
 begin
@@ -831,6 +853,9 @@ begin
     Caption := Caption + ' [SAFE MODE]';
 
   LoadSettings;
+
+  // Load ribbon banner
+  LoadBanner;
 
   SingleInstance.OnProcessParam := LoadFromSingleInstance;
 end;
@@ -1800,6 +1825,7 @@ procedure TFormMain.ActionImportFileSourceExecute(Sender: TObject);
 var
   Filename: string;
   SaveFilename: string;
+  SymbolFilename: string;
   ProjectProcessor: TProjectResourceProcessor;
   CountBefore, CountAfter: TCounts;
   Msg: string;
@@ -1807,11 +1833,19 @@ resourcestring
   sSwitchSourceModuleTitle = 'Update project?';
   sSwitchSourceModule = 'Do you want to alter the project to use this file as the source file?';
 begin
-  if (not OpenDialogEXE.Execute(Handle)) then
-    exit;
+  SaveCursor(crAppStart); // Open dialog can take a while to appear
 
   Filename := OpenDialogEXE.FileName;
-  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
+  if (Filename <> '') then
+  begin
+    OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
+    OpenDialogEXE.FileName := TPath.ChangeExtension(TPath.GetFileName(Filename), '.exe');
+  end;
+
+  if (not OpenDialogEXE.Execute(Handle)) then
+    Exit;
+
+  Filename := OpenDialogEXE.FileName;
 
   // Temporarily switch to new file or we will not be able to find the companion files (*.drc)
   SaveFilename := FProject.SourceFilename;
@@ -1852,25 +1886,39 @@ begin
   else
     Msg := sProjectUpdatedNothing;
 
-  Msg := Msg + #13#13 +sSwitchSourceModule;
-
-  if (TaskMessageDlg(sProjectUpdatedTitle, Msg, mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
+  if (not AnsiSameText(PathUtil.Canonicalise(FProject.SourceFilename), PathUtil.Canonicalise(Filename))) then
   begin
-    FProject.SourceFilename := Filename;
-    FProject.Name := TPath.GetFileNameWithoutExtension(Filename);
-    RibbonMain.DocumentName := FProject.Name;
+    Msg := Msg + #13#13 + sSwitchSourceModule;
 
-    FProject.Changed;
-  end;
+    if (TaskMessageDlg(sProjectUpdatedTitle, Msg, mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes) then
+    begin
+      // Find absolute symbol filename
+      SymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
+
+      FProject.SourceFilename := Filename;
+
+      // Make symbol file name relative to the new filename
+      FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
+
+      FProject.Name := TPath.GetFileNameWithoutExtension(Filename);
+      RibbonMain.DocumentName := FProject.Name;
+
+      FProject.Changed;
+    end;
+  end else
+    TaskMessageDlg(sProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionImportFileTargetExecute(Sender: TObject);
 var
+  Filename: string;
   ProjectProcessor: TProjectResourceProcessor;
   Stats: TTranslationCounts;
   SaveFilter: string;
   LocaleItem: TLocaleItem;
 begin
+  SaveCursor(crAppStart); // Open dialog can take a while to appear
+
   SaveFilter := OpenDialogEXE.Filter;
   try
 
@@ -1878,16 +1926,21 @@ begin
     OpenDialogEXE.Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + SaveFilter;
     OpenDialogEXE.FilterIndex := 1;
 
+    Filename := OpenDialogEXE.FileName;
+    if (Filename <> '') then
+    begin
+      OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
+      OpenDialogEXE.FileName := TPath.ChangeExtension(TPath.GetFileName(Filename), '.'+LocaleItem.LanguageShortName);
+    end;
+
     if (not OpenDialogEXE.Execute(Handle)) then
-      exit;
+      Exit;
 
   finally
     OpenDialogEXE.Filter := SaveFilter;
   end;
 
   SaveCursor(crHourGlass);
-
-  OpenDialogEXE.InitialDir := TPath.GetDirectoryName(OpenDialogEXE.FileName);
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -2138,10 +2191,19 @@ resourcestring
 begin
   Result := True;
 
-  if (FProject.StringSymbolFilename = '') then
-    FProject.StringSymbolFilename := TPath.ChangeExtension(FProject.SourceFilename, '.drc');
+  SaveCursor(crAppStart);
 
-  Filename := FProject.StringSymbolFilename;
+  if (FProject.StringSymbolFilename = '') then
+  begin
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
+    FProject.StringSymbolFilename := Filename;
+  end else
+  if (FProject.SourceFilename <> '') then
+    // Path might be relative - Get absolute path
+    Filename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename)
+  else
+    Filename := FProject.StringSymbolFilename;
+
   while (not TFile.Exists(Filename)) do
   begin
     Result := False;
@@ -2152,8 +2214,11 @@ begin
     if (Res <> mrYes) then
       Exit(False);
 
-    OpenDialogDRC.InitialDir := TPath.GetDirectoryName(Filename);
-    OpenDialogDRC.FileName := TPath.GetFileName(Filename);
+    if (Filename <> '') then
+    begin
+      OpenDialogDRC.InitialDir := TPath.GetDirectoryName(Filename);
+      OpenDialogDRC.FileName := TPath.GetFileName(Filename);
+    end;
 
     if (not OpenDialogDRC.Execute(Handle)) then
       Exit(False);
@@ -2162,7 +2227,7 @@ begin
   end;
 
   if (not Result) then
-    FProject.StringSymbolFilename := Filename;
+    FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(FProject.SourceFilename), Filename);
 
   Result := True;
 end;
@@ -2179,7 +2244,10 @@ resourcestring
 begin
   Result := True;
 
+  SaveCursor(crAppStart);
+
   Filename := FProject.SourceFilename;
+
   while (not TFile.Exists(Filename)) do
   begin
     Result := False;
@@ -2187,11 +2255,15 @@ begin
     // Symbol file does not exist. Try to locate it.
     Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [FProject.SourceFilename]),
       mtWarning, [mbYes, mbNo], 0, mbYes);
+
     if (Res <> mrYes) then
       Exit(False);
 
-    OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
-    OpenDialogEXE.FileName := TPath.GetFileName(Filename);
+    if (Filename <> '') then
+    begin
+      OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
+      OpenDialogEXE.FileName := TPath.GetFileName(Filename);
+    end;
 
     if (not OpenDialogEXE.Execute(Handle)) then
       Exit(False);
@@ -2449,16 +2521,23 @@ begin
 end;
 
 procedure TFormMain.ActionProjectOpenExecute(Sender: TObject);
+var
+  Filename: string;
 begin
   if (not CheckSave) then
-    exit;
+    Exit;
+
+  Filename := OpenDialogProject.FileName;
+  if (Filename <> '') then
+  begin
+    OpenDialogProject.FileName := TPath.GetFileName(Filename);
+    OpenDialogProject.InitialDir := TPath.GetDirectoryName(Filename);
+  end;
 
   if (not OpenDialogProject.Execute(Handle)) then
-    exit;
+    Exit;
 
   SaveCursor(crHourGlass);
-
-  OpenDialogProject.InitialDir := TPath.GetDirectoryName(OpenDialogProject.FileName);
 
   LoadFromFile(OpenDialogProject.FileName);
 end;
@@ -2622,7 +2701,7 @@ begin
   Filename := FProjectFilename;
 
   if (Filename = '') then
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sProjectFileType);
+    Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sFileTypeProject);
 
   SaveDialogProject.InitialDir := TPath.GetDirectoryName(Filename);
   SaveDialogProject.FileName := TPath.GetFileName(Filename);
@@ -3623,7 +3702,9 @@ begin
     FProject.Clear;
 
     FProject.SourceFilename := SourceFilename;
-    FProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, '.drc');
+    FProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
+    if (FProject.SourceFilename <> '') then
+      FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
     FProject.Name := TPath.GetFileNameWithoutExtension(SourceFilename);
     FProject.SourceLanguageID := SourceLocaleID;

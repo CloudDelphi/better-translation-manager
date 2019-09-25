@@ -430,7 +430,7 @@ begin
   ProjectNode.Attributes['name'] := Project.Name;
   // TODO : Make paths relative to project file
   ProjectNode.Attributes['sourcefile'] := TPath.GetFileName(Project.SourceFilename);
-  ProjectNode.Attributes['stringsymbolfile'] := FilenameMakeRelative(TPath.GetDirectoryName(Project.SourceFilename), Project.StringSymbolFilename);
+  ProjectNode.Attributes['stringsymbolfile'] := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(Project.SourceFilename), Project.StringSymbolFilename);
   ProjectNode.Attributes['language'] := Project.SourceLanguageID;
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');

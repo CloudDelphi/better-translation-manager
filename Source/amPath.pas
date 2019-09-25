@@ -1,4 +1,4 @@
-unit amPath;
+﻿unit amPath;
 
 (*
  * Copyright © 2008 Anders Melander
@@ -13,21 +13,27 @@ interface
 // -----------------------------------------------------------------------------
 // Utilities for File Path manipulation
 // -----------------------------------------------------------------------------
+type
+  PathUtil = class abstract
+  public
+    class function PathMakeCanonical(const APath: string): string;
+    class function OldPathMakeAbsolute(const Path, CurrentPath: string): string; deprecated;
+    class function PathCombinePath(const Path, Filename: string): string;
+    class function PathAppendFilename(const Path, Filename: string): string;
 
-function Canonicalise(const Path: string; RaiseOnError: boolean = False): string;
+    class function Canonicalise(const Path: string; RaiseOnError: boolean = False): string;
+    class function RemoveDoubleBackslashesFromPath(const Value: string): string;
+    class function FixTooLongFilename(const Filename: string; Overhead: integer = 12): string;
+    class function FilenameFindOnPath(var Filename: string): boolean; overload;
 
-function PathIsRelative(const Path: string): boolean;
-function FilenameFindOnPath(var Filename: string): boolean; overload;
-function PathMakeCanonical(const APath: string): string;
-function OldPathMakeAbsolute(const Path, CurrentPath: string): string;
-function PathCombinePath(const Path, Filename: string): string;
-function PathAppendFilename(const Path, Filename: string): string;
-function FilenameMakeRelative(const FromPath, Filename: string): string;
-function PathEnsureExistForFile(const Path, Filename: string): boolean;
-function FilenameMakeLong(const Filename: string): string;
-function ResolveShellLink(const Filename: string): string;
-function FixTooLongFilename(const Filename: string; Overhead: integer = 12): string;
-function RemoveDoubleBackslashesFromPath(const Value: string): string;
+    class function FilenameMakeRelative(const FromPath, Filename: string): string;
+    class function PathEnsureExistForFile(const Path, Filename: string): boolean;
+    class function FilenameMakeLong(const Filename: string): string;
+    class function ResolveShellLink(const Filename: string): string;
+
+    class function PathIsRelative(const Path: string): boolean;
+  end;
+
 
 implementation
 
@@ -37,11 +43,19 @@ uses
   SysUtils,
   StrUtils,
   ShLwApi, // PathRelativePathTo
+  Dialogs, Controls, // TaskMessageDlg
   Forms, ActiveX, ComObj, ShlObj; // ResolveShellLink
 
+// -----------------------------------------------------------------------------
+//
+//              Imports
+//
+// -----------------------------------------------------------------------------
 function GetFullPathName(lpFileName: PWideChar; nBufferLength: DWORD; lpBuffer: PWideChar; lpFilePart: PPWideChar): DWORD; stdcall; external kernel32 name 'GetFullPathNameW';
 
-function RemoveDoubleBackslashesFromPath(const Value: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.RemoveDoubleBackslashesFromPath(const Value: string): string;
 var
   n: integer;
 begin
@@ -59,7 +73,9 @@ begin
   end;
 end;
 
-function Canonicalise(const Path: string; RaiseOnError: boolean): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.Canonicalise(const Path: string; RaiseOnError: boolean): string;
 // http://pdh11.blogspot.dk/2009/05/pathcanonicalize-versus-what-it-says-on.html
 var
   Size: DWORD;
@@ -196,7 +212,9 @@ begin
   Result := StringReplace(Result, '/', '\', [rfReplaceAll]);
 end;
 
-function FixTooLongFilename(const Filename: string; Overhead: integer): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.FixTooLongFilename(const Filename: string; Overhead: integer): string;
 begin
   if (Length(Filename) >= MAX_PATH - Overhead) and (not TPath.IsExtendedPrefixed(Filename)) then
   begin
@@ -209,13 +227,17 @@ begin
     Result := Filename;
 end;
 
-function PathIsRelative(const Path: string): boolean;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.PathIsRelative(const Path: string): boolean;
 begin
   // Warning: PathIsRelative returns False for "c:test.txt" and "\test.txt"
   Result := ShLwApi.PathIsRelative(PChar(Path));
 end;
 
-function FilenameFindOnPath(var Filename: string): boolean;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.FilenameFindOnPath(var Filename: string): boolean;
 var
   SaveLength: integer;
 begin
@@ -231,7 +253,9 @@ begin
     SetLength(Filename, SaveLength);
 end;
 
-function PathMakeCanonical(const APath: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.PathMakeCanonical(const APath: string): string;
 var
   Path: string;
   n: integer;
@@ -262,7 +286,9 @@ begin
   SetLength(Result, Length(PChar(Result)));
 end;
 
-function OldPathMakeAbsolute(const Path, CurrentPath: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.OldPathMakeAbsolute(const Path, CurrentPath: string): string;
 begin
   if (Path = '') then
     Result := CurrentPath
@@ -279,7 +305,9 @@ begin
     Result := Path
 end;
 
-function PathCombinePath(const Path, Filename: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.PathCombinePath(const Path, Filename: string): string;
 begin
   SetLength(Result, MAX_PATH);
   if (PathCombine(PChar(Result), PChar(Path), PChar(Filename)) = nil) then
@@ -287,7 +315,9 @@ begin
   SetLength(Result, Length(PChar(Result)))
 end;
 
-function PathAppendFilename(const Path, Filename: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.PathAppendFilename(const Path, Filename: string): string;
 begin
   SetLength(Result, MAX_PATH);
   StrLCopy(PChar(Result), PChar(Path), MAX_PATH);
@@ -296,7 +326,9 @@ begin
   SetLength(Result, Length(PChar(Result)))
 end;
 
-function FilenameMakeRelative(const FromPath, Filename: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.FilenameMakeRelative(const FromPath, Filename: string): string;
 begin
   SetLength(Result, MAX_PATH);
   if (PathRelativePathTo(PChar(Result), PChar(FromPath), FILE_ATTRIBUTE_DIRECTORY, PChar(Filename), 0)) then
@@ -305,11 +337,13 @@ begin
     Result := Filename;
 end;
 
-function PathEnsureExistForFile(const Path, Filename: string): boolean;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.PathEnsureExistForFile(const Path, Filename: string): boolean;
 resourcestring
-  sResourceFolderDoesNotExist = 'Directory not found';
-  sResourceCreateMissingFolderForFile = 'The directory "%s" does not exist.'+#13+
-    'Do you wish to create it for the file "%s"?';
+  sCreateMissingFolderForFileTitle = 'Directory not found';
+  sCreateMissingFolderForFile = 'The directory "%s" does not exist.'+#13#13+
+    'Do you want to create it for the file "%s"?';
 var
   FileOnly, PathOnly: string;
   Res: Word;
@@ -320,21 +354,23 @@ begin
 
   if (not DirectoryExists(PathOnly)) then
   begin
-    if (PathIsRelative(PChar(Filename))) then
+    if (PathIsRelative(Filename)) then
       FileOnly := Filename
     else
       FileOnly := ExtractFileName(Filename);
 
-    Res := MessageBox(0, PChar(Format(sResourceCreateMissingFolderForFile, [PathOnly, FileOnly])), PChar(sResourceFolderDoesNotExist), MB_OKCANCEL);
+    Res := TaskMessageDlg(sCreateMissingFolderForFileTitle, Format(sCreateMissingFolderForFile, [PathOnly, FileOnly]), mtConfirmation, [mbYes, mbNo], 0, mbNo);
 
-    if (Res = ID_OK) then
+    if (Res = mrYes) then
       Result := CreateDir(PathOnly)
     else
       Result := False;
   end;
 end;
 
-function FilenameMakeLong(const Filename: string): string;
+// -----------------------------------------------------------------------------
+
+class function PathUtil.FilenameMakeLong(const Filename: string): string;
 var
   Size: integer;
 begin
@@ -359,7 +395,7 @@ end;
 //------------------------------------------------------------------------------
 // Copied from am's Resource Editor
 //------------------------------------------------------------------------------
-function ResolveShellLink(const Filename: string): string;
+class function PathUtil.ResolveShellLink(const Filename: string): string;
 var
   ShellLink: IShellLink;
   PersistFile: IPersistFile;
@@ -379,5 +415,7 @@ begin
       Result := PWideChar(@Buffer[0]);
   end;
 end;
+
+// -----------------------------------------------------------------------------
 
 end.

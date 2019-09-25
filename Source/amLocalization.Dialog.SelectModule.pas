@@ -23,10 +23,14 @@ uses
 type
   TFormSelectModule = class(TFormDialog)
     ComboBoxModule: TcxComboBox;
-    dxLayoutItem1: TdxLayoutItem;
+    LayoutItemModule: TdxLayoutItem;
+    LayoutItemPrompt: TdxLayoutLabeledItem;
+    LayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
+    LayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
+    procedure ActionOKUpdate(Sender: TObject);
   private
   public
-    function Execute(Project: TLocalizerProject; const Prompt: string = ''): TLocalizerModule;
+    function Execute(Project: TLocalizerProject; const Title: string = ''; const Prompt: string = ''): TLocalizerModule;
   end;
 
 implementation
@@ -39,9 +43,16 @@ uses
 
 { TFormSelectModule }
 
-function TFormSelectModule.Execute(Project: TLocalizerProject; const Prompt: string): TLocalizerModule;
+procedure TFormSelectModule.ActionOKUpdate(Sender: TObject);
 begin
-  SetHeader(Prompt);
+  TAction(Sender).Enabled := (ComboBoxModule.ItemIndex <> -1);
+end;
+
+function TFormSelectModule.Execute(Project: TLocalizerProject; const Title, Prompt: string): TLocalizerModule;
+begin
+  SetHeader(Title);
+  LayoutItemPrompt.CaptionOptions.Text := Prompt;
+  LayoutItemPrompt.CaptionOptions.Visible := (Prompt <> '');
 
   ComboBoxModule.Properties.Items.Clear;
   Project.Traverse(

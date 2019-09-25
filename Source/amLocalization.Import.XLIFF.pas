@@ -592,8 +592,8 @@ var
   LocaleItem: TLocaleItem;
   FormSelectModule: TFormSelectModule;
 resourcestring
-  sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name.'#13#13+
-    'Please specify which module to import the translations into.';
+  sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name';
+  sXLIFFMissingModuleNamePrompt = 'Please specify which module to import the translations into.';
   sXLIFFLanguageMismatchTitle = 'Source language mismatch';
   sXLIFFLanguageMismatch = 'The source language of the project does not match the source language of the import file.'#13#13+
     'Project source language: %s'#13+
@@ -700,7 +700,7 @@ begin
     begin
       FormSelectModule := TFormSelectModule.Create(nil);
       try
-        Result := FormSelectModule.Execute(Project, sXLIFFMissingModuleName);
+        Result := FormSelectModule.Execute(Project, sXLIFFMissingModuleName, sXLIFFMissingModuleNamePrompt);
         if (Result = nil) then
           Exit(nil);
       finally

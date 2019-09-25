@@ -72,7 +72,7 @@ end;
 
 procedure TFormNewProject.EditSourceApplicationPropertiesButtonClick(Sender: TObject);
 begin
-  FileOpenDialogApplication.FileName := EditSourceApplication.Text;
+  FileOpenDialogApplication.FileName := TPath.GetFileName(EditSourceApplication.Text);
   FileOpenDialogApplication.DefaultFolder := TPath.GetDirectoryName(EditSourceApplication.Text);
 
   if (FileOpenDialogApplication.Execute) then

@@ -24,12 +24,12 @@ uses
 // -----------------------------------------------------------------------------
 type
   TCsvSettings = record
-    Codepage: integer;          // GetACP;
-    EscapeChar: Char;           // '\'
-    FirstRow: integer;          // 1 (One based)
-    QuoteChar: Char;            // '"'
-    DelimiterChar: Char;        // ';'
-    DecimalSeparator: Char;     // if (FDecimalSeparator = #0) then FDecimalSeparator := SysUtils.FormatSettings.DecimalSeparator;
+    Codepage: integer;
+    EscapeChar: Char;
+    FirstRow: integer;
+    QuoteChar: Char;
+    DelimiterChar: Char;
+    DecimalSeparator: Char;
 
     class function Default: TCsvSettings; static;
   end;
@@ -49,7 +49,6 @@ type
 //
 // -----------------------------------------------------------------------------
 // CSV parsing functions.
-// CSV to TDatabase import.
 // -----------------------------------------------------------------------------
 // See:
 // RFC4180
@@ -150,7 +149,7 @@ type
     function GetEndOfData: boolean;
   public
     constructor Create(const ASettings: TCsvSettings; AReader: TStreamReader); overload;
-    constructor Create(const ASettings: TCsvSettings; AStream: TStream; AEncoding: TEncoding = nil; AOwnsObject: boolean = False); overload;
+    constructor Create(const ASettings: TCsvSettings; AStream: TStream; AEncoding: TEncoding = nil; AOwnsStream: boolean = False); overload;
     destructor Destroy; override;
 
     property Reader: TStreamReader read FReader;
@@ -182,6 +181,21 @@ const
   // Line break character.
   // #10 and #13 in the source CSV is converted to this character
   CsvLineBreak: Char = #13;
+
+// -----------------------------------------------------------------------------
+//
+//              TCsvSettings
+//
+// -----------------------------------------------------------------------------
+class function TCsvSettings.Default: TCsvSettings;
+begin
+  Result.Codepage := GetACP;
+  Result.EscapeChar := '\';
+  Result.FirstRow := 1;
+  Result.QuoteChar := '"';
+  Result.DelimiterChar := ';';
+  Result.DecimalSeparator := SysUtils.FormatSettings.DecimalSeparator;
+end;
 
 // -----------------------------------------------------------------------------
 //
@@ -218,15 +232,7 @@ var
   Encoding: TEncoding;
   Reader: TStreamReader;
   ProgressStream: TStream;
-{$ifOPT D+}
-var
-  Stopwatch: TStopwatch;
-  RowCount: integer;
-{$endif}
 begin
-{$ifOPT D+}
-  Stopwatch := TStopwatch.StartNew;
-{$endif}
   ASSERT(Stream <> nil);
 
   SaveCursor(crAppStart);
@@ -257,9 +263,6 @@ begin
           on E: EAbort do
             Exit;
         end;
-{$ifOPT D+}
-//        RowCount := TImportRowTarget(Target).RowCount;
-{$endif}
       finally
         Reader.Free;
       end;
@@ -269,18 +272,6 @@ begin
   finally
     Encoding.Free;
   end;
-
-{$ifOPT D+}
-  Stopwatch.Stop;
-
-  with Stopwatch.Elapsed do
-    OutputDebugString(PChar(Format(
-        'CSV import benchmark'#13+
-        'Ticks: %.0n'#13+
-        'Duration: %.1n mS'#13+
-        'Rows: %d'#13+
-        'Rate: %.1n rows/S', [Ticks*1.0, TotalMilliseconds, RowCount, RowCount/TotalSeconds])));
-{$endif}
 end;
 
 // -----------------------------------------------------------------------------
@@ -552,6 +543,7 @@ end;
 constructor TTextParserCSV.Create(const ASettings: TCsvSettings; AReader: TStreamReader);
 begin
   inherited Create;
+
   FReader := AReader;
   FTarget := TCsvReaderStringArrayRowTarget.Create;
   FSettings := ASettings;
@@ -562,9 +554,9 @@ begin
   FNeedData := True;
 end;
 
-constructor TTextParserCSV.Create(const ASettings: TCsvSettings; AStream: TStream; AEncoding: TEncoding; AOwnsObject: boolean);
+constructor TTextParserCSV.Create(const ASettings: TCsvSettings; AStream: TStream; AEncoding: TEncoding; AOwnsStream: boolean);
 begin
-  if (AOwnsObject) then
+  if (AOwnsStream) then
     FOwnedStream := AStream;
 
   if (AEncoding <> nil) then
@@ -577,6 +569,7 @@ end;
 
 destructor TTextParserCSV.Destroy;
 begin
+  FOwnedStream.Free;
   FOwnedReader.Free;
   FTarget := nil;
   inherited;
@@ -612,15 +605,5 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
-
-class function TCsvSettings.Default: TCsvSettings;
-begin
-  Result.Codepage := GetACP;
-  Result.EscapeChar := '\';
-  Result.FirstRow := 1;
-  Result.QuoteChar := '"';
-  Result.DelimiterChar := ';';
-  Result.DecimalSeparator := SysUtils.FormatSettings.DecimalSeparator;
-end;
 
 end.

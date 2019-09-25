@@ -30,7 +30,8 @@ type
 
     const
       // File types
-      sProjectFileType = '.xlat';
+      sFileTypeProject = '.xlat';
+      sFileTypeStringSymbols = '.drc';
   protected
     class procedure RegisterExt(const Extension, IntName: string; const Icon: string; Description, FileName: string; KeepExisting: boolean = False); static;
   public
@@ -82,7 +83,7 @@ class procedure TranslationManagerShell.RegisterFileTypeHandler;
 var
   FileRegistrationHelper : TFileRegistrationHelper;
 begin
-  FileRegistrationHelper := TFileRegistrationHelper.Create(sApplicationShellProgID, ParamStr(0), sProjectFileDescription, sApplicationShellAppID, sProjectFileType);
+  FileRegistrationHelper := TFileRegistrationHelper.Create(sApplicationShellProgID, ParamStr(0), sProjectFileDescription, sApplicationShellAppID, sFileTypeProject);
   try
     FileRegistrationHelper.RegisterToHandleFileType(True);
   finally
@@ -197,7 +198,7 @@ end;
 
 class procedure TranslationManagerShell.RegisterFileTypes;
 begin
-  RegisterExt(sProjectFileType, sProjectFileClass, '0', sProjectFileDescription, ParamStr(0));
+  RegisterExt(sFileTypeProject, sProjectFileClass, '0', sProjectFileDescription, ParamStr(0));
 end;
 
 // -----------------------------------------------------------------------------
