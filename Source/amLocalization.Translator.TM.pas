@@ -11,7 +11,6 @@
 interface
 
 {.$define TM_BENCHMARK}
-{$define TM_BINARYFORMAT}
 
 uses
   Generics.Collections,
@@ -20,9 +19,6 @@ uses
 
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
-{$ifndef TM_BINARYFORMAT}
-  FireDAC.Stan.StorageBin,
-{$endif TM_BINARYFORMAT}
 
   amLocale,
   amProgress,
@@ -203,6 +199,12 @@ uses
 
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
+
+  TMFileVersionMajor = 2;
+  TMFileVersionMinor = 1;
+
+type
+  TTMStreamTag = (tmDescription, tmLanguages, tmTerms);
 
 
 // -----------------------------------------------------------------------------
@@ -1076,61 +1078,48 @@ begin
 end;
 
 procedure TDataModuleTranslationMemory.LoadFromStream(Stream: TStream);
-{$ifdef TM_BINARYFORMAT}
-var
-  Signature: AnsiString;
-  Reader: TReader;
-  i: integer;
-  n: integer;
-  s: string;
-  Field: TField;
-{$endif TM_BINARYFORMAT}
-{$ifdef TM_BENCHMARK}
-var
-  StopWatch: TStopWatch;
-{$endif TM_BENCHMARK}
-begin
-{$ifdef TM_BINARYFORMAT}
-{$ifdef TM_BENCHMARK}
-  StopWatch := TStopWatch.StartNew;
-{$endif TM_BENCHMARK}
 
-  SetLength(Signature, Length(sTMFileSignature)); // Signature
-  if (Stream.Read(Signature[1], Length(sTMFileSignature)) <> Length(sTMFileSignature)) or (Signature <> sTMFileSignature) then
-    raise ETranslationMemory.Create('Invalid TM file signature');
+  procedure LoadLanguages(Reader: TReader);
+  var
+    Field: TField;
+  begin
+    Reader.ReadInteger; // Ignore count
 
-  TableTranslationMemory.Close;
-  TableTranslationMemory.Fields.Clear;
-  TableTranslationMemory.FieldDefs.Clear;
-
-  Reader := TReader.Create(Stream, 8192);
-  try
-    n := Reader.ReadInteger; // Stream version
-    if (n <> 1) then
-      raise ETranslationMemory.CreateFmt('Invalid TM file format version: %d', [n]);
-
-    Reader.ReadInteger; // Field list
     Reader.ReadListBegin;
     while (not Reader.EndOfList) do
     begin
       Field := TWideMemoField.Create(TableTranslationMemory);
 
-      Field.Tag := Reader.ReadInteger;
-      Field.FieldName := Reader.ReadString;
-      Field.DisplayLabel := Reader.ReadString;
+      Reader.ReadListBegin;
+      begin
+        Field.Tag := Reader.ReadInteger;
+        Field.FieldName := Reader.ReadString;
+        Field.DisplayLabel := Reader.ReadString;
+
+        while (not Reader.EndOfList) do
+          Reader.SkipValue;
+      end;
+      Reader.ReadListEnd;
 
       Field.DataSet := TableTranslationMemory;
       Field.DisplayWidth := 100;
       Field.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
     end;
     Reader.ReadListEnd;
+  end;
 
+  procedure LoadTerms(Reader: TReader);
+  var
+    s: string;
+    i: integer;
+  begin
     if (TableTranslationMemory.Fields.Count > 0) then
       TableTranslationMemory.CreateDataSet; // Apperently one cannot create a dataset without fields
 
     TableTranslationMemory.DisableControls;
     try
-      Reader.ReadInteger; // Row list
+      Reader.ReadInteger; // Ignore count
+
       Reader.ReadListBegin;
       while (not Reader.EndOfList) do
       begin
@@ -1145,6 +1134,9 @@ begin
               if (s <> '') then
                 TableTranslationMemory.Fields[i].AsString := s;
             end;
+            // Future version might add additional non-field data. E.g. context info or term description
+            while (not Reader.EndOfList) do
+              Reader.SkipValue;
           end;
           Reader.ReadListEnd;
 
@@ -1158,6 +1150,77 @@ begin
     finally
       TableTranslationMemory.EnableControls;
     end;
+  end;
+
+var
+  Signature: AnsiString;
+  Reader: TReader;
+  VersionMajor, VersionMinor: integer;
+  n: integer;
+{$ifdef TM_BENCHMARK}
+var
+  StopWatch: TStopWatch;
+{$endif TM_BENCHMARK}
+begin
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  (*
+  ** Signature
+  *)
+  SetLength(Signature, Length(sTMFileSignature));
+  if (Stream.Read(Signature[1], Length(sTMFileSignature)) <> Length(sTMFileSignature)) or (Signature <> sTMFileSignature) then
+    raise ETranslationMemory.Create('Invalid TM file signature');
+
+  TableTranslationMemory.Close;
+  TableTranslationMemory.Fields.Clear;
+  TableTranslationMemory.FieldDefs.Clear;
+
+  Reader := TReader.Create(Stream, 8192);
+  try
+    (*
+    ** Stream format version
+    *)
+    VersionMajor := Reader.ReadInteger;
+    VersionMinor := Reader.ReadInteger;
+
+    if (VersionMajor <> TMFileVersionMajor) then
+      raise ETranslationMemory.CreateFmt('Unsupported TM file format version: %d.%d', [VersionMajor, VersionMinor]);
+
+    Reader.ReadListBegin;
+    begin
+      while (not Reader.EndOfList) do
+      begin
+        // Read tag
+        n := Reader.ReadInteger;
+        if (n < Ord(Low(TTMStreamTag))) or (n > Ord(High(TTMStreamTag))) then
+        begin
+          // Unknown tag - skip block
+          Reader.SkipValue;
+          continue;
+        end;
+
+        Reader.ReadListBegin;
+        begin
+          case TTMStreamTag(n) of
+            tmDescription:
+              Reader.ReadString;
+
+            tmLanguages:
+              LoadLanguages(Reader);
+
+            tmTerms:
+              LoadTerms(Reader);
+
+          else
+            Reader.SkipValue;
+          end;
+        end;
+        Reader.ReadListEnd;
+      end;
+    end;
+    Reader.ReadListEnd;
   finally
     Reader.Free;
   end;
@@ -1166,21 +1229,6 @@ begin
   StopWatch.Stop;
   OutputDebugString(PChar(Format('Read TM via TReader: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
 {$endif TM_BENCHMARK}
-{$endif TM_BINARYFORMAT}
-
-{$ifndef TM_BINARYFORMAT}
-{$ifdef TM_BENCHMARK}
-  StopWatch := TStopWatch.StartNew;
-{$endif TM_BENCHMARK}
-
-  TableTranslationMemory.LoadFromStream(Stream, sfBinary);
-  TableTranslationMemory.FieldDefs.Clear;
-
-{$ifdef TM_BENCHMARK}
-  StopWatch.Stop;
-  OutputDebugString(PChar(Format('Read TM via FireDAC: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
-{$endif TM_BENCHMARK}
-{$endif TM_BINARYFORMAT}
 
   FModified := False;
   FLoaded := True;
@@ -1204,37 +1252,32 @@ begin
 end;
 
 procedure TDataModuleTranslationMemory.SaveToStream(Stream: TStream);
-var
-  Writer: TWriter;
-  i: integer;
-{$ifdef TM_BENCHMARK}
-var
-  StopWatch: TStopWatch;
-{$endif TM_BENCHMARK}
-begin
-{$ifdef TM_BINARYFORMAT}
-{$ifdef TM_BENCHMARK}
-  StopWatch := TStopWatch.StartNew;
-{$endif TM_BENCHMARK}
 
-  Stream.Write(sTMFileSignature[1], Length(sTMFileSignature)); // Signature
-
-  Writer := TWriter.Create(Stream, 8192);
-  try
-    Writer.WriteInteger(1); // Stream version
-
-    Writer.WriteInteger(TableTranslationMemory.Fields.Count); // Field list
+  procedure WriteLanguages(Writer: TWriter);
+  var
+    i: integer;
+  begin
+    Writer.WriteInteger(TableTranslationMemory.Fields.Count);
     Writer.WriteListBegin;
     begin
       for i := 0 to TableTranslationMemory.Fields.Count-1 do
       begin
-        Writer.WriteInteger(TableTranslationMemory.Fields[i].Tag); // LCID
-        Writer.WriteString(TableTranslationMemory.Fields[i].FieldName); // Locale short name
-        Writer.WriteString(TableTranslationMemory.Fields[i].DisplayName); // Locale name
+        Writer.WriteListBegin;
+        begin
+          Writer.WriteInteger(TableTranslationMemory.Fields[i].Tag); // LCID
+          Writer.WriteString(TableTranslationMemory.Fields[i].FieldName); // Locale short name
+          Writer.WriteString(TableTranslationMemory.Fields[i].DisplayName); // Locale name
+        end;
+        Writer.WriteListEnd;
       end;
     end;
     Writer.WriteListEnd;
+  end;
 
+  procedure WriteTerms(Writer: TWriter);
+  var
+    i: integer;
+  begin
     if (TableTranslationMemory.Active) then
     begin
       Writer.WriteInteger(TableTranslationMemory.RecordCount); // Row list
@@ -1265,6 +1308,65 @@ begin
       Writer.WriteListBegin;
       Writer.WriteListEnd;
     end;
+  end;
+
+var
+  Writer: TWriter;
+{$ifdef TM_BENCHMARK}
+var
+  StopWatch: TStopWatch;
+{$endif TM_BENCHMARK}
+begin
+{$ifdef TM_BENCHMARK}
+  StopWatch := TStopWatch.StartNew;
+{$endif TM_BENCHMARK}
+
+  (*
+  ** Signature
+  *)
+  Stream.Write(sTMFileSignature[1], Length(sTMFileSignature));
+
+  Writer := TWriter.Create(Stream, 8192);
+  try
+    (*
+    ** Stream format version
+    *)
+    Writer.WriteInteger(TMFileVersionMajor);
+    Writer.WriteInteger(TMFileVersionMinor);
+
+    Writer.WriteListBegin;
+    begin
+      (*
+      ** Description
+      *)
+      Writer.WriteInteger(Ord(tmDescription));
+      Writer.WriteListBegin;
+      begin
+        Writer.WriteString('Default Translation Memory'); // TODO : Localize
+      end;
+      Writer.WriteListEnd;
+
+      (*
+      ** Languages
+      *)
+      Writer.WriteInteger(Ord(tmLanguages));
+      Writer.WriteListBegin;
+      begin
+        WriteLanguages(Writer);
+      end;
+      Writer.WriteListEnd;
+
+      (*
+      ** Terms
+      *)
+      Writer.WriteInteger(Ord(tmTerms));
+      Writer.WriteListBegin;
+      begin
+        WriteTerms(Writer);
+      end;
+      Writer.WriteListEnd;
+    end;
+    Writer.WriteListEnd;
   finally
     Writer.Free;
   end;
@@ -1273,20 +1375,6 @@ begin
   StopWatch.Stop;
   OutputDebugString(PChar(Format('Save TM via TWriter: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
 {$endif TM_BENCHMARK}
-{$endif TM_BINARYFORMAT}
-
-{$ifndef TM_BINARYFORMAT}
-{$ifdef TM_BENCHMARK}
-  StopWatch := TStopWatch.StartNew;
-{$endif TM_BENCHMARK}
-
-  TableTranslationMemory.SaveToStream(Stream, sfBinary);
-
-{$ifdef TM_BENCHMARK}
-  StopWatch.Stop;
-  OutputDebugString(PChar(Format('Save TM via FireDAC: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
-{$endif TM_BENCHMARK}
-{$endif TM_BINARYFORMAT}
 
   FModified := False;
 end;
