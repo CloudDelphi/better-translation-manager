@@ -189,6 +189,7 @@ object FormMain: TFormMain
       Styles.Inactive = StyleInactive
       Styles.Selection = StyleSelected
       Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
+      Styles.UseOddEvenStyles = bFalse
       TabOrder = 0
       OnDblClick = TreeListDblClick
       OnEnter = TreeListModulesEnter

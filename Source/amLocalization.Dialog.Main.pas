@@ -569,6 +569,7 @@ uses
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
+  dxSkinOffice2019Colorful,
 
   // Skin utils
   dxSkinsDefaultPainters,
@@ -3427,7 +3428,7 @@ begin
     // Verify that skin is valid
     // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, dxRibbonMain.Style);
     // DevExpress 17.1.1
-    RibbonSkin := dxRibbonSkinsManager.GetMostSituable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
+    RibbonSkin := dxRibbonSkinsManager.GetMostSuitable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
 
     if (RibbonSkin <> nil) or (SkinLoaded) or (not Retry) then
       break;
@@ -3460,7 +3461,7 @@ begin
     if (not AnsiSameText(SkinName, Value)) then
       // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, RibbonMain.Style);
       // DevExpress 17.1.1
-      RibbonSkin := dxRibbonSkinsManager.GetMostSituable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
+      RibbonSkin := dxRibbonSkinsManager.GetMostSuitable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
   end;
 
   // If value was invalid. Find first valid skin.
