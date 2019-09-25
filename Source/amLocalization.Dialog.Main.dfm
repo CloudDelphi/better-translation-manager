@@ -1383,6 +1383,7 @@ object FormMain: TFormMain
       Properties.Nullstring = '(search)'
       Properties.Ribbon = RibbonMain
       Properties.SearchSource = RibbonMain
+      Properties.ShowResultPaths = True
       Properties.UseNullString = True
     end
     object dxBarButton35: TdxBarButton
