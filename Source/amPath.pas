@@ -16,12 +16,26 @@ interface
 type
   PathUtil = class abstract
   public
+    /// <summary>
+    ///  PathMakeCanonical() just uses the PathCanonicalize() Win32 function to expand ".\" and "..\" .<br/>
+    ///  It doesn't actually produce a path that can be considered canonical.
+    /// </summary>
     class function PathMakeCanonical(const APath: string): string;
+
+    /// <summary>
+    ///   Canonicalise() produces a string that can be used to compare paths
+    ///   for equalness. I.e. Canonicalise(A)=Canonicalise(B) &lt;=&gt; A=B
+    /// </summary>
+    /// <remarks>
+    ///   The result of Canonicalise() should not be considered a valid
+    ///   filename. I.e. Canonicalise(A) &lt;&gt; A
+    /// </remarks>
+    class function Canonicalise(const Path: string; RaiseOnError: boolean = False): string;
+
     class function OldPathMakeAbsolute(const Path, CurrentPath: string): string; deprecated;
     class function PathCombinePath(const Path, Filename: string): string;
     class function PathAppendFilename(const Path, Filename: string): string;
 
-    class function Canonicalise(const Path: string; RaiseOnError: boolean = False): string;
     class function RemoveDoubleBackslashesFromPath(const Value: string): string;
     class function FixTooLongFilename(const Filename: string; Overhead: integer = 12): string;
     class function FilenameFindOnPath(var Filename: string): boolean; overload;
@@ -38,6 +52,7 @@ type
 implementation
 
 uses
+  UITypes,
   IOUtils,
   Windows,
   SysUtils,
@@ -97,6 +112,7 @@ begin
     Res := GetFullPathName(PChar(Path), Length(Result)+1, PChar(Result), nil);
   end else
     Res := 0;
+
   if (Res = 0) then
   begin
     if (RaiseOnError) then
@@ -116,6 +132,7 @@ begin
     // Get rid of \\?\UNC on drive-letter and UNC paths
     if (StartsStr('\\?\UNC', Result)) then
     begin
+      // Note: Safe to use Result[11] here since we know that Length>=10 EXCLUDING the terminating zero.
       if (Result[10] = ':') and (Result[11] = '\') then
         Delete(Result, 1, 8)
       else
@@ -125,7 +142,6 @@ begin
       end;
     end;
   end;
-
 
   (*
   ** Anything other than UNC and drive-letter is something we don't
@@ -138,7 +154,7 @@ begin
 
     // OK -- UNC
   end else
-  if (Result[1] in ['a'..'z', 'A'..'Z']) and (Result[2] = ':') then
+  if (Length(Result) >= 2) and (Result[1] in ['a'..'z', 'A'..'Z']) and (Result[2] = ':') then
   begin
     // OK -- drive letter -- unwind subst'ing
     SetLength(Drive, 2);
