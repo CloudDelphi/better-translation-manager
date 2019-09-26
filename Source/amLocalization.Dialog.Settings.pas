@@ -1212,7 +1212,7 @@ end;
 
 procedure TFormSettings.TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
 var
-  Translator: TDataModuleTranslatorMicrosoftV3;
+  TranslationProvider: ITranslationProviderMicrosoftV3;
   ErrorMessage: string;
 resourcestring
   sTranslatorMSAPIKeyValid = 'The API key has been validated.';
@@ -1220,10 +1220,10 @@ resourcestring
 begin
   EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 0;
 
-  Translator := TDataModuleTranslatorMicrosoftV3.Create(nil);
+  TranslationProvider := TTranslationProviderMicrosoftV3.Create(nil);
   try
 
-    if ((Translator as ITranslationServiceMS).ValidateAPIKey(EditTranslatorMSAPIKey.Text, ErrorMessage)) then
+    if (TranslationProvider.ValidateAPIKey(EditTranslatorMSAPIKey.Text, ErrorMessage)) then
     begin
       EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 1;
       MessageDlg(sTranslatorMSAPIKeyValid, mtInformation, [mbOK], 0);
@@ -1231,7 +1231,7 @@ begin
       MessageDlg(Format(sTranslatorMSAPIKeyInvalid, [ErrorMessage]), mtWarning, [mbOK], 0);
 
   finally
-    Translator.Free;
+    TranslationProvider := nil;
   end;
 end;
 

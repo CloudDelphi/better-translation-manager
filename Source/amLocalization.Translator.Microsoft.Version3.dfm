@@ -1,4 +1,4 @@
-object DataModuleTranslatorMicrosoftV3: TDataModuleTranslatorMicrosoftV3
+object TranslationProviderMicrosoftV3: TTranslationProviderMicrosoftV3
   OldCreateOrder = False
   Height = 309
   Width = 411

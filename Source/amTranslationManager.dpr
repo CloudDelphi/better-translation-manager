@@ -32,7 +32,7 @@ uses
   amLocalization.Dialog.TextEdit in 'amLocalization.Dialog.TextEdit.pas' {FormTextEditor},
   amLocalization.Dialog.Languages in 'amLocalization.Dialog.Languages.pas' {FormLanguages},
   amLocalization.Data.Main in 'amLocalization.Data.Main.pas' {DataModuleMain: TDataModule},
-  amLocalization.Translator.Microsoft.Version3 in 'amLocalization.Translator.Microsoft.Version3.pas' {DataModuleTranslatorMicrosoftV3: TDataModule},
+  amLocalization.Translator.Microsoft.Version3 in 'amLocalization.Translator.Microsoft.Version3.pas' {TranslationProviderMicrosoftV3: TDataModule},
   amLocalization.Dialog.Search in 'amLocalization.Dialog.Search.pas' {FormSearch},
   amLocalization.Dialog.TranslationMemory in 'amLocalization.Dialog.TranslationMemory.pas' {FormTranslationMemory},
   amLocalization.Translator.TM in 'amLocalization.Translator.TM.pas' {DataModuleTranslationMemory: TDataModule},
@@ -50,7 +50,9 @@ uses
   amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas',
   amLocalization.TranslationMemory.FileFormats.TBX in 'amLocalization.TranslationMemory.FileFormats.TBX.pas',
   amLocalization.TranslationMemory.FileFormats.MSGlossaryCSV in 'amLocalization.TranslationMemory.FileFormats.MSGlossaryCSV.pas',
-  amLocalization.Dialog.TargetLanguage in 'amLocalization.Dialog.TargetLanguage.pas' {FormTargetLanguage};
+  amLocalization.Dialog.TargetLanguage in 'amLocalization.Dialog.TargetLanguage.pas' {FormTargetLanguage},
+  amLocalization.Translator.Microsoft.Terminology.SOAP in 'amLocalization.Translator.Microsoft.Terminology.SOAP.pas',
+  amLocalization.Translator.Microsoft.Terminology in 'amLocalization.Translator.Microsoft.Terminology.pas';
 
 {$R *.res}
 

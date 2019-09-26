@@ -67,6 +67,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -85,7 +86,6 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
-      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -728,7 +728,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 347
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -914,7 +914,7 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'BarButtonMTWeb'
+          ItemName = 'BarButtonAutoTranslate'
         end
         item
           Visible = True
@@ -937,7 +937,7 @@ object FormMain: TFormMain
     object BarManagerBarExport: TdxBar
       Caption = 'Export'
       CaptionButtons = <>
-      DockedLeft = 197
+      DockedLeft = 208
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1151,9 +1151,11 @@ object FormMain: TFormMain
       Action = ActionFindReplace
       Category = 0
     end
-    object BarButtonMTWeb: TdxBarLargeButton
-      Action = ActionAutomationWebLookup
+    object BarButtonAutoTranslate: TdxBarLargeButton
+      Action = ActionAutomationTranslate
       Category = 0
+      ButtonStyle = bsDropDown
+      DropDownMenu = PopupMenuTranslateProviders
     end
     object BarButtonTM: TdxBarButton
       Action = ActionTranslationMemory
@@ -1608,13 +1610,13 @@ object FormMain: TFormMain
       OnExecute = ActionImportFileTargetExecute
       OnUpdate = ActionImportFileTargetUpdate
     end
-    object ActionAutomationWebLookup: TAction
+    object ActionAutomationTranslate: TAction
       Category = 'Automation'
-      Caption = 'Web lookup'
-      Hint = 'Perform machine translation using a web service'
+      Caption = 'Auto translate...'
+      Hint = 'Perform machine translation on the selected items'
       ImageIndex = 22
-      OnExecute = ActionAutomationWebLookupExecute
-      OnUpdate = ActionAutomationWebLookupUpdate
+      OnExecute = ActionAutomationTranslateExecute
+      OnUpdate = ActionAutomationTranslateUpdate
     end
     object ActionTranslationMemory: TAction
       Category = 'Automation'
@@ -2022,5 +2024,30 @@ object FormMain: TFormMain
         'ar'#13#10'\cf2{\pntext\f1\'#39'B7\tab}Two\cf1\par'#13#10'}'#13#10
       Footer.Text = 'Click to translate from Translation Memory'
     end
+  end
+  object TaskDialogTranslate: TTaskDialog
+    Buttons = <>
+    CommonButtons = [tcbYes, tcbNo]
+    DefaultButton = tcbNo
+    FooterIcon = 1
+    FooterText = 'X of the selected values are not elegible for translation.'
+    RadioButtons = <>
+    Text = 
+      'Do you want to perform machine translation on the selected X val' +
+      'ues?'
+    Title = 'Translate using XXX?'
+    VerificationText = 'Only translate strings that have not already been translated'
+    Left = 708
+    Top = 244
+  end
+  object PopupMenuTranslateProviders: TdxRibbonPopupMenu
+    BarManager = BarManager
+    ItemLinks = <>
+    Ribbon = RibbonMain
+    UseOwnFont = False
+    OnPopup = PopupMenuTranslateProvidersPopup
+    Left = 380
+    Top = 300
+    PixelsPerInch = 96
   end
 end

@@ -148,7 +148,7 @@
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <DCCReference Include="amLocalization.Translator.Microsoft.Version3.pas">
-            <Form>DataModuleTranslatorMicrosoftV3</Form>
+            <Form>TranslationProviderMicrosoftV3</Form>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <DCCReference Include="amLocalization.Dialog.Search.pas">
@@ -187,6 +187,8 @@
             <Form>FormTargetLanguage</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="amLocalization.Translator.Microsoft.Terminology.SOAP.pas"/>
+        <DCCReference Include="amLocalization.Translator.Microsoft.Terminology.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

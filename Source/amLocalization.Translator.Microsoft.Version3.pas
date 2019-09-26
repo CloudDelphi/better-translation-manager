@@ -19,34 +19,50 @@ uses
   amLocalization.Translator;
 
 type
-  ITranslationServiceMS = interface
+  ITranslationProviderMicrosoftV3 = interface
     ['{BCB967CF-9D86-404E-824F-3952F31B4AEC}']
     function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
   end;
 
+// -----------------------------------------------------------------------------
+//
+// TTranslationProviderMicrosoftV3
+//
+// -----------------------------------------------------------------------------
 type
-  TDataModuleTranslatorMicrosoftV3 = class(TDataModule, ITranslationService, ITranslationServiceMS)
+  TTranslationProviderMicrosoftV3 = class(TDataModule, IUnknown, ITranslationProvider, ITranslationProviderMicrosoftV3)
     RESTRequestTranslate: TRESTRequest;
     RESTResponseResult: TRESTResponse;
     RESTClient: TRESTClient;
     RESTRequestLanguages: TRESTRequest;
     RESTRequestValidateAPIKey: TRESTRequest;
   private
+    FRefCount: integer;
   protected
-    // ITranslationService
+    // IInterface
+    function QueryInterface(const IID: TGUID; out Obj): HResult; override; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+
+    // ITranslationProvider
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
     function GetServiceName: string;
 
-    // ITranslationServiceMS
+    // ITranslationProviderMicrosoftV3
     function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
   public
   end;
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 implementation
 
 uses
+  SyncObjs,
   System.json,
   Rest.Types,
   System.json.Types,
@@ -60,9 +76,37 @@ uses
 
 {$R *.dfm}
 
-{ TDataModule1 }
+resourcestring
+  sTranslatorNameMS = 'Microsoft Translation Service';
 
-function TDataModuleTranslatorMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+// -----------------------------------------------------------------------------
+//
+// TTranslationProviderMicrosoftV3
+//
+// -----------------------------------------------------------------------------
+function TTranslationProviderMicrosoftV3._AddRef: Integer;
+begin
+  Result := TInterlocked.Increment(FRefCount);
+end;
+
+function TTranslationProviderMicrosoftV3._Release: Integer;
+begin
+  Result := TInterlocked.Decrement(FRefCount);
+  if (Result = 0) then
+    Free;
+end;
+
+function TTranslationProviderMicrosoftV3.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TTranslationProviderMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
 resourcestring
   sPrompMicrosoftV3APIKey = 'You must register an API key before the Microsoft Translator v3 service can be used.';
 begin
@@ -76,25 +120,24 @@ begin
   Result := True;
 end;
 
-procedure TDataModuleTranslatorMicrosoftV3.EndLookup;
+procedure TTranslationProviderMicrosoftV3.EndLookup;
 begin
 //
 end;
 
-function TDataModuleTranslatorMicrosoftV3.GetServiceName: string;
-resourcestring
-  sTranslatorNameMS = 'Microsoft Translation Service';
+function TTranslationProviderMicrosoftV3.GetServiceName: string;
 begin
   Result := sTranslatorNameMS;
 end;
 
-function TDataModuleTranslatorMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+function TTranslationProviderMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
 var
   JsonResultArray: TJsonArray;
   JsonTranslationItem: TJsonObject;
   JsonTranslationItemArray: TJsonArray;
   JsonError: TJsonObject;
   Msg: string;
+  TargetValue: string;
 begin
   RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleSName;
   RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleSName;
@@ -129,11 +172,17 @@ begin
     JsonTranslationItemArray := JsonTranslationItem.GetValue('translations') as TJsonArray;
     TargetValue :=  JsonTranslationItemArray.Items[0].GetValue<string>('text');
 
+    // Service does not explicitly state if no translation was found but instead just returns Target=Source
     Result := (not AnsiSameText(Prop.Value, TargetValue));
+
+    if (Result) then
+      Translations.Add(TargetValue);
   end;
 end;
 
-function TDataModuleTranslatorMicrosoftV3.ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+// -----------------------------------------------------------------------------
+
+function TTranslationProviderMicrosoftV3.ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
 var
   JsonError: TJsonObject;
 begin
@@ -161,4 +210,20 @@ begin
   Result := True;
 end;
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+var
+  ProviderHandle: integer = -1;
+
+initialization
+  ProviderHandle := TranslationProviderRegistry.RegisterProvider(sTranslatorNameMS,
+    function(): ITranslationProvider
+    begin
+      Result := TTranslationProviderMicrosoftV3.Create(nil);
+    end);
+
+finalization
+  TranslationProviderRegistry.UnregisterProvider(ProviderHandle);
 end.

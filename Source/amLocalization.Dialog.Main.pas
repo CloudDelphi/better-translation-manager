@@ -10,6 +10,8 @@
 
 interface
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
@@ -174,7 +176,7 @@ type
     TreeListColumnModuleName: TcxTreeListColumn;
     TreeListColumnModuleStatus: TcxTreeListColumn;
     BarManagerBarMachineTranslation: TdxBar;
-    BarButtonMTWeb: TdxBarLargeButton;
+    BarButtonAutoTranslate: TdxBarLargeButton;
     BarButtonTM: TdxBarButton;
     BarButtonGotoNext: TdxBarSubItem;
     ActionMain: TAction;
@@ -207,7 +209,7 @@ type
     LabelCountTranslated: TcxLabel;
     dxLayoutItem1: TdxLayoutItem;
     LabelCountPending: TcxLabel;
-    ActionAutomationWebLookup: TAction;
+    ActionAutomationTranslate: TAction;
     ActionTranslationMemory: TAction;
     ActionTranslationMemoryAdd: TAction;
     ActionTranslationMemoryTranslate: TAction;
@@ -272,6 +274,8 @@ type
     dxBarButton35: TdxBarButton;
     ActionAbout: TAction;
     StyleInactive: TcxStyle;
+    TaskDialogTranslate: TTaskDialog;
+    PopupMenuTranslateProviders: TdxRibbonPopupMenu;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -327,8 +331,8 @@ type
     procedure ActionImportFileSourceExecute(Sender: TObject);
     procedure ActionImportFileTargetExecute(Sender: TObject);
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
-    procedure ActionAutomationWebLookupExecute(Sender: TObject);
-    procedure ActionAutomationWebLookupUpdate(Sender: TObject);
+    procedure ActionAutomationTranslateExecute(Sender: TObject);
+    procedure ActionAutomationTranslateUpdate(Sender: TObject);
     procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
@@ -372,25 +376,30 @@ type
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
     procedure TreeListModulesSelectionChanged(Sender: TObject);
     procedure StatusBarPanels1Click(Sender: TObject);
+    procedure PopupMenuTranslateProvidersPopup(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
     FTargetLanguage: TTargetLanguage;
     FUpdateLockCount: integer;
-    FSpellCheckProp: TLocalizerProperty;
-    FSpellCheckingWord: boolean;
-    FSpellCheckingString: boolean;
-    FSpellCheckingStringResult: boolean;
     FLocalizerDataSource: TLocalizerDataSource;
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
     FSearchProvider: ILocalizerSearchProvider;
-    FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FLastBookmark: integer;
+  private
+    // Spell check
+    FSpellCheckProp: TLocalizerProperty;
+    FSpellCheckingWord: boolean;
+    FSpellCheckingString: boolean;
+    FSpellCheckingStringResult: boolean;
+    function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
   private type
+    // Translation Memory
     TTranslationMemoryPeekResult = (prNone, prQueued, prFound);
   private
+    FTranslationMemory: TDataModuleTranslationMemory;
     FTranslationMemoryPeek: ITranslationMemoryPeek;
     procedure CreateTranslationMemoryPeeker(Force: boolean);
     procedure TranslationMemoryPeekHandler(Sender: TObject);
@@ -450,7 +459,7 @@ type
     procedure MsgAfterShow(var Msg: TMessage); message MSG_AFTER_SHOW;
     procedure MsgFileOpen(var Msg: TMsgFileOpen); message MSG_FILE_OPEN;
   private
-    // Event handlers
+    // Translation project event handlers
     procedure OnProjectChanged(Sender: TObject);
     procedure OnModuleChanged(Module: TLocalizerModule);
     procedure OnTranslationWarning(Translation: TLocalizerTranslation);
@@ -503,7 +512,6 @@ type
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
-    function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
     function CheckSave: boolean;
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
@@ -511,7 +519,9 @@ type
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile: boolean;
   private
-    procedure TranslateSelected(const TranslationService: ITranslationService);
+    // Machine Translation
+    procedure TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);
+    procedure OnTranslationProviderHandler(Sender: TObject);
   private type
     TCounts = record
       CountModule, CountItem, CountProperty: integer;
@@ -534,6 +544,7 @@ type
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
     procedure ILocalizerSearchHost.InvalidateItem = ReloadProperty;
   private
+    // Skin
     FSkin: string;
     FColorSchemeAccent: integer;
   protected
@@ -566,6 +577,7 @@ uses
   System.Character,
   RegularExpressions,
   Menus,
+  CommCtrl,
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
@@ -595,7 +607,6 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Settings,
-  amLocalization.Translator.Microsoft.Version3,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -605,9 +616,6 @@ uses
 
 resourcestring
   sLocalizerFindNoMore = 'No more found';
-
-resourcestring
-  sTranslateEligibleWarning = #13#13'Note: %d of the selected values are not elegible for translation.';
 
 resourcestring
   sProjectUpdatedTitle = 'Project updated';
@@ -830,7 +838,7 @@ begin
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
   DataModuleMain := TDataModuleMain.Create(Self);
-  FDataModuleTranslationMemory := TDataModuleTranslationMemory.Create(Self);
+  FTranslationMemory := TDataModuleTranslationMemory.Create(Self);
 
   Application.OnHint := ShowHint;
   Application.OnShowHint := DoShowHint;
@@ -1248,6 +1256,7 @@ var
 resourcestring
   sAddToDictionaryPromptTitle = 'Add to Translation Memory?';
   sAddToDictionaryPrompt = 'Do you want to add the selected %d values to the Translation Memory?%s';
+  sAddToDictionaryEligibleWarning = 'Note: %d of the selected values are not elegible for translation and have been excluded.';
   sProgressAddingTranslationMemory = 'Adding to Translation Memory...';
 begin
   Count := 0;
@@ -1268,7 +1277,7 @@ begin
     Exit;
 
   if (ElegibleCount < Count) then
-    ElegibleWarning :=  #13#13 + Format(sTranslateEligibleWarning, [Count-ElegibleCount])
+    ElegibleWarning :=  #13#13 + Format(sAddToDictionaryEligibleWarning, [Count-ElegibleCount])
   else
     ElegibleWarning :=  '';
 
@@ -1292,7 +1301,7 @@ begin
       begin
         if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TargetLanguage)) then
         begin
-          DuplicateAction := FDataModuleTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage], OneStats, DuplicateAction);
+          DuplicateAction := FTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage], OneStats, DuplicateAction);
 
           Inc(Stats.Added, OneStats.Added);
           Inc(Stats.Merged, OneStats.Merged);
@@ -1328,7 +1337,7 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  Enabled := (FocusedNode <> nil) and (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
+  Enabled := (FocusedNode <> nil) and (SourceLanguageID <> TargetLanguageID) and (FTranslationMemory.IsAvailable);
   if (Enabled) and (FocusedNode.TreeList.SelectionCount < 100) then
   begin
     // Require that at least one property is translated
@@ -1361,7 +1370,7 @@ begin
   FormTranslationMemory := TFormTranslationMemory.Create(nil);
   try
 
-    FormTranslationMemory.Execute(FDataModuleTranslationMemory);
+    FormTranslationMemory.Execute(FTranslationMemory);
 
   finally
     FormTranslationMemory.Free;
@@ -1370,20 +1379,32 @@ begin
   CreateTranslationMemoryPeeker(True);
 end;
 
-procedure TFormMain.TranslateSelected(const TranslationService: ITranslationService);
+procedure TFormMain.TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);
+type
+  TAutoTranslateCounts = record
+    Count: integer;
+    ElegibleCount: integer;
+    TranslatedCount: integer;
+    UpdatedCount: integer;
+  end;
 var
   Progress: IProgress;
   SourceLocaleItem, TargetLocaleItem: TLocaleItem;
   i: integer;
   Item: TCustomLocalizerItem;
-  Count, ElegibleCount: integer;
-  TranslatedCount, UpdatedCount: integer;
-  ElegibleWarning: string;
+  Counts: TAutoTranslateCounts;
   Translation: TLocalizerTranslation;
+  Warning: string;
+  TranslateTranslated: boolean;
 resourcestring
   sTranslateAutoProgress = 'Translating using %s...';
   sTranslateAutoPromptTitle = 'Translate using %s?';
-  sTranslateAutoPrompt = 'Do you want to perform machine translation on the selected %d values?%s';
+  sTranslateAutoPrompt = 'Do you want to perform machine translation on the selected %d values?';
+  sTranslateAutoPromptCheck = 'Only translate strings that have not already been translated';
+  sTranslateAutoEligibleWarning = '%d of the selected values are not elegible for translation and have been excluded.';
+  sTranslateAutoTranslatedWarning = '%d of the selected values have already been translated.';
+  sTranslateAutoNoneTitle = 'Nothing to translate';
+  sTranslateAutoNone = 'None of the %d selected values are elegible for translation.';
   sTranslateAutoResultTitle = 'Machine translation completed.';
   sTranslateAutoResult = 'Translated: %d'#13'Updated: %d'#13'Not found: %d';
 begin
@@ -1393,28 +1414,68 @@ begin
   if (SourceLocaleItem = TargetLocaleItem) then
     Exit;
 
-  Count := 0;
+  Counts := Default(TAutoTranslateCounts);
   for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
   begin
     Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
-        Inc(Count);
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TargetLanguage)) then
-          Inc(ElegibleCount);
+        Inc(Counts.Count);
+        if (not Prop.Value.Trim.IsEmpty) and (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
+        begin
+          Inc(Counts.ElegibleCount);
+          if (Prop.HasTranslation(TargetLanguage)) then
+            Inc(Counts.TranslatedCount);
+        end;
         Result := True;
       end, False);
   end;
 
-  if (ElegibleCount < Count) then
-    ElegibleWarning :=  Format(sTranslateEligibleWarning, [Count-ElegibleCount])
-  else
-    ElegibleWarning :=  '';
+  TaskDialogTranslate.Title := Format(sTranslateAutoPromptTitle, [TranslationProvider.ServiceName]);
 
-  if (TaskMessageDlg(Format(sTranslateAutoPromptTitle, [TranslationService.ServiceName]), Format(sTranslateAutoPrompt, [ElegibleCount, ElegibleWarning]),
-    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+  if (Counts.TranslatedCount > 0) then
+    TaskDialogTranslate.VerificationText := sTranslateAutoPromptCheck
+  else
+    TaskDialogTranslate.VerificationText := '';
+
+  if (Counts.TranslatedCount > 0) then
+  begin
+    if (Warning <> '') then
+      Warning := Warning + #13;
+    Warning := Warning + Format(sTranslateAutoTranslatedWarning, [Counts.TranslatedCount]);
+  end;
+
+  if (Counts.ElegibleCount > 0) then
+  begin
+    TaskDialogTranslate.CommonButtons := [tcbYes, tcbNo];
+    TaskDialogTranslate.Text := Format(sTranslateAutoPrompt, [Counts.ElegibleCount]);
+
+    if (Counts.Count <> Counts.ElegibleCount) and (Counts.ElegibleCount <> 0) then
+      Warning := Format(sTranslateAutoEligibleWarning, [Counts.Count-Counts.ElegibleCount])
+    else
+      Warning := '';
+
+    if (Counts.TranslatedCount > 0) then
+    begin
+      if (Warning <> '') then
+        Warning := Warning + #13;
+      Warning := Warning + Format(sTranslateAutoTranslatedWarning, [Counts.TranslatedCount]);
+    end;
+
+    TaskDialogTranslate.FooterText := Warning;
+  end else
+  begin
+    TaskDialogTranslate.CommonButtons := [tcbOK];
+    TaskDialogTranslate.Title := sTranslateAutoNone;
+    TaskDialogTranslate.Text := Format(sTranslateAutoNone, [Counts.Count]);
+    TaskDialogTranslate.FooterText := '';
+  end;
+
+  if (not TaskDialogTranslate.Execute) or (TaskDialogTranslate.ModalResult <> mrYes) then
     Exit;
+
+  TranslateTranslated := not(tfVerificationFlagChecked in TaskDialogTranslate.Flags);
 
   if (not TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem)) then
     Exit;
@@ -1425,12 +1486,14 @@ begin
   try
     try
 
-      TranslatedCount := 0;
-      UpdatedCount := 0;
-      Count := 0;
+      if (not TranslateTranslated) then
+        Dec(Counts.ElegibleCount, Counts.TranslatedCount);
+      Counts.TranslatedCount := 0;
+      Counts.UpdatedCount := 0;
+      Counts.Count := 0;
 
       SaveCursor(crHourGlass);
-      Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationService.ServiceName]));
+      Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationProvider.ServiceName]));
       Progress.EnableAbort := True;
 
       FProject.BeginUpdate;
@@ -1445,10 +1508,13 @@ begin
             var
               Value, SourceValue, TranslatedValue: string;
             begin
-              if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) or (Prop.HasTranslation(TargetLanguage)) then
+              if (Prop.Value.Trim.IsEmpty) and (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
                 Exit(True);
 
-              Inc(Count);
+              if (not TranslateTranslated) and (Prop.HasTranslation(TargetLanguage)) then
+                Exit(True);
+
+              Inc(Counts.Count);
 
               SourceValue := Prop.Value;
               if (Prop.HasTranslation(TargetLanguage)) then
@@ -1456,7 +1522,7 @@ begin
               else
                 TranslatedValue := SourceValue;
 
-              Progress.Progress(psProgress, Count, ElegibleCount, SourceValue);
+              Progress.Progress(psProgress, Counts.Count, Counts.ElegibleCount, SourceValue);
               if (Progress.Aborted) then
                 Exit(False);
 
@@ -1489,10 +1555,10 @@ begin
                   end;
                 end;
 
-                Inc(TranslatedCount);
+                Inc(Counts.TranslatedCount);
 
                 if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then
-                  Inc(UpdatedCount);
+                  Inc(Counts.UpdatedCount);
 
                 // Set value regardless of current value so we get the correct Status set
                 if (Translation <> nil) then
@@ -1508,7 +1574,7 @@ begin
             end, False);
         end;
 
-        Progress.Progress(psEnd, Count, ElegibleCount);
+        Progress.Progress(psEnd, Counts.Count, Counts.ElegibleCount);
 
       finally
         FProject.EndUpdate;
@@ -1525,17 +1591,19 @@ begin
   Progress.Hide;
   Progress := nil;
 
-  TaskMessageDlg(sTranslateAutoResultTitle, Format(sTranslateAutoResult, [TranslatedCount, UpdatedCount, ElegibleCount-TranslatedCount]),
+  TaskMessageDlg(sTranslateAutoResultTitle, Format(sTranslateAutoResult, [Counts.TranslatedCount, Counts.UpdatedCount, Counts.ElegibleCount-Counts.TranslatedCount]),
     mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionTranslationMemoryTranslateExecute(Sender: TObject);
 var
+  TranslationProvider: ITranslationProvider;
   TranslationService: ITranslationService;
 begin
-  TranslationService := FDataModuleTranslationMemory as ITranslationService;
+  TranslationProvider := FTranslationMemory as ITranslationProvider;
+  TranslationService := CreateTranslationService(TranslationProvider);
 
-  TranslateSelected(TranslationService);
+  TranslateSelected(TranslationService, TranslationProvider);
 end;
 
 procedure TFormMain.ActionTranslationMemoryTranslateUpdate(Sender: TObject);
@@ -1545,7 +1613,7 @@ begin
   Item := FocusedItem;
 
   TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
-    (SourceLanguageID <> TargetLanguageID) and (FDataModuleTranslationMemory.IsAvailable);
+    (SourceLanguageID <> TargetLanguageID) and (FTranslationMemory.IsAvailable);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1561,7 +1629,7 @@ begin
   if (FProject.Modules.Count > 0) and ((FTranslationMemoryPeek = nil) or (Force)) then
   begin
     FTranslationMemoryPeek := nil;
-    FTranslationMemoryPeek := FDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguageID, TargetLanguageID, TranslationMemoryPeekHandler);
+    FTranslationMemoryPeek := FTranslationMemory.CreateBackgroundLookup(SourceLanguageID, TargetLanguageID, TranslationMemoryPeekHandler);
     QueueTranslationMemoryPeek;
   end;
 end;
@@ -1628,21 +1696,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.ActionAutomationWebLookupExecute(Sender: TObject);
-var
-  Translator: TDataModuleTranslatorMicrosoftV3;
+procedure TFormMain.ActionAutomationTranslateExecute(Sender: TObject);
 begin
-  Translator := TDataModuleTranslatorMicrosoftV3.Create(nil);
-  try
-
-    TranslateSelected(Translator);
-
-  finally
-    Translator.Free;
-  end;
+  BarButtonAutoTranslate.DropDown(True);
 end;
 
-procedure TFormMain.ActionAutomationWebLookupUpdate(Sender: TObject);
+procedure TFormMain.ActionAutomationTranslateUpdate(Sender: TObject);
 var
   Item: TCustomLocalizerItem;
 begin
@@ -1650,6 +1709,50 @@ begin
 
   TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
     (SourceLanguageID <> TargetLanguageID);
+end;
+
+procedure TFormMain.OnTranslationProviderHandler(Sender: TObject);
+var
+  TranslationProvider: ITranslationProvider;
+  TranslationService: ITranslationService;
+begin
+  TranslationProvider := TranslationProviderRegistry.CreateProvider(TdxBarButton(Sender).Tag);
+  try
+    TranslationService := CreateTranslationService(TranslationProvider);
+    try
+
+      // It would be better if we delegated the task of providing a name to the service but for
+      // now we have to pass the provider along so the dialogs and progress can display the
+      // name of the provider.
+      // When we implement support for multi-provider lookup this will have to change.
+
+      TranslateSelected(TranslationService, TranslationProvider);
+
+    finally
+      TranslationService := nil;
+    end;
+  finally
+    TranslationProvider := nil;
+  end;
+end;
+
+procedure TFormMain.PopupMenuTranslateProvidersPopup(Sender: TObject);
+var
+  i: integer;
+  Provider: TranslationProviderRegistry.TProvider;
+  ItemLink: TdxBarItemLink;
+begin
+  // Clear all existing items and repopulate
+  for i := TdxRibbonPopupMenu(Sender).ItemLinks.Count-1 downto 0 do
+    TdxRibbonPopupMenu(Sender).ItemLinks[i].Item.Free;
+
+  for Provider in TranslationProviderRegistry(nil) do // Hack! enumerator not allowed on meta types
+  begin
+    ItemLink := TdxRibbonPopupMenu(Sender).ItemLinks.AddButton;
+    TdxBarButton(ItemLink.Item).Caption := Provider.ProviderName;
+    TdxBarButton(ItemLink.Item).Tag := Provider.Handle;
+    TdxBarButton(ItemLink.Item).OnClick := OnTranslationProviderHandler;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2457,7 +2560,7 @@ begin
   begin
     try
 
-      FDataModuleTranslationMemory.CheckLoaded(True);
+      FTranslationMemory.CheckLoaded(True);
 
     except
       on E: ETranslationMemory do
@@ -3287,7 +3390,7 @@ end;
 
 procedure TFormMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  CanClose := CheckSave and FDataModuleTranslationMemory.CheckSave;
+  CanClose := CheckSave and FTranslationMemory.CheckSave;
 end;
 
 // -----------------------------------------------------------------------------
@@ -5026,7 +5129,7 @@ begin
       Translations.Duplicates := dupIgnore;
       Translations.Sorted := True;
 
-      if (not FDataModuleTranslationMemory.FindTranslations(Prop, TLocaleItems.FindLCID(SourceLanguageID), TLocaleItems.FindLCID(TargetLanguageID), Translations)) then
+      if (not FTranslationMemory.FindTranslations(Prop, TLocaleItems.FindLCID(SourceLanguageID), TLocaleItems.FindLCID(TargetLanguageID), Translations)) then
         Exit;
 
       HintList := '';

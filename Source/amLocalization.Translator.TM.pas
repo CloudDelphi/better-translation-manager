@@ -23,8 +23,7 @@ uses
   amLocale,
   amProgress,
   amLocalization.Model,
-  amLocalization.Translator,
-  amLocalization.Dialog.TranslationMemory.SelectDuplicate;
+  amLocalization.Translator;
 
 
 type
@@ -82,19 +81,17 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TDataModuleTranslationMemory = class(TDataModule, ITranslationService, ITranslationMemory)
+  TDataModuleTranslationMemory = class(TDataModule, ITranslationProvider, ITranslationMemory)
     DataSourceTranslationMemory: TDataSource;
     TableTranslationMemory: TFDMemTable;
     procedure TableTranslationMemoryAfterModify(DataSet: TDataSet);
   private
     FLoaded: boolean;
     FEnabled: boolean;
-    FFormSelectDuplicate: TFormSelectDuplicate;
-    FDuplicateAction: TDuplicateAction;
     FLookupIndex: TDictionary<string, TList<integer>>;
-    FConflictResolution: TDictionary<string, string>;
     FModified: boolean;
     FRefreshEvent: TEvent;
+    FProviderHandle: integer;
   private
     function FindField(LocaleItem: TLocaleItem): TField;
     function GetHasData: boolean;
@@ -120,10 +117,10 @@ type
     procedure ITranslationMemory.Lock = Lock;
     procedure ITranslationMemory.Unlock = Unlock;
   protected
-    // ITranslationService
+    // ITranslationProvider
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
     function GetServiceName: string;
   public
     constructor Create(AOwner: TComponent); override;
@@ -196,6 +193,9 @@ uses
   amFileUtils,
   amLocalization.Settings,
   amLocalization.Utils;
+
+resourcestring
+  sTranslatorNameTM = 'Translation Memory';
 
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
@@ -471,10 +471,18 @@ begin
 
   FRefreshEvent := TEvent.Create(nil, False, False, '');
   FEnabled := True;
+
+  FProviderHandle := TranslationProviderRegistry.RegisterProvider(sTranslatorNameTM,
+    function(): ITranslationProvider
+    begin
+      Result := Self;
+    end);
 end;
 
 destructor TDataModuleTranslationMemory.Destroy;
 begin
+  TranslationProviderRegistry.UnregisterProvider(FProviderHandle);
+
   FRefreshEvent.Free;
 
   inherited;
@@ -483,8 +491,6 @@ end;
 // -----------------------------------------------------------------------------
 
 function TDataModuleTranslationMemory.GetServiceName: string;
-resourcestring
-  sTranslatorNameTM = 'Translation Memory';
 begin
   Result := sTranslatorNameTM;
 end;
@@ -1471,13 +1477,11 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
 var
   TargetField: TField;
-  Translations: TStringList;
 begin
   Result := False;
-  TargetValue := '';
 
   if (SourceLanguage = TargetLanguage) then
     Exit;
@@ -1490,42 +1494,7 @@ begin
   if (TargetField = nil) then
     Exit;
 
-  Translations := TStringList.Create;
-  try
-
-    Result := FindTranslations(Prop, TargetField, Translations);
-
-    if (not Result) then
-      Exit;
-
-    Assert(Translations.Count > 0);
-
-    if (Translations.Count > 1) then
-    begin
-      // Attempt to resolve using previously resolved conflicts
-      if (FConflictResolution.TryGetValue(Prop.Value, TargetValue)) then
-        Exit;
-
-      if (FFormSelectDuplicate = nil) then
-        FFormSelectDuplicate := TFormSelectDuplicate.Create(nil);
-
-      FFormSelectDuplicate.DuplicateAction := FDuplicateAction;
-
-      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Translations, TargetValue)) then
-        Abort;
-
-      FDuplicateAction := FFormSelectDuplicate.DuplicateAction;
-
-      if (FFormSelectDuplicate.ApplyToIdentical) then
-        FConflictResolution.Add(Prop.Value, TargetValue);
-
-      Result := (not (FDuplicateAction in [daSkip, daSkipAll]));
-    end else
-      TargetValue := Translations[0];
-
-  finally
-    Translations.Free;
-  end;
+  Result := FindTranslations(Prop, TargetField, Translations);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1597,9 +1566,7 @@ var
   SourceValue: string;
   List: TList<integer>;
 begin
-  FDuplicateAction := daPrompt;
   FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues], TTextComparer.Create);
-  FConflictResolution := TDictionary<string, string>.Create;
 
   if (not CheckLoaded) then
     Exit(False);
@@ -1640,12 +1607,11 @@ end;
 
 procedure TDataModuleTranslationMemory.EndLookup;
 begin
-  FreeAndNil(FFormSelectDuplicate);
   FreeAndNil(FLookupIndex);
-  FreeAndNil(FConflictResolution);
 end;
 
 // -----------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 end.
