@@ -51,7 +51,7 @@ function HasAccelerator(const Value: string): boolean;
 // Escapes &. Assumes Value doesn't contain real accelerators
 function EscapeAccelerators(const Value: string): string;
 // Adds &. Assumes any existing & are escaped
-function AddAccelerator(const Value: string): string;
+function AddAccelerator(const Value: string; Default: Char = #0): string;
 
 const
   cAcceleratorPrefix = '&'; // From menus.pas
@@ -61,9 +61,21 @@ const
 //              Misc
 //
 // -----------------------------------------------------------------------------
-function IsUppercase(const Value: string): boolean;
+function IsUpperCase(const Value: string): boolean;
+function IsLowerCase(const Value: string): boolean;
+function IsTitleCase(const Value: string; IgnoreAccelerator: boolean = False): boolean;
+function IsSentenceCase(const Value: string; IgnoreAccelerator: boolean = False): boolean;
 function StartsWithUppercase(const Value: string): boolean;
-function MakeStartWithUppercase(const Value: string): string;
+
+function MakeStartWithUppercase(const Value: string): string; // Note: Only modifies first letter
+function MakeTitleCase(const Value: string): string;
+function MakeSentenceCase(const Value: string): string;
+
+type
+  TMakeAlikeAction = (EqualizeCase, EqualizeEnding, EqualizeAccelerators);
+  TMakeAlikeActions = set of TMakeAlikeAction;
+
+function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions = [EqualizeCase, EqualizeEnding, EqualizeAccelerators]): string;
 
 
 // -----------------------------------------------------------------------------
@@ -75,6 +87,7 @@ implementation
 uses
   System.Character,
   Windows,
+  Menus,
   SyncObjs,
   StrUtils,
   SysUtils;
@@ -110,8 +123,8 @@ begin
         HasHotKey := True;
         LastWasPrefix := False;
       end;
+      Inc(i);
     end;
-    Inc(i);
   end;
 end;
 
@@ -173,13 +186,21 @@ begin
   end;
 end;
 
-function AddAccelerator(const Value: string): string;
+function AddAccelerator(const Value: string; Default: Char): string;
 var
   i: integer;
 begin
+  if (Default <> #0) then
+  begin
+    i := Pos(Default, Value);
+    if (i <> 0) then
+      Exit(Copy(Value, 1, i-1)+cAcceleratorPrefix+Copy(Value, i, MaxInt));
+  end;
+
   for i := 1 to Length(Value) do
     if (Value[i].IsLetterOrDigit) and ((i = 1) or (Value[i-1] <> cAcceleratorPrefix)) then
       Exit(Copy(Value, 1, i-1)+cAcceleratorPrefix+Copy(Value, i, MaxInt));
+
   Result := Value;
 end;
 
@@ -258,7 +279,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function IsUppercase(const Value: string): boolean;
+function IsUpperCase(const Value: string): boolean;
 var
   i: integer;
 begin
@@ -271,6 +292,94 @@ begin
       else
       if (not Result) and (Value[i].IsUpper) then
         Result := True;
+    end;
+end;
+
+function IsLowerCase(const Value: string): boolean;
+var
+  i: integer;
+begin
+  Result := False;
+  for i := 1 to Length(Value) do
+    if (Value[i].IsLetter) then
+    begin
+      if (Value[i].IsUpper) then
+        Exit(False)
+      else
+      if (not Result) and (Value[i].IsLower) then
+        Result := True;
+    end;
+end;
+
+function IsTitleCase(const Value: string; IgnoreAccelerator: boolean): boolean;
+var
+  i: integer;
+  InWord: boolean;
+  HasSpace: boolean;
+begin
+  Result := False;
+  InWord := False;
+  HasSpace := False;
+  for i := 1 to Length(Value) do
+    if (Value[i].IsLetter) then
+    begin
+      if (InWord) then
+      begin
+        if (not Value[i].IsLower) then
+          Exit(False);
+        // We now have a word with both Upper and a Lowercase
+        Result := HasSpace;
+      end else
+      begin
+        if (not Value[i].IsUpper) then
+          Exit(False);
+        InWord := True;
+      end;
+    end else
+    if (not IgnoreAccelerator) or (Value[i] <> cAcceleratorPrefix) or ((i > 1) and (Value[i-1] = cAcceleratorPrefix)) or (Value[i+1] = cAcceleratorPrefix) then
+    begin
+      InWord := False;
+      HasSpace := True;
+    end;
+end;
+
+function IsSentenceCase(const Value: string; IgnoreAccelerator: boolean): boolean;
+var
+  i: integer;
+  InSentence, InWord: boolean;
+begin
+  Result := False;
+  InWord := False;
+  InSentence := False;
+  for i := 1 to Length(Value) do
+    if (Value[i].IsLetter) then
+    begin
+      if (InWord) then
+      begin
+        if (Value[i].IsUpper) then
+          Exit(False); // Uppercase inside word
+        // We now have both an Upper and a Lowercase
+        Result := True;
+      end else
+      begin
+        if (InSentence) then
+        begin
+          if (Value[i].IsUpper) then
+            Exit(False); // Uppercase at start of word, inside sentence
+        end else
+        begin
+          if (Value[i].IsLower) then
+            Exit(False); // Lowercase at start of sentence
+        end;
+        InSentence := True;
+        InWord := True;
+      end;
+    end else
+    if (not IgnoreAccelerator) or (Value[i] <> cAcceleratorPrefix) or ((i > 1) and (Value[i-1] = cAcceleratorPrefix)) or (Value[i+1] = cAcceleratorPrefix) then
+    begin
+      InWord := False;
+      if (Ord(Value[i]) <= 255) and (AnsiChar(Value[i]) in ['.', '!', '?', ':', ';']) then
+        InSentence := False;
     end;
 end;
 
@@ -295,6 +404,135 @@ begin
       Result[i] := Result[i].ToUpper;
       Exit;
     end;
+end;
+
+function MakeTitleCase(const Value: string): string;
+var
+  i: integer;
+  InWord: boolean;
+begin
+  Result := Value;
+  InWord := False;
+  for i := 1 to Length(Result) do
+    if (Result[i].IsLetter) then
+    begin
+      if (InWord) then
+        Result[i] := Result[i].ToLower
+      else
+      begin
+        Result[i] := Result[i].ToUpper;
+        InWord := True;
+      end;
+    end else
+      InWord := False;
+end;
+
+function MakeSentenceCase(const Value: string): string;
+var
+  i: integer;
+  InSentence: boolean;
+begin
+  Result := Value;
+  InSentence := False;
+  for i := 1 to Length(Result) do
+    if (Result[i].IsLetter) then
+    begin
+      if (InSentence) then
+        Result[i] := Result[i].ToLower // Lowercase inside sentence
+      else
+        Result[i] := Result[i].ToUpper; // Uppercase at start of sentence
+
+      InSentence := True;
+    end else
+    // if (Result[i].IsPunctuation) then
+    if (Ord(Result[i]) <= 255) and (AnsiChar(Result[i]) in ['.', '!', '?', ':', ';']) then
+      InSentence := False;
+end;
+
+function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions): string;
+var
+  SourceHasAccelerator: boolean;
+  IgnoreAccelerator: boolean;
+  Accelerator: string;
+begin
+  Result := Value;
+
+  if (Kinds * [EqualizeAccelerators, EqualizeCase] <> []) then
+  begin
+    SourceHasAccelerator := HasAccelerator(SourceValue);
+    if (EqualizeAccelerators in Kinds) then
+      IgnoreAccelerator := SourceHasAccelerator
+    else
+      IgnoreAccelerator := HasAccelerator(Result);
+  end else
+  begin
+    SourceHasAccelerator := False;
+    IgnoreAccelerator := False;
+  end;
+
+  // Handle accelerator keys
+  if (EqualizeAccelerators in Kinds) then
+  begin
+    if (SourceHasAccelerator) then
+    begin
+      if (not HasAccelerator(Result)) then
+      begin
+        // If source had an accelerator then make sure the target also has one
+        Accelerator := Menus.GetHotkey(SourceValue);
+        Result := AddAccelerator(EscapeAccelerators(Result), Accelerator[1]);
+      end;
+    end else
+    begin
+      if (HasAccelerator(Result)) then
+        // If source doesn't have an accelerator then make sure the target also doesn't have one
+        Result := SanitizeText(Result, [skAccelerator]);
+    end;
+  end;
+
+  // If source ends with a colon or ellipsis the target should also do so
+  if (EqualizeEnding in Kinds) then
+  begin
+    if (SourceValue.EndsWith(':')) then
+    begin
+      if (not Result.EndsWith(':')) and (Result[Length(Result)].IsLetterOrDigit) then
+        Result := Result + ':';
+    end else
+    begin
+      if (Result.EndsWith(':')) then
+        SetLength(Result, Length(Result)-1)
+      else
+      if (SourceValue.EndsWith('...')) then
+      begin
+        if (not Result.EndsWith('...')) and (Result[Length(Result)].IsLetterOrDigit) then
+          Result := Result + '...';
+      end else
+      if (Result.EndsWith('...')) then
+        SetLength(Result, Length(Result)-3);
+    end;
+  end;
+
+  if (EqualizeCase in Kinds) then
+  begin
+    // If source is all UPPERCASE the target should also be so
+    if (IsUpperCase(SourceValue)) then
+      Result := AnsiUpperCase(Result)
+    else
+    // If source is all lowercase the target should also be so
+    if (IsLowerCase(SourceValue)) then
+      Result := AnsiLowerCase(Result)
+    else
+    // If source is Title Case the target should also be so
+    if (IsTitleCase(SourceValue, IgnoreAccelerator)) then
+      Result := MakeTitleCase(Result)
+    else
+    // If source is Sentence case: The target should also be so
+    if (IsSentenceCase(SourceValue, IgnoreAccelerator)) then
+      Result := MakeSentenceCase(Result)
+    else
+    // If source starts with an Uppercase letter the target should also do so
+    if (StartsWithUppercase(SourceValue)) then
+      Result := MakeStartWithUppercase(Result);
+  end;
 end;
 
 // -----------------------------------------------------------------------------

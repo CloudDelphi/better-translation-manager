@@ -264,6 +264,12 @@ type
     CheckBoxTMPromptToSave: TcxCheckBox;
     dxLayoutItem45: TdxLayoutItem;
     CheckBoxSaveBackup: TcxCheckBox;
+    dxLayoutItem46: TdxLayoutItem;
+    SpinEditTranslatorTerminologyMaxResult: TcxSpinEdit;
+    dxLayoutItem47: TdxLayoutItem;
+    cxLabel1: TcxLabel;
+    LayoutGroupTranslatorMSTerminology: TdxLayoutGroup;
+    dxLayoutGroup17: TdxLayoutGroup;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -492,6 +498,8 @@ begin
   CheckBoxTMPromptToSave.Checked := TranslationManagerSettings.Translators.TranslationMemory.PromptToSave;
   CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery;
 
+  SpinEditTranslatorTerminologyMaxResult.Value := TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult;
+
   EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
   if (TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated) then
     EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex := 1;
@@ -545,6 +553,8 @@ begin
   TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
   TranslationManagerSettings.Translators.TranslationMemory.PromptToSave := CheckBoxTMPromptToSave.Checked;
   TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
+
+  TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult := SpinEditTranslatorTerminologyMaxResult.Value;
 
   TranslationManagerSettings.Translators.MicrosoftV3.APIKey := EditTranslatorMSAPIKey.Text;
   TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated := (EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex = 1);

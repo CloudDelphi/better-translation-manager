@@ -137,8 +137,11 @@ var
   JsonTranslationItemArray: TJsonArray;
   JsonError: TJsonObject;
   Msg: string;
+  SourceValue: string;
   TargetValue: string;
 begin
+  SourceValue := SanitizeText(Prop.Value, False);
+
   RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleSName;
   RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleSName;
 
@@ -146,7 +149,7 @@ begin
   RESTRequestTranslate.Body.JSONWriter.WriteStartArray;
   RESTRequestTranslate.Body.JSONWriter.WriteStartObject;
   RESTRequestTranslate.Body.JSONWriter.WritePropertyName('Text');
-  RESTRequestTranslate.Body.JSONWriter.WriteValue(SanitizeText(Prop.Value, False));
+  RESTRequestTranslate.Body.JSONWriter.WriteValue(SourceValue);
   RESTRequestTranslate.Body.JSONWriter.WriteEndObject;
   RESTRequestTranslate.Body.JSONWriter.WriteEndArray;
 
@@ -173,10 +176,14 @@ begin
     TargetValue :=  JsonTranslationItemArray.Items[0].GetValue<string>('text');
 
     // Service does not explicitly state if no translation was found but instead just returns Target=Source
-    Result := (not AnsiSameText(Prop.Value, TargetValue));
+    Result := (not AnsiSameText(SourceValue, TargetValue));
 
     if (Result) then
+    begin
+      TargetValue := MakeAlike(Prop.Value, TargetValue);
+
       Translations.Add(TargetValue);
+    end;
   end;
 end;
 

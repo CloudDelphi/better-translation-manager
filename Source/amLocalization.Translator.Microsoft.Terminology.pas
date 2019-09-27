@@ -78,13 +78,22 @@ var
   ResultMatches: Matches;
   Match: Match2;
   Translation: Translation2;
+  SourceValue: string;
+  TargetValue: string;
+  n: integer;
 begin
   SetLength(Sources, 1);
   Sources[0] := TranslationSource.UiStrings;
 
+  // We are searching on the raw UI string since the Terminology Service can handle that.
+  // We could also search on the sanitized value but that would produce more mismatches
+  // and doesn't seem necessary.
+  SourceValue := Prop.Value;
+
    // Call web service
-  ResultMatches := FTerminology.GetTranslations(Prop.Value, SourceLanguage.LocaleSName, TargetLanguage.LocaleSName,
-    SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True, 10, False, nil);
+  ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleSName, TargetLanguage.LocaleSName,
+    SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True,
+    TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult, False, nil);
 
   // Get result
   Result := False;
@@ -94,8 +103,31 @@ begin
     begin
       for Translation in Match.Translations do
       begin
-        if (Translations.IndexOf(Translation.TranslatedText) =-1) then
-          Translations.Add(Translation.TranslatedText);
+        TargetValue := Translation.TranslatedText;
+
+        if (SourceValue = Match.OriginalText) then
+        begin
+          // Don't MakeAlike on an exact match
+
+          // Exact match - Insert in front
+          if (Translations.Count > 0) then
+          begin
+            n := Translations.IndexOf(TargetValue);
+            if (n = -1) then
+              Translations.Insert(0, TargetValue)
+            else
+              Translations.Move(n, 0);
+          end else
+            Translations.Add(TargetValue);
+        end else
+        begin
+          TargetValue := MakeAlike(SourceValue, TargetValue);
+
+          // Inefficient due to sequential scan, but we need to maintain returned order
+          if (Translations.IndexOf(TargetValue) = -1) then
+            Translations.Add(TargetValue);
+        end;
+
         Result := True;
       end;
     end;

@@ -1508,7 +1508,7 @@ begin
             var
               Value, SourceValue, TranslatedValue: string;
             begin
-              if (Prop.Value.Trim.IsEmpty) and (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
+              if (Prop.Value.Trim.IsEmpty) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
                 Exit(True);
 
               if (not TranslateTranslated) and (Prop.HasTranslation(TargetLanguage)) then
@@ -1531,30 +1531,6 @@ begin
               // if SourceValue=TargetValue is in fact a translation.
               if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, Value)) then
               begin
-                if (not Value.IsEmpty) then
-                begin
-                  // If source is all UPPERCASE the target should also be so
-                  if (IsUppercase(SourceValue)) then
-                    Value := AnsiUpperCase(Value)
-                  else
-                  // If source starts with an Uppercase letter the target should also do so
-                  if (StartsWithUppercase(SourceValue)) then
-                    Value := MakeStartWithUppercase(Value);
-
-                  // Handle accelerator keys
-                  if (HasAccelerator(Prop.Value)) then
-                  begin
-                    if (not HasAccelerator(Value)) then
-                      // If source had an accelerator then make sure the target also has one
-                      Value := AddAccelerator(EscapeAccelerators(Value));
-                  end else
-                  begin
-                    if (HasAccelerator(Value)) then
-                      // If source doesn't have an accelerator then make sure the target also doesn't have one
-                      Value := SanitizeText(Value, [skAccelerator]);
-                  end;
-                end;
-
                 Inc(Counts.TranslatedCount);
 
                 if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then

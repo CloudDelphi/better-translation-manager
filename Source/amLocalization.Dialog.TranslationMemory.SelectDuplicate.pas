@@ -41,18 +41,24 @@ type
     LabelContext: TLabel;
     dxLayoutItem8: TdxLayoutItem;
     CheckBoxApplyToIdentical: TcxCheckBox;
+    LayoutItemButtonSkip: TdxLayoutItem;
+    ButtonSkip: TcxButton;
+    ActionSkip: TAction;
     procedure ActionCancelExecute(Sender: TObject);
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionOKUpdate(Sender: TObject);
     procedure ComboBoxActionPropertiesChange(Sender: TObject);
     procedure CheckBoxAllPropertiesChange(Sender: TObject);
     procedure ListViewDuplicatesDblClick(Sender: TObject);
+    procedure ActionSkipExecute(Sender: TObject);
   private
     FDuplicateAction: TDuplicateAction;
+    FSkipOne: boolean;
     function GetApplyToIdentical: boolean;
   public
     function SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; var Value: string): boolean;
     property DuplicateAction: TDuplicateAction read FDuplicateAction write FDuplicateAction;
+    property SkipOne: boolean read FSkipOne;
     property ApplyToIdentical: boolean read GetApplyToIdentical;
   end;
 
@@ -61,7 +67,8 @@ implementation
 {$R *.dfm}
 
 uses
-  amLocalization.Data.Main;
+  amLocalization.Data.Main,
+  amLocalization.Utils;
 
 const
   ActionMap: array[boolean, 0..2] of TDuplicateAction =
@@ -80,6 +87,12 @@ end;
 procedure TFormSelectDuplicate.ActionOKUpdate(Sender: TObject);
 begin
   TAction(Sender).Enabled := (FDuplicateAction <> daPrompt) or (ListViewDuplicates.Selected <> nil);
+end;
+
+procedure TFormSelectDuplicate.ActionSkipExecute(Sender: TObject);
+begin
+  FSkipOne := True;
+  ModalResult := mrOK;
 end;
 
 procedure TFormSelectDuplicate.CheckBoxAllPropertiesChange(Sender: TObject);
@@ -117,6 +130,8 @@ var
 begin
   if (FDuplicateAction = daAbort) then
     Exit(False);
+
+  FSkipOne := False;
 
   if (not(FDuplicateAction in [daSkipAll, daFirstAll])) then
   begin

@@ -13,12 +13,38 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
     ExplicitTop = 307
     ExplicitWidth = 502
     inherited ButtonOK: TcxButton
-      Left = 335
-      ExplicitLeft = 335
+      Left = 254
+      ExplicitLeft = 254
     end
     inherited ButtonCancel: TcxButton
       Left = 416
+      TabOrder = 2
       ExplicitLeft = 416
+    end
+    object ButtonSkip: TcxButton [2]
+      Left = 335
+      Top = 11
+      Width = 75
+      Height = 25
+      Action = ActionSkip
+      Default = True
+      TabOrder = 1
+    end
+    inherited LayoutItemButtonCancel: TdxLayoutItem
+      Index = 2
+    end
+    inherited LayoutGroupButtons: TdxLayoutGroup
+      ItemIndex = 1
+    end
+    object LayoutItemButtonSkip: TdxLayoutItem
+      Parent = LayoutGroupButtons
+      AlignHorz = ahRight
+      CaptionOptions.Visible = False
+      Control = ButtonSkip
+      ControlOptions.OriginalHeight = 25
+      ControlOptions.OriginalWidth = 75
+      ControlOptions.ShowBorder = False
+      Index = 1
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -146,7 +172,7 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         CaptionOptions.Visible = False
         Control = CheckBoxAll
         ControlOptions.OriginalHeight = 19
-        ControlOptions.OriginalWidth = 127
+        ControlOptions.OriginalWidth = 126
         ControlOptions.ShowBorder = False
         Enabled = False
         Index = 2
@@ -206,6 +232,11 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
   inherited ActionList: TActionList
     inherited ActionOK: TAction
       OnUpdate = ActionOKUpdate
+    end
+    object ActionSkip: TAction
+      Caption = 'Skip'
+      Hint = 'Skip this value'
+      OnExecute = ActionSkipExecute
     end
   end
 end

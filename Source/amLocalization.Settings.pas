@@ -162,6 +162,14 @@ type
     property APIKeyValidated: boolean read FAPIKeyValidated write FAPIKeyValidated;
   end;
 
+  TTranslationManagerTranslatorMicrosoftTerminologySettings = class(TConfigurationSection)
+  private
+    FMaxResult: integer;
+  public
+  published
+    property MaxResult: integer read FMaxResult write FMaxResult default 10;
+  end;
+
   TTranslationManagerTranslatorTMX = class(TConfigurationSection)
   private
     FFilename: string;
@@ -182,12 +190,14 @@ type
   private
     FMicrosoftV3: TTranslationManagerTranslatorMicrosoftV3Settings;
     FTranslationMemory: TTranslationManagerTranslatorTMX;
+    FMicrosoftTerminology: TTranslationManagerTranslatorMicrosoftTerminologySettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
     procedure ResetSettings;
   published
     property MicrosoftV3: TTranslationManagerTranslatorMicrosoftV3Settings read FMicrosoftV3;
+    property MicrosoftTerminology: TTranslationManagerTranslatorMicrosoftTerminologySettings read FMicrosoftTerminology;
     property TranslationMemory: TTranslationManagerTranslatorTMX read FTranslationMemory;
   end;
 
@@ -639,12 +649,14 @@ constructor TTranslationManagerTranslatorSettings.Create(AOwner: TConfigurationS
 begin
   inherited;
   FMicrosoftV3 := TTranslationManagerTranslatorMicrosoftV3Settings.Create(Self);
+  FMicrosoftTerminology := TTranslationManagerTranslatorMicrosoftTerminologySettings.Create(Self);
   FTranslationMemory := TTranslationManagerTranslatorTMX.Create(Self);
 end;
 
 destructor TTranslationManagerTranslatorSettings.Destroy;
 begin
   FMicrosoftV3.Free;
+  FMicrosoftTerminology.Free;
   FTranslationMemory.Free;
   inherited;
 end;
@@ -654,6 +666,7 @@ begin
   ApplyDefault;
 
   FMicrosoftV3.ApplyDefault;
+  FMicrosoftTerminology.ApplyDefault;
   FTranslationMemory.ApplyDefault;
 end;
 

@@ -589,9 +589,9 @@ inherited FormSettings: TFormSettings
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 106
+              Top = 164
               AutoSize = False
-              Caption = 'Microsoft Translator'
+              Caption = 'Microsoft Translation Service'
               Style.HotTrack = False
               Style.TextStyle = [fsBold]
               Style.TransparentBorder = False
@@ -601,8 +601,8 @@ inherited FormSettings: TFormSettings
               Width = 413
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
-              Left = 58
-              Top = 129
+              Left = 76
+              Top = 187
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -614,8 +614,8 @@ inherited FormSettings: TFormSettings
               Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
               Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
               Style.HotTrack = False
-              TabOrder = 5
-              Width = 355
+              TabOrder = 7
+              Width = 337
             end
             object CheckBoxTMBackgroundQuery: TcxCheckBox
               Left = 12
@@ -645,11 +645,39 @@ inherited FormSettings: TFormSettings
               TabOrder = 2
               Transparent = True
             end
+            object SpinEditTranslatorTerminologyMaxResult: TcxSpinEdit
+              Left = 76
+              Top = 129
+              Hint = 'Maximum number of translations to return per term'
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 20.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 5
+              Value = 1
+              Width = 77
+            end
+            object cxLabel1: TcxLabel
+              Left = 0
+              Top = 106
+              AutoSize = False
+              Caption = 'Microsoft Terminology Service'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 413
+            end
             object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
               AlignVert = avTop
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = -1
             end
@@ -665,10 +693,8 @@ inherited FormSettings: TFormSettings
             end
             object LayoutGroupTranslatorTM: TdxLayoutGroup
               Parent = LayoutControlTranslatorsGroup_Root
-              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               ButtonOptions.Buttons = <>
-              Hidden = True
               ItemIndex = 1
               ShowBorder = False
               Index = 0
@@ -684,11 +710,9 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutGroup2: TdxLayoutGroup
               Parent = LayoutGroupTranslatorTM
-              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
-              Hidden = True
               ItemIndex = 1
               ShowBorder = False
               Index = 1
@@ -704,14 +728,12 @@ inherited FormSettings: TFormSettings
             end
             object LayoutGroupTranslatorMS: TdxLayoutGroup
               Parent = LayoutControlTranslatorsGroup_Root
-              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Top = 8
               ButtonOptions.Buttons = <>
-              Hidden = True
               ItemIndex = 1
               ShowBorder = False
-              Index = 1
+              Index = 2
             end
             object dxLayoutItem25: TdxLayoutItem
               Parent = dxLayoutGroup8
@@ -724,11 +746,9 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutGroup8: TdxLayoutGroup
               Parent = LayoutGroupTranslatorMS
-              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
-              Hidden = True
               ShowBorder = False
               Index = 1
             end
@@ -748,6 +768,42 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 94
               ControlOptions.ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem46: TdxLayoutItem
+              Parent = dxLayoutGroup17
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Max results:'
+              Control = SpinEditTranslatorTerminologyMaxResult
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 77
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem47: TdxLayoutItem
+              Parent = LayoutGroupTranslatorMSTerminology
+              CaptionOptions.Visible = False
+              Control = cxLabel1
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 7
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupTranslatorMSTerminology: TdxLayoutGroup
+              Parent = LayoutControlTranslatorsGroup_Root
+              CaptionOptions.Visible = False
+              Offsets.Top = 8
+              ButtonOptions.Buttons = <>
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutGroup17: TdxLayoutGroup
+              Parent = LayoutGroupTranslatorMSTerminology
+              CaptionOptions.Visible = False
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ButtonOptions.Buttons = <>
+              ShowBorder = False
               Index = 1
             end
           end

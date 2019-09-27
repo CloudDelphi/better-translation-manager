@@ -100,6 +100,7 @@ type
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
     function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
+    procedure AddMatch(Translations: TStrings; Prop: TLocalizerProperty; const SourceValue, TargetValue: string);
   protected
     // Threaded lookup
     procedure PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
@@ -1404,7 +1405,7 @@ function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty;
 var
   List: TList<integer>;
   RecordIndex: integer;
-  TargetValue: string;
+  SourceValue, TargetValue: string;
 begin
   Result := False;
 
@@ -1413,7 +1414,8 @@ begin
 
   Assert(FLookupIndex <> nil);
 
-  if (not FLookupIndex.TryGetValue(SanitizeText(Prop.Value, False), List)) then
+  SourceValue := SanitizeText(Prop.Value, False);
+  if (not FLookupIndex.TryGetValue(SourceValue, List)) then
     Exit;
 
   for RecordIndex in List do
@@ -1422,16 +1424,47 @@ begin
 
     TargetValue := TargetField.AsString;
 
-    if (TargetValue = '') then
+    if (TargetValue.IsEmpty) then
       continue;
 
-    // Ignore exact duplicates
-    if (Translations.IndexOf(TargetValue) <> -1) then
-      continue;
-
+    AddMatch(Translations, Prop, SourceValue, TargetValue);
     Result := True;
-    Translations.Add(TargetValue);
   end;
+end;
+
+procedure TDataModuleTranslationMemory.AddMatch(Translations: TStrings; Prop: TLocalizerProperty; const SourceValue, TargetValue: string);
+var
+  Value: string;
+  n: integer;
+begin
+  // We can't really assume anything with regards to fidelity on a TM but the hope is
+  // that at least the case is correct.
+  // To make sure we add an extra match where we have made sure the case is correct.
+
+  if (Prop.Value = SourceValue) then
+  begin
+    // Don't mess with case on an exact match.
+    Value := MakeAlike(Prop.Value, TargetValue, [EqualizeEnding, EqualizeAccelerators]);
+
+    // Exact match - Insert in front
+    if (Translations.Count > 0) then
+    begin
+      n := Translations.IndexOf(Value);
+      if (n = -1) then
+        Translations.Insert(0, Value)
+      else
+        Translations.Move(n, 0);
+    end else
+      Translations.Add(Value);
+
+    // Fix case. This is safe since we will ignore duplicates below.
+    Value := MakeAlike(Prop.Value, Value, [EqualizeCase]);
+  end else
+    Value := MakeAlike(Prop.Value, TargetValue);
+
+  // Inefficient due to sequential scan, but we need to maintain returned order
+  if (Translations.IndexOf(Value) = -1) then
+    Translations.Add(Value);
 end;
 
 function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
@@ -1439,6 +1472,7 @@ var
   SourceField: TField;
   TargetField: TField;
   SourceValue: string;
+  TargetValue: string;
 begin
   if (not CheckLoaded) then
     Exit(False);
@@ -1466,8 +1500,11 @@ begin
     begin
       if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString, False))) then
       begin
+        TargetValue := TargetField.AsString;
+
+        // Match found
+        AddMatch(Translations, Prop, SourceValue, TargetValue);
         Result := True;
-        Translations.Add(TargetField.AsString);
       end;
     end;
 
