@@ -98,7 +98,8 @@ implementation
 uses
   Classes,
   SysUtils,
-  IOUtils;
+  IOUtils,
+  amPath;
 
 
 // -----------------------------------------------------------------------------
@@ -682,8 +683,11 @@ begin
     SetLength(Filename, Size);
   end;
 
-  if (TFile.Exists(Module.Project.StringSymbolFilename)) then
-    FSymbolMap.LoadFromFile(Module.Project.StringSymbolFilename);
+  // Symbol filename is relative to source file. Get the absolute path.
+  Filename := PathUtil.PathCombinePath(TPath.GetDirectoryName(Filename), Module.Project.StringSymbolFilename);
+
+  if (TFile.Exists(Filename)) then
+    FSymbolMap.LoadFromFile(Filename);
 end;
 
 // -----------------------------------------------------------------------------

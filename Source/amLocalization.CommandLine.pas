@@ -75,6 +75,7 @@ uses
   StrUtils,
   Windows,
   amLocale,
+  amPath,
   amVersionInfo,
   amLocalization.Persistence,
   amLocalization.ResourceWriter,
@@ -159,6 +160,9 @@ begin
 
   FVerbose := (FindCmdLineSwitch('v')) or (FindCmdLineSwitch('verbose'));
 
+  // If command line specified a relative path then it must be relative to the "current folder"
+  Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+
   LoadFromFile(Filename);
 
   if (not FindCmdLineSwitch('t', Language)) and (not FindCmdLineSwitch('target', Language)) then
@@ -227,7 +231,7 @@ var
   Filename: string;
 begin
   LocaleItem := TLocaleItems.FindLCID(TargetLanguage.LanguageID);
-  Filename := TPath.ChangeExtension(AProjectFilename, '.'+LocaleItem.LanguageShortName);
+  Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
 
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(Filename)]));
 
@@ -254,6 +258,9 @@ var
 begin
   Message(Format('Loading project: %s...', [TPath.GetFileNameWithoutExtension(Filename)]));
 
+  if (not TFile.Exists(Filename)) then
+    Error(Format('Project file not found: %s', [Filename]));
+
   FProject.BeginUpdate;
   try
 
@@ -262,6 +269,10 @@ begin
   finally
     FProject.EndUpdate;
   end;
+
+  // Make filenames absolute
+  FProject.SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(Filename), FProject.SourceFilename);
+  FProject.StringSymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
   if (FVerbose) then
   begin
@@ -293,6 +304,12 @@ begin
     Message(Format('  Items          : %6.0n', [CountItem*1.0]));
     Message(Format('  Properties     : %6.0n', [CountProperty*1.0]));
   end;
+
+  if (not TFile.Exists(FProject.StringSymbolFilename)) then
+    Warning(Format('String symbol file not found: %s', [FProject.StringSymbolFilename]));
+
+  if (not TFile.Exists(FProject.SourceFilename)) then
+    Error(Format('Source file not found: %s', [FProject.SourceFilename]));
 end;
 
 { TCommandLineLogger }

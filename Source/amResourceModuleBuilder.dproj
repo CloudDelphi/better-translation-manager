@@ -82,7 +82,9 @@
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>
-        <Debugger_RunParams>D:\Projects\Localizer\Bin\Win32\Debug\amTranslationManager.xlat -v</Debugger_RunParams>
+        <Debugger_RunParams>D:\Projects\Localizer\Bin\Win32\Debug\amTranslationManager.xlat -build</Debugger_RunParams>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_MapFile>3</DCC_MapFile>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>

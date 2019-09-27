@@ -14,6 +14,7 @@
 {$R amTranslationManager.res}
 
 uses
+  madExcept,
   System.SysUtils,
   amLocalization.CommandLine;
 

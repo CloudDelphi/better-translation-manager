@@ -2276,7 +2276,7 @@ begin
   if (FProject.StringSymbolFilename = '') then
   begin
     Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
-    FProject.StringSymbolFilename := Filename;
+    FProject.StringSymbolFilename := TPath.GetFileName(Filename);
   end else
   if (FProject.SourceFilename <> '') then
     // Path might be relative - Get absolute path
