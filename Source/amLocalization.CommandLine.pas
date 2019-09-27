@@ -26,15 +26,16 @@ type
   private
     FLogger: ICommandLineLogger;
     FProject: TLocalizerProject;
+    FVerbose: boolean;
   protected
     procedure Message(const Msg: string);
     procedure Error(const Msg: string);
     procedure Warning(const Msg: string);
 
-    procedure DoBuild(TargetLanguage: TTargetLanguage);
+    procedure DoBuild(const AProjectFilename: string; TargetLanguage: TTargetLanguage);
 
     procedure LoadFromFile(const Filename: string);
-    procedure Build(const Language: string);
+    procedure Build(const AProjectFilename: string; const Language: string);
     procedure Help;
     procedure Header;
   public
@@ -42,6 +43,10 @@ type
     destructor Destroy; override;
 
     procedure Execute;
+
+    class function ProjectFilename: string;
+    class function OptionBuild: boolean;
+    class function OptionHelp: boolean;
   end;
 
 type
@@ -59,7 +64,8 @@ resourcestring
     'Options:'+#13+
     '  -?               Display help (this message)'+#13+
     '  -t language      Only build for specified language'+#13+
-    '  -b               Build resource module(s)';
+    '  -b               Build resource module(s)'+#13+
+    '  -v               Display verbose messages';
 
 implementation
 
@@ -109,6 +115,30 @@ begin
     FLogger.Warning(Msg+#13);
 end;
 
+class function TLocalizationCommandLineTool.OptionBuild: boolean;
+begin
+  Result := (FindCmdLineSwitch('b')) or (FindCmdLineSwitch('build'));
+end;
+
+class function TLocalizationCommandLineTool.OptionHelp: boolean;
+begin
+  Result := (FindCmdLineSwitch('h')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('help'));
+end;
+
+class function TLocalizationCommandLineTool.ProjectFilename: string;
+var
+  i: integer;
+begin
+  // Filename should be first but look for it in all params anyway
+  Result := '';
+  for i := 1 to ParamCount do
+    if (not CharInSet(ParamStr(1)[1], SwitchChars)) then
+    begin
+      Result := ParamStr(i);
+      break;
+    end;
+end;
+
 procedure TLocalizationCommandLineTool.Execute;
 var
   Filename: string;
@@ -116,24 +146,26 @@ var
 begin
   Header;
 
-  if (ParamCount < 1) or (FindCmdLineSwitch('h')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('help')) then
+  if (ParamCount < 1) or OptionHelp then
   begin
     Help;
     Exit;
   end;
 
-  Filename := ParamStr(1);
+  Filename := ProjectFilename;
 
   if (not TFile.Exists(Filename)) then
     Error(Format('Project file not found: %s', [Filename]));
 
+  FVerbose := (FindCmdLineSwitch('v')) or (FindCmdLineSwitch('verbose'));
+
   LoadFromFile(Filename);
 
-  if (not FindCmdLineSwitch('t', Language)) then
+  if (not FindCmdLineSwitch('t', Language)) and (not FindCmdLineSwitch('target', Language)) then
     Language := '';
 
-  if (FindCmdLineSwitch('b')) then
-    Build(Language);
+  if (OptionBuild) then
+    Build(Filename, Language);
 
   Message('Done');
 end;
@@ -148,7 +180,7 @@ begin
   Message(Format(sCommandLineHelp, [TPath.GetFileNameWithoutExtension(ParamStr(0))]));
 end;
 
-procedure TLocalizationCommandLineTool.Build(const Language: string);
+procedure TLocalizationCommandLineTool.Build(const AProjectFilename: string; const Language: string);
 var
   LocaleID: integer;
   LocaleItem: TLocaleItem;
@@ -178,16 +210,16 @@ begin
     if (TargetLanguage = nil) then
       Error(Format('Project does not contain any translations for the language: %s (%s)', [Language, LocaleItem.LanguageName]));
 
-    DoBuild(TargetLanguage);
+    DoBuild(AProjectFilename, TargetLanguage);
   end else
   begin
     for i := 0 to FProject.TargetLanguages.Count-1 do
       if (FProject.TargetLanguages[i].LanguageID <> FProject.SourceLanguageID) then
-        DoBuild(FProject.TargetLanguages[i]);
+        DoBuild(AProjectFilename, FProject.TargetLanguages[i]);
   end;
 end;
 
-procedure TLocalizationCommandLineTool.DoBuild(TargetLanguage: TTargetLanguage);
+procedure TLocalizationCommandLineTool.DoBuild(const AProjectFilename: string; TargetLanguage: TTargetLanguage);
 var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
@@ -195,7 +227,7 @@ var
   Filename: string;
 begin
   LocaleItem := TLocaleItems.FindLCID(TargetLanguage.LanguageID);
-  Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
+  Filename := TPath.ChangeExtension(AProjectFilename, '.'+LocaleItem.LanguageShortName);
 
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(Filename)]));
 
@@ -215,6 +247,10 @@ begin
 end;
 
 procedure TLocalizationCommandLineTool.LoadFromFile(const Filename: string);
+var
+  LocaleItem: TLocaleItem;
+  i: integer;
+  CountItem, CountProperty: integer;
 begin
   Message(Format('Loading project: %s...', [TPath.GetFileNameWithoutExtension(Filename)]));
 
@@ -225,6 +261,37 @@ begin
 
   finally
     FProject.EndUpdate;
+  end;
+
+  if (FVerbose) then
+  begin
+    LocaleItem := TLocaleItems.FindLCID(FProject.SourceLanguageID);
+    Message('Project information:');
+    Message(Format('  Source file    : %s', [FProject.SourceFilename]));
+    Message(Format('  Source Language: Locale=%.4X, Name=%s', [LocaleItem.Locale, LocaleItem.LanguageName]));
+    Message(Format('  Symbol file    : %s', [FProject.StringSymbolFilename]));
+    for i := 0 to FProject.TargetLanguages.Count-1 do
+    begin
+      LocaleItem := TLocaleItems.FindLCID(FProject.TargetLanguages[i].LanguageID);
+      Message(Format('  Target language: Translated=%6.0n, Locale=%.4X, Name=%s', [FProject.TargetLanguages[i].TranslatedCount*1.0, LocaleItem.Locale, LocaleItem.LanguageName]));
+    end;
+    CountItem := 0;
+    CountProperty := 0;
+    FProject.Traverse(
+      function(Item: TLocalizerItem): boolean
+      begin
+        Inc(CountItem);
+        Item.Traverse(
+          function(Prop: TLocalizerProperty): boolean
+          begin
+            Inc(CountProperty);
+            Result := True;
+          end, False);
+        Result := True;
+      end, False);
+    Message(Format('  Modules        : %6.0n', [FProject.Modules.Count*1.0]));
+    Message(Format('  Items          : %6.0n', [CountItem*1.0]));
+    Message(Format('  Properties     : %6.0n', [CountProperty*1.0]));
   end;
 end;
 

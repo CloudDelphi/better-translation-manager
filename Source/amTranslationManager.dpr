@@ -216,7 +216,9 @@ function ProcessCommandLine: boolean;
 var
   CommandLineTool: TLocalizationCommandLineTool;
 begin
-  if (ParamCount = 0) or ((ParamCount = 1) and (TFile.Exists(ParamStr(1)))) then
+  if (ParamCount = 0) or
+    (((not TLocalizationCommandLineTool.OptionBuild) or (TLocalizationCommandLineTool.ProjectFilename = '')) and
+     (not TLocalizationCommandLineTool.OptionHelp)) then
     Exit(False);
 
   CommandLineTool := TLocalizationCommandLineTool.Create(TCommandLineGUILogger.Create);

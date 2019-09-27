@@ -4,7 +4,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Projects Include="amTranslationManager.dproj">
-            <Dependencies/>
+            <Dependencies>amResourceModuleBuilder.dproj</Dependencies>
         </Projects>
         <Projects Include="amResourceModuleBuilder.dproj">
             <Dependencies/>
@@ -17,13 +17,13 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="amTranslationManager">
+    <Target Name="amTranslationManager" DependsOnTargets="amResourceModuleBuilder">
         <MSBuild Projects="amTranslationManager.dproj"/>
     </Target>
-    <Target Name="amTranslationManager:Clean">
+    <Target Name="amTranslationManager:Clean" DependsOnTargets="amResourceModuleBuilder:Clean">
         <MSBuild Projects="amTranslationManager.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="amTranslationManager:Make">
+    <Target Name="amTranslationManager:Make" DependsOnTargets="amResourceModuleBuilder:Make">
         <MSBuild Projects="amTranslationManager.dproj" Targets="Make"/>
     </Target>
     <Target Name="amResourceModuleBuilder">
