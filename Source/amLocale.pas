@@ -60,7 +60,7 @@ type
     function ReleaseFlag: TBitmap;
     procedure DestroyFlag;
     class function GetLocaleDataW(ID: LCID; Flag: DWORD): string;
-    property Flag: TBitmap read GetFlag;
+    property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
     property DisplayName: string read GetDisplayName;
     property ISO3166Name: string read GetISO3166Name;
     property ISO639_1Name: string read GetISO639_1Name;
@@ -342,8 +342,6 @@ implementation
 
 uses
   SysUtils;
-
-{$R 'amFlags.res'}
 
 //------------------------------------------------------------------------------
 //
@@ -963,7 +961,7 @@ end;
 
 procedure TLocaleItem.DestroyFlag;
 begin
-  FreeAndNIl(FFlag);
+  FreeAndNil(FFlag);
 end;
 
 //------------------------------------------------------------------------------
