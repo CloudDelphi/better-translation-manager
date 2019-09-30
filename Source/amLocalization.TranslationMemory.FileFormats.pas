@@ -30,6 +30,8 @@ type
   TTranslationMemoryFileFormat = class;
   TTranslationMemoryFileFormatClass = class of TTranslationMemoryFileFormat;
 
+  TTranslationMemoryFileFormatClasses = array of TTranslationMemoryFileFormatClass;
+
   TTranslationMemoryFileFormat = class abstract
   private
     class var FFileFormatRegistry: TList<TTranslationMemoryFileFormatClass>;
@@ -80,6 +82,7 @@ type
 
     class function FileFormatFileFilters(Capability: TFileFormatCapability; IncludeAllFilter: boolean = True): string;
     class function FindFileFormat(const Filename: string; Capability: TFileFormatCapability; Default: TTranslationMemoryFileFormatClass = nil): TTranslationMemoryFileFormatClass;
+    class function FindFileFormats(const Filename: string; Capability: TFileFormatCapability): TTranslationMemoryFileFormatClasses;
   end;
 
 // -----------------------------------------------------------------------------
@@ -174,19 +177,45 @@ end;
 
 class function TTranslationMemoryFileFormat.FindFileFormat(const Filename: string; Capability: TFileFormatCapability; Default: TTranslationMemoryFileFormatClass): TTranslationMemoryFileFormatClass;
 var
+  FileFormatClasses: TTranslationMemoryFileFormatClasses;
+begin
+  FileFormatClasses := FindFileFormats(Filename, Capability);
+
+  if (Length(FileFormatClasses) > 0) then
+    Result := FileFormatClasses[0]
+  else
+    Result := Default
+end;
+
+class function TTranslationMemoryFileFormat.FindFileFormats(const Filename: string; Capability: TFileFormatCapability): TTranslationMemoryFileFormatClasses;
+var
   FileFormatClass: TTranslationMemoryFileFormatClass;
   FileType: string;
+  i: integer;
 begin
+  SetLength(Result, 0);
+
   if (FFileFormatRegistry = nil) then
-    Exit(nil);
+    Exit;
 
   FileType := Copy(TPath.GetExtension(Filename), 2, MaxInt);
 
   for FileFormatClass in FFileFormatRegistry do
     if (Capability in FileFormatClass.FileFormatCapabilities) and (AnsiSameText(FileType, FileFormatClass.FileFormatFileType)) then
-      Exit(FileFormatClass);
+    begin
+      SetLength(Result, Length(Result)+1);
+      Result[Length(Result)-1] := FileFormatClass;
+    end;
 
-  Result := Default;
+  if (Length(Result) = 0) then
+  begin
+    for i := 0 to FFileFormatRegistry.Count-1 do
+      if (Capability in FFileFormatRegistry[i].FileFormatCapabilities) then
+      begin
+        SetLength(Result, Length(Result)+1);
+        Result[Length(Result)-1] := FFileFormatRegistry[i];
+      end;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -258,13 +287,17 @@ var
   SourceValue, SanitizedSourceValue: string;
 begin
   // Create one term list per language.
-  // Assume language[0] is the source language.
   // A term list holds the target language terms that correspond to a given source language term.
+  // Assume language[0] is the source language. This assumption seems to no longer be true...
   SetLength(DuplicateTermsList, TableTranslationMemory.Fields.Count);
 
-  DuplicateTermsList[0] := nil;
-  for i := 1 to TableTranslationMemory.Fields.Count-1 do
+  for i := 0 to TableTranslationMemory.Fields.Count-1 do
   begin
+    if (TableTranslationMemory.Fields[i] = SourceField) then
+    begin
+      DuplicateTermsList[i] := nil;
+      continue;
+    end;
     DuplicateTerms := TDuplicateTerms.Create([doOwnsValues], TTextComparer.Create);
     DuplicateTermsList[i] := DuplicateTerms;
     Duplicates.Add(TableTranslationMemory.Fields[i], DuplicateTerms);
@@ -282,27 +315,31 @@ begin
     SourceValue := SourceField.AsString;
     SanitizedSourceValue := SanitizeText(SourceValue, False);
 
-    // ..., For each target language...
-    for i := 0 to TableTranslationMemory.Fields.Count-1 do
+    // Empty source value should not occur but we have to handle it (because it does)
+    if (not SanitizedSourceValue.Trim.IsEmpty) then
     begin
-      if (TableTranslationMemory.Fields[i] = SourceField) then
-        continue;
-
-      // ... save the target term in the term list of the source language term
-      if (not DuplicateTermsList[i].TryGetValue(SanitizedSourceValue, DuplicateValues)) then
+      // ..., For each target language...
+      for i := 0 to TableTranslationMemory.Fields.Count-1 do
       begin
-        DuplicateValues := TDuplicateValues.Create;
-        DuplicateTermsList[i].Add(SanitizedSourceValue, DuplicateValues);
+        if (TableTranslationMemory.Fields[i] = SourceField) then
+          continue;
+
+        // ... save the target term in the term list of the source language term
+        if (not DuplicateTermsList[i].TryGetValue(SanitizedSourceValue, DuplicateValues)) then
+        begin
+          DuplicateValues := TDuplicateValues.Create;
+          DuplicateTermsList[i].Add(SanitizedSourceValue, DuplicateValues);
+        end;
+
+        Duplicate.SourceValue := SourceValue;
+        Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
+        Duplicate.RecordID := TableTranslationMemory.RecNo;
+
+        DuplicateValues.Add(Duplicate);
+
+        if (Duplicate.Value.IsEmpty) then
+          Inc(DuplicateValues.EmptyCount);
       end;
-
-      Duplicate.SourceValue := SourceValue;
-      Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
-      Duplicate.RecordID := TableTranslationMemory.RecNo;
-
-      DuplicateValues.Add(Duplicate);
-
-      if (Duplicate.Value.IsEmpty) then
-        Inc(DuplicateValues.EmptyCount);
     end;
 
     TableTranslationMemory.Next;
@@ -530,7 +567,7 @@ end;
 
 function TTranslationMemoryFileFormat.Prepare(const Filename: string): boolean;
 begin
-  Result :=True;
+  Result := True;
 end;
 
 // -----------------------------------------------------------------------------

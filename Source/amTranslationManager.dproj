@@ -100,9 +100,9 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_PreRelease>true</VerInfo_PreRelease>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.19;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.20;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-        <VerInfo_Build>19</VerInfo_Build>
+        <VerInfo_Build>20</VerInfo_Build>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
@@ -191,6 +191,11 @@ $(PostBuildEvent)]]></PostBuildEvent>
         </DCCReference>
         <DCCReference Include="amLocalization.Translator.Microsoft.Terminology.SOAP.pas"/>
         <DCCReference Include="amLocalization.Translator.Microsoft.Terminology.pas"/>
+        <DCCReference Include="amLocalization.TranslationMemory.FileFormats.GenericCSV.pas"/>
+        <DCCReference Include="amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas">
+            <Form>FormSelectFileFormat</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

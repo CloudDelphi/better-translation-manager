@@ -21,6 +21,7 @@ uses
   SysUtils,
   Classes,
   Forms,
+  Graphics,
   dxSpellChecker,
   cxCustomData,
   amRegConfig;
@@ -34,13 +35,6 @@ uses
 var
   TranslationManagerRegistryKey: HKEY = HKEY_CURRENT_USER;
   TranslationManagerRegistryRoot: string = '\Software\Melander\TranslationManager\';
-
-const
-  TranslationManagerSettingsKeyLayout: string = '\Layout';
-  TranslationManagerSettingsKeyFolder: string = '\Folders';
-  TranslationManagerSettingsKeyFormMain: string = '\Forms\Debugger';
-  TranslationManagerSettingsKeyDialogSupression: string = '\Dialogs\Supress';
-  TranslationManagerSettingsKeyLicense: string = '\License';
 
 //------------------------------------------------------------------------------
 //
@@ -260,6 +254,66 @@ type
     property AutoRecoverInterval: integer read FAutoRecoverInterval write FAutoRecoverInterval;
   end;
 
+  TListStyle = (ListStyleDefault, ListStyleSelected, ListStyleInactive, ListStyleFocused, ListStyleNotTranslated, ListStyleProposed, ListStyleTranslated, ListStyleHold, ListStyleDontTranslate);
+
+  TTranslationManagerListStyleSettings = class(TConfigurationSection)
+  private
+    FColorText: TColor;
+    FColorBackground: TColor;
+    FBold: integer;
+    FListStyle: TListStyle;
+  protected
+    function GetName: string;
+  public
+    constructor Create(AOwner: TConfigurationSection; AListStyle: TListStyle);
+    property Name: string read GetName;
+  published
+    property ColorText: TColor read FColorText write FColorText default clDefault;
+    property ColorBackground: TColor read FColorBackground write FColorBackground default clDefault;
+    property Bold: integer read FBold write FBold default -1;
+  end;
+
+  TTranslationManagerStyleSettings = class(TConfigurationSection)
+  private
+    FStyles: array[TListStyle] of TTranslationManagerListStyleSettings;
+    FValid: boolean;
+  protected
+    procedure ReadSection(const Key: string); override;
+    procedure ApplyDefault; override;
+    function GetStyle(Index: TListStyle): TTranslationManagerListStyleSettings;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+
+    procedure ResetSettings;
+
+    property Styles[Style: TListStyle]: TTranslationManagerListStyleSettings read GetStyle; default;
+  published
+    property Valid: boolean read FValid write FValid;
+    property StyleDefault: TTranslationManagerListStyleSettings index ListStyleDefault read GetStyle;
+    property StyleSelected: TTranslationManagerListStyleSettings index ListStyleSelected read GetStyle;
+    property StyleInactive: TTranslationManagerListStyleSettings index ListStyleInactive read GetStyle;
+    property StyleFocused: TTranslationManagerListStyleSettings index ListStyleFocused read GetStyle;
+    property StyleNotTranslated: TTranslationManagerListStyleSettings index ListStyleNotTranslated read GetStyle;
+    property StyleProposed: TTranslationManagerListStyleSettings index ListStyleProposed read GetStyle;
+    property StyleTranslated: TTranslationManagerListStyleSettings index ListStyleTranslated read GetStyle;
+    property StyleHold: TTranslationManagerListStyleSettings index ListStyleHold read GetStyle;
+    property StyleDontTranslate: TTranslationManagerListStyleSettings index ListStyleDontTranslate read GetStyle;
+  end;
+
+  TTranslationManagerEditorSettings = class(TConfigurationSection)
+  private
+    FStyle: TTranslationManagerStyleSettings;
+    FDisplayStatusGlyphs: boolean;
+    FStatusGlyphHints: boolean;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+  published
+    property Style: TTranslationManagerStyleSettings read FStyle;
+    property DisplayStatusGlyphs: boolean read FDisplayStatusGlyphs write FDisplayStatusGlyphs default True;
+    property StatusGlyphHints: boolean read FStatusGlyphHints write FStatusGlyphHints default False;
+  end;
 
   TTranslationManagerSystemSettings = class(TConfigurationSection)
   private
@@ -326,6 +380,7 @@ type
     FProofing: TTranslationManagerProofingSettings;
     FLayout: TTranslationManagerLayoutSettings;
     FBackup: TTranslationManagerBackupSettings;
+    FEditor: TTranslationManagerEditorSettings;
   private
   protected
   public
@@ -343,6 +398,7 @@ type
     property Proofing: TTranslationManagerProofingSettings read FProofing;
     property Layout: TTranslationManagerLayoutSettings read FLayout;
     property Backup: TTranslationManagerBackupSettings read FBackup;
+    property Editor: TTranslationManagerEditorSettings read FEditor;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -596,6 +652,7 @@ begin
   FProofing := TTranslationManagerProofingSettings.Create(Self);
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
   FBackup := TTranslationManagerBackupSettings.Create(Self);
+  FEditor := TTranslationManagerEditorSettings.Create(Self);
 end;
 
 destructor TTranslationManagerSettings.Destroy;
@@ -607,6 +664,7 @@ begin
   FProofing.Free;
   FLayout.Free;
   FBackup.Free;
+  FEditor.Free;
 
   inherited;
 end;
@@ -892,6 +950,129 @@ procedure TTranslationManagerSystemSettings.SetSafeMode;
 begin
   FSafeMode := True;
   Registry.WriteBoolean(Key, 'SafeMode', True);
+end;
+
+{ TTranslationManagerStyleSettings }
+
+procedure TTranslationManagerStyleSettings.ApplyDefault;
+begin
+  inherited;
+
+  StyleDefault.ColorText := clBlack;
+  StyleDefault.ColorBackground := clWhite;
+  StyleDefault.Bold := 0;
+
+  StyleSelected.ColorText := clHighlightText;
+  StyleSelected.ColorBackground := clHighlight;
+  StyleSelected.Bold := -1;
+
+  StyleInactive.ColorText := clDefault;
+  StyleInactive.ColorBackground := $00C4996F;
+  StyleInactive.Bold := -1;
+
+  StyleFocused.ColorText := clHighlightText;
+  StyleFocused.ColorBackground := clHighlight;
+  StyleFocused.Bold := 1;
+
+  StyleNotTranslated.ColorText := clDefault;
+  StyleNotTranslated.ColorBackground := clDefault;
+  StyleNotTranslated.Bold := -1;
+
+  StyleProposed.ColorText := $00FF7900;
+  StyleProposed.ColorBackground := clDefault;
+  StyleProposed.Bold := -1;
+
+  StyleTranslated.ColorText := $00FF7900;
+  StyleTranslated.ColorBackground := $00FFF8F0;
+  StyleTranslated.Bold := -1;
+
+  StyleHold.ColorText := clDefault;
+  StyleHold.ColorBackground := $00F4F4FF;
+  StyleHold.Bold := -1;
+
+  StyleDontTranslate.ColorText := clGray;
+  StyleDontTranslate.ColorBackground := $00F4F4FF;
+  StyleDontTranslate.Bold := -1;
+end;
+
+constructor TTranslationManagerStyleSettings.Create(AOwner: TConfigurationSection);
+var
+  ListStyle: TListStyle;
+begin
+  inherited Create(AOwner);
+
+  for ListStyle := Low(TListStyle) to High(TListStyle) do
+    FStyles[ListStyle] := TTranslationManagerListStyleSettings.Create(Self, ListStyle);
+end;
+
+destructor TTranslationManagerStyleSettings.Destroy;
+var
+  ListStyle: TListStyle;
+begin
+  for ListStyle := Low(TListStyle) to High(TListStyle) do
+    FStyles[ListStyle].Free;
+
+  inherited;
+end;
+
+function TTranslationManagerStyleSettings.GetStyle(Index: TListStyle): TTranslationManagerListStyleSettings;
+begin
+  Result := FStyles[Index];
+end;
+
+procedure TTranslationManagerStyleSettings.ReadSection(const Key: string);
+begin
+  inherited ReadSection(Key);
+
+  if (not Valid) then
+    ApplyDefault;
+
+  Valid := True;
+end;
+
+procedure TTranslationManagerStyleSettings.ResetSettings;
+begin
+  ApplyDefault;
+end;
+
+{ TTranslationManagerEditorSettings }
+
+constructor TTranslationManagerEditorSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited Create(AOwner);
+  FStyle := TTranslationManagerStyleSettings.Create(Self);
+end;
+
+destructor TTranslationManagerEditorSettings.Destroy;
+begin
+  FStyle.Free;
+  inherited;
+end;
+
+{ TTranslationManagerListStyleSettings }
+
+constructor TTranslationManagerListStyleSettings.Create(AOwner: TConfigurationSection; AListStyle: TListStyle);
+begin
+  inherited Create(AOwner);
+  FListStyle := AListStyle;
+end;
+
+function TTranslationManagerListStyleSettings.GetName: string;
+const
+  // TODO : Localization
+  sStyleNames: array[TListStyle] of string = (
+    'Default',
+    'Selected',
+    'Inactive',
+    'Focused',
+    'Not translated',
+    'Proposed',
+    'Translated',
+    'Hold',
+    'Don''t translate'
+  );
+begin
+  Result := sStyleNames[FListStyle];
 end;
 
 initialization

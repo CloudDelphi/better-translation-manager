@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -67,7 +68,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -125,6 +125,7 @@ object FormMain: TFormMain
         Width = 220
       end>
     Ribbon = RibbonMain
+    OnHint = StatusBarHint
     ParentFont = True
     OnMouseDown = StatusBarMouseDown
     OnMouseMove = StatusBarMouseMove
@@ -183,18 +184,23 @@ object FormMain: TFormMain
       OptionsView.ColumnAutoWidth = True
       OptionsView.DynamicIndent = True
       OptionsView.FixedSeparatorWidth = 1
+      OptionsView.GridLineColor = 16050401
+      OptionsView.GridLines = tlglHorz
       OptionsView.ShowRoot = False
       OptionsView.TreeLineStyle = tllsNone
       PopupMenu = PopupMenuTree
-      Styles.Inactive = StyleInactive
-      Styles.Selection = StyleSelected
+      Styles.Background = DataModuleMain.StyleDefault
+      Styles.Inactive = DataModuleMain.StyleInactive
+      Styles.Selection = DataModuleMain.StyleSelected
       Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
+      Styles.Indicator = DataModuleMain.StyleDefault
       Styles.UseOddEvenStyles = bFalse
       TabOrder = 0
       OnDblClick = TreeListDblClick
       OnEnter = TreeListModulesEnter
       OnExit = TreeListModulesExit
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
+      OnGetCellHint = TreeListGetCellHint
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
       OnSelectionChanged = TreeListModulesSelectionChanged
       ExplicitHeight = 436
@@ -273,7 +279,7 @@ object FormMain: TFormMain
       end
       object LabelCountPending: TcxLabel
         Left = 66
-        Top = 26
+        Top = 20
         AutoSize = False
         Caption = '0'
         ParentFont = False
@@ -303,6 +309,7 @@ object FormMain: TFormMain
         ButtonOptions.Buttons = <>
         Hidden = True
         ShowBorder = False
+        UseIndent = False
         Index = -1
       end
       object dxLayoutItem2: TdxLayoutItem
@@ -384,15 +391,19 @@ object FormMain: TFormMain
     OptionsView.CellEndEllipsis = True
     OptionsView.Buttons = False
     OptionsView.FixedSeparatorWidth = 0
+    OptionsView.GridLineColor = 16050401
+    OptionsView.GridLines = tlglHorz
     OptionsView.Indicator = True
     OptionsView.IndicatorWidth = 50
     OptionsView.ShowRoot = False
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
     StateImages = DataModuleMain.ImageListState
-    Styles.Inactive = StyleInactive
-    Styles.Selection = StyleSelected
+    Styles.Background = DataModuleMain.StyleDefault
+    Styles.Inactive = DataModuleMain.StyleInactive
+    Styles.Selection = DataModuleMain.StyleSelected
     Styles.OnGetContentStyle = TreeListItemsStylesGetContentStyle
+    Styles.Indicator = DataModuleMain.StyleDefault
     Styles.UseOddEvenStyles = bFalse
     TabOrder = 4
     OnClick = TreeListItemsClick
@@ -403,7 +414,7 @@ object FormMain: TFormMain
     OnEditValueChanged = TreeListItemsEditValueChanged
     OnEnter = TreeListModulesEnter
     OnExit = TreeListModulesExit
-    OnGetCellHint = TreeListItemsGetCellHint
+    OnGetCellHint = TreeListGetCellHint
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
     OnMouseDown = TreeListItemsMouseDown
     OnMouseMove = TreeListItemsMouseMove
@@ -728,7 +739,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 347
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -937,7 +948,7 @@ object FormMain: TFormMain
     object BarManagerBarExport: TdxBar
       Caption = 'Export'
       CaptionButtons = <>
-      DockedLeft = 208
+      DockedLeft = 197
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1222,11 +1233,8 @@ object FormMain: TFormMain
       Visible = ivAlways
     end
     object dxBarButton21: TdxBarButton
-      Caption = 'Import CSV'
+      Action = ActionImportCSV
       Category = 0
-      Enabled = False
-      Hint = 'Import CSV'
-      Visible = ivAlways
     end
     object dxBarButton22: TdxBarButton
       Caption = 'Import from Excel'
@@ -1446,7 +1454,7 @@ object FormMain: TFormMain
       Caption = 'New project'
       Hint = 'Create a new translation project'
       ImageIndex = 1
-      ShortCut = 16462
+      ShortCut = 24654
       OnExecute = ActionProjectNewExecute
     end
     object ActionProjectSave: TAction
@@ -1498,13 +1506,15 @@ object FormMain: TFormMain
       Category = 'Translation'
       Caption = '&Propose translation'
       ImageIndex = 7
+      ShortCut = 32848
       OnExecute = ActionTranslationStateProposeExecute
       OnUpdate = ActionTranslationStateUpdate
     end
     object ActionTranslationStateAccept: TAction
       Category = 'Translation'
-      Caption = '&Accept translation'
+      Caption = 'Accept &translation'
       ImageIndex = 8
+      ShortCut = 32852
       OnExecute = ActionTranslationStateAcceptExecute
       OnUpdate = ActionTranslationStateUpdate
     end
@@ -1512,12 +1522,13 @@ object FormMain: TFormMain
       Category = 'Translation'
       Caption = '&Reject translation'
       ImageIndex = 9
+      ShortCut = 32850
       OnExecute = ActionTranslationStateRejectExecute
       OnUpdate = ActionTranslationStateUpdate
     end
     object ActionStatusTranslate: TAction
       Category = 'Translation'
-      Caption = 'T&ranslate'
+      Caption = 'Translate'
       ImageIndex = 10
       OnExecute = ActionStatusTranslateExecute
       OnUpdate = ActionStatusTranslateUpdate
@@ -1526,6 +1537,7 @@ object FormMain: TFormMain
       Category = 'Translation'
       Caption = '&Don'#39't translate'
       ImageIndex = 12
+      ShortCut = 32836
       OnExecute = ActionStatusDontTranslateExecute
       OnUpdate = ActionStatusDontTranslateUpdate
     end
@@ -1533,6 +1545,7 @@ object FormMain: TFormMain
       Category = 'Translation'
       Caption = '&Hold'
       ImageIndex = 11
+      ShortCut = 32840
       OnExecute = ActionStatusHoldExecute
       OnUpdate = ActionStatusHoldUpdate
     end
@@ -1664,8 +1677,8 @@ object FormMain: TFormMain
       Category = 'Find'
       Caption = 'Next untranslated'
       Hint = 'Find the next untranslated item'
-      ImageIndex = 50
-      ShortCut = 24654
+      ImageIndex = 10
+      ShortCut = 16462
       OnExecute = ActionGotoNextUntranslatedExecute
       OnUpdate = ActionHasModulesUpdate
     end
@@ -1736,7 +1749,7 @@ object FormMain: TFormMain
       Tag = 2
       Category = 'Find'
       Caption = 'Don'#39't translate'
-      ImageIndex = 9
+      ImageIndex = 12
       OnExecute = ActionGotoNextStatusExecute
     end
     object ActionGotoNextState: TAction
@@ -1748,14 +1761,14 @@ object FormMain: TFormMain
     object ActionGotoNextStateNew: TAction
       Category = 'Find'
       Caption = 'New'
-      ImageIndex = 10
+      ImageIndex = 50
       OnExecute = ActionGotoNextStateExecute
     end
     object ActionGotoNextStateExisting: TAction
       Tag = 1
       Category = 'Find'
       Caption = 'Existing'
-      ImageIndex = 50
+      ImageIndex = 10
       OnExecute = ActionGotoNextStateExecute
     end
     object ActionGotoNextStateUnused: TAction
@@ -1804,6 +1817,10 @@ object FormMain: TFormMain
       Hint = 'About...'
       ImageIndex = 57
       OnExecute = ActionAboutExecute
+    end
+    object ActionImportCSV: TAction
+      Category = 'Import'
+      Caption = 'Import CSV...'
     end
   end
   object OpenDialogProject: TOpenDialog
@@ -1884,43 +1901,6 @@ object FormMain: TFormMain
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Left = 448
     Top = 412
-  end
-  object StyleRepository: TcxStyleRepository
-    Left = 156
-    Top = 296
-    PixelsPerInch = 96
-    object StyleNormal: TcxStyle
-    end
-    object StyleComplete: TcxStyle
-      AssignedValues = [svTextColor]
-      TextColor = 16742656
-    end
-    object StyleNeedTranslation: TcxStyle
-    end
-    object StyleDontTranslate: TcxStyle
-      AssignedValues = [svColor, svTextColor]
-      Color = 15132390
-      TextColor = clGray
-    end
-    object StyleHold: TcxStyle
-      AssignedValues = [svColor]
-      Color = 15132390
-    end
-    object StyleSelected: TcxStyle
-      AssignedValues = [svColor, svTextColor]
-      Color = clHighlight
-      TextColor = clHighlightText
-    end
-    object StyleFocused: TcxStyle
-      AssignedValues = [svColor, svTextColor]
-      Color = clHighlight
-      TextColor = clHighlightText
-    end
-    object StyleInactive: TcxStyle
-      AssignedValues = [svColor, svTextColor]
-      Color = 12884335
-      TextColor = clBlack
-    end
   end
   object PopupMenuBookmark: TdxRibbonPopupMenu
     BarManager = BarManager
@@ -2049,5 +2029,12 @@ object FormMain: TFormMain
     Left = 380
     Top = 300
     PixelsPerInch = 96
+  end
+  object TimerToast: TTimer
+    Enabled = False
+    Interval = 2000
+    OnTimer = TimerToastTimer
+    Left = 616
+    Top = 200
   end
 end

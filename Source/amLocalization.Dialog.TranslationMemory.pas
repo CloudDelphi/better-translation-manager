@@ -91,6 +91,7 @@ uses
   amProgress,
   amLocalization.Settings,
   amLocalization.Data.Main,
+  amLocalization.Dialog.TranslationMemory.SelectFileFormat,
   amLocalization.TranslationMemory.FileFormats,
   amLocalization.TranslationMemory.FileFormats.TMX;
 
@@ -229,8 +230,10 @@ var
   Res: Word;
   Stats, OneStats: TTranslationMemoryMergeStats;
   Filename: string;
-  TranslationMemoryFileFormatClass: TTranslationMemoryFileFormatClass;
-  TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
+  FileFormatClasses: TTranslationMemoryFileFormatClasses;
+  FileFormatClass: TTranslationMemoryFileFormatClass;
+  FileFormat: TTranslationMemoryFileFormat;
+  FormSelectFileFormat: TFormSelectFileFormat;
   DuplicateAction: TTranslationMemoryDuplicateAction;
   Progress: IProgress;
   MergeFile: boolean;
@@ -284,20 +287,37 @@ begin
 
     MergeFile := Merge;
 
-    TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(OpenDialogTMX.FileName, ffcLoad, TTranslationMemoryFileFormatTMX);
-    Assert(TranslationMemoryFileFormatClass <> nil);
+    FileFormatClasses := TTranslationMemoryFileFormat.FindFileFormats(OpenDialogTMX.FileName, ffcLoad);
 
-    TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
+    if (Length(FileFormatClasses) = 0) then
+      Exit;
+
+    if (Length(FileFormatClasses) > 1) then
+    begin
+      FormSelectFileFormat := TFormSelectFileFormat.Create(nil);
+      try
+        FileFormatClass := FormSelectFileFormat.Execute(FileFormatClasses);
+      finally
+        FormSelectFileFormat.Free;
+      end;
+      if (FileFormatClass = nil) then
+        Exit;
+    end else
+      FileFormatClass := FileFormatClasses[0];
+
+    Assert(FileFormatClass <> nil);
+
+    FileFormat := FileFormatClass.Create(FDataModuleTranslationMemory);
     try
       for Filename in OpenDialogTMX.Files do
       begin
         if (Progress <> nil) then
           Progress.AdvanceProgress;
 
-        if (not TranslationMemoryFileFormat.Prepare(Filename)) then
+        if (not FileFormat.Prepare(Filename)) then
           break;
 
-        OneStats := TranslationMemoryFileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
+        OneStats := FileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
 
         MergeFile := True; // Additional files will be merged regardless of choice
 
@@ -310,7 +330,7 @@ begin
           break;
       end;
     finally
-      TranslationMemoryFileFormat.Free;
+      FileFormat.Free;
     end;
 
     if (not Merge) then

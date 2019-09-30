@@ -13,14 +13,14 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.Menus, Vcl.StdCtrls, System.Actions,
-  Vcl.ActnList,
+  Vcl.ActnList, Vcl.ExtCtrls,
 
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxContainer,
   cxEdit, dxLayoutcxEditAdapters, dxLayoutContainer, dxLayoutControlAdapters, cxButtons,
   cxListView, cxLabel, cxClasses, dxLayoutControl, cxCheckBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
 
   amLocalization.Dialog,
-  amLocalization.Model, Vcl.ExtCtrls;
+  amLocalization.Model;
 
 type
   TDuplicateAction = (daPrompt, daFirst, daFirstAll, daSkip, daSkipAll, daAbort);

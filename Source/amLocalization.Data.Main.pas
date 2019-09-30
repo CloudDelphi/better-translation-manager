@@ -17,7 +17,7 @@ uses
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels, cxEditRepositoryItems,
   cxDBExtLookupComboBox, cxImageList,
-  amLocalization.Model;
+  amLocalization.Model, cxTL;
 
 type
   TDataModuleMain = class(TDataModule)
@@ -49,6 +49,16 @@ type
     ImageListState: TcxImageList;
     ImageListSmall: TcxImageList;
     ImageListLarge: TcxImageList;
+    StyleRepository: TcxStyleRepository;
+    StyleDefault: TcxStyle;
+    StyleComplete: TcxStyle;
+    StyleNeedTranslation: TcxStyle;
+    StyleDontTranslate: TcxStyle;
+    StyleHold: TcxStyle;
+    StyleSelected: TcxStyle;
+    StyleFocused: TcxStyle;
+    StyleInactive: TcxStyle;
+    StyleProposed: TcxStyle;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);

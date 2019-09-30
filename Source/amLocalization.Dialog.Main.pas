@@ -183,12 +183,6 @@ type
     ActionGotoNextUntranslated: TAction;
     OpenDialogEXE: TOpenDialog;
     ActionImportFile: TAction;
-    StyleRepository: TcxStyleRepository;
-    StyleNormal: TcxStyle;
-    StyleComplete: TcxStyle;
-    StyleNeedTranslation: TcxStyle;
-    StyleDontTranslate: TcxStyle;
-    StyleHold: TcxStyle;
     dxBarSubItem1: TdxBarSubItem;
     dxBarButton18: TdxBarButton;
     ActionImportFileSource: TAction;
@@ -201,7 +195,6 @@ type
     dxBarButton22: TdxBarButton;
     BarButtonTMAdd: TdxBarButton;
     BarButtonTMLookup: TdxBarButton;
-    StyleSelected: TcxStyle;
     PanelModules: TPanel;
     LayoutControlModulesGroup_Root: TdxLayoutGroup;
     LayoutControlModules: TdxLayoutControl;
@@ -228,7 +221,6 @@ type
     ActionEditMark: TAction;
     BarManagerBarMark: TdxBar;
     ButtonItemBookmark: TdxBarButton;
-    StyleFocused: TcxStyle;
     dxLayoutItem3: TdxLayoutItem;
     LabelCountTranslatedPercent: TcxLabel;
     dxLayoutGroup1: TdxLayoutGroup;
@@ -273,9 +265,10 @@ type
     ScreenTipTranslationMemory: TdxScreenTip;
     dxBarButton35: TdxBarButton;
     ActionAbout: TAction;
-    StyleInactive: TcxStyle;
     TaskDialogTranslate: TTaskDialog;
     PopupMenuTranslateProviders: TdxRibbonPopupMenu;
+    ActionImportCSV: TAction;
+    TimerToast: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -337,7 +330,7 @@ type
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
     procedure ActionTranslationMemoryExecute(Sender: TObject);
-    procedure TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
+    procedure TreeListGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
     procedure TreeListItemsClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionGotoNextWarningExecute(Sender: TObject);
@@ -377,6 +370,8 @@ type
     procedure TreeListModulesSelectionChanged(Sender: TObject);
     procedure StatusBarPanels1Click(Sender: TObject);
     procedure PopupMenuTranslateProvidersPopup(Sender: TObject);
+    procedure TimerToastTimer(Sender: TObject);
+    procedure StatusBarHint(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -386,6 +381,7 @@ type
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
+    FRefreshingModuleStats: boolean;
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
   private
@@ -414,11 +410,19 @@ type
     FHintColumn: TcxTreeListColumn;
     procedure HideHint;
   private
+    // Toast messages
+    FToastMessage: string;
+    procedure QueueToast(const Msg: string);
+    procedure DismissToast; overload;
+    procedure DismissToast(const Msg: string); overload;
+  private
     // Warnings
     FWarningCount: integer;
   private
     procedure SaveSettings;
-    procedure LoadSettings;
+    procedure ApplySettings;
+    procedure ApplyCustomSettings;
+    procedure ApplyListStyles;
     function QueueRestart(Immediately: boolean = False): boolean;
   private
     // Hints
@@ -505,7 +509,7 @@ type
     procedure LoadFocusedPropertyNode;
     procedure ReloadNode(Node: TcxTreeListNode);
     procedure ReloadProperty(Prop: TLocalizerProperty);
-    procedure DisplayModuleStats;
+    procedure RefreshModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
     procedure TranslationAdded(Prop: TLocalizerProperty);
   protected
@@ -514,7 +518,7 @@ type
     procedure UnlockUpdates;
     function CheckSave: boolean;
     procedure ClearDependents;
-    function GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean = False): boolean;
+    function GotoNext(Predicate: TLocalizerPropertyDelegate; DisplayNotFound: boolean = True; FromStart: boolean = False; AutoWrap: boolean = True): boolean;
     procedure UpdateProjectModifiedIndicator;
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile: boolean;
@@ -615,7 +619,9 @@ uses
   amLocalization.Dialog.Feedback;
 
 resourcestring
+  sLocalizerFindNone = 'None found';
   sLocalizerFindNoMore = 'No more found';
+  sLocalizerFindWrapAround = 'Reached end, continued from start';
 
 resourcestring
   sProjectUpdatedTitle = 'Project updated';
@@ -637,10 +643,39 @@ resourcestring
   sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 
 const
-  ImageIndexBookmark0 = 27;
-  ImageIndexBookmarkA = 37;
-  ImageIndexModified = 44;
-  ImageIndexNotModified = -1;
+  ImageIndexAbout               = 57;
+  ImageIndexInfo                = 58;
+  ImageIndexBookmark0           = 27;
+  ImageIndexBookmarkA           = 37;
+  ImageIndexModified            = 44;
+  ImageIndexNotModified         = -1;
+
+const
+  NodeImageIndexStateWarning    = 0;
+  NodeImageIndexNew             = 0;
+  NodeImageIndexUnused          = 1;
+  NodeImageIndexDontTranslate   = 2;
+  NodeImageIndexProposed        = 3;
+  NodeImageIndexTranslated      = 4;
+  NodeImageIndexHold            = 5;
+  NodeImageIndexNotTranslated   = 6;
+  NodeImageIndexObsolete        = 7;
+  NodeImageIndexComplete25      = 8;
+  NodeImageIndexComplete50      = 9;
+  NodeImageIndexComplete75      = 10;
+
+resourcestring
+  sNodeImageHintNew = 'Not translated. Added by last refresh';
+  sNodeImageHintUnused = 'No longer in use';
+  sNodeImageHintDontTranslate = 'Should not be translated';
+  sNodeImageHintProposed = 'Translation has been proposed';
+  sNodeImageHintTranslated = 'Has been translated';
+  sNodeImageHintHold = 'Placed on hold';
+  sNodeImageHintNotTranslated = 'Not translated';
+  sNodeImageHintObsolete = 'Source value has changed since translation';
+  sNodeImageHintComplete25 = 'Approximately 25% has been translated';
+  sNodeImageHintComplete50 = 'Approximately 50% has been translated';
+  sNodeImageHintComplete75 = 'Approximately 75% has been translated';
 
 const
   StatusBarPanelHint = 0;
@@ -854,14 +889,10 @@ begin
   FSkin := '';
   FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
 
-  // Not possible to set [fsBold] at design time without also setting font name.
-  StyleFocused.Font.Assign(TreeListItems.Font);
-  StyleFocused.Font.Style := [fsBold];
-
   if (TranslationManagerSettings.System.SafeMode) then
     Caption := Caption + ' [SAFE MODE]';
 
-  LoadSettings;
+  ApplySettings;
 
   // Load ribbon banner
   LoadBanner;
@@ -897,7 +928,56 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.LoadSettings;
+procedure TFormMain.ApplyListStyles;
+
+  procedure ApplyListStyle(AListStyle: TListStyle; Style: TcxStyle);
+  var
+    ListStyle: TTranslationManagerListStyleSettings;
+  begin
+    ListStyle := TranslationManagerSettings.Editor.Style[AListStyle];
+
+    if (ListStyle.ColorBackground <> clDefault) then
+      Style.Color := ListStyle.ColorBackground
+    else
+    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorBackground <> clDefault) then
+      Style.Color := TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorBackground
+    else
+      Style.Color := clWhite;
+
+    if (ListStyle.ColorText <> clDefault) then
+      Style.TextColor := ListStyle.ColorText
+    else
+    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorText <> clDefault) then
+      Style.TextColor := TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorText
+    else
+      Style.TextColor := clBlack;
+
+    if (ListStyle.Bold <> -1) then
+    begin
+      if (ListStyle.Bold = 1) then
+        Style.Font.Style := Style.Font.Style + [fsBold]
+      else
+        Style.Font.Style := Style.Font.Style - [fsBold];
+    end else
+    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].Bold = 1) then
+      Style.Font.Style := Style.Font.Style + [fsBold]
+    else
+      Style.Font.Style := Style.Font.Style - [fsBold];
+  end;
+
+begin
+  ApplyListStyle(ListStyleDefault, DataModuleMain.StyleDefault);
+  ApplyListStyle(ListStyleSelected, DataModuleMain.StyleSelected);
+  ApplyListStyle(ListStyleInactive, DataModuleMain.StyleInactive);
+  ApplyListStyle(ListStyleFocused, DataModuleMain.StyleFocused);
+  ApplyListStyle(ListStyleNotTranslated, DataModuleMain.StyleNeedTranslation);
+  ApplyListStyle(ListStyleProposed, DataModuleMain.StyleProposed);
+  ApplyListStyle(ListStyleTranslated, DataModuleMain.StyleComplete);
+  ApplyListStyle(ListStyleHold, DataModuleMain.StyleHold);
+  ApplyListStyle(ListStyleDontTranslate, DataModuleMain.StyleDontTranslate);
+end;
+
+procedure TFormMain.ApplySettings;
 begin
   TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
   SpellChecker.UseThreadedLoad := (not TranslationManagerSettings.System.SafeMode);
@@ -928,7 +1008,27 @@ begin
 
   RibbonMain.TabAreaToolbar.Visible := not TranslationManagerSettings.System.HideFeedback;
 
+  ApplyCustomSettings;
+end;
+
+procedure TFormMain.ApplyCustomSettings;
+begin
   SetSkin(TranslationManagerSettings.System.Skin);
+
+  ApplyListStyles;
+
+  if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
+  begin
+    TreeListModules.Images := DataModuleMain.ImageListTree;
+    TreeListItems.Images := DataModuleMain.ImageListTree;
+  end else
+  begin
+    TreeListModules.Images := nil;
+    TreeListItems.Images := nil;
+  end;
+  // Force redraw
+  TreeListItems.LayoutChanged;
+  TreeListModules.LayoutChanged;
 end;
 
 procedure TFormMain.SaveSettings;
@@ -939,6 +1039,7 @@ begin
 
   TranslationManagerSettings.Forms.Main.PrepareSettings(Self);
 
+  // TreeList layout and filters
   TreeListModules.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.ModuleTree.Name);
   TranslationManagerSettings.Layout.ModuleTree.WriteFilter(TreeListModules.Filter);
   TranslationManagerSettings.Layout.ModuleTree.Valid := True;
@@ -1594,6 +1695,44 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.QueueToast(const Msg: string);
+begin
+  TimerToast.Enabled := False;
+  FToastMessage := Msg;
+  StatusBar.Panels[StatusBarPanelHint].Text := FToastMessage;
+  TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := ImageIndexInfo;
+  TimerToast.Enabled := True;
+end;
+
+procedure TFormMain.DismissToast;
+begin
+  DismissToast(FToastMessage);
+end;
+
+procedure TFormMain.DismissToast(const Msg: string);
+begin
+  if (Msg = '') then
+    Exit;
+
+  if (StatusBar.Panels[StatusBarPanelHint].Text = Msg) then
+    StatusBar.Panels[StatusBarPanelHint].Text := '';
+
+  if (FToastMessage = Msg) then
+  begin
+    TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := -1;
+    FToastMessage := '';
+    TimerToast.Enabled := False;
+  end;
+end;
+
+
+procedure TFormMain.TimerToastTimer(Sender: TObject);
+begin
+  DismissToast;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.CreateTranslationMemoryPeeker(Force: boolean);
 begin
   if (not TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery) or (TranslationManagerSettings.System.SafeMode) then
@@ -1753,12 +1892,11 @@ begin
   // Otherwise it must be from a Set boomark action.
   if (ActionGotoBookmarkAny.Visible) then
   begin
-    if (not GotoNext(
+    GotoNext(
       function(Prop: TLocalizerProperty): boolean
       begin
         Result := (Flag in Prop.Flags);
-      end, Flag in [FlagBookmark0..FlagBookmark9])) then
-      ShowMessage(sLocalizerFindNoMore);
+      end, True, Flag in [FlagBookmark0..FlagBookmark9]);
   end else
   begin
     // Change the generic set boomark action to indicate what kind of bookmark it will set
@@ -2095,12 +2233,11 @@ end;
 procedure TFormMain.ActionGotoBookmarkAnyExecute(Sender: TObject);
 begin
   FLastBookmark := -1;
-  if (not GotoNext(
+  GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := (Prop.Flags * [FlagBookmark0..FlagBookmarkF] <> []);
-    end)) then
-    ShowMessage(sLocalizerFindNoMore);
+    end);
 end;
 
 procedure TFormMain.ActionGotoNextBookmarkExecute(Sender: TObject);
@@ -2127,27 +2264,25 @@ end;
 
 procedure TFormMain.ActionGotoNextStateExecute(Sender: TObject);
 begin
-  if (not GotoNext(
+  GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := (TLocalizerItemState(TAction(Sender).Tag) in Prop.State);
-    end)) then
-    ShowMessage(sLocalizerFindNoMore);
+    end);
 end;
 
 procedure TFormMain.ActionGotoNextStatusExecute(Sender: TObject);
 begin
-  if (not GotoNext(
+  GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := (Prop.EffectiveStatus = TLocalizerItemStatus(TAction(Sender).Tag));
-    end)) then
-    ShowMessage(sLocalizerFindNoMore);
+    end);
 end;
 
 procedure TFormMain.ActionGotoNextUntranslatedExecute(Sender: TObject);
 begin
-  if (not GotoNext(
+  GotoNext(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
@@ -2156,13 +2291,12 @@ begin
         Exit(False);
 
       Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
-    end)) then
-    ShowMessage(sLocalizerFindNoMore);
+    end);
 end;
 
 procedure TFormMain.ActionGotoNextWarningExecute(Sender: TObject);
 begin
-  if (not GotoNext(
+  GotoNext(
     function(Prop: TLocalizerProperty): boolean
     var
       Translation: TLocalizerTranslation;
@@ -2171,8 +2305,7 @@ begin
         Exit(False);
 
       Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
-    end)) then
-    ShowMessage(sLocalizerFindNoMore);
+    end);
 end;
 
 procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
@@ -2912,7 +3045,8 @@ begin
       Exit;
 
     CreateTranslationMemoryPeeker(False);
-    Skin := TranslationManagerSettings.System.Skin;
+
+    ApplyCustomSettings;
 
     if (FormSettings.RestartRequired) then
     begin
@@ -3699,7 +3833,7 @@ procedure TFormMain.UpdateTargetLanguage;
 begin
   FLocalizerDataSource.TargetLanguage := TargetLanguage;
   TreeListModules.FullRefresh;
-  DisplayModuleStats;
+  RefreshModuleStats;
 end;
 
 // -----------------------------------------------------------------------------
@@ -3980,6 +4114,10 @@ var
 begin
   InvalidateTranslatedCount(Module);
 
+  // Refresh stats for current module
+  if (Module = FocusedModule) then
+    RefreshModuleStats;
+
   Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
 
   if (Node <> nil) then
@@ -4002,6 +4140,7 @@ begin
   if (Sep <> 0) then
     s := Copy(s, 1, Sep-1);
 
+  DismissToast;
   StatusBar.Panels[StatusBarPanelHint].Text := s;
   StatusBar.Update;
 end;
@@ -4021,6 +4160,11 @@ begin
     if (s <> '') then
       HintStr := s;
   end;
+end;
+
+procedure TFormMain.StatusBarHint(Sender: TObject);
+begin
+  DismissToast;
 end;
 
 procedure TFormMain.StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -4055,6 +4199,17 @@ end;
 procedure TFormMain.StatusBarPanels1Click(Sender: TObject);
 begin
   // TODO : Display validation warning overview
+
+  GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    var
+      Translation: TLocalizerTranslation;
+    begin
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
+        Exit(False);
+
+      Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
+    end, True, True);
 end;
 
 // -----------------------------------------------------------------------------
@@ -4145,7 +4300,7 @@ begin
 
   // Current module stats has updated - refresh display
   if (Module = FLocalizerDataSource.Module) then
-    DisplayModuleStats;
+    RefreshModuleStats;
 end;
 
 procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
@@ -4169,7 +4324,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.GotoNext(Predicate: TLocalizerPropertyDelegate; FromStart: boolean): boolean;
+function TFormMain.GotoNext(Predicate: TLocalizerPropertyDelegate; DisplayNotFound, FromStart, AutoWrap: boolean): boolean;
 var
   Module: TLocalizerModule;
   Prop: TLocalizerProperty;
@@ -4177,6 +4332,7 @@ var
   PropNode: TcxTreeListNode;
 begin
   SaveCursor(crHourGlass);
+  DismissToast(sLocalizerFindWrapAround);
 
   Result := False;
 
@@ -4244,6 +4400,21 @@ begin
 
     ModuleNode := ModuleNode.GetNextSiblingVisible;
     PropNode := nil;
+
+    if (ModuleNode = nil) and (AutoWrap) and (not FromStart) then
+    begin
+      AutoWrap := False;
+      QueueToast(sLocalizerFindWrapAround);
+      ModuleNode := TreeListModules.Root.GetFirstChildVisible;
+    end;
+  end;
+
+  if (DisplayNotFound) then
+  begin
+    if (FromStart) then
+      ShowMessage(sLocalizerFindNone)
+    else
+      ShowMessage(sLocalizerFindNoMore);
   end;
 
   // The following finds the next untranslated in physical order.
@@ -4683,8 +4854,7 @@ begin
     MessageDlg(Msg, mtWarning, [mbOK], 0);
 end;
 
-procedure TFormMain.TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas;
-  AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
+procedure TFormMain.TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
 var
   Prop: TLocalizerProperty;
   Triangle: array[0..2] of TPoint;
@@ -4704,10 +4874,8 @@ begin
     Exit;
   end;
 
-  ACanvas.FillRect(AViewInfo.BoundsRect);
-
   // Draw the default content
-  AViewInfo.EditViewInfo.PaintEx(ACanvas);
+  AViewInfo.Draw(ACanvas);
 
   // Draw a rectangle in the top right corner
   ACanvas.SaveDC;
@@ -4750,7 +4918,7 @@ begin
     Exit;
 
   if (AViewInfo.Node.Focused) or (AViewInfo.Node.Selected) then
-    ACanvas.FillRect(AViewInfo.BoundsRect, StyleSelected.Color)
+    ACanvas.FillRect(AViewInfo.BoundsRect, DataModuleMain.StyleSelected.Color)
   else
     ACanvas.FillRect(AViewInfo.BoundsRect, AViewInfo.ViewParams.Color);
 
@@ -4854,13 +5022,44 @@ begin
   TranslationAdded(Prop);
 end;
 
-procedure TFormMain.TreeListItemsGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
+procedure TFormMain.TreeListGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
 begin
-  if (not (ACell is TcxTreeListIndentCellViewInfo)) or (TcxTreeListIndentCellViewInfo(ACell).Kind <> nikState) then
+  if (not (ACell is TcxTreeListIndentCellViewInfo)) then
     Exit;
 
-  AText := GetNodeValidationMessage(TcxTreeListIndentCellViewInfo(ACell).Node);
-  ANeedShow := (AText <> '');
+  if (Sender = TreeListItems) and (TcxTreeListIndentCellViewInfo(ACell).Kind = nikState) then
+  begin
+    AText := GetNodeValidationMessage(TcxTreeListIndentCellViewInfo(ACell).Node);
+    ANeedShow := (AText <> '');
+  end else
+  if (TcxTreeListIndentCellViewInfo(ACell).Kind = nikImage) and (TranslationManagerSettings.Editor.StatusGlyphHints) then
+  begin
+    case TcxTreeListIndentCellViewInfo(ACell).Node.ImageIndex of
+      NodeImageIndexNew:
+        AText := sNodeImageHintNew;
+      NodeImageIndexUnused:
+        AText := sNodeImageHintUnused;
+      NodeImageIndexDontTranslate:
+        AText := sNodeImageHintDontTranslate;
+      NodeImageIndexProposed:
+        AText := sNodeImageHintProposed;
+      NodeImageIndexTranslated:
+        AText := sNodeImageHintTranslated;
+      NodeImageIndexHold:
+        AText := sNodeImageHintHold;
+      NodeImageIndexNotTranslated:
+        AText := sNodeImageHintNotTranslated;
+      NodeImageIndexObsolete:
+        AText := sNodeImageHintObsolete;
+      NodeImageIndexComplete25:
+        AText := sNodeImageHintComplete25;
+      NodeImageIndexComplete50:
+        AText := sNodeImageHintComplete50;
+      NodeImageIndexComplete75:
+        AText := sNodeImageHintComplete75;
+    end;
+    ANeedShow := (AText <> '');
+  end;
 end;
 
 procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode;
@@ -4874,6 +5073,9 @@ begin
   if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex, tlitStateIndex])) then
     Exit;
 
+  if (not TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
+    Exit;
+
   Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode));
   Assert(Prop <> nil);
 
@@ -4883,7 +5085,7 @@ begin
   if (AIndexType = tlitStateIndex) then
   begin
     if (Translation <> nil) and (Translation.Warnings <> []) then
-      AIndex := 0;
+      AIndex := NodeImageIndexStateWarning;
 
     Exit;
   end;
@@ -4891,31 +5093,31 @@ begin
   // Note: Image indicates effective status
 
   if (Prop.IsUnused) then
-    AIndex := 1
+    AIndex := NodeImageIndexUnused
   else
   if (ItemStateNew in Prop.State) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Translation = nil) then
-    AIndex := 0
+    AIndex := NodeImageIndexNew
   else
   if (Prop.EffectiveStatus = ItemStatusDontTranslate) then
-    AIndex := 2
+    AIndex := NodeImageIndexDontTranslate
   else
   if (Prop.EffectiveStatus = ItemStatusHold) then
-    AIndex := 5
+    AIndex := NodeImageIndexHold
   else
   if (Translation <> nil) and (Translation.Status <> tStatusPending) then
   begin
     if (Translation.Status = tStatusProposed) then
-      AIndex := 3
+      AIndex := NodeImageIndexProposed
     else
     if (Translation.Status = tStatusTranslated) then
-      AIndex := 4
+      AIndex := NodeImageIndexTranslated
     else
     if (Translation.Status = tStatusObsolete) then
-      AIndex := 7
+      AIndex := NodeImageIndexObsolete
     else
       AIndex := -1; // Should never happen
   end else
-    AIndex := 6;
+    AIndex := NodeImageIndexNotTranslated;
 end;
 
 procedure TFormMain.TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -5137,17 +5339,17 @@ var
 begin
   if (ANode.Selected) and (not Sender.Focused) then
   begin
-    AStyle := StyleInactive;
+    AStyle := DataModuleMain.StyleInactive;
     Exit;
   end else
   if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then
   begin
-    AStyle := StyleSelected;
+    AStyle := DataModuleMain.StyleSelected;
     Exit;
   end else
   if (Sender.Focused) and (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (not AColumn.Editing) then
   begin
-    AStyle := StyleFocused;
+    AStyle := DataModuleMain.StyleFocused;
     Exit;
   end;
 
@@ -5155,13 +5357,13 @@ begin
 
   if (Prop.IsUnused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
   begin
-    AStyle := StyleDontTranslate;
+    AStyle := DataModuleMain.StyleDontTranslate;
     Exit;
   end;
 
   if (Prop.EffectiveStatus = ItemStatusHold) then
   begin
-    AStyle := StyleHold;
+    AStyle := DataModuleMain.StyleHold;
     Exit;
   end;
 
@@ -5169,9 +5371,13 @@ begin
     Translation := nil;
 
   if (Translation <> nil) and (Translation.IsTranslated) then
-    AStyle := StyleComplete
-  else
-    AStyle := StyleNeedTranslation;
+  begin
+    if (Translation.Status = TTranslationStatus.tStatusProposed) then
+      AStyle := DataModuleMain.StyleProposed
+    else
+      AStyle := DataModuleMain.StyleComplete;
+  end else
+    AStyle := DataModuleMain.StyleNeedTranslation;
 end;
 
 procedure TFormMain.TreeListModulesEnter(Sender: TObject);
@@ -5189,29 +5395,38 @@ begin
 //
 end;
 
-procedure TFormMain.DisplayModuleStats;
+procedure TFormMain.RefreshModuleStats;
 var
   TranslatedCount: integer;
   TranslatableCount: integer;
   PendingCount: integer;
 begin
-  if (FLocalizerDataSource.Module <> nil) then
-  begin
-    TranslatedCount := GetTranslatedCount(FLocalizerDataSource.Module);
-    TranslatableCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate];
-  end else
-  begin
-    TranslatedCount := 0;
-    TranslatableCount := 0;
-  end;
-  PendingCount := TranslatableCount - TranslatedCount;
+  // Prevent recursion - GetTranslatedCount will call RefreshModuleStats
+  if (FRefreshingModuleStats) then
+    Exit;
 
-  LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
-  LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
-  if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
-    LabelCountTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
-  else
-    LabelCountTranslatedPercent.Caption := '';
+  FRefreshingModuleStats := True;
+  try
+    if (FLocalizerDataSource.Module <> nil) then
+    begin
+      TranslatedCount := GetTranslatedCount(FLocalizerDataSource.Module);
+      TranslatableCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate];
+    end else
+    begin
+      TranslatedCount := 0;
+      TranslatableCount := 0;
+    end;
+    PendingCount := TranslatableCount - TranslatedCount;
+
+    LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
+    LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
+    if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
+      LabelCountTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
+    else
+      LabelCountTranslatedPercent.Caption := '';
+  finally
+    FRefreshingModuleStats := False;
+  end;
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
@@ -5225,10 +5440,13 @@ begin
   if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
     Exit;
 
+  if (not TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
+    Exit;
+
   Module := TLocalizerModule(ANode.Data);
 
   if (Module.IsUnused) then
-    AIndex := 1
+    AIndex := NodeImageIndexUnused
   else
   if (Module.EffectiveStatus = ItemStatusTranslate) then
   begin
@@ -5240,27 +5458,27 @@ begin
       Completeness := 100;
 
     if (Completeness = 100) then        // 100% complete
-      AIndex := 4
+      AIndex := NodeImageIndexTranslated
     else
     if (Completeness >= 66) then        // 66%..99% complete
-      AIndex := 10
+      AIndex := NodeImageIndexComplete75
     else
     if (Completeness >= 33) then        // 33%..65% complete
-      AIndex := 9
+      AIndex := NodeImageIndexComplete50
     else
     if (TranslatedCount > 0) then       // >0%..32% complete
-      AIndex := 8
+      AIndex := NodeImageIndexComplete25
     else
     if (ItemStateNew in Module.State) then
-      AIndex := 0
+      AIndex := NodeImageIndexNew
     else
-      AIndex := 6;
+      AIndex := NodeImageIndexNotTranslated;
   end else
   if (Module.EffectiveStatus = ItemStatusDontTranslate) then
-    AIndex := 2
+    AIndex := NodeImageIndexDontTranslate
   else
   if (Module.EffectiveStatus = ItemStatusHold) then
-    AIndex := 5
+    AIndex := NodeImageIndexHold
   else
     AIndex := -1;
 end;
@@ -5305,7 +5523,7 @@ begin
     TreeListItems.TopNode.Focused := True;
   end;
 
-  DisplayModuleStats;
+  RefreshModuleStats;
 end;
 
 procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
@@ -5314,17 +5532,17 @@ var
 begin
   if (ANode.Selected) and (not Sender.Focused) then
   begin
-    AStyle := StyleInactive;
+    AStyle := DataModuleMain.StyleInactive;
     Exit;
   end else
   if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then
   begin
-    AStyle := StyleSelected;
+    AStyle := DataModuleMain.StyleSelected;
     Exit;
   end else
   if (Sender.Focused) and (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (not AColumn.Editing) then
   begin
-    AStyle := StyleFocused;
+    AStyle := DataModuleMain.StyleFocused;
     Exit;
   end;
 
@@ -5332,20 +5550,20 @@ begin
 
   if (Module.IsUnused) or (Module.EffectiveStatus = ItemStatusDontTranslate) then
   begin
-    AStyle := StyleDontTranslate;
+    AStyle := DataModuleMain.StyleDontTranslate;
     Exit;
   end;
 
   if (Module.EffectiveStatus = ItemStatusHold) then
   begin
-    AStyle := StyleHold;
+    AStyle := DataModuleMain.StyleHold;
     Exit;
   end;
 
   if (GetTranslatedCount(Module) = Module.StatusCount[ItemStatusTranslate]) then
-    AStyle := StyleComplete
+    AStyle := DataModuleMain.StyleComplete
   else
-    AStyle := StyleNeedTranslation;
+    AStyle := DataModuleMain.StyleNeedTranslation;
 end;
 
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);

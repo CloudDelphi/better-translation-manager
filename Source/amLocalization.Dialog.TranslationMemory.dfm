@@ -96,10 +96,6 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Width = 702
     Visible = False
     ExplicitWidth = 702
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 680
-      Width = 680
-    end
   end
   inherited PanelMain: TPanel
     Width = 702

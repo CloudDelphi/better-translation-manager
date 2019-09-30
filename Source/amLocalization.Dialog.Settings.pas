@@ -26,12 +26,12 @@ uses
   dxGDIPlusClasses, cxGridViewLayoutContainer,
   cxGridLayoutView, cxGridCustomLayoutView, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit, cxGridLevel, cxGridCustomTableView,
   cxGridTableView, cxGridCustomView, cxGrid, cxDropDownEdit, Vcl.StdCtrls, cxButtons, cxMaskEdit, cxImageComboBox, dxLayoutControl,
-  cxPC,
+  cxPC, dxColorEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
 
   dxRibbonSkins,
   dxSpellChecker,
 
-  amLocalization.Dialog, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox;
+  amLocalization.Dialog, dxColorDialog;
 
 type
   TFormSettings = class(TFormDialog)
@@ -62,7 +62,6 @@ type
     CheckBoxAtstart: TcxCheckBox;
     cxLabel2: TcxLabel;
     ImageComboBoxSkin: TcxImageComboBox;
-    LabelApperance: TcxLabel;
     ButtonDialogsSuppressReset: TcxButton;
     dxLayoutGroup1: TdxLayoutGroup;
     LayoutControlGeneralItem1: TdxLayoutItem;
@@ -71,11 +70,10 @@ type
     LayoutControlGeneralItem12: TdxLayoutItem;
     LayoutControlGeneralItem13: TdxLayoutItem;
     LayoutControlGroupStartup: TdxLayoutGroup;
-    LayoutControlGeneralItem14: TdxLayoutItem;
-    LayoutControlGeneralItem16: TdxLayoutItem;
-    LayoutControlGroupUserInterface: TdxLayoutGroup;
+    LayoutControlGeneralItem15: TdxLayoutItem;
+    LayoutGroupUserInterface: TdxLayoutGroup;
     LayoutControlGeneralGroup2: TdxLayoutGroup;
-    LayoutControlGeneralGroup3: TdxLayoutGroup;
+    LayoutGroup3: TdxLayoutGroup;
     LayoutControlGeneralItem11: TdxLayoutItem;
     LayoutControlGeneralGroup4: TdxLayoutGroup;
     TabSheetFileLocations: TcxTabSheet;
@@ -270,6 +268,37 @@ type
     cxLabel1: TcxLabel;
     LayoutGroupTranslatorMSTerminology: TdxLayoutGroup;
     dxLayoutGroup17: TdxLayoutGroup;
+    TabSheetAppearance: TcxTabSheet;
+    ActionCategoryAppearance: TAction;
+    ButtonCategoryAppearance: TcxButton;
+    LayoutControlColorsGroup_Root: TdxLayoutGroup;
+    LayoutControlColors: TdxLayoutControl;
+    dxLayoutItem48: TdxLayoutItem;
+    LabelListStyles: TcxLabel;
+    dxLayoutGroup18: TdxLayoutGroup;
+    dxLayoutGroup19: TdxLayoutGroup;
+    cxLabel15: TcxLabel;
+    GridColorsLevel: TcxGridLevel;
+    GridColors: TcxGrid;
+    dxLayoutItem49: TdxLayoutItem;
+    GridColorsTableView: TcxGridTableView;
+    GridColorsTableViewColumnName: TcxGridColumn;
+    GridColorsTableViewColumnText: TcxGridColumn;
+    GridColorsTableViewColumnBackground: TcxGridColumn;
+    GridColorsTableViewColumnSample: TcxGridColumn;
+    GridColorsTableViewColumnBold: TcxGridColumn;
+    ColorDialog: TdxColorDialog;
+    dxLayoutItem50: TdxLayoutItem;
+    CheckBoxDisplayStatusGlyphs: TcxCheckBox;
+    dxLayoutSeparatorItem5: TdxLayoutSeparatorItem;
+    dxLayoutItem51: TdxLayoutItem;
+    ButtonStyleReset: TcxButton;
+    dxLayoutItem52: TdxLayoutItem;
+    LabelApperance: TcxLabel;
+    dxLayoutItem53: TdxLayoutItem;
+    CheckBoxStatusGlyphHint: TcxCheckBox;
+    ActionEditStatusGlyphs: TAction;
+    ActionEditStatusHint: TAction;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -308,6 +337,18 @@ type
     procedure ComboBoxApplicationLanguagePropertiesEditValueChanged(Sender: TObject);
     procedure CheckBoxSingleInstancePropertiesChange(Sender: TObject);
     procedure ButtonRegisterFiletypesClick(Sender: TObject);
+    procedure GridColorsTableViewColumnTextCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure GridColorsTableViewColumnBackgroundCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure GridColorsTableViewColumnSampleCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure GridColorsTableViewColumnColorPropertiesInitPopup(Sender: TObject);
+    procedure GridColorsTableViewDataControllerAfterPost(ADataController: TcxCustomDataController);
+    procedure GridColorsTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
+    procedure ButtonStyleResetClick(Sender: TObject);
+    procedure ActionDummyExecute(Sender: TObject);
+    procedure ActionEditStatusHintUpdate(Sender: TObject);
   private
     type
       TSkinDetails = record
@@ -326,6 +367,12 @@ type
     FSpellChecker: TdxSpellChecker;
     FRibbonStyle: TdxRibbonStyle;
   private
+    function TranslateStyleBold(Index: integer): TFontStyles;
+    function TranslateStyleColor(Index: integer; TextColor: boolean): TColor; overload;
+    function TranslateStyleColor(ColorValue: Variant; TextColor: boolean): TColor; overload;
+    procedure OnColorsEditColorDefaultHandler(Sender: TObject);
+    procedure OnCustomColorClickHandler(Sender: TObject; AButtonIndex: Integer);
+  private
     procedure PopulateSkins;
     function GetSkin: string;
     procedure SetSkin(const value: string);
@@ -337,6 +384,9 @@ type
 
     procedure LoadFolders;
     procedure ApplyFolders;
+
+    procedure LoadStyles;
+    procedure ApplyStyles;
   protected
     procedure LoadSettings;
     procedure ApplySettings;
@@ -372,6 +422,9 @@ uses
   dxSpellCheckerAutoCorrectOptionsDialog,
 
   cxStorage,
+  dxColorGallery,
+  dxCoreGraphics,
+
 
   amShell,
   amCursorService,
@@ -395,6 +448,8 @@ type
   TcxExtLookupComboBoxCracker = class(TcxExtLookupComboBox);
 
 constructor TFormSettings.Create(Awner: TComponent);
+var
+  Style: TListStyle;
 resourcestring
   sLanguageSystemDefault = '(system default)';
 begin
@@ -405,6 +460,10 @@ begin
   TcxExtLookupComboBoxCracker(ComboBoxSourceLanguage).TextHint := sLanguageSystemDefault;
   TcxExtLookupComboBoxCracker(ComboBoxTargetLanguage).TextHint := sLanguageSystemDefault;
   TcxExtLookupComboBoxCracker(ComboBoxApplicationLanguage).TextHint := sLanguageSystemDefault;
+
+  GridColorsTableView.DataController.RecordCount := Ord(High(TListStyle))+1;
+  for Style := Low(TListStyle) to High(TListStyle) do
+    GridColorsTableView.DataController.Values[Ord(Style), 0] := TranslationManagerSettings.Editor.Style[Style].Name;
 end;
 
 destructor TFormSettings.Destroy;
@@ -425,10 +484,10 @@ var
   Index: integer;
 begin
   // Make sure Actions, Buttons and Tabsheet pages are in sync
-  for i := 0 to PanelCategory.ComponentCount-1 do
-    if (PanelCategory.Components[i] is TcxButton) then
+  for i := 0 to PanelCategory.ControlCount-1 do
+    if (PanelCategory.Controls[i] is TcxButton) then
     begin
-      Button := TcxButton(PanelCategory.Components[i]);
+      Button := TcxButton(PanelCategory.Controls[i]);
       Action := TAction(Button.Action);
 
       // Button tab order must equal Tabsheet order.
@@ -442,7 +501,8 @@ begin
     end;
 
   PageControl.HideTabs := True;
-  PageControl.ActivePage := TabSheetGeneral;
+  ActionCategoryGeneral.Execute;
+  // PageControl.ActivePage := TabSheetGeneral;
 
   LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Assign(Font);
   LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Style := [fsBold];
@@ -490,6 +550,13 @@ begin
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
   ComboBoxApplicationLanguage.EditValue := TranslationManagerSettings.System.ApplicationLanguage;
+
+  (*
+  ** Appearance
+  *)
+  LoadStyles;
+  ActionEditStatusGlyphs.Checked := TranslationManagerSettings.Editor.DisplayStatusGlyphs;
+  ActionEditStatusHint.Checked := TranslationManagerSettings.Editor.StatusGlyphHints;
 
   (*
   ** Translators section
@@ -548,6 +615,13 @@ begin
   TranslationManagerSettings.System.ApplicationLanguage := VarToLCID(ComboBoxApplicationLanguage.EditValue);
 
   (*
+  ** Appearance
+  *)
+  ApplyStyles;
+  TranslationManagerSettings.Editor.DisplayStatusGlyphs := ActionEditStatusGlyphs.Checked;
+  TranslationManagerSettings.Editor.StatusGlyphHints := ActionEditStatusHint.Checked;
+
+  (*
   ** Translators section
   *)
   TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
@@ -575,6 +649,95 @@ begin
   ** Advanced section
   *)
   TranslationManagerSettings.System.SingleInstance := CheckBoxSingleInstance.Checked;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSettings.LoadStyles;
+
+  procedure LoadStyle(ListStyle: TListStyle);
+  var
+    Style: TTranslationManagerListStyleSettings;
+    Index: integer;
+  begin
+    Style := TranslationManagerSettings.Editor.Style[ListStyle];
+    Index := Ord(ListStyle);
+
+    GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnSample.Index] := 'Lorem ipsum dolor';
+
+    if (Style.ColorBackground <> clDefault) then
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBackground.Index] := ColorToRGB(Style.ColorBackground)
+    else
+    if (ListStyle = ListStyleDefault) then
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBackground.Index] := clWhite
+    else
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBackground.Index] := Null;
+
+    if (Style.ColorText <> clDefault) then
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnText.Index] := ColorToRGB(Style.ColorText)
+    else
+    if (ListStyle = ListStyleDefault) then
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnText.Index] := clBlack
+    else
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnText.Index] := Null;
+
+    if (Style.Bold <> -1) then
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index] := (Style.Bold = 1)
+    else
+      GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index] := Null;
+  end;
+
+var
+  Style: TListStyle;
+begin
+  for Style := Low(TListStyle) to High(TListStyle) do
+    LoadStyle(Style);
+end;
+
+procedure TFormSettings.ApplyStyles;
+
+  procedure SaveStyle(ListStyle: TListStyle);
+  var
+    Style: TTranslationManagerListStyleSettings;
+    Index: integer;
+    Value: Variant;
+  begin
+    Style := TranslationManagerSettings.Editor.Style[ListStyle];
+    Index := Ord(ListStyle);
+
+    Value := GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBackground.Index];
+    if (VarIsOrdinal(Value)) and (Value <> clDefault) and ((Index <> 0) or (Value <> clWhite)) then
+      Style.ColorBackground := Value
+    else
+      Style.ColorBackground := clDefault;
+
+    Value := GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnText.Index];
+    if (VarIsOrdinal(Value)) and (Value <> clDefault) and ((Index <> 0) or (Value <> clBlack)) then
+      Style.ColorText := Value
+    else
+      Style.ColorText := clDefault;
+
+    if (not VarIsNull(GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index])) then
+    begin
+      if (GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index]) then
+        Style.Bold := 1
+      else
+        Style.Bold := 0;
+    end else
+      Style.Bold := -1;
+  end;
+
+var
+  Style: TListStyle;
+begin
+  for Style := Low(TListStyle) to High(TListStyle) do
+    SaveStyle(Style);
+end;
+
+procedure TFormSettings.ButtonStyleResetClick(Sender: TObject);
+begin
+  TranslationManagerSettings.Editor.Style.ResetSettings;
+  LoadStyles;
 end;
 
 // -----------------------------------------------------------------------------
@@ -639,6 +802,213 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function TFormSettings.TranslateStyleBold(Index: integer): TFontStyles;
+begin
+  if (not VarIsNull(GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index])) then
+  begin
+    if (GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBold.Index]) then
+      Result := [fsBold]
+    else
+      Result := [];
+  end else
+  if (not VarIsNull(GridColorsTableView.DataController.Values[0, GridColorsTableViewColumnBold.Index])) and
+    (GridColorsTableView.DataController.Values[0, GridColorsTableViewColumnBold.Index]) then
+    Result := [fsBold]
+  else
+    Result := [];
+end;
+
+function TFormSettings.TranslateStyleColor(ColorValue: Variant; TextColor: boolean): TColor;
+begin
+  if (not VarIsOrdinal(ColorValue)) or (ColorValue = clDefault) then
+  begin
+    if (TextColor) then
+      ColorValue := GridColorsTableView.DataController.Values[0, GridColorsTableViewColumnText.Index]
+    else
+      ColorValue := GridColorsTableView.DataController.Values[0, GridColorsTableViewColumnBackground.Index];
+  end;
+
+  if (not VarIsOrdinal(ColorValue)) or (ColorValue = clDefault) then
+  begin
+    if (TextColor) then
+      Result := clBlack
+    else
+      Result := clWhite;
+  end else
+    Result := ColorToRGB(ColorValue);
+end;
+
+function TFormSettings.TranslateStyleColor(Index: integer; TextColor: boolean): TColor;
+begin
+  if (TextColor) then
+    Result := TranslateStyleColor(GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnText.Index], TextColor)
+  else
+    Result := TranslateStyleColor(GridColorsTableView.DataController.Values[Index, GridColorsTableViewColumnBackground.Index], TextColor);
+end;
+
+procedure TFormSettings.GridColorsTableViewColumnSampleCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+  AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+var
+  r: TRect;
+begin
+  // Draw sample using current colors
+  r := AViewInfo.Bounds;
+  Inc(r.Left, 1);
+  ACanvas.Brush.Style := bsSolid;
+  ACanvas.Brush.Color := TranslateStyleColor(AViewInfo.GridRecord.Index, False);
+  ACanvas.FillRect(r);
+  Inc(r.Left, 4);
+  ACanvas.Font.Color := TranslateStyleColor(AViewInfo.GridRecord.Index, True);
+  ACanvas.Font.Style := TranslateStyleBold(AViewInfo.GridRecord.Index);
+  ACanvas.DrawTexT(AViewInfo.Text, r, cxAlignLeft or cxAlignVCenter or cxSingleLine);
+  ADone := True;
+end;
+
+procedure TFormSettings.GridColorsTableViewColumnBackgroundCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+var
+  r, r2: TRect;
+begin
+  if (AViewInfo.RecordViewInfo.Index = 0) then
+    Exit;
+
+  if (not VarIsOrdinal(AViewInfo.Value)) or (AViewInfo.Value = clDefault) then
+  begin
+    r := AViewInfo.Bounds;
+    r.Inflate(-2, -2);
+    ACanvas.Pen.Color := clBtnShadow;
+    ACanvas.Pen.Style := psSolid;
+    ACanvas.Pen.Width := 1;
+    ACanvas.Rectangle(r);
+
+    r2 := r;
+    r2.Inflate(-2, -2);
+    r2.Right := r2.Left + r2.Height;
+    ACanvas.Brush.Color := TranslateStyleColor(0, False);
+    ACanvas.Brush.Style := bsSolid;
+    ACanvas.Pen.Color := clBtnShadow;
+    ACanvas.Pen.Style := psSolid;
+    ACanvas.Pen.Width := 1;
+    ACanvas.Rectangle(r2);
+
+    r.Left := r2.Right+2;
+    ACanvas.Brush.Style := bsClear;
+    ACanvas.Font.Color := clWindowText;
+    ACanvas.DrawTexT('default', r, cxAlignVCenter or cxAlignLeft or cxSingleLine);
+    ADone := True;
+  end;
+end;
+
+procedure TFormSettings.GridColorsTableViewColumnTextCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+var
+  r, r2: TRect;
+begin
+  if (AViewInfo.RecordViewInfo.Index = 0) then
+    Exit;
+
+  if (not VarIsOrdinal(AViewInfo.Value)) or (AViewInfo.Value = clDefault) then
+  begin
+    r := AViewInfo.Bounds;
+    r.Inflate(-2, -2);
+    ACanvas.Pen.Color := clBtnShadow;
+    ACanvas.Pen.Style := psSolid;
+    ACanvas.Pen.Width := 1;
+    ACanvas.Rectangle(r);
+
+    r2 := r;
+    r2.Inflate(-2, -2);
+    r2.Right := r2.Left + r2.Height;
+    ACanvas.Brush.Color := TranslateStyleColor(0, True);
+    ACanvas.Brush.Style := bsSolid;
+    ACanvas.Pen.Color := clBtnShadow;
+    ACanvas.Pen.Style := psSolid;
+    ACanvas.Pen.Width := 1;
+    ACanvas.Rectangle(r2);
+
+    r.Left := r2.Right+2;
+    ACanvas.Brush.Style := bsClear;
+    ACanvas.Font.Color := clWindowText;
+    ACanvas.DrawTexT('default', r, cxAlignVCenter or cxAlignLeft or cxSingleLine);
+    ADone := True;
+  end;
+end;
+
+procedure TFormSettings.GridColorsTableViewDataControllerAfterPost(ADataController: TcxCustomDataController);
+begin
+  // Redraw everything if default changes
+  if (ADataController.FocusedRecordIndex = 0) then
+    GridColorsTableView.Invalidate(True);
+end;
+
+procedure TFormSettings.GridColorsTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem;
+  AEdit: TcxCustomEdit);
+var
+  Button: TcxEditButton;
+begin
+  if (not (AEdit is TdxColorEdit)) then
+    Exit;
+  Button := TdxColorEdit(AEdit).Properties.Buttons.Add;
+  Button.Kind := bkEllipsis;
+  TdxColorEdit(AEdit).Properties.OnButtonClick := OnCustomColorClickHandler;
+end;
+
+type
+  TdxCustomColorEditCracker = class(TdxCustomColorEdit);
+  TdxCustomColorGalleryCracker = class(TdxCustomColorGallery);
+
+procedure TFormSettings.GridColorsTableViewColumnColorPropertiesInitPopup(Sender: TObject);
+var
+  Gallery: TdxCustomColorGalleryCracker;
+  Button: TcxButton;
+begin
+  if (Sender is TdxCustomColorEdit) then
+  begin
+    Gallery := TdxCustomColorGalleryCracker(TdxCustomColorEditCracker(Sender).FColorGallery);
+    Gallery.DestroyComponents;
+
+    Button := TcxButton.Create(Gallery);
+    Button.Parent := Gallery;
+    Button.Align := alTop;
+    Button.Caption := '(default)';
+    Button.SpeedButtonOptions.Flat := True;
+    Button.SpeedButtonOptions.Transparent := True;
+    Button.SpeedButtonOptions.CanBeFocused := False;
+    Button.TabStop := False;
+    Button.Height := Abs(Button.Font.Height)+8;
+    Button.OnClick := OnColorsEditColorDefaultHandler;
+
+    Gallery.ContentOffset.Top := Button.Top + Button.Height+2;
+  end;
+end;
+
+procedure TFormSettings.OnColorsEditColorDefaultHandler(Sender: TObject);
+begin
+  GridColorsTableView.Controller.EditingController.HideEdit(False);
+  if (GridColorsTableView.Controller.FocusedRecordIndex = 0) then
+  begin
+    if (GridColorsTableView.Controller.FocusedItem = GridColorsTableViewColumnText) then
+      GridColorsTableView.Controller.FocusedItem.EditValue := clBlack
+    else
+      GridColorsTableView.Controller.FocusedItem.EditValue := clWhite;
+  end else
+    GridColorsTableView.Controller.FocusedItem.EditValue := Null;
+end;
+
+procedure TFormSettings.OnCustomColorClickHandler(Sender: TObject; AButtonIndex: Integer);
+begin
+  if (AButtonIndex = 0) then
+    Exit;
+
+  ColorDialog.Color := dxColorToAlphaColor(TranslateStyleColor(GridColorsTableView.Controller.FocusedRecordIndex, GridColorsTableView.Controller.FocusedItem = GridColorsTableViewColumnText));
+
+  if (ColorDialog.Execute) then
+  begin
+    GridColorsTableView.Controller.EditingController.HideEdit(False);
+    GridColorsTableView.Controller.FocusedItem.EditValue := dxAlphaColorToColor(ColorDialog.Color);
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormSettings.GridFoldersTableViewCellDblClick(Sender: TcxCustomGridTableView;
   ACellViewInfo: TcxGridTableDataCellViewInfo; AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
 begin
@@ -698,6 +1068,20 @@ end;
 procedure TFormSettings.ActionCategoryUpdate(Sender: TObject);
 begin
   TAction(Sender).Checked := (TAction(Sender).Tag = PageControl.ActivePageIndex);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSettings.ActionDummyExecute(Sender: TObject);
+begin
+  //
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSettings.ActionEditStatusHintUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := ActionEditStatusGlyphs.Checked;
 end;
 
 // -----------------------------------------------------------------------------
@@ -816,7 +1200,7 @@ end;
 
 procedure TFormSettings.ButtonCategoryEnter(Sender: TObject);
 begin
-  PageControl.ActivePageIndex := TcxButton(Sender).TabOrder;
+  TcxButton(Sender).Action.Execute;
 end;
 
 // -----------------------------------------------------------------------------
