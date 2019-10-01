@@ -948,7 +948,7 @@ object FormMain: TFormMain
     object BarManagerBarExport: TdxBar
       Caption = 'Export'
       CaptionButtons = <>
-      DockedLeft = 197
+      DockedLeft = 216
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1132,6 +1132,7 @@ object FormMain: TFormMain
     object BarButtonSpellCheck: TdxBarLargeButton
       Action = ActionProofingCheck
       Category = 0
+      LargeImageIndex = 6
     end
     object dxBarButton9: TdxBarButton
       Action = ActionProofingLiveCheck
@@ -1145,6 +1146,7 @@ object FormMain: TFormMain
     object dxBarLargeButton5: TdxBarLargeButton
       Action = ActionEditPaste
       Category = 0
+      LargeImageIndex = 7
     end
     object dxBarButton11: TdxBarButton
       Action = ActionEditCopy
@@ -1167,6 +1169,7 @@ object FormMain: TFormMain
       Category = 0
       ButtonStyle = bsDropDown
       DropDownMenu = PopupMenuTranslateProviders
+      LargeImageIndex = 11
     end
     object BarButtonTM: TdxBarButton
       Action = ActionTranslationMemory
@@ -1175,6 +1178,7 @@ object FormMain: TFormMain
     object BarButtonGotoNext: TdxBarSubItem
       Action = ActionGotoNext
       Category = 0
+      LargeImageIndex = 9
       ItemLinks = <
         item
           Visible = True
@@ -1200,6 +1204,7 @@ object FormMain: TFormMain
     object dxBarSubItem1: TdxBarSubItem
       Action = ActionImportFile
       Category = 0
+      LargeImageIndex = 10
       ItemLinks = <
         item
           Visible = True
@@ -1224,6 +1229,7 @@ object FormMain: TFormMain
       Enabled = False
       Hint = 'Save to CSV'
       Visible = ivAlways
+      ImageIndex = 63
     end
     object dxBarButton20: TdxBarButton
       Caption = 'Save to Excel'
@@ -1231,10 +1237,12 @@ object FormMain: TFormMain
       Enabled = False
       Hint = 'Save to Excel'
       Visible = ivAlways
+      ImageIndex = 62
     end
     object dxBarButton21: TdxBarButton
       Action = ActionImportCSV
       Category = 0
+      ImageIndex = 61
     end
     object dxBarButton22: TdxBarButton
       Caption = 'Import from Excel'
@@ -1242,6 +1250,7 @@ object FormMain: TFormMain
       Enabled = False
       Hint = 'Import from Excel'
       Visible = ivAlways
+      ImageIndex = 60
     end
     object BarButtonTMAdd: TdxBarButton
       Action = ActionTranslationMemoryAdd
@@ -1258,6 +1267,7 @@ object FormMain: TFormMain
     object dxBarButton26: TdxBarButton
       Action = ActionValidate
       Category = 0
+      LargeImageIndex = 13
     end
     object dxBarButton16: TdxBarButton
       Action = ActionGotoNextUntranslated
@@ -1399,6 +1409,7 @@ object FormMain: TFormMain
     object dxBarButton35: TdxBarButton
       Action = ActionAbout
       Category = 0
+      LargeImageIndex = 14
     end
   end
   object SkinController: TdxSkinController
@@ -1712,7 +1723,7 @@ object FormMain: TFormMain
       Tag = -1
       Category = 'Bookmark'
       Caption = 'Set bookmark'
-      ImageIndex = 37
+      ImageIndex = 49
       SecondaryShortCuts.Strings = (
         'Shift+Ctrl+B')
       ShortCut = 16450
