@@ -263,10 +263,10 @@ type
     FBold: integer;
     FListStyle: TListStyle;
   protected
-    function GetName: string;
+    function GetStyleName: string;
   public
-    constructor Create(AOwner: TConfigurationSection; AListStyle: TListStyle);
-    property Name: string read GetName;
+    constructor Create(AOwner: TConfigurationSection; AListStyle: TListStyle); reintroduce;
+    property Name: string read GetStyleName;
   published
     property ColorText: TColor read FColorText write FColorText default clDefault;
     property ColorBackground: TColor read FColorBackground write FColorBackground default clDefault;
@@ -1057,7 +1057,7 @@ begin
   FListStyle := AListStyle;
 end;
 
-function TTranslationManagerListStyleSettings.GetName: string;
+function TTranslationManagerListStyleSettings.GetStyleName: string;
 const
   // TODO : Localization
   sStyleNames: array[TListStyle] of string = (

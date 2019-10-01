@@ -205,9 +205,9 @@ begin
       begin
         MemFile := TMediaPlayerMemoryFile(Info^.adwInfo[0]);
         case Param2 of
-          SEEK_CUR: Result := MemFile.MemoryStream.Seek(Param1, soFromCurrent);
-          SEEK_END: Result := MemFile.MemoryStream.Seek(Param1, soFromEnd);
-          SEEK_SET: Result := MemFile.MemoryStream.Seek(Param1, soFromBeginning);
+          SEEK_CUR: Result := MemFile.MemoryStream.Seek(Int64(Param1), soCurrent);
+          SEEK_END: Result := MemFile.MemoryStream.Seek(Int64(Param1), soEnd);
+          SEEK_SET: Result := MemFile.MemoryStream.Seek(Int64(Param1), soBeginning);
         else
           Result := -1
         end;
@@ -551,15 +551,12 @@ begin
     begin
       Scale := ((PixDst^ and $FF) + (PixDst^ shr 8 and $FF) + (PixDst^ shr 16 and $FF)) div 3; // Must use average of all three to work around ClearType AA
 
-      if (Scale <= 255) then
-      begin
-        // Fade
-        if (Row < FBannerFadeZone) then
-          Scale := 255 - ((255-Scale) * (Row+1) div FBannerFadeZone)
-        else
-        if (Row > FBannerBitmap.Height-FBannerFadeZone) then
-          Scale := 255 - ((255-Scale) * (FBannerBitmap.Height-Row) div FBannerFadeZone);
-      end;
+      // Fade
+      if (Row < FBannerFadeZone) then
+        Scale := 255 - ((255-Scale) * (Row+1) div FBannerFadeZone)
+      else
+      if (Row > FBannerBitmap.Height-FBannerFadeZone) then
+        Scale := 255 - ((255-Scale) * (FBannerBitmap.Height-Row) div FBannerFadeZone);
 
       if (Scale = 255) then
         PixDst^ := PixSrc^

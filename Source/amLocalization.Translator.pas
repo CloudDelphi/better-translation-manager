@@ -126,7 +126,6 @@ type
     FDuplicateAction: TDuplicateAction;
     FConflictResolution: TDictionary<string, string>;
   private
-    procedure RankAndOrder(const Value: string; Translations: TStringList); deprecated;
   protected
     // ITranslationService
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
@@ -155,69 +154,6 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
-
-function TranslationRanker(List: TStringList; Index1, Index2: Integer): Integer;
-begin
-  Result := integer(List.Objects[Index1]) - integer(List.Objects[Index2]);
-end;
-
-procedure TTranslationService.RankAndOrder(const Value: string; Translations: TStringList);
-var
-  i: integer;
-  IsAllUppercase: boolean;
-  IsStartWithUppercase: boolean;
-  IsEndsWithEllipsis: boolean;
-  EndsWithSymbol: Char;
-  Rank: integer;
-  s: string;
-  NeedSort: boolean;
-begin
-  IsAllUppercase := IsUpperCase(Value);
-  IsStartWithUppercase := StartsWithUppercase(Value);
-  IsEndsWithEllipsis := Value.EndsWith('...');
-  if (not IsEndsWithEllipsis) and (Value[Length(Value)].IsPunctuation) then
-    EndsWithSymbol := Value[Length(Value)]
-  else
-    EndsWithSymbol := #0;
-
-  NeedSort := False;
-  for i := Translations.Count-1 downto 0 do
-  begin
-    s := Translations[i];
-
-    // Remove empty translations
-    if (s.IsEmpty) then
-    begin
-      Translations.Delete(i);
-      continue;
-    end;
-
-    // Initial rank according to order
-    Rank := i;
-
-    // This is kinda pointless since we have used MakeAlike() to eliminate these differences anyway
-
-    if (IsAllUppercase) <> (IsUpperCase(s)) then
-      Inc(Rank, 50)
-    else
-    if (IsStartWithUppercase) <> (StartsWithUppercase(s)) then
-      Inc(Rank, 50);
-
-    if (IsEndsWithEllipsis) <> (s.EndsWith('...')) then
-      Inc(Rank, 200)
-    else
-    if (not IsEndsWithEllipsis) and (((EndsWithSymbol <> #0) <> (s[Length(s)].IsPunctuation)) or ((EndsWithSymbol <> #0) and (EndsWithSymbol <> s[Length(s)]))) then
-      Inc(Rank, 400);
-
-    if (Rank <> i) then
-      NeedSort := True;
-
-    Translations.Objects[i] := TObject(Rank);
-  end;
-
-  if (NeedSort) then
-    Translations.CustomSort(TranslationRanker);
-end;
 
 // -----------------------------------------------------------------------------
 
@@ -263,9 +199,6 @@ begin
 
     if (Translations.Count > 1) then
     begin
-      // Order translations according to rank
-      // RankAndOrder(Prop.Value, Translations);
-
       // Attempt to resolve using previously resolved conflicts
       if (FConflictResolution.TryGetValue(Prop.Value, TargetValue)) then
         Exit;

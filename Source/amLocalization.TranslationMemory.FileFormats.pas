@@ -352,22 +352,14 @@ function TTranslationMemoryFileFormat.LoadFromStream(Stream: TStream; var Duplic
   Merge: boolean; const Progress: IProgress): TTranslationMemoryMergeStats;
 var
   Duplicates: TDuplicates;
-  Duplicate: TDuplicate;
-  CreateDate: TDateTime;
-  Language: string;
-  LanguageName: string;
   Languages: TLanguageFields;
   Clone: IInterface;
   Translations: TTranslations;
-  Term: TTerm;
-  Terms: TTerms;
-  LocaleItem: TLocaleItem;
   i, j: integer;
   Field: TField;
-  s: string;
   SourceValue, SanitizedSourceValue: string;
   SourceIndex: integer;
-  SourceLanguage, SourceLanguageTU: string;
+  SourceLanguage: string;
   SourceField, SourceFieldTU: TField;
   LocalProgress: IProgress;
   DetailedProgress: boolean;
