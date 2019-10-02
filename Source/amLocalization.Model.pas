@@ -50,10 +50,10 @@ type
 
 // -----------------------------------------------------------------------------
 //
-// TTargetLanguage
+// TTranslationLanguage
 //
 // -----------------------------------------------------------------------------
-  TTargetLanguage = class
+  TTranslationLanguage = class
   private
     FLanguageID: LCID;
     FTranslatedCount: integer;
@@ -67,28 +67,28 @@ type
 
 // -----------------------------------------------------------------------------
 //
-// TTargetLanguageList
+// TTranslationLanguageList
 //
 // -----------------------------------------------------------------------------
-  TTargetLanguageList = class
+  TTranslationLanguageList = class
   private
-    FLanguages: TObjectDictionary<LCID, TTargetLanguage>;
+    FLanguages: TObjectDictionary<LCID, TTranslationLanguage>;
   protected
     function GetCount: integer;
-    function GetItem(Index: integer): TTargetLanguage;
+    function GetItem(Index: integer): TTranslationLanguage;
   public
     constructor Create;
     destructor Destroy; override;
 
-    function Add(LanguageID: LCID): TTargetLanguage;
+    function Add(LanguageID: LCID): TTranslationLanguage;
     procedure Remove(LanguageID: LCID);
     procedure Delete(Index: integer);
     procedure Clear;
-    function Find(LanguageID: LCID): TTargetLanguage;
+    function Find(LanguageID: LCID): TTranslationLanguage;
     function Contains(LanguageID: LCID): boolean;
 
     property Count: integer read GetCount;
-    property Languages[Index: integer]: TTargetLanguage read GetItem; default;
+    property Languages[Index: integer]: TTranslationLanguage read GetItem; default;
   end;
 
 
@@ -140,7 +140,7 @@ type
     FStringSymbolFilename: string;
     FModules: TLocalizerModules;
     FSourceLanguageID: LCID;
-    FTargetLanguages: TTargetLanguageList;
+    FTranslationLanguages: TTranslationLanguageList;
     FState: TLocalizerProjectStates;
     FLoadCount: integer;
     FPropertyCount: integer;
@@ -183,7 +183,7 @@ type
     property StringSymbolFilename: string read FStringSymbolFilename write FStringSymbolFilename;
 
     property SourceLanguageID: LCID read FSourceLanguageID write FSourceLanguageID;
-    property TargetLanguages: TTargetLanguageList read FTargetLanguages;
+    property TranslationLanguages: TTranslationLanguageList read FTranslationLanguages;
 
     property Modules: TLocalizerModules read FModules;
 
@@ -368,7 +368,7 @@ type
   TLocalizerTranslation = class
   strict private
     FValue: string;
-    FLanguage: TTargetLanguage;
+    FLanguage: TTranslationLanguage;
     FStatus: TTranslationStatus;
     FOwner: TLocalizerProperty;
     FUpdateCount: integer;
@@ -382,7 +382,7 @@ type
     procedure Changed;
     procedure NotifyWarnings;
   public
-    constructor Create(AOwner: TLocalizerProperty; ALanguage: TTargetLanguage);
+    constructor Create(AOwner: TLocalizerProperty; ALanguage: TTranslationLanguage);
     destructor Destroy; override;
 
     procedure BeginUpdate;
@@ -394,7 +394,7 @@ type
     procedure UpdateWarnings;
 
     property Value: string read FValue write SetValue;
-    property Language: TTargetLanguage read FLanguage;
+    property Language: TTranslationLanguage read FLanguage;
     property Status: TTranslationStatus read FStatus write SetStatus;
     property IsTranslated: boolean read GetIsTranslated;
     property Warnings: TTranslationWarnings read FWarnings write SetWarnings;
@@ -402,16 +402,16 @@ type
 
   TLocalizerTranslations = class
   strict private
-    FTranslations: TDictionary<TTargetLanguage, TLocalizerTranslation>;
+    FTranslations: TDictionary<TTranslationLanguage, TLocalizerTranslation>;
     FOwner: TLocalizerProperty;
   strict private
     class var FDefaultStatus: TTranslationStatus;
   strict protected
     function GetCount: integer;
-    function GetItem(Language: TTargetLanguage): TLocalizerTranslation; overload;
+    function GetItem(Language: TTranslationLanguage): TLocalizerTranslation; overload;
     function GetItem(Index: integer): TLocalizerTranslation; overload;
   protected
-    property Translations: TDictionary<TTargetLanguage, TLocalizerTranslation> read FTranslations;
+    property Translations: TDictionary<TTranslationLanguage, TLocalizerTranslation> read FTranslations;
   public
     class constructor Create; overload;
     constructor Create(AOwner: TLocalizerProperty); overload;
@@ -419,14 +419,14 @@ type
 
     procedure Clear;
 
-    function TryGetTranslation(Language: TTargetLanguage; var Value: TLocalizerTranslation): boolean;
-    function FindTranslation(Language: TTargetLanguage): TLocalizerTranslation;
-    function AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string): TLocalizerTranslation; overload;
-    function AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation; overload;
-    procedure Remove(Language: TTargetLanguage);
+    function TryGetTranslation(Language: TTranslationLanguage; var Value: TLocalizerTranslation): boolean;
+    function FindTranslation(Language: TTranslationLanguage): TLocalizerTranslation;
+    function AddOrUpdateTranslation(Language: TTranslationLanguage; const Value: string): TLocalizerTranslation; overload;
+    function AddOrUpdateTranslation(Language: TTranslationLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation; overload;
+    procedure Remove(Language: TTranslationLanguage);
 
     property Owner: TLocalizerProperty read FOwner;
-    property Items[Language: TTargetLanguage]: TLocalizerTranslation read GetItem; default;
+    property Items[Language: TTranslationLanguage]: TLocalizerTranslation read GetItem; default;
     property Items[Index: integer]: TLocalizerTranslation read GetItem; default;
     property Count: integer read GetCount;
 
@@ -467,8 +467,8 @@ type
   strict protected
     procedure SetValue(const Value: string);
     procedure SetFlags(const Value: TPropertyFlags);
-    function GetTranslatedValue(Language: TTargetLanguage): string;
-    procedure SetTranslatedValue(Language: TTargetLanguage; const Value: string);
+    function GetTranslatedValue(Language: TTranslationLanguage): string;
+    procedure SetTranslatedValue(Language: TTranslationLanguage; const Value: string);
     procedure DoSetStatus(const Value: TLocalizerItemStatus); override;
   public
     constructor Create(AItem: TLocalizerItem; const AName: string);
@@ -479,11 +479,11 @@ type
     function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; overload; override;
     function Traverse(Delegate: TLocalizerTranslationDelegate): boolean; reintroduce; overload;
 
-    function HasTranslation(Language: TTargetLanguage): boolean;
+    function HasTranslation(Language: TTranslationLanguage): boolean;
 
     property Item: TLocalizerItem read GetParent;
     property Value: string read FValue write SetValue;
-    property TranslatedValue[Language: TTargetLanguage]: string read GetTranslatedValue write SetTranslatedValue;
+    property TranslatedValue[Language: TTranslationLanguage]: string read GetTranslatedValue write SetTranslatedValue;
 
     property Translations: TLocalizerTranslations read FTranslations;
 
@@ -834,10 +834,10 @@ end;
 
 // -----------------------------------------------------------------------------
 //
-// TTargetLanguage
+// TTranslationLanguage
 //
 // -----------------------------------------------------------------------------
-constructor TTargetLanguage.Create(ALanguageID: LCID);
+constructor TTranslationLanguage.Create(ALanguageID: LCID);
 begin
   inherited Create;
 
@@ -846,63 +846,63 @@ end;
 
 // -----------------------------------------------------------------------------
 //
-// TTargetLanguageList
+// TTranslationLanguageList
 //
 // -----------------------------------------------------------------------------
-constructor TTargetLanguageList.Create;
+constructor TTranslationLanguageList.Create;
 begin
   inherited Create;
 
-  FLanguages := TObjectDictionary<LCID, TTargetLanguage>.Create([doOwnsValues]);
+  FLanguages := TObjectDictionary<LCID, TTranslationLanguage>.Create([doOwnsValues]);
 end;
 
-destructor TTargetLanguageList.Destroy;
+destructor TTranslationLanguageList.Destroy;
 begin
   FLanguages.Free;
   inherited;
 end;
 
-function TTargetLanguageList.Add(LanguageID: LCID): TTargetLanguage;
+function TTranslationLanguageList.Add(LanguageID: LCID): TTranslationLanguage;
 begin
   if (not FLanguages.TryGetValue(LanguageID, Result)) then
   begin
-    Result := TTargetLanguage.Create(LanguageID);
+    Result := TTranslationLanguage.Create(LanguageID);
     FLanguages.Add(LanguageID, Result);
   end;
 end;
 
-procedure TTargetLanguageList.Clear;
+procedure TTranslationLanguageList.Clear;
 begin
   FLanguages.Clear;
 end;
 
-function TTargetLanguageList.Contains(LanguageID: LCID): boolean;
+function TTranslationLanguageList.Contains(LanguageID: LCID): boolean;
 begin
   Result := FLanguages.ContainsKey(LanguageID);
 end;
 
-procedure TTargetLanguageList.Delete(Index: integer);
+procedure TTranslationLanguageList.Delete(Index: integer);
 begin
   FLanguages.Remove(FLanguages.Keys.ToArray[Index]);
 end;
 
-function TTargetLanguageList.Find(LanguageID: LCID): TTargetLanguage;
+function TTranslationLanguageList.Find(LanguageID: LCID): TTranslationLanguage;
 begin
   if (not FLanguages.TryGetValue(LanguageID, Result)) then
     Result := nil;
 end;
 
-function TTargetLanguageList.GetCount: integer;
+function TTranslationLanguageList.GetCount: integer;
 begin
   Result := FLanguages.Count;
 end;
 
-function TTargetLanguageList.GetItem(Index: integer): TTargetLanguage;
+function TTranslationLanguageList.GetItem(Index: integer): TTranslationLanguage;
 begin
   Result := FLanguages.Values.ToArray[Index];
 end;
 
-procedure TTargetLanguageList.Remove(LanguageID: LCID);
+procedure TTranslationLanguageList.Remove(LanguageID: LCID);
 begin
   FLanguages.Remove(LanguageID);
 end;
@@ -917,14 +917,14 @@ constructor TLocalizerProject.Create(const AName: string; ASourceLanguageID: LCI
 begin
   inherited Create(AName);
   FModules := TLocalizerModules.Create([doOwnsValues], TTextComparer.Create);
-  FTargetLanguages := TTargetLanguageList.Create;
+  FTranslationLanguages := TTranslationLanguageList.Create;
   FSourceLanguageID := ASourceLanguageID;
 end;
 
 destructor TLocalizerProject.Destroy;
 begin
   FModules.Free;
-  FTargetLanguages.Free;
+  FTranslationLanguages.Free;
   inherited;
 end;
 
@@ -953,7 +953,7 @@ var
   Status: TLocalizerItemStatus;
 begin
   FModules.Clear;
-  FTargetLanguages.Clear;
+  FTranslationLanguages.Clear;
   FPropertyCount := 0;
   for Status := Low(TLocalizerItemStatus) to High(TLocalizerItemStatus) do
     FStatusCount[Status] := 0;
@@ -1658,12 +1658,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerProperty.SetTranslatedValue(Language: TTargetLanguage; const Value: string);
+procedure TLocalizerProperty.SetTranslatedValue(Language: TTranslationLanguage; const Value: string);
 begin
   Translations.AddOrUpdateTranslation(Language, Value);
 end;
 
-function TLocalizerProperty.GetTranslatedValue(Language: TTargetLanguage): string;
+function TLocalizerProperty.GetTranslatedValue(Language: TTranslationLanguage): string;
 var
   Translation: TLocalizerTranslation;
 begin
@@ -1675,7 +1675,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerProperty.HasTranslation(Language: TTargetLanguage): boolean;
+function TLocalizerProperty.HasTranslation(Language: TTranslationLanguage): boolean;
 var
   Translation: TLocalizerTranslation;
 begin
@@ -1686,7 +1686,7 @@ end;
 
 procedure TLocalizerProperty.SetValue(const Value: string);
 var
-  Translation: TPair<TTargetLanguage, TLocalizerTranslation>;
+  Translation: TPair<TTranslationLanguage, TLocalizerTranslation>;
 begin
   if (FValue = Value) then
     exit;
@@ -1752,7 +1752,7 @@ end;
 
 function TLocalizerProperty.Traverse(Delegate: TLocalizerTranslationDelegate): boolean;
 var
-  Translation: TPair<TTargetLanguage, TLocalizerTranslation>;
+  Translation: TPair<TTranslationLanguage, TLocalizerTranslation>;
 begin
   Result := True;
 
@@ -1767,7 +1767,7 @@ end;
 // TLocalizerTranslation
 //
 // -----------------------------------------------------------------------------
-constructor TLocalizerTranslation.Create(AOwner: TLocalizerProperty; ALanguage: TTargetLanguage);
+constructor TLocalizerTranslation.Create(AOwner: TLocalizerProperty; ALanguage: TTranslationLanguage);
 begin
   inherited Create;
   FOwner := AOwner;
@@ -2156,7 +2156,7 @@ end;
 constructor TLocalizerTranslations.Create(AOwner: TLocalizerProperty);
 begin
   inherited Create;
-  FTranslations := TObjectDictionary<TTargetLanguage, TLocalizerTranslation>.Create([doOwnsValues]);
+  FTranslations := TObjectDictionary<TTranslationLanguage, TLocalizerTranslation>.Create([doOwnsValues]);
   FOwner := AOwner;
 end;
 
@@ -2168,12 +2168,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string): TLocalizerTranslation;
+function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTranslationLanguage; const Value: string): TLocalizerTranslation;
 begin
   Result := AddOrUpdateTranslation(Language, Value, FDefaultStatus);
 end;
 
-function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTargetLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation;
+function TLocalizerTranslations.AddOrUpdateTranslation(Language: TTranslationLanguage; const Value: string; Status: TTranslationStatus): TLocalizerTranslation;
 begin
   if (not FTranslations.TryGetValue(Language, Result)) then
   begin
@@ -2197,7 +2197,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerTranslations.FindTranslation(Language: TTargetLanguage): TLocalizerTranslation;
+function TLocalizerTranslations.FindTranslation(Language: TTranslationLanguage): TLocalizerTranslation;
 begin
   if (not FTranslations.TryGetValue(Language, Result)) then
     Result := nil;
@@ -2215,14 +2215,14 @@ begin
   Result := FTranslations.Values.ToArray[Index];
 end;
 
-function TLocalizerTranslations.GetItem(Language: TTargetLanguage): TLocalizerTranslation;
+function TLocalizerTranslations.GetItem(Language: TTranslationLanguage): TLocalizerTranslation;
 begin
   Result := FTranslations[Language];
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TLocalizerTranslations.Remove(Language: TTargetLanguage);
+procedure TLocalizerTranslations.Remove(Language: TTranslationLanguage);
 begin
   FTranslations.Remove(Language);
 
@@ -2231,7 +2231,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TLocalizerTranslations.TryGetTranslation(Language: TTargetLanguage; var Value: TLocalizerTranslation): boolean;
+function TLocalizerTranslations.TryGetTranslation(Language: TTranslationLanguage; var Value: TLocalizerTranslation): boolean;
 begin
   Result := FTranslations.TryGetValue(Language, Value);
 end;

@@ -183,7 +183,7 @@ var
   Module: TLocalizerModule;
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
-  Language: TTargetLanguage;
+  Language: TTranslationLanguage;
   CachedLanguage: string;
 //  Translation: TLocalizerTranslation;
   TranslationStatus: TTranslationStatus;
@@ -239,7 +239,7 @@ begin
       begin
         s := VarToStr(LanguageNode.Attributes['language']);
         if (Language = nil) or (s <> CachedLanguage) then
-          Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
+          Language := Project.TranslationLanguages.Add(StrToIntDef(s, 0));
       end;
       LanguageNode := LanguageNode.NextSibling;
     end;
@@ -303,7 +303,7 @@ begin
                         begin
                           s := VarToStr(XlatNode.Attributes['language']);
                           if (Language = nil) or (s <> CachedLanguage) then
-                            Language := Project.TargetLanguages.Add(StrToIntDef(s, 0));
+                            Language := Project.TranslationLanguages.Add(StrToIntDef(s, 0));
                           TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
                           s := XlatNode.Text;
                           // s := s.Replace(#10, #13);
@@ -434,11 +434,11 @@ begin
   ProjectNode.Attributes['language'] := Project.SourceLanguageID;
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');
-  for i := 0 to Project.TargetLanguages.Count-1 do
+  for i := 0 to Project.TranslationLanguages.Count-1 do
   begin
     LanguageNode := LanguagesNode.AddChild('language');
-    LanguageNode.Attributes['language'] := Project.TargetLanguages[i].LanguageID;
-    LanguageNode.Attributes['translated'] := Project.TargetLanguages[i].TranslatedCount;
+    LanguageNode.Attributes['language'] := Project.TranslationLanguages[i].LanguageID;
+    LanguageNode.Attributes['translated'] := Project.TranslationLanguages[i].TranslatedCount;
   end;
 
   ModulesNode := ProjectNode.AddChild('modules');

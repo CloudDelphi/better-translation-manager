@@ -147,7 +147,7 @@ begin
   if (not FFilterTargetLanguages) or (FProject = nil) then
     Exit;
 
-  Accept := (FProject.TargetLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewLanguagesColumnLocaleID.Index]));
+  Accept := (FProject.TranslationLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewLanguagesColumnLocaleID.Index]));
 end;
 
 end.

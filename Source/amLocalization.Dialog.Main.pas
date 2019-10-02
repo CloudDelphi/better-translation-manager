@@ -56,10 +56,10 @@ type
   TLocalizerDataSource = class(TcxTreeListCustomDataSource)
   private
     FModule: TLocalizerModule;
-    FTargetLanguage: TTargetLanguage;
+    FTranslationLanguage: TTranslationLanguage;
   protected
     procedure SetModule(const Value: TLocalizerModule);
-    procedure SetTargetLanguage(const Value: TTargetLanguage);
+    procedure SetTranslationLanguage(const Value: TTranslationLanguage);
 
     function GetRootRecordHandle: TcxDataRecordHandle; override;
     function GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle; override;
@@ -71,7 +71,7 @@ type
     constructor Create(AModule: TLocalizerModule);
 
     property Module: TLocalizerModule read FModule write SetModule;
-    property TargetLanguage: TTargetLanguage read FTargetLanguage write SetTargetLanguage;
+    property TranslationLanguage: TTranslationLanguage read FTranslationLanguage write SetTranslationLanguage;
   end;
 
 // -----------------------------------------------------------------------------
@@ -374,7 +374,6 @@ type
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
-    FTargetLanguage: TTargetLanguage;
     FUpdateLockCount: integer;
     FLocalizerDataSource: TLocalizerDataSource;
     FActiveTreeList: TcxCustomTreeList;
@@ -383,6 +382,17 @@ type
     FRefreshingModuleStats: boolean;
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
+  private
+    // Language selection
+    FTranslationLanguage: TTranslationLanguage;
+    function GetLanguageID(Value: LCID): LCID;
+    function GetSourceLanguageID: Word;
+    function GetTargetLanguageID: Word;
+    procedure SetSourceLanguageID(const Value: Word);
+    procedure SetTargetLanguageID(const Value: Word);
+    function GetTranslationLanguage: TTranslationLanguage;
+    procedure ClearTargetLanguage;
+    procedure UpdateTargetLanguage;
   private
     // Spell check
     FSpellCheckProp: TLocalizerProperty;
@@ -472,15 +482,6 @@ type
     procedure SaveRecentFiles;
     procedure AddRecentFile(const Filename: string);
   protected
-    function GetLanguageID(Value: LCID): LCID;
-    function GetSourceLanguageID: Word;
-    function GetTargetLanguageID: Word;
-    procedure SetSourceLanguageID(const Value: Word);
-    procedure SetTargetLanguageID(const Value: Word);
-    function GetTargetLanguage: TTargetLanguage;
-    procedure ClearTargetLanguage;
-    procedure UpdateTargetLanguage;
-
     function GetProject: TLocalizerProject;
     function GetFocusedNode: TcxTreeListNode;
     function GetFocusedItem: TCustomLocalizerItem;
@@ -543,7 +544,7 @@ type
     // ILocalizerSearchHost
     function ILocalizerSearchHost.GetProject = GetProject;
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
-    function ILocalizerSearchHost.GetTargetLanguage = GetTargetLanguage;
+    function ILocalizerSearchHost.GetTranslationLanguage = GetTranslationLanguage;
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
     procedure ILocalizerSearchHost.InvalidateItem = ReloadProperty;
   private
@@ -555,9 +556,10 @@ type
     property Skin: string read FSkin write SetSkin;
   public
     constructor Create(AOwner: TComponent); override;
+
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
-    property TargetLanguage: TTargetLanguage read GetTargetLanguage;
+    property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
   end;
 
 var
@@ -1367,7 +1369,7 @@ begin
       function(Prop: TLocalizerProperty): boolean
       begin
         Inc(Count);
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TargetLanguage)) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
           Inc(ElegibleCount);
         Result := True;
       end, False);
@@ -1399,9 +1401,9 @@ begin
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TargetLanguage)) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
         begin
-          DuplicateAction := FTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TargetLanguage], OneStats, DuplicateAction);
+          DuplicateAction := FTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TranslationLanguage], OneStats, DuplicateAction);
 
           Inc(Stats.Added, OneStats.Added);
           Inc(Stats.Merged, OneStats.Merged);
@@ -1451,7 +1453,7 @@ begin
         function(Prop: TLocalizerProperty): boolean
         begin
           Inc(Count);
-          Result := (Count < 100) and (not Prop.HasTranslation(TargetLanguage));
+          Result := (Count < 100) and (not Prop.HasTranslation(TranslationLanguage));
         end, False);
       if (Enabled) then
         break;
@@ -1525,7 +1527,7 @@ begin
         if (not Prop.Value.Trim.IsEmpty) and (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
         begin
           Inc(Counts.ElegibleCount);
-          if (Prop.HasTranslation(TargetLanguage)) then
+          if (Prop.HasTranslation(TranslationLanguage)) then
             Inc(Counts.TranslatedCount);
         end;
         Result := True;
@@ -1611,14 +1613,14 @@ begin
               if (Prop.Value.Trim.IsEmpty) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
                 Exit(True);
 
-              if (not TranslateTranslated) and (Prop.HasTranslation(TargetLanguage)) then
+              if (not TranslateTranslated) and (Prop.HasTranslation(TranslationLanguage)) then
                 Exit(True);
 
               Inc(Counts.Count);
 
               SourceValue := Prop.Value;
-              if (Prop.HasTranslation(TargetLanguage)) then
-                TranslatedValue := SanitizeText(Prop.TranslatedValue[TargetLanguage])
+              if (Prop.HasTranslation(TranslationLanguage)) then
+                TranslatedValue := SanitizeText(Prop.TranslatedValue[TranslationLanguage])
               else
                 TranslatedValue := SourceValue;
 
@@ -1633,14 +1635,14 @@ begin
               begin
                 Inc(Counts.TranslatedCount);
 
-                if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Value <> Value) then
+                if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Value <> Value) then
                   Inc(Counts.UpdatedCount);
 
                 // Set value regardless of current value so we get the correct Status set
                 if (Translation <> nil) then
                   Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
                 else
-                  Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Value);
+                  Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Value);
 
                 Translation.UpdateWarnings;
 
@@ -1798,7 +1800,7 @@ begin
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
 
-  if (Prop = nil) or (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TargetLanguage)) then
+  if (Prop = nil) or (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
     Exit;
 
   if (TTranslationMemoryPeekResult(Node.Data) = TTranslationMemoryPeekResult.prFound) then
@@ -2013,7 +2015,7 @@ begin
       ResourceWriter := TResourceModuleWriter.Create(Filename);
       try
 
-        ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TargetLanguage, ResourceWriter);
+        ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
 
       finally
         ResourceWriter := nil;
@@ -2162,7 +2164,7 @@ begin
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
-    ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TargetLanguage, nil);
+    ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TranslationLanguage, nil);
 
     Stats := ProjectProcessor.TranslationCount;
 
@@ -2289,7 +2291,7 @@ begin
       if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
         Exit(False);
 
-      Result := (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending);
+      Result := (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) or (Translation.Status = tStatusPending);
     end);
 end;
 
@@ -2303,7 +2305,7 @@ begin
       if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
         Exit(False);
 
-      Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
+      Result := (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Warnings <> []);
     end);
 end;
 
@@ -2560,7 +2562,7 @@ procedure TFormMain.LoadFromFile(const Filename: string);
 var
   Stream: TStream;
   ProgressStream: TStream;
-  BestLanguage: TTargetLanguage;
+  BestLanguage: TTranslationLanguage;
   i: integer;
   Progress: IProgress;
 begin
@@ -2613,9 +2615,9 @@ begin
 
     // Find language with most translations
     BestLanguage := nil;
-    for i := 0 to FProject.TargetLanguages.Count-1 do
-      if (BestLanguage = nil) or (FProject.TargetLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
-        BestLanguage := FProject.TargetLanguages[i];
+    for i := 0 to FProject.TranslationLanguages.Count-1 do
+      if (BestLanguage = nil) or (FProject.TranslationLanguages[i].TranslatedCount >= BestLanguage.TranslatedCount) then
+        BestLanguage := FProject.TranslationLanguages[i];
 
     if (BestLanguage <> nil) then
     begin
@@ -3180,7 +3182,7 @@ begin
     begin
       if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) then
       begin
-        if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+        if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         begin
           OldWarnings := Translation.Warnings;
           Translation.UpdateWarnings;
@@ -3234,8 +3236,8 @@ begin
   begin
     Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-      Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Prop.Value);
+    if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+      Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
     Translation.Status := tStatusTranslated;
 
@@ -3257,8 +3259,8 @@ begin
   begin
     Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-      Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, Prop.Value);
+    if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+      Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
     Translation.Status := tStatusProposed;
 
@@ -3279,7 +3281,7 @@ begin
   begin
     Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    Prop.Translations.Remove(TargetLanguage);
+    Prop.Translations.Remove(TranslationLanguage);
 
     LoadItem(Prop);
 
@@ -3300,8 +3302,8 @@ end;
 procedure TFormMain.BarEditItemTargetLanguageEnter(Sender: TObject);
 begin
   DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
-    ((FProject.TargetLanguages.Count > 1) or
-     ((FProject.TargetLanguages.Count = 1) and (FProject.TargetLanguages[0].LanguageID <> SourceLanguageID)));
+    ((FProject.TranslationLanguages.Count > 1) or
+     ((FProject.TranslationLanguages.Count = 1) and (FProject.TranslationLanguages[0].LanguageID <> SourceLanguageID)));
 
   DataModuleMain.Project := FProject;
 end;
@@ -3328,8 +3330,8 @@ var
   FormLanguages: TFormLanguages;
   i: integer;
   Languages: TList<integer>;
-  DeleteLanguages: TList<TTargetLanguage>;
-  Language: TTargetLanguage;
+  DeleteLanguages: TList<TTranslationLanguage>;
+  Language: TTranslationLanguage;
   PromptCount: integer;
   LocaleItem: TLocaleItem;
   Res: integer;
@@ -3345,8 +3347,8 @@ begin
 
     FormLanguages.SourceLanguageID := SourceLanguageID;
 
-    for i := 0 to FProject.TargetLanguages.Count-1 do
-      FormLanguages.SelectTargetLanguage(FProject.TargetLanguages[i].LanguageID);
+    for i := 0 to FProject.TranslationLanguages.Count-1 do
+      FormLanguages.SelectTargetLanguage(FProject.TranslationLanguages[i].LanguageID);
 
     FormLanguages.ApplyFilter := FFilterTargetLanguages;
 
@@ -3357,7 +3359,7 @@ begin
 
     TreeListItems.BeginUpdate;
     try
-      DeleteLanguages := TList<TTargetLanguage>.Create;
+      DeleteLanguages := TList<TTranslationLanguage>.Create;
       try
         Languages := TList<integer>.Create;
         try
@@ -3368,12 +3370,12 @@ begin
 
           // Loop though list of current languages and build list of languages to delete
           PromptCount := 0;
-          for i := FProject.TargetLanguages.Count-1 downto 0 do
-            if (not Languages.Contains(FProject.TargetLanguages[i].LanguageID)) then
+          for i := FProject.TranslationLanguages.Count-1 downto 0 do
+            if (not Languages.Contains(FProject.TranslationLanguages[i].LanguageID)) then
             begin
-              DeleteLanguages.Add(FProject.TargetLanguages[i]);
+              DeleteLanguages.Add(FProject.TranslationLanguages[i]);
 
-              if (FProject.TargetLanguages[i].TranslatedCount > 0) then
+              if (FProject.TranslationLanguages[i].TranslatedCount > 0) then
                 Inc(PromptCount);
             end;
 
@@ -3415,7 +3417,7 @@ begin
         for Language in DeleteLanguages do
         begin
           // If we delete current target language we must clear references to it in the GUI
-          if (Language = FTargetLanguage) then
+          if (Language = FTranslationLanguage) then
           begin
             ClearDependents;
             ClearTargetLanguage;
@@ -3431,7 +3433,7 @@ begin
 
           Assert(Language.TranslatedCount = 0);
 
-          FProject.TargetLanguages.Remove(Language.LanguageID);
+          FProject.TranslationLanguages.Remove(Language.LanguageID);
         end;
 
       finally
@@ -3440,10 +3442,10 @@ begin
 
       // Add selected languages
       for i := 0 to FormLanguages.TargetLanguageCount-1 do
-        FProject.TargetLanguages.Add(FormLanguages.TargetLanguage[i]);
+        FProject.TranslationLanguages.Add(FormLanguages.TargetLanguage[i]);
 
       // If we deleted current target language we must select a new one - default to source language
-      if (FTargetLanguage = nil) then
+      if (FTranslationLanguage = nil) then
         TargetLanguageID := SourceLanguageID;
 
     finally
@@ -3571,7 +3573,7 @@ begin
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
 
-  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
     Exit;
 
   if (Translation <> nil) and (Translation.Warnings <> []) then
@@ -3787,17 +3789,17 @@ begin
   Perform(MSG_SOURCE_CHANGED, 0, 0);
 end;
 
-function TFormMain.GetTargetLanguage: TTargetLanguage;
+function TFormMain.GetTranslationLanguage: TTranslationLanguage;
 begin
-  if (FTargetLanguage = nil) then
+  if (FTranslationLanguage = nil) then
   begin
     if (TargetLanguageID <> 0) then
-      FTargetLanguage := FProject.TargetLanguages.Add(TargetLanguageID)
+      FTranslationLanguage := FProject.TranslationLanguages.Add(TargetLanguageID)
     else
-      FTargetLanguage := FProject.TargetLanguages.Add(SourceLanguageID);
+      FTranslationLanguage := FProject.TranslationLanguages.Add(SourceLanguageID);
   end;
 
-  Result := FTargetLanguage;
+  Result := FTranslationLanguage;
 end;
 
 function TFormMain.GetTargetLanguageID: Word;
@@ -3824,13 +3826,13 @@ end;
 
 procedure TFormMain.ClearTargetLanguage;
 begin
-  FTargetLanguage := nil;
-  FLocalizerDataSource.TargetLanguage := nil;
+  FTranslationLanguage := nil;
+  FLocalizerDataSource.TranslationLanguage := nil;
 end;
 
 procedure TFormMain.UpdateTargetLanguage;
 begin
-  FLocalizerDataSource.TargetLanguage := TargetLanguage;
+  FLocalizerDataSource.TranslationLanguage := TranslationLanguage;
   TreeListModules.FullRefresh;
   RefreshModuleStats;
 end;
@@ -4207,7 +4209,7 @@ begin
       if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
         Exit(False);
 
-      Result := (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) and (Translation.Warnings <> []);
+      Result := (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Warnings <> []);
     end, True, True);
 end;
 
@@ -4275,7 +4277,7 @@ end;
 
 function TFormMain.GetTranslatedCount(Module: TLocalizerModule): integer;
 var
-  Language: TTargetLanguage;
+  Language: TTranslationLanguage;
   Count: integer;
 begin
   if (FTranslationCounts.TryGetValue(Module, Result)) and (Result <> -1) then
@@ -4283,7 +4285,7 @@ begin
 
   // Calculate translated count
   Count := 0;
-  Language := TargetLanguage; // Cache costly conversion
+  Language := TranslationLanguage; // Cache costly conversion
   Module.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
@@ -4561,7 +4563,7 @@ begin
   if (Prop.EffectiveStatus <> ItemStatusTranslate) then
     Exit(True);
 
-  Translation := Prop.Translations.FindTranslation(TargetLanguage);
+  Translation := Prop.Translations.FindTranslation(TranslationLanguage);
 
   // Do not check values that have not been translated
   if (Translation = nil) or (not Translation.IsTranslated) then
@@ -4618,7 +4620,7 @@ begin
   if (CheckedText <> Text) then
   begin
     // Save spell corrected value
-    Prop.TranslatedValue[TargetLanguage] := CheckedText;
+    Prop.TranslatedValue[TranslationLanguage] := CheckedText;
 
     // Update treenode
     LoadFocusedPropertyNode;
@@ -4817,11 +4819,11 @@ begin
   if (TranslationStatus = tStatusPending) then
   begin
     // Remove translation
-    FocusedProperty.Translations.Remove(TargetLanguage);
+    FocusedProperty.Translations.Remove(TranslationLanguage);
   end else
   begin
-    if (not FocusedProperty.Translations.TryGetTranslation(TargetLanguage, Translation)) then
-      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TargetLanguage, FocusedProperty.Value);
+    if (not FocusedProperty.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TranslationLanguage, FocusedProperty.Value);
     Translation.Status := TranslationStatus;
   end;
 
@@ -4881,7 +4883,7 @@ begin
     Exit;
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(AViewInfo.Node));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TargetLanguage)) then
+  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
   begin
     // Status has changed since the flag was set
     AViewInfo.Node.Data := pointer(TTranslationMemoryPeekResult.prQueued);
@@ -5023,7 +5025,7 @@ begin
   LockUpdates;
   try
 
-    Translation := Prop.Translations.AddOrUpdateTranslation(TargetLanguage, VarToStr(Sender.InplaceEditor.EditValue));
+    Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, VarToStr(Sender.InplaceEditor.EditValue));
     Translation.UpdateWarnings;
 
     TreeListItems.FocusedNode.Data := pointer(TTranslationMemoryPeekResult.prNone);
@@ -5093,7 +5095,7 @@ begin
   Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode));
   Assert(Prop <> nil);
 
-  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
     Translation := nil;
 
   if (AIndexType = tlitStateIndex) then
@@ -5165,7 +5167,7 @@ begin
     Exit;
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TargetLanguage)) then
+  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
     Exit;
 
   TreeListItems.Select(Node);
@@ -5219,7 +5221,7 @@ begin
     Exit;
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.HitTest.HitNode));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TargetLanguage)) then
+  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
   begin
     // Status has changed since the flag was set
     TreeListItems.HitTest.HitNode.Data := pointer(TTranslationMemoryPeekResult.prQueued);
@@ -5381,7 +5383,7 @@ begin
     Exit;
   end;
 
-  if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
     Translation := nil;
 
   if (Translation <> nil) and (Translation.IsTranslated) then
@@ -5701,7 +5703,7 @@ begin
       Result := Ord(Prop.EffectiveStatus);
 
     TreeItemIndexState:
-      if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+      if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Result := Ord(Translation.Status)
       else
         Result := Ord(tStatusPending);
@@ -5710,7 +5712,7 @@ begin
       Result := Prop.Value;
 
     TreeItemIndexTargetValue:
-      if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+      if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Result := Translation.Value
       else
         Result := Prop.Value;
@@ -5729,12 +5731,12 @@ begin
   DataChanged;
 end;
 
-procedure TLocalizerDataSource.SetTargetLanguage(const Value: TTargetLanguage);
+procedure TLocalizerDataSource.SetTranslationLanguage(const Value: TTranslationLanguage);
 begin
-  if (FTargetLanguage = Value) then
+  if (FTranslationLanguage = Value) then
     Exit;
 
-  FTargetLanguage := Value;
+  FTranslationLanguage := Value;
 
   DataChanged;
 end;

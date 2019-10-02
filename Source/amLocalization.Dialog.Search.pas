@@ -30,8 +30,8 @@ type
     function GetSelectedModule: TLocalizerModule;
     property SelectedModule: TLocalizerModule read GetSelectedModule;
 
-    function GetTargetLanguage: TTargetLanguage;
-    property TargetLanguage: TTargetLanguage read GetTargetLanguage;
+    function GetTranslationLanguage: TTranslationLanguage;
+    property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
 
     procedure ViewItem(Item: TLocalizerProperty);
     procedure InvalidateItem(Item: TLocalizerProperty);
@@ -418,7 +418,7 @@ begin
 
   if (ssTarget in FSearchScope) then
   begin
-    if Match(Prop.TranslatedValue[FSearchHost.TargetLanguage]) then
+    if Match(Prop.TranslatedValue[FSearchHost.TranslationLanguage]) then
     begin
       if (not Found) then
         FoundText := sValueTarget

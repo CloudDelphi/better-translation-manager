@@ -289,7 +289,7 @@ function TModuleImporterXLIFF.LoadFromStream(Project: TLocalizerProject; Stream:
 type
   TImportDelegate = reference to function(Module: TLocalizerModule; const ItemName, ItemType, PropertyName, SourceValue: string; var Prop: TLocalizerProperty): boolean;
 var
-  TargetLanguage: TTargetLanguage;
+  TranslationLanguage: TTranslationLanguage;
   IgnoreMismatch: boolean;
 
   function ProcessNodes(const BodyNode: IXMLNode; Module: TLocalizerModule; Delegate: TImportDelegate): boolean;
@@ -528,7 +528,7 @@ var
                   // Do not import obsolete translations - Unless we already know that the source values are wrong
                   Inc(FTranslationCount.CountSkipped);
                 end else
-                if (Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) then
+                if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
                 begin
                   if (Translation.Value <> TargetValue) or (Translation.Status <> TranslationStatusMap[TranslationStatus]) then
                   begin
@@ -538,7 +538,7 @@ var
                     Inc(FTranslationCount.CountSkipped);
                 end else
                 begin
-                  Prop.Translations.AddOrUpdateTranslation(TargetLanguage, TargetValue, TranslationStatusMap[TranslationStatus]);
+                  Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, TargetValue, TranslationStatusMap[TranslationStatus]);
                   Inc(FTranslationCount.CountAdded);
                 end;
               end;
@@ -713,7 +713,7 @@ begin
   if (Result.Kind = mkOther) then
     Result.Kind := ModuleKind;
 
-  TargetLanguage := Result.Project.TargetLanguages.Add(TargetLocaleID);
+  TranslationLanguage := Result.Project.TranslationLanguages.Add(TargetLocaleID);
 
   FillChar(FTranslationCount, SizeOf(FTranslationCount), 0);
 

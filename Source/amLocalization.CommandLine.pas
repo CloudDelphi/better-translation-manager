@@ -32,7 +32,7 @@ type
     procedure Error(const Msg: string);
     procedure Warning(const Msg: string);
 
-    procedure DoBuild(const AProjectFilename: string; TargetLanguage: TTargetLanguage);
+    procedure DoBuild(const AProjectFilename: string; TranslationLanguage: TTranslationLanguage);
 
     procedure LoadFromFile(const Filename: string);
     procedure Build(const AProjectFilename: string; const Language: string);
@@ -188,7 +188,7 @@ procedure TLocalizationCommandLineTool.Build(const AProjectFilename: string; con
 var
   LocaleID: integer;
   LocaleItem: TLocaleItem;
-  TargetLanguage: TTargetLanguage;
+  TranslationLanguage: TTranslationLanguage;
   i: integer;
 begin
   if (Language <> '') then
@@ -209,28 +209,28 @@ begin
     if (LocaleItem = nil) then
       Error(Format('Unknown target language: %s', [Language]));
 
-    TargetLanguage := FProject.TargetLanguages.Find(LocaleItem.Locale);
+    TranslationLanguage := FProject.TranslationLanguages.Find(LocaleItem.Locale);
 
-    if (TargetLanguage = nil) then
+    if (TranslationLanguage = nil) then
       Error(Format('Project does not contain any translations for the language: %s (%s)', [Language, LocaleItem.LanguageName]));
 
-    DoBuild(AProjectFilename, TargetLanguage);
+    DoBuild(AProjectFilename, TranslationLanguage);
   end else
   begin
-    for i := 0 to FProject.TargetLanguages.Count-1 do
-      if (FProject.TargetLanguages[i].LanguageID <> FProject.SourceLanguageID) then
-        DoBuild(AProjectFilename, FProject.TargetLanguages[i]);
+    for i := 0 to FProject.TranslationLanguages.Count-1 do
+      if (FProject.TranslationLanguages[i].LanguageID <> FProject.SourceLanguageID) then
+        DoBuild(AProjectFilename, FProject.TranslationLanguages[i]);
   end;
 end;
 
-procedure TLocalizationCommandLineTool.DoBuild(const AProjectFilename: string; TargetLanguage: TTargetLanguage);
+procedure TLocalizationCommandLineTool.DoBuild(const AProjectFilename: string; TranslationLanguage: TTranslationLanguage);
 var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
   LocaleItem: TLocaleItem;
   Filename: string;
 begin
-  LocaleItem := TLocaleItems.FindLCID(TargetLanguage.LanguageID);
+  LocaleItem := TLocaleItems.FindLCID(TranslationLanguage.LanguageID);
   Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
 
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(Filename)]));
@@ -240,7 +240,7 @@ begin
     ResourceWriter := TResourceModuleWriter.Create(Filename);
     try
 
-      ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TargetLanguage, ResourceWriter);
+      ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
 
     finally
       ResourceWriter := nil;
@@ -281,10 +281,10 @@ begin
     Message(Format('  Source file    : %s', [FProject.SourceFilename]));
     Message(Format('  Source Language: Locale=%.4X, Name=%s', [LocaleItem.Locale, LocaleItem.LanguageName]));
     Message(Format('  Symbol file    : %s', [FProject.StringSymbolFilename]));
-    for i := 0 to FProject.TargetLanguages.Count-1 do
+    for i := 0 to FProject.TranslationLanguages.Count-1 do
     begin
-      LocaleItem := TLocaleItems.FindLCID(FProject.TargetLanguages[i].LanguageID);
-      Message(Format('  Target language: Translated=%6.0n, Locale=%.4X, Name=%s', [FProject.TargetLanguages[i].TranslatedCount*1.0, LocaleItem.Locale, LocaleItem.LanguageName]));
+      LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
+      Message(Format('  Target language: Translated=%6.0n, Locale=%.4X, Name=%s', [FProject.TranslationLanguages[i].TranslatedCount*1.0, LocaleItem.Locale, LocaleItem.LanguageName]));
     end;
     CountItem := 0;
     CountProperty := 0;

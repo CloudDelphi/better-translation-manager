@@ -22,7 +22,7 @@ uses
 //
 // -----------------------------------------------------------------------------
 type
-  TTranslateProc = reference to function(Language: TTargetLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean;
+  TTranslateProc = reference to function(Language: TTranslationLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean;
 
 
 // -----------------------------------------------------------------------------
@@ -76,10 +76,10 @@ type
     FTranslationCount: TTranslationCounts;
     FIncludeVersionInfo: boolean;
   protected
-    class function DefaultTranslator(Language: TTargetLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
+    class function DefaultTranslator(Language: TTranslationLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
   public
-    procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTargetLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
-    procedure Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTargetLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
+    procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
+    procedure Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
 
     procedure ScanProject(Project: TLocalizerProject; Instance: HINST); overload;
     procedure ScanProject(Project: TLocalizerProject; const Filename: string); overload;
@@ -266,14 +266,14 @@ type
   protected
     FTranslationCounts: TTranslationCounts;
   protected
-    procedure DoSetTranslation(Prop: TLocalizerProperty; Language: TTargetLanguage; const Value: string);
+    procedure DoSetTranslation(Prop: TLocalizerProperty; Language: TTranslationLanguage; const Value: string);
     property Module: TLocalizerModule read FModule;
     property Instance: HINST read FInstance;
   public
     constructor Create(AModule: TLocalizerModule; AInstance: HINST);
 
-    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean; overload; virtual; abstract;
-    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage): boolean; overload;
+    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean; overload; virtual; abstract;
+    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage): boolean; overload;
 
     property TranslationCount: TTranslationCounts read FTranslationCounts;
   end;
@@ -289,14 +289,14 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TModuleResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage): boolean;
+function TModuleResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage): boolean;
 begin
   Result := Execute(Action, ResourceWriter, Language, TProjectResourceProcessor.DefaultTranslator);
 end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleResourceProcessor.DoSetTranslation(Prop: TLocalizerProperty; Language: TTargetLanguage; const Value: string);
+procedure TModuleResourceProcessor.DoSetTranslation(Prop: TLocalizerProperty; Language: TTranslationLanguage; const Value: string);
 var
   Translation: TLocalizerTranslation;
 begin
@@ -337,15 +337,15 @@ type
     FWriter: TWriter;
     FLastCopied: integer;
   protected
-    procedure ReadCollection(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
-    procedure ReadProperty(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
-    procedure ReadComponent(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; const Path: string);
+    procedure ReadCollection(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+    procedure ReadProperty(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+    procedure ReadComponent(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; const Path: string);
 
     procedure CopyToHere(CopyPos: int64);
   public
     destructor Destroy; override;
 
-    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean; override;
+    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean; override;
   end;
 
 // -----------------------------------------------------------------------------
@@ -399,7 +399,7 @@ begin
   inherited;
 end;
 
-function TModuleDFMResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean;
+function TModuleDFMResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean;
 const
   FilerSignature: UInt32 = $30465054; // ($54, $50, $46, $30) 'TPF0'
 var
@@ -483,7 +483,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleDFMResourceProcessor.ReadCollection(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+procedure TModuleDFMResourceProcessor.ReadCollection(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
 var
   Index: integer;
   ChildItem: TLocalizerItem;
@@ -522,7 +522,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleDFMResourceProcessor.ReadComponent(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; const Path: string);
+procedure TModuleDFMResourceProcessor.ReadComponent(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; const Path: string);
 var
   Flags: TFilerFlags;
   Position: Integer;
@@ -570,7 +570,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TModuleDFMResourceProcessor.ReadProperty(Action: TLocalizerImportAction; Language: TTargetLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+procedure TModuleDFMResourceProcessor.ReadProperty(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
 var
   PropertyName: string;
   Prop: TLocalizerProperty;
@@ -654,12 +654,12 @@ type
     FSymbolMap: TResourceStringSymbolMap;
     FResourceGroups: TResourceGroups;
   protected
-    procedure ExecuteGroup(Action: TLocalizerImportAction; ResourceGroupID: Word; ReadStream, WriteStream: TStream; Language: TTargetLanguage; Translator: TTranslateProc);
+    procedure ExecuteGroup(Action: TLocalizerImportAction; ResourceGroupID: Word; ReadStream, WriteStream: TStream; Language: TTranslationLanguage; Translator: TTranslateProc);
   public
     constructor Create(AModule: TLocalizerModule; AInstance: HINST; AResourceGroups: TResourceGroups);
     destructor Destroy; override;
 
-    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean; override;
+    function Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean; override;
   end;
 
 // -----------------------------------------------------------------------------
@@ -699,7 +699,7 @@ begin
   inherited;
 end;
 
-function TModuleStringResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTargetLanguage; Translator: TTranslateProc): boolean;
+function TModuleStringResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean;
 var
   SourceStream: TStream;
   TargetStream: TMemoryStream;
@@ -755,7 +755,7 @@ begin
   Result := True;
 end;
 
-procedure TModuleStringResourceProcessor.ExecuteGroup(Action: TLocalizerImportAction; ResourceGroupID: Word; ReadStream, WriteStream: TStream; Language: TTargetLanguage; Translator: TTranslateProc);
+procedure TModuleStringResourceProcessor.ExecuteGroup(Action: TLocalizerImportAction; ResourceGroupID: Word; ReadStream, WriteStream: TStream; Language: TTranslationLanguage; Translator: TTranslateProc);
 var
   i: integer;
   Size: Word;
@@ -857,7 +857,7 @@ end;
 // TProjectProcessorDFMResource
 //
 // -----------------------------------------------------------------------------
-class function TProjectResourceProcessor.DefaultTranslator(Language: TTargetLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean;
+class function TProjectResourceProcessor.DefaultTranslator(Language: TTranslationLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean;
 var
   Translation: TLocalizerTranslation;
 begin
@@ -876,7 +876,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTargetLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
+procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
 var
   Module: HModule;
 begin
@@ -935,7 +935,7 @@ begin
   Result := True;
 end;
 
-procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTargetLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
+procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
 
   procedure CopyVersionInfo;
   var
