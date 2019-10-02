@@ -639,8 +639,8 @@ object FormMain: TFormMain
     PopupMenuLinks = <>
     ShowShortCutInHint = True
     UseSystemFont = True
-    Left = 824
-    Top = 44
+    Left = 664
+    Top = 72
     PixelsPerInch = 96
     object BarManagerBarFile: TdxBar
       Caption = 'File'
@@ -1416,8 +1416,8 @@ object FormMain: TFormMain
     NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
-    Left = 748
-    Top = 48
+    Left = 736
+    Top = 72
   end
   object OpenDialogXLIFF: TOpenDialog
     Filter = 
@@ -1427,13 +1427,13 @@ object FormMain: TFormMain
       '*.dfn;*.rcn|All files (*.*)|*.*'
     FilterIndex = 4
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
-    Left = 344
-    Top = 364
+    Left = 448
+    Top = 512
   end
   object ActionList: TActionList
     Images = DataModuleMain.ImageListSmall
-    Left = 384
-    Top = 232
+    Left = 592
+    Top = 72
     object ActionProofingCheck: TAction
       Category = 'Validation'
       Caption = 'Spell check'
@@ -1853,12 +1853,8 @@ object FormMain: TFormMain
     OnCheckAsYouTypeStart = SpellCheckerCheckAsYouTypeStart
     OnCheckWord = SpellCheckerCheckWord
     OnSpellingComplete = SpellCheckerSpellingComplete
-    Left = 536
-    Top = 244
-  end
-  object ReplaceDialog: TReplaceDialog
-    Left = 164
-    Top = 380
+    Left = 448
+    Top = 204
   end
   object PopupMenuTree: TdxRibbonPopupMenu
     BarManager = BarManager
@@ -1900,8 +1896,8 @@ object FormMain: TFormMain
       end>
     Ribbon = RibbonMain
     UseOwnFont = False
-    Left = 276
-    Top = 240
+    Left = 80
+    Top = 232
     PixelsPerInch = 96
   end
   object OpenDialogEXE: TOpenDialog
@@ -1923,8 +1919,8 @@ object FormMain: TFormMain
     Ribbon = RibbonMain
     UseOwnFont = False
     OnPopup = PopupMenuBookmarkPopup
-    Left = 276
-    Top = 312
+    Left = 80
+    Top = 288
     PixelsPerInch = 96
   end
   object PopupMenuRecentFiles: TdxRibbonPopupMenu
@@ -1957,7 +1953,7 @@ object FormMain: TFormMain
   object TimerHint: TTimer
     Enabled = False
     OnTimer = TimerHintTimer
-    Left = 616
+    Left = 296
     Top = 244
   end
   object HintStyleController: TcxHintStyleController
@@ -1966,8 +1962,8 @@ object FormMain: TFormMain
     HintStyle.ScreenTipLinks = <>
     HintStyle.ScreenTipActionLinks = <>
     HintHidePause = 5000
-    Left = 616
-    Top = 332
+    Left = 296
+    Top = 356
   end
   object ScreenTipRepository: TdxScreenTipRepository
     AssignedFonts = [stbFooter]
@@ -1976,8 +1972,8 @@ object FormMain: TFormMain
     FooterFont.Height = -12
     FooterFont.Name = 'Segoe UI'
     FooterFont.Style = []
-    Left = 616
-    Top = 288
+    Left = 296
+    Top = 308
     PixelsPerInch = 96
     object ScreenTipTranslationMemory: TdxScreenTip
       Header.Glyph.SourceDPI = 96
@@ -2028,8 +2024,8 @@ object FormMain: TFormMain
       'ues?'
     Title = 'Translate using XXX?'
     VerificationText = 'Only translate strings that have not already been translated'
-    Left = 708
-    Top = 244
+    Left = 448
+    Top = 288
   end
   object PopupMenuTranslateProviders: TdxRibbonPopupMenu
     BarManager = BarManager
@@ -2037,15 +2033,15 @@ object FormMain: TFormMain
     Ribbon = RibbonMain
     UseOwnFont = False
     OnPopup = PopupMenuTranslateProvidersPopup
-    Left = 380
-    Top = 300
+    Left = 80
+    Top = 336
     PixelsPerInch = 96
   end
   object TimerToast: TTimer
     Enabled = False
     Interval = 2000
     OnTimer = TimerToastTimer
-    Left = 616
+    Left = 296
     Top = 200
   end
 end

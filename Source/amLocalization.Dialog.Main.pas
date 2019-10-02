@@ -169,7 +169,6 @@ type
     ActionFindReplace: TAction;
     dxBarButton13: TdxBarButton;
     dxBarButton14: TdxBarButton;
-    ReplaceDialog: TReplaceDialog;
     PopupMenuTree: TdxRibbonPopupMenu;
     SplitterTreeLists: TcxSplitter;
     TreeListModules: TcxTreeList;
@@ -4742,12 +4741,21 @@ end;
 procedure TFormMain.ViewProperty(Prop: TLocalizerProperty);
 var
   Node: TcxTreeListNode;
+resourcestring
+  sNodeModuleHidden = 'Module has been hidden by a filter and can not be selected';
+  sNodeItemHidden = 'Item has been hidden by a filter and can not be selected';
 begin
   // Find and select module
   Node := TreeListModules.Find(Prop.Item.Module, nil, False, True, TreeListFindFilter);
 
   if (Node <> nil) then
   begin
+    if (Node.IsHidden) then
+    begin
+      QueueToast(sNodeModuleHidden);
+      Exit;
+    end;
+
     Node.MakeVisible;
     Node.Focused := True;
 
@@ -4756,6 +4764,12 @@ begin
 
     if (Node <> nil) then
     begin
+      if (Node.IsHidden) then
+      begin
+        QueueToast(sNodeItemHidden);
+        Exit;
+      end;
+
       Node.MakeVisible;
       Node.Focused := True;
       TreeListItems.SetFocus;
