@@ -374,6 +374,7 @@ type
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
+    FUpdateCount: integer;
     FUpdateLockCount: integer;
     FLocalizerDataSource: TLocalizerDataSource;
     FActiveTreeList: TcxCustomTreeList;
@@ -384,6 +385,8 @@ type
     FLastBookmark: integer;
   private
     // Language selection
+    FSourceLanguage: TLocaleItem;
+    FTargetLanguage: TLocaleItem;
     FTranslationLanguage: TTranslationLanguage;
     function GetLanguageID(Value: LCID): LCID;
     function GetSourceLanguageID: Word;
@@ -410,6 +413,7 @@ type
     procedure TranslationMemoryPeekHandler(Sender: TObject);
     procedure QueueTranslationMemoryPeek(Node: TcxTreeListNode; Force: boolean = False); overload; // Specified node
     procedure QueueTranslationMemoryPeek; overload; // All nodes
+    procedure ClearTranslationMemoryPeekResult;
   private
     // Custom hint management
     FHintRect: TRect;
@@ -516,6 +520,8 @@ type
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
     procedure UnlockUpdates;
+    procedure BeginUpdate;
+    procedure EndUpdate;
     function CheckSave: boolean;
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; DisplayNotFound: boolean = True; FromStart: boolean = False; AutoWrap: boolean = True): boolean;
@@ -557,7 +563,10 @@ type
   public
     constructor Create(AOwner: TComponent); override;
 
+    property SourceLanguage: TLocaleItem read FSourceLanguage;
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
+
+    property TargetLanguage: TLocaleItem read FTargetLanguage;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
   end;
@@ -1076,82 +1085,12 @@ end;
 
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
-  FProject.SourceLanguageID := SourceLanguageID;
-  TreeListColumnSource.Caption.Text := TLocaleItems.FindLCID(FProject.SourceLanguageID).LanguageName;
-
-  CreateTranslationMemoryPeeker(True);
+  SourceLanguageID := BarEditItemSourceLanguage.EditValue;
 end;
 
 procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
-var
-  LocaleItem: TLocaleItem;
-  i: integer;
-  Found: boolean;
-  AnyFound: boolean;
-  FilenameDic, FilenameAff: string;
-  SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
 begin
-  CreateTranslationMemoryPeeker(True);
-
-  ClearDependents;
-  ClearTargetLanguage;
-  InvalidateTranslatedCounts;
-
-  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-  TreeListColumnTarget.Caption.Text := LocaleItem.LanguageName;
-
-  (*
-  ** Load spell check dictionary for new language
-  *)
-
-  // Unload old custom dictionary
-  Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
-  SpellChecker.Dictionaries[0].Enabled := False;
-  // Make sure folder exist before we save
-  TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
-  SpellChecker.Dictionaries[0].Unload;
-  // Load new custom dictionary
-  TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := TranslationManagerSettings.Folders.FolderUserSpellCheck+Format('user-%s.dic', [LocaleItem.LanguageShortName]);
-  SpellChecker.Dictionaries[0].Enabled := True;
-  SpellChecker.Dictionaries[0].Language := LocaleItem.Locale;
-
-  // Deactivate all existing dictionaries except ones that match new language
-  AnyFound := False;
-  for i := 1 to SpellChecker.DictionaryCount-1 do
-  begin
-    Found := (SpellChecker.Dictionaries[i].Language = LocaleItem.Locale);
-
-//    if (SpellChecker.Dictionaries[i].Enabled) and (not Found) then
-//      SpellChecker.Dictionaries[i].Unload;
-
-    SpellChecker.Dictionaries[i].Enabled := Found;
-    AnyFound := AnyFound or Found;
-  end;
-
-  // Add and load new dictionary
-  if (not AnyFound) then
-  begin
-    FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [LocaleItem.LanguageShortName]);
-    FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [LocaleItem.LanguageShortName]);
-    if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
-    begin
-      // AnyFound := True;
-      SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
-      SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := LocaleItem.Locale;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
-      TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
-    end;
-
-    // TODO : Add support for other formats here...
-  end;
-
-  SpellChecker.LoadDictionaries;
-
-  // Reload project
-  UpdateTargetLanguage;
+  TargetLanguageID := BarEditItemTargetLanguage.EditValue;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1274,19 +1213,32 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+  TreeListModules.BeginUpdate;
+  TreeListItems.BeginUpdate;
+end;
+
+procedure TFormMain.EndUpdate;
+begin
+  ASSERT(FUpdateCount > 0);
+  Dec(FUpdateCount);
+  TreeListItems.EndUpdate;
+  TreeListModules.EndUpdate;
+end;
+
 procedure TFormMain.LockUpdates;
 begin
   Inc(FUpdateLockCount);
-  TreeListModules.BeginUpdate;
-  TreeListItems.BeginUpdate;
+  BeginUpdate;
 end;
 
 procedure TFormMain.UnlockUpdates;
 begin
   ASSERT(FUpdateLockCount > 0);
-  TreeListItems.EndUpdate;
-  TreeListModules.EndUpdate;
   Dec(FUpdateLockCount);
+  EndUpdate;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1439,7 +1391,8 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  Enabled := (FocusedNode <> nil) and (SourceLanguageID <> TargetLanguageID) and (FTranslationMemory.IsAvailable);
+  Enabled := (FocusedNode <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
+
   if (Enabled) and (FocusedNode.TreeList.SelectionCount < 100) then
   begin
     // Require that at least one property is translated
@@ -1478,6 +1431,7 @@ begin
     FormTranslationMemory.Free;
   end;
 
+  ClearTranslationMemoryPeekResult;
   CreateTranslationMemoryPeeker(True);
 end;
 
@@ -1491,7 +1445,6 @@ type
   end;
 var
   Progress: IProgress;
-  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
   i: integer;
   Item: TCustomLocalizerItem;
   Counts: TAutoTranslateCounts;
@@ -1510,10 +1463,7 @@ resourcestring
   sTranslateAutoResultTitle = 'Machine translation completed.';
   sTranslateAutoResult = 'Translated: %d'#13'Updated: %d'#13'Not found: %d';
 begin
-  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguageID);
-  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-  if (SourceLocaleItem = TargetLocaleItem) then
+  if (SourceLanguage = TargetLanguage) then
     Exit;
 
   Counts := Default(TAutoTranslateCounts);
@@ -1579,7 +1529,7 @@ begin
 
   TranslateTranslated := not(tfVerificationFlagChecked in TaskDialogTranslate.Flags);
 
-  if (not TranslationService.BeginLookup(SourceLocaleItem, TargetLocaleItem)) then
+  if (not TranslationService.BeginLookup(SourceLanguage, TargetLanguage)) then
     Exit;
 
   // Abort any pending TM peek - we will requeue them all when we're done
@@ -1631,7 +1581,7 @@ begin
               // Perform translation
               // Note: It is the responsibility of the translation service to return True/False to indicate
               // if SourceValue=TargetValue is in fact a translation.
-              if (TranslationService.Lookup(Prop, SourceLocaleItem, TargetLocaleItem, Value)) then
+              if (TranslationService.Lookup(Prop, SourceLanguage, TargetLanguage, Value)) then
               begin
                 Inc(Counts.TranslatedCount);
 
@@ -1691,7 +1641,7 @@ begin
   Item := FocusedItem;
 
   TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
-    (SourceLanguageID <> TargetLanguageID) and (FTranslationMemory.IsAvailable);
+    (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1810,6 +1760,15 @@ begin
   FTranslationMemoryPeek.EnqueueQuery(Prop);
 end;
 
+procedure TFormMain.ClearTranslationMemoryPeekResult;
+var
+  i: integer;
+begin
+  // Reset state of all
+  for i := 0 to TreeListItems.Count-1 do
+    TreeListItems.Items[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+end;
+
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionAutomationTranslateExecute(Sender: TObject);
@@ -1824,7 +1783,7 @@ begin
   Item := FocusedItem;
 
   TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
-    (SourceLanguageID <> TargetLanguageID);
+    (SourceLanguage <> TargetLanguage);
 end;
 
 procedure TFormMain.OnTranslationProviderHandler(Sender: TObject);
@@ -1975,7 +1934,6 @@ var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
   Filename, Path: string;
-  LocaleItem: TLocaleItem;
   Filter: string;
 resourcestring
   sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
@@ -1986,19 +1944,14 @@ begin
 
   CheckStringsSymbolFile;
 
-  LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-
-  if (LocaleItem <> nil) then
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName)
-  else
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, '.dll');
+  Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+TargetLanguage.LanguageShortName);
 
   Path := TPath.GetDirectoryName(Filename);
   Filename := TPath.GetFileName(Filename);
 
   Filter := SaveDialogEXE.Filter;
-  if (LocaleItem <> nil) then
-    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + Filter;
+  if (TargetLanguage <> nil) then
+    Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.LanguageShortName]) + Filter;
 
   if (not PromptForFileName(Filename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
     Exit;
@@ -2134,22 +2087,20 @@ var
   ProjectProcessor: TProjectResourceProcessor;
   Stats: TTranslationCounts;
   SaveFilter: string;
-  LocaleItem: TLocaleItem;
 begin
   SaveCursor(crAppStart); // Open dialog can take a while to appear
 
   SaveFilter := OpenDialogEXE.Filter;
   try
 
-    LocaleItem := TLocaleItems.FindLCID(TargetLanguageID);
-    OpenDialogEXE.Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + SaveFilter;
+    OpenDialogEXE.Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.LanguageShortName]) + SaveFilter;
     OpenDialogEXE.FilterIndex := 1;
 
     Filename := OpenDialogEXE.FileName;
     if (Filename <> '') then
     begin
       OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
-      OpenDialogEXE.FileName := TPath.ChangeExtension(TPath.GetFileName(Filename), '.'+LocaleItem.LanguageShortName);
+      OpenDialogEXE.FileName := TPath.ChangeExtension(TPath.GetFileName(Filename), '.'+TargetLanguage.LanguageShortName);
     end;
 
     if (not OpenDialogEXE.Execute(Handle)) then
@@ -2181,7 +2132,7 @@ end;
 
 procedure TFormMain.ActionImportFileTargetUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (SourceLanguageID <> TargetLanguageID);
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (SourceLanguage <> TargetLanguage);
 end;
 
 // -----------------------------------------------------------------------------
@@ -3316,6 +3267,8 @@ end;
 
 procedure TFormMain.BarEditItemTargetLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
+  // BarEditItemTargetLanguage.EditValue isn't updated at this point.
+  // When MSG_TARGET_CHANGED arrives it will be.
   PostMessage(Handle, MSG_TARGET_CHANGED, 0, 0);
 end;
 
@@ -3776,17 +3729,31 @@ end;
 
 function TFormMain.GetSourceLanguageID: Word;
 begin
+  Result := FSourceLanguage.Locale;
+(*
   if (VarIsOrdinal(BarEditItemSourceLanguage.EditValue)) then
     Result := BarEditItemSourceLanguage.EditValue
   else
     Result := 0;
+*)
 end;
 
 procedure TFormMain.SetSourceLanguageID(const Value: Word);
+var
+  LocaleItem: TLocaleItem;
 begin
-  BarEditItemSourceLanguage.EditValue := Value;
+  LocaleItem := TLocaleItems.FindLCID(Value);
+  if (LocaleItem = nil) then
+    raise Exception.CreateFmt('Invalid source language ID: %.4X', [Value]);
 
-  Perform(MSG_SOURCE_CHANGED, 0, 0);
+  ClearTranslationMemoryPeekResult;
+
+  FSourceLanguage := LocaleItem;
+  BarEditItemSourceLanguage.EditValue := FSourceLanguage.Locale;
+  FProject.SourceLanguageID := FSourceLanguage.Locale;
+  TreeListColumnSource.Caption.Text := FSourceLanguage.LanguageName;
+
+  CreateTranslationMemoryPeeker(True);
 end;
 
 function TFormMain.GetTranslationLanguage: TTranslationLanguage;
@@ -3804,24 +3771,101 @@ end;
 
 function TFormMain.GetTargetLanguageID: Word;
 begin
+  Result := FTargetLanguage.Locale;
+(*
   if (VarIsOrdinal(BarEditItemTargetLanguage.EditValue)) then
     Result := BarEditItemTargetLanguage.EditValue
   else
     Result := 0;
+*)
 end;
 
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
+var
+  LocaleItem: TLocaleItem;
+  i: integer;
+  Found: boolean;
+  AnyFound: boolean;
+  FilenameDic, FilenameAff: string;
+  SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
 begin
-  // Always process setting the target. We need to have the dependents cleared and reloaded.
-  // if (TargetLanguageID = Value) then
-  //  Exit;
+  // Note: Always process setting the target regardless of current value.
+  // We need to have the dependents refreshed.
 
-  ClearDependents;
-  ClearTargetLanguage;
+  LocaleItem := TLocaleItems.FindLCID(Value);
+  if (LocaleItem = nil) then
+    raise Exception.CreateFmt('Invalid target language ID: %.4X', [Value]);
 
-  BarEditItemTargetLanguage.EditValue := Value;
+  BeginUpdate;
+  try
+    ClearDependents;
+    ClearTargetLanguage;
+    ClearTranslationMemoryPeekResult;
 
-  Perform(MSG_TARGET_CHANGED, 0, 0);
+    FTargetLanguage := LocaleItem;
+    BarEditItemTargetLanguage.EditValue := FTargetLanguage.Locale;
+
+    CreateTranslationMemoryPeeker(True);
+
+    InvalidateTranslatedCounts;
+
+    TreeListColumnTarget.Caption.Text := FTargetLanguage.LanguageName;
+
+    (*
+    ** Load spell check dictionary for new language
+    *)
+
+    // Unload old custom dictionary
+    Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
+    SpellChecker.Dictionaries[0].Enabled := False;
+    // Make sure folder exist before we save
+    TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
+    SpellChecker.Dictionaries[0].Unload;
+    // Load new custom dictionary
+    TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := TranslationManagerSettings.Folders.FolderUserSpellCheck+Format('user-%s.dic', [FTargetLanguage.LanguageShortName]);
+    SpellChecker.Dictionaries[0].Enabled := True;
+    SpellChecker.Dictionaries[0].Language := FTargetLanguage.Locale;
+
+    // Deactivate all existing dictionaries except ones that match new language
+    AnyFound := False;
+    for i := 1 to SpellChecker.DictionaryCount-1 do
+    begin
+      Found := (SpellChecker.Dictionaries[i].Language = FTargetLanguage.Locale);
+
+  //    if (SpellChecker.Dictionaries[i].Enabled) and (not Found) then
+  //      SpellChecker.Dictionaries[i].Unload;
+
+      SpellChecker.Dictionaries[i].Enabled := Found;
+      AnyFound := AnyFound or Found;
+    end;
+
+    // Add and load new dictionary
+    if (not AnyFound) then
+    begin
+      FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LanguageShortName]);
+      FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.LanguageShortName]);
+      if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
+      begin
+        // AnyFound := True;
+        SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
+        SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
+        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := FTargetLanguage.Locale;
+        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
+        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
+        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
+      end;
+
+      // TODO : Add support for other formats here...
+    end;
+
+    SpellChecker.LoadDictionaries;
+
+    // Reload project
+    UpdateTargetLanguage;
+
+  finally
+    EndUpdate;
+  end;
 end;
 
 procedure TFormMain.ClearTargetLanguage;
@@ -3832,7 +3876,7 @@ end;
 
 procedure TFormMain.UpdateTargetLanguage;
 begin
-  FLocalizerDataSource.TranslationLanguage := TranslationLanguage;
+  FLocalizerDataSource.TranslationLanguage := GetTranslationLanguage; // Must use getter
   TreeListModules.FullRefresh;
   RefreshModuleStats;
 end;
@@ -4277,7 +4321,6 @@ end;
 
 function TFormMain.GetTranslatedCount(Module: TLocalizerModule): integer;
 var
-  Language: TTranslationLanguage;
   Count: integer;
 begin
   if (FTranslationCounts.TryGetValue(Module, Result)) and (Result <> -1) then
@@ -4285,11 +4328,10 @@ begin
 
   // Calculate translated count
   Count := 0;
-  Language := TranslationLanguage; // Cache costly conversion
   Module.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
-      if (not Prop.IsUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(Language)) then
+      if (not Prop.IsUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
         Inc(Count);
       Result := True;
     end, False);
@@ -5320,10 +5362,8 @@ begin
 
     Translations := TStringList.Create;
     try
-      Translations.Duplicates := dupIgnore;
-      Translations.Sorted := True;
 
-      if (not FTranslationMemory.FindTranslations(Prop, TLocaleItems.FindLCID(SourceLanguageID), TLocaleItems.FindLCID(TargetLanguageID), Translations)) then
+      if (not FTranslationMemory.FindTranslations(Prop, SourceLanguage, TargetLanguage, Translations)) then
         Exit;
 
       HintList := '';

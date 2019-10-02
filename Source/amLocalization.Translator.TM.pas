@@ -253,7 +253,6 @@ begin
   FQueueEvent := TEvent.Create(nil, False, False, '');
   FDictionary := TStringList.Create;
   FDictionary.CaseSensitive := False;
-  FDictionary.Duplicates := dupIgnore;
 end;
 
 destructor TPeekDictionaryThread.Destroy;
@@ -1578,7 +1577,8 @@ begin
         begin
           SourceValue := SanitizeText(SourceField.AsString, False);
 
-          Dictionary.Add(SourceValue);
+          if (Dictionary.IndexOf(SourceValue) = -1) then
+            Dictionary.Add(SourceValue);
         end;
 
         Clone.Next;
