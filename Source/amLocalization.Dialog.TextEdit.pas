@@ -63,6 +63,7 @@ type
     procedure FileSaveAs1Accept(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
+    FTargetRightToLeft: boolean;
     function GetText: string;
     procedure SetText(const Value: string);
     function GetSourceText: string;
@@ -71,6 +72,7 @@ type
     function Execute(ShowSourceValue: boolean = True): boolean;
     property Text: string read GetText write SetText;
     property SourceText: string read GetSourceText write SetSourceText;
+    property TargetRightToLeft: boolean read FTargetRightToLeft write FTargetRightToLeft;
   end;
 
 implementation
@@ -90,6 +92,14 @@ function TFormTextEditor.Execute(ShowSourceValue: boolean): boolean;
 begin
   EditSourceText.Visible := ShowSourceValue;
   SplitterEditors.Visible := ShowSourceValue;
+
+  if (FTargetRightToLeft) <> (IsRightToLeft) then
+  begin
+    if (FTargetRightToLeft) then
+      EditText.BiDiMode := bdRightToLeft
+    else
+      EditText.BiDiMode := bdLeftToRight;
+  end;
 
   Result := (ShowModal = mrOK);
 end;

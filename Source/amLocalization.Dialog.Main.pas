@@ -387,6 +387,7 @@ type
     // Language selection
     FSourceLanguage: TLocaleItem;
     FTargetLanguage: TLocaleItem;
+    FTargetRightToLeft: boolean;
     FTranslationLanguage: TTranslationLanguage;
     function GetLanguageID(Value: LCID): LCID;
     function GetSourceLanguageID: Word;
@@ -603,6 +604,7 @@ uses
 
   dxHunspellDictionary,
   dxSpellCheckerDialogs,
+  cxDrawTextUtils,
 
   DelphiDabbler.SingleInstance,
 
@@ -3803,6 +3805,8 @@ begin
     ClearTranslationMemoryPeekResult;
 
     FTargetLanguage := LocaleItem;
+    FTargetRightToLeft := (StrToInt(TLocaleItem.GetLocaleDataW(FTargetLanguage.Locale, LOCALE_IREADINGLAYOUT)) = 1);
+
     BarEditItemTargetLanguage.EditValue := FTargetLanguage.Locale;
 
     CreateTranslationMemoryPeeker(True);
@@ -3810,6 +3814,7 @@ begin
     InvalidateTranslatedCounts;
 
     TreeListColumnTarget.Caption.Text := FTargetLanguage.LanguageName;
+
 
     (*
     ** Load spell check dictionary for new language
@@ -4887,7 +4892,8 @@ begin
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := TcxButtonEdit(Sender).EditingText;// FocusedProperty.TranslatedValue[TargetLanguage];
+    TextEditor.Text := TcxButtonEdit(Sender).EditingText;
+    TextEditor.TargetRightToLeft := FTargetRightToLeft;
 
     if (TextEditor.Execute) then
     begin
@@ -4920,6 +4926,21 @@ begin
   if (AViewInfo.Column <> TreeListColumnTarget) then
     Exit;
 
+  if (FTargetRightToLeft) and (not IsRightToLeft) then
+  begin
+    // Target language is Right-to-Left but rest of UI isn't
+
+    (* None of these work:
+    AViewInfo.EditViewInfo.UseRightToLeftAlignment := True;
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).TextOutData.TextParams.RTLReading := True;
+    ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
+    *)
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags or CXTO_RTLREADING;
+    AViewInfo.Draw(ACanvas);
+
+    ADone := True;
+  end;
+
   // Draw indicator if source value is found in Translation Memory
   if (TTranslationMemoryPeekResult(AViewInfo.Node.Data) <> TTranslationMemoryPeekResult.prFound) or (AViewInfo.Editing) then
     Exit;
@@ -4933,7 +4954,8 @@ begin
   end;
 
   // Draw the default content
-  AViewInfo.Draw(ACanvas);
+  if (not ADone) then
+    AViewInfo.Draw(ACanvas);
 
   // Draw a rectangle in the top right corner
   ACanvas.SaveDC;
@@ -4945,9 +4967,18 @@ begin
     ACanvas.Pen.Color := clBlue;
     ACanvas.Pen.Style := psSolid;
 
-    Triangle[0].X := AViewInfo.BoundsRect.Right-1;
+    if (FTargetRightToLeft) then
+    begin
+      // Top left corner
+      Triangle[0].X := AViewInfo.BoundsRect.Left+1;
+      Triangle[1].X := Triangle[0].X + HintCornerSize;
+    end else
+    begin
+      // Top right corner
+      Triangle[0].X := AViewInfo.BoundsRect.Right-1;
+      Triangle[1].X := Triangle[0].X - HintCornerSize;
+    end;
     Triangle[0].Y := AViewInfo.BoundsRect.Top;
-    Triangle[1].X := Triangle[0].X - HintCornerSize;
     Triangle[1].Y := Triangle[0].Y;
     Triangle[2].X := Triangle[0].X;
     Triangle[2].Y := Triangle[0].Y + HintCornerSize;
