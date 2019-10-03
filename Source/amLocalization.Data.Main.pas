@@ -128,7 +128,10 @@ begin
   TextEditor := TFormTextEditor.Create(nil);
   try
 //    TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := TcxButtonEdit(Sender).EditingText;// FocusedProperty.TranslatedValue[TargetLanguage];
+    TextEditor.Text := TcxButtonEdit(Sender).EditingText;
+    TextEditor.TargetRightToLeft := (TcxButtonEdit(Sender).BiDiMode <> bdLeftToRight);
+    if (TcxButtonEdit(Sender).Tag <> 0) then
+      TextEditor.SetTargetName(TLocaleItems.FindLCID(TcxButtonEdit(Sender).Tag).LanguageName);
 
     if (TextEditor.Execute(False)) then
     begin

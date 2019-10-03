@@ -124,6 +124,7 @@ object DataModuleMain: TDataModuleMain
           Kind = bkEllipsis
         end>
       Properties.ClearKey = 16392
+      Properties.UseLeftAlignmentOnEditing = False
       Properties.OnButtonClick = EditRepositoryTextItemPropertiesButtonClick
     end
     object EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem

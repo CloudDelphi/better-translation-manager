@@ -332,6 +332,7 @@ type
     FBooting: boolean;
     FBootCount: integer;
     FHideFeedback: boolean;
+    FEditBiDiMode: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -360,6 +361,7 @@ type
     property HideFeedback: boolean read FHideFeedback write FHideFeedback;
 
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
+    property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
 
     property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;

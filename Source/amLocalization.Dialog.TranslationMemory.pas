@@ -57,9 +57,11 @@ type
     procedure GridPopupMenuPopupMenus0Popup(ASenderMenu: TComponent; AHitTest: TcxCustomGridHitTest; X, Y: Integer);
     procedure ActionExportExecute(Sender: TObject);
     procedure ActionImportExecute(Sender: TObject);
+    procedure GridTMDBTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
   private
     FDataModuleTranslationMemory: TDataModuleTranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
+    FRightToLeft: array of boolean;
   protected
     procedure CreateColumns;
     procedure SaveLayout;
@@ -86,6 +88,8 @@ implementation
 uses
   IOUtils,
   UITypes,
+  cxTextEdit,
+  cxDrawTextUtils,
   amCursorService,
   amLocale,
   amProgress,
@@ -370,9 +374,11 @@ begin
   try
     GridTMDBTableView.ClearItems;
     GridTMDBTableView.DataController.CreateAllItems;
+    SetLength(FRightToLeft, GridTMDBTableView.ColumnCount);
 
     for i := 0 to GridTMDBTableView.ColumnCount-1 do
     begin
+      FRightToLeft[i] := (StrToInt(TLocaleItem.GetLocaleDataW(GridTMDBTableView.Columns[i].DataBinding.Field.Tag, LOCALE_IREADINGLAYOUT)) = 1);
       GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
       GridTMDBTableView.Columns[i].Width := 200;
       GridTMDBTableView.Columns[i].BestFitMaxWidth := 400;
@@ -410,6 +416,8 @@ end;
 
 procedure TFormTranslationMemory.GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
   AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+var
+  Flags: DWORD;
 begin
 (* Turns out we really don't need this.
 
@@ -418,6 +426,48 @@ begin
 
   // ...Also we no longer store the charset in the tag
 *)
+
+  if (FRightToLeft[AViewInfo.Item.Index] <> IsRightToLeft) then
+  begin
+    // Target language is Right-to-Left but rest of UI isn't - or vice versa
+    Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
+    if (FRightToLeft[AViewInfo.Item.Index]) then
+    begin
+      // Set RTL
+      Flags := Flags or CXTO_RTLREADING;
+      // Swap left/right alignment
+      if (TranslationManagerSettings.System.EditBiDiMode) then
+      begin
+        if ((Flags and $0000000F) = CXTO_LEFT) then
+          Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
+        else
+        if ((Flags and $0000000F) =  CXTO_RIGHT) then
+          Flags := (Flags and $FFFFFFF0) or CXTO_LEFT;
+      end;
+    end else
+      // Clear RTL
+      Flags := Flags and (not CXTO_RTLREADING);
+
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := Flags;
+  end;
+end;
+
+procedure TFormTranslationMemory.GridTMDBTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem;
+  AEdit: TcxCustomEdit);
+begin
+  // Editor is reused between columns so we need to reset this for every column
+  // in case one of the columns has changed it
+  if (TranslationManagerSettings.System.EditBiDiMode) then
+  begin
+    if (FRightToLeft[AItem.Index]) then
+      AEdit.BiDiMode := bdRightToLeft
+    else
+      AEdit.BiDiMode := bdLeftToRight;
+  end;
+
+  // Store Locale in tag so we can use it when opening the text editor.
+  // See: TDataModuleMain.EditRepositoryTextItemPropertiesButtonClick
+  AEdit.Tag := TcxGridDBColumn(AItem).DataBinding.Field.Tag;
 end;
 
 end.

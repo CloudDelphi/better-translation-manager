@@ -114,7 +114,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetAppearance
+        Properties.ActivePage = TabSheetGeneral
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -167,18 +167,18 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAtstart: TcxCheckBox
               Left = 12
-              Top = 135
+              Top = 160
               Caption = 'Display guide dialog when the application starts'
               ParentBackground = False
               ParentColor = False
               Style.Color = 16053234
               Style.TransparentBorder = False
-              TabOrder = 5
+              TabOrder = 6
               Transparent = True
             end
             object cxLabel2: TcxLabel
               Left = 0
-              Top = 112
+              Top = 137
               AutoSize = False
               Caption = 'Dialogs'
               Style.HotTrack = False
@@ -191,15 +191,15 @@ inherited FormSettings: TFormSettings
             end
             object ButtonDialogsSuppressReset: TcxButton
               Left = 12
-              Top = 160
+              Top = 185
               Width = 197
               Height = 23
               Caption = 'Reset suppressed dialogs'
-              TabOrder = 6
+              TabOrder = 7
             end
             object LabelLanguage: TcxLabel
               Left = 0
-              Top = 197
+              Top = 222
               AutoSize = False
               Caption = 'Language'
               Style.HotTrack = False
@@ -240,18 +240,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxSourceLanguage: TcxExtLookupComboBox
               Left = 138
-              Top = 220
-              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
-              Properties.ClearKey = 46
-              Properties.DropDownAutoSize = True
-              Properties.DropDownSizeable = True
-              Style.HotTrack = False
-              TabOrder = 8
-              Width = 145
-            end
-            object ComboBoxTargetLanguage: TcxExtLookupComboBox
-              Left = 138
-              Top = 247
+              Top = 245
               RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
@@ -260,23 +249,47 @@ inherited FormSettings: TFormSettings
               TabOrder = 9
               Width = 145
             end
+            object ComboBoxTargetLanguage: TcxExtLookupComboBox
+              Left = 138
+              Top = 272
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
+              Properties.ClearKey = 46
+              Properties.DropDownAutoSize = True
+              Properties.DropDownSizeable = True
+              Style.HotTrack = False
+              TabOrder = 10
+              Width = 145
+            end
             object ComboBoxApplicationLanguage: TcxExtLookupComboBox
               Left = 138
-              Top = 286
+              Top = 311
               RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
               Properties.DropDownSizeable = True
               Properties.OnEditValueChanged = ComboBoxApplicationLanguagePropertiesEditValueChanged
               Style.HotTrack = False
-              TabOrder = 10
+              TabOrder = 11
               Width = 145
+            end
+            object CheckBoxEditBiDiMode: TcxCheckBox
+              Left = 12
+              Top = 104
+              Caption = 'BiDi mode follows edited language'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 4
+              Transparent = True
             end
             object dxLayoutGroup1: TdxLayoutGroup
               AlignHorz = ahParentManaged
               AlignVert = avParentManaged
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = -1
             end
@@ -348,6 +361,7 @@ inherited FormSettings: TFormSettings
               Offsets.Left = 12
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -474,6 +488,15 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalWidth = 145
               ControlOptions.ShowBorder = False
               Index = 3
+            end
+            object dxLayoutItem54: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup2
+              CaptionOptions.Visible = False
+              Control = CheckBoxEditBiDiMode
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 183
+              ControlOptions.ShowBorder = False
+              Index = 1
             end
           end
         end

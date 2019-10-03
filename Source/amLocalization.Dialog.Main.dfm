@@ -416,6 +416,7 @@ object FormMain: TFormMain
     OnExit = TreeListModulesExit
     OnGetCellHint = TreeListGetCellHint
     OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
+    OnInitEdit = TreeListItemsInitEdit
     OnMouseDown = TreeListItemsMouseDown
     OnMouseMove = TreeListItemsMouseMove
     ExplicitTop = 125
@@ -2003,12 +2004,14 @@ object FormMain: TFormMain
       Header.Text = 'Translation Memory'
       Description.PlainText = False
       Description.Text = 
-        '{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fnil\fcharset0 Segoe ' +
-        'UI;}{\f1\fnil\fcharset2 Symbol;}}'#13#10'{\colortbl ;\red76\green76\bl' +
-        'ue76;\red0\green128\blue255;}'#13#10'\viewkind4\uc1\pard\cf1\lang1030\' +
-        'f0\fs18 Lorem ipsum dolor:\par'#13#10'\pard{\pntext\f1\'#39'B7\tab}{\*\pn\' +
-        'pnlvlblt\pnf1\pnindent0{\pntxtb\'#39'B7}}\fi-200\li200\cf2 One\cf1\p' +
-        'ar'#13#10'\cf2{\pntext\f1\'#39'B7\tab}Two\cf1\par'#13#10'}'#13#10
+        '{\rtf1\fbidis\ansi\ansicpg1252\deff0{\fonttbl{\f0\fnil\fcharset0' +
+        ' Segoe UI;}{\f1\fnil\fcharset178 Segoe UI;}{\f2\fnil\fcharset2 S' +
+        'ymbol;}}'#13#10'{\colortbl ;\red76\green76\blue76;\red0\green128\blue2' +
+        '55;}'#13#10'\viewkind4\uc1\pard\ltrpar\cf1\lang1030\f0\fs18 Lorem ipsu' +
+        'm dolor:\par'#13#10'\pard{\pntext\f2\'#39'B7\tab}{\*\pn\pnlvlblt\pnf2\pnin' +
+        'dent0{\pntxtb\'#39'B7}}\ltrpar\fi-200\li200\cf2\f1\rtlch\'#39'c5\'#39'e1\'#39'db' +
+        '\'#39'c7\'#39'c1 \'#39'c7\'#39'e1\'#39'c3\'#39'e3\'#39'd1\cf1\f0\ltrch\par'#13#10'\cf2{\pntext\f2\' +
+        #39'B7\tab}Two\cf1\par'#13#10'}'#13#10
       Footer.Text = 'Click to translate from Translation Memory'
     end
   end

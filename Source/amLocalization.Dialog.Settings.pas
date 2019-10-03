@@ -299,6 +299,8 @@ type
     CheckBoxStatusGlyphHint: TcxCheckBox;
     ActionEditStatusGlyphs: TAction;
     ActionEditStatusHint: TAction;
+    dxLayoutItem54: TdxLayoutItem;
+    CheckBoxEditBiDiMode: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -546,6 +548,7 @@ begin
   *)
   SetSkin(TranslationManagerSettings.System.Skin);
   CheckUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
+  CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.System.EditBiDiMode;
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
@@ -609,6 +612,7 @@ begin
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
+  TranslationManagerSettings.System.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
   TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
   TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);

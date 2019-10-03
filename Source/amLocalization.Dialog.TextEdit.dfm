@@ -1,5 +1,4 @@
 inherited FormTextEditor: TFormTextEditor
-  ActiveControl = EditText
   BorderIcons = [biSystemMenu, biMaximize]
   BorderStyle = bsSizeToolWin
   Caption = 'Edit text'
@@ -61,40 +60,99 @@ inherited FormTextEditor: TFormTextEditor
         ParentBackground = False
         ShowCaption = False
         TabOrder = 0
-        object EditSourceText: TcxRichEdit
-          Left = 0
-          Top = 0
-          Align = alLeft
-          PopupMenu = PopupActionBar1
-          Properties.MemoMode = True
-          Properties.PlainText = True
-          Properties.ReadOnly = True
-          Properties.ScrollBars = ssVertical
-          Style.HotTrack = False
-          Style.TextColor = clGrayText
-          TabOrder = 0
-          Height = 238
-          Width = 277
-        end
-        object EditText: TcxRichEdit
-          Left = 281
-          Top = 0
-          Align = alClient
-          PopupMenu = PopupActionBar1
-          Properties.MemoMode = True
-          Properties.PlainText = True
-          Properties.ScrollBars = ssVertical
-          Style.HotTrack = False
-          TabOrder = 1
-          Height = 238
-          Width = 288
-        end
         object SplitterEditors: TcxSplitter
           Left = 277
           Top = 0
           Width = 4
           Height = 238
           HotZoneClassName = 'TcxSimpleStyle'
+        end
+        object PanelSource: TPanel
+          Left = 0
+          Top = 0
+          Width = 277
+          Height = 238
+          Align = alLeft
+          BevelOuter = bvNone
+          FullRepaint = False
+          ParentColor = True
+          ShowCaption = False
+          TabOrder = 1
+          object EditSourceText: TcxRichEdit
+            Left = 0
+            Top = 13
+            Align = alClient
+            PopupMenu = PopupActionBar1
+            Properties.MemoMode = True
+            Properties.PlainText = True
+            Properties.ReadOnly = True
+            Properties.ScrollBars = ssVertical
+            Style.HotTrack = False
+            Style.TextColor = clGrayText
+            TabOrder = 0
+            ExplicitLeft = -188
+            ExplicitTop = 0
+            ExplicitHeight = 238
+            Height = 225
+            Width = 277
+          end
+          object LabelSourceName: TcxLabel
+            Left = 0
+            Top = 0
+            Align = alTop
+            Caption = 'Lorem ipsum'
+            Style.TransparentBorder = False
+            Properties.Alignment.Horz = taCenter
+            Properties.ShowAccelChar = False
+            Transparent = True
+            Visible = False
+            AnchorX = 139
+          end
+        end
+        object PanelText: TPanel
+          Left = 281
+          Top = 0
+          Width = 288
+          Height = 238
+          Align = alClient
+          BevelOuter = bvNone
+          FullRepaint = False
+          ParentColor = True
+          ShowCaption = False
+          TabOrder = 2
+          ExplicitLeft = 192
+          ExplicitTop = 104
+          ExplicitWidth = 89
+          ExplicitHeight = 93
+          object EditText: TcxRichEdit
+            Left = 0
+            Top = 13
+            Align = alClient
+            PopupMenu = PopupActionBar1
+            Properties.MemoMode = True
+            Properties.PlainText = True
+            Properties.ScrollBars = ssVertical
+            Style.HotTrack = False
+            TabOrder = 0
+            ExplicitLeft = 281
+            ExplicitTop = 0
+            ExplicitWidth = 89
+            ExplicitHeight = 93
+            Height = 225
+            Width = 288
+          end
+          object LabelTargetName: TcxLabel
+            Left = 0
+            Top = 0
+            Align = alTop
+            Caption = 'Lorem ipsum'
+            Style.TransparentBorder = False
+            Properties.Alignment.Horz = taCenter
+            Properties.ShowAccelChar = False
+            Transparent = True
+            Visible = False
+            AnchorX = 144
+          end
         end
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup

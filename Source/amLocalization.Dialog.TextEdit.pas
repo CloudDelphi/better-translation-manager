@@ -55,9 +55,13 @@ type
     N1: TMenuItem;
     LayoutItemEditors: TdxLayoutItem;
     PanelEditors: TPanel;
+    SplitterEditors: TcxSplitter;
+    PanelSource: TPanel;
+    PanelText: TPanel;
     EditSourceText: TcxRichEdit;
     EditText: TcxRichEdit;
-    SplitterEditors: TcxSplitter;
+    LabelSourceName: TcxLabel;
+    LabelTargetName: TcxLabel;
     procedure FormKeyPress(Sender: TObject; var Key: Char);
     procedure FileOpen1Accept(Sender: TObject);
     procedure FileSaveAs1Accept(Sender: TObject);
@@ -72,6 +76,8 @@ type
     function Execute(ShowSourceValue: boolean = True): boolean;
     property Text: string read GetText write SetText;
     property SourceText: string read GetSourceText write SetSourceText;
+    procedure SetSourceName(const Name: string);
+    procedure SetTargetName(const Name: string);
     property TargetRightToLeft: boolean read FTargetRightToLeft write FTargetRightToLeft;
   end;
 
@@ -80,7 +86,8 @@ implementation
 {$R *.dfm}
 
 uses
-  Consts;
+  Consts,
+  amLocalization.Settings;
 
 //------------------------------------------------------------------------------
 //
@@ -90,10 +97,10 @@ uses
 
 function TFormTextEditor.Execute(ShowSourceValue: boolean): boolean;
 begin
-  EditSourceText.Visible := ShowSourceValue;
+  PanelSource.Visible := ShowSourceValue;
   SplitterEditors.Visible := ShowSourceValue;
 
-  if (FTargetRightToLeft) <> (IsRightToLeft) then
+  if (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.System.EditBiDiMode) then
   begin
     if (FTargetRightToLeft) then
       EditText.BiDiMode := bdRightToLeft
@@ -149,6 +156,20 @@ end;
 procedure TFormTextEditor.SetSourceText(const Value: string);
 begin
   EditSourceText.Text := Value;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TFormTextEditor.SetSourceName(const Name: string);
+begin
+  LabelSourceName.Caption := Name;
+  LabelSourceName.Visible := (Name <> '');
+end;
+
+procedure TFormTextEditor.SetTargetName(const Name: string);
+begin
+  LabelTargetName.Caption := Name;
+  LabelTargetName.Visible := (Name <> '');
 end;
 
 //------------------------------------------------------------------------------

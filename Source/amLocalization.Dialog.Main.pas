@@ -371,6 +371,7 @@ type
     procedure PopupMenuTranslateProvidersPopup(Sender: TObject);
     procedure TimerToastTimer(Sender: TObject);
     procedure StatusBarHint(Sender: TObject);
+    procedure TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -569,6 +570,7 @@ type
 
     property TargetLanguage: TLocaleItem read FTargetLanguage;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
+    property TargetRightToLeft: boolean read FTargetRightToLeft;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
   end;
 
@@ -744,14 +746,19 @@ begin
     HitTest.HitPoint := p;
     HitTest.ReCalculate;
 
-    if (not HitTest.HitAtNode) or (not HitTest.HitAtColumn) or (HitTest.HitTestItem = nil) then
+    if (not HitTest.HitAtNode) or (not HitTest.HitAtColumn) or (HitTest.HitTestItem = nil) or (HitTest.HitColumn <> TFormMain(Owner).TreeListColumnTarget) then
     begin
       Inherited;
       Exit;
     end;
 
     r := CellRect(HitTest.HitNode, HitTest.HitColumn);
-    r.Left := r.Right - HintCornerSize;
+    if (UseRightToLeftReading) or (TFormMain(Owner).TargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+      // Top left corner
+      r.Right := r.Left + HintCornerSize
+    else
+      // Top right corner
+      r.Left := r.Right - HintCornerSize;
     r.Bottom := r.Top + HintCornerSize;
 
     if (not r.Contains(p)) or (TFormMain.TTranslationMemoryPeekResult(HitTest.HitNode.Data) <> TFormMain.TTranslationMemoryPeekResult.prFound) then
@@ -991,16 +998,14 @@ end;
 
 procedure TFormMain.ApplySettings;
 begin
+  (*
+  ** Settings that can NOT be modified via GUI
+  *)
   TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
   SpellChecker.UseThreadedLoad := (not TranslationManagerSettings.System.SafeMode);
   SpellChecker.CheckAsYouTypeOptions.Active := SpellChecker.CheckAsYouTypeOptions.Active and (not TranslationManagerSettings.System.SafeMode);
 
   LoadRecentFiles;
-
-  if (TranslationManagerSettings.System.UseProposedStatus) then
-    TLocalizerTranslations.DefaultStatus := tStatusProposed
-  else
-    TLocalizerTranslations.DefaultStatus := tStatusTranslated;
 
   OpenDialogXLIFF.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
   OpenDialogProject.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
@@ -1025,9 +1030,17 @@ end;
 
 procedure TFormMain.ApplyCustomSettings;
 begin
+  (*
+  ** Settings that can be modified via GUI
+  *)
   SetSkin(TranslationManagerSettings.System.Skin);
 
   ApplyListStyles;
+
+  if (TranslationManagerSettings.System.UseProposedStatus) then
+    TLocalizerTranslations.DefaultStatus := tStatusProposed
+  else
+    TLocalizerTranslations.DefaultStatus := tStatusTranslated;
 
   if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
   begin
@@ -4894,6 +4907,8 @@ begin
     TextEditor.SourceText := FocusedProperty.Value;
     TextEditor.Text := TcxButtonEdit(Sender).EditingText;
     TextEditor.TargetRightToLeft := FTargetRightToLeft;
+    TextEditor.SetSourceName(SourceLanguage.LanguageName);
+    TextEditor.SetTargetName(TargetLanguage.LanguageName);
 
     if (TextEditor.Execute) then
     begin
@@ -4922,20 +4937,40 @@ procedure TFormMain.TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; A
 var
   Prop: TLocalizerProperty;
   Triangle: array[0..2] of TPoint;
+  Flags: DWORD;
 begin
   if (AViewInfo.Column <> TreeListColumnTarget) then
     Exit;
 
-  if (FTargetRightToLeft) and (not IsRightToLeft) then
+  if (FTargetRightToLeft <> IsRightToLeft) then
   begin
-    // Target language is Right-to-Left but rest of UI isn't
+    // Target language is Right-to-Left but rest of UI isn't - or vice versa
 
     (* None of these work:
     AViewInfo.EditViewInfo.UseRightToLeftAlignment := True;
     TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).TextOutData.TextParams.RTLReading := True;
     ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
     *)
-    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags or CXTO_RTLREADING;
+    Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
+    if (FTargetRightToLeft) then
+    begin
+      // Set RTL
+      Flags := Flags or CXTO_RTLREADING;
+      // Swap left/right alignment
+      if (TranslationManagerSettings.System.EditBiDiMode) then
+      begin
+        if ((Flags and $0000000F) = CXTO_LEFT) then
+          Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
+        else
+        if ((Flags and $0000000F) =  CXTO_RIGHT) then
+          Flags := (Flags and $FFFFFFF0) or CXTO_LEFT;
+      end;
+    end else
+      // Clear RTL
+      Flags := Flags and (not CXTO_RTLREADING);
+
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := Flags;
+
     AViewInfo.Draw(ACanvas);
 
     ADone := True;
@@ -4967,7 +5002,7 @@ begin
     ACanvas.Pen.Color := clBlue;
     ACanvas.Pen.Style := psSolid;
 
-    if (FTargetRightToLeft) then
+    if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
     begin
       // Top left corner
       Triangle[0].X := AViewInfo.BoundsRect.Left+1;
@@ -5209,6 +5244,18 @@ begin
     AIndex := NodeImageIndexNotTranslated;
 end;
 
+procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
+begin
+  if (AItem = TreeListColumnTarget) and (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.System.EditBiDiMode) then
+  begin
+    // Target language is Right-to-Left but rest of UI isn't - or vice versa
+    if (FTargetRightToLeft) then
+      AEdit.BiDiMode := bdRightToLeft
+    else
+      AEdit.BiDiMode := bdLeftToRight;
+  end;
+end;
+
 procedure TFormMain.TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   p: TPoint;
@@ -5233,7 +5280,12 @@ begin
   Node := TreeListItems.HitTest.HitNode;
 
   r := TreeListItems.CellRect(Node, TreeListItems.HitTest.HitColumn);
-  r.Left := r.Right - HintCornerSize;
+  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+    // Top left corner
+    r.Right := r.Left + HintCornerSize
+  else
+    // Top right corner
+    r.Left := r.Right - HintCornerSize;
   r.Bottom := r.Top + HintCornerSize;
 
   if (not r.Contains(p)) then
@@ -5283,7 +5335,12 @@ begin
     Exit;
 
   r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
-  r.Left := r.Right - HintCornerSize;
+  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+    // Top left corner
+    r.Right := r.Left + HintCornerSize
+  else
+    // Top right corner
+    r.Left := r.Right - HintCornerSize;
   r.Bottom := r.Top + HintCornerSize;
 
   if (not r.Contains(p)) then
@@ -5399,6 +5456,7 @@ begin
 
       HintList := '';
       for s in Translations do
+        // TODO : Need handling of BiDi and RTL. Will probably have to abandom RTF for this
         HintList := HintList + Format(sTranslationMemoryHintListItem, [UnicodeToRTF(s)]);
 
     finally
