@@ -781,7 +781,7 @@ end;
 // -----------------------------------------------------------------------------
 constructor TFormMain.Create(AOwner: TComponent);
 begin
-  SaveCursor(crAppStart);
+  SaveCursor(crAppStart, True);
 
   inherited;
 end;
@@ -5634,6 +5634,8 @@ var
 begin
   if (FTranslationMemoryPeek <> nil) then
     FTranslationMemoryPeek.Cancel;
+
+  SaveCursor(crAppStart);
 
   TreeListItems.BeginUpdate;
   try

@@ -39,8 +39,15 @@ type
     procedure Forget;
   end;
 
+  TSaveCursor = class abstract(TInterfacedObject, ICursorRecall)
+  private
+    procedure Store; virtual; abstract;
+    procedure Forget; virtual; abstract;
+  end;
+
 
 function SaveCursor(NewCursor: TCursor = crNone; ImmediateUpdate: boolean = False): ICursorRecall;
+function SaveCursorScoped(NewCursor: TCursor = crNone; ImmediateUpdate: boolean = False): TSaveCursor;
 
 // Use UpdateCursor to force immediate update of cursor
 procedure UpdateCursor;
@@ -102,6 +109,11 @@ begin
 
   if (NewCursor <> crNone) then
   begin
+    // Reset screen cursor if it has come out of sync with windows cursor.
+    // Otherwise setting Screen.Cursor might have no effect.
+    if (Screen.Cursor = NewCursor) and (Windows.GetCursor <> Screen.Cursors[Screen.Cursor]) then
+      Screen.Cursor := crNone;
+
     Screen.Cursor := NewCursor;
     if (ImmediateUpdate) then
       UpdateCursor;
@@ -129,6 +141,37 @@ end;
 function SaveCursor(NewCursor: TCursor; ImmediateUpdate: boolean): ICursorRecall;
 begin
   Result := TCursorRecall.Create(NewCursor, ImmediateUpdate);
+end;
+
+type
+  TSaveCursorDelegate = class(TSaveCursor)
+  private
+    FCursorRecall: ICursorRecall;
+    procedure Store; override;
+    procedure Forget; override;
+  public
+    constructor Create(NewCursor: TCursor; ImmediateUpdate: boolean);
+  end;
+
+constructor TSaveCursorDelegate.Create(NewCursor: TCursor; ImmediateUpdate: boolean);
+begin
+  inherited Create;
+  FCursorRecall := SaveCursor(NewCursor, ImmediateUpdate);
+end;
+
+procedure TSaveCursorDelegate.Store;
+begin
+  FCursorRecall.Store;
+end;
+
+procedure TSaveCursorDelegate.Forget;
+begin
+  FCursorRecall.Forget;
+end;
+
+function SaveCursorScoped(NewCursor: TCursor; ImmediateUpdate: boolean): TSaveCursor;
+begin
+  Result := TSaveCursorDelegate.Create(NewCursor, ImmediateUpdate);
 end;
 
 

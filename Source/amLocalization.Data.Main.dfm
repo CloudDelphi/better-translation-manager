@@ -42,6 +42,7 @@ object DataModuleMain: TDataModuleMain
       DataController.Summary.FooterSummaryItems = <>
       DataController.Summary.SummaryGroups = <>
       OptionsBehavior.IncSearchItem = GridTableViewLanguagesColumnLocaleName
+      OptionsBehavior.ShowHourglassCursor = False
       OptionsData.Deleting = False
       OptionsData.Editing = False
       OptionsData.Inserting = False
@@ -77,6 +78,7 @@ object DataModuleMain: TDataModuleMain
       DataController.Summary.FooterSummaryItems = <>
       DataController.Summary.SummaryGroups = <>
       DataController.OnFilterRecord = GridTableViewTargetLanguagesDataControllerFilterRecord
+      OptionsBehavior.ShowHourglassCursor = False
       object GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn
         Caption = 'Locale ID'
         DataBinding.FieldName = 'LocaleID'

@@ -1,7 +1,7 @@
 object FormSplash: TFormSplash
   Left = 0
   Top = 0
-  Cursor = crHourGlass
+  Cursor = crAppStart
   BorderStyle = bsNone
   Caption = 'Splash!'
   ClientHeight = 200

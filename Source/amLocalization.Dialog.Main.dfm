@@ -171,6 +171,7 @@ object FormMain: TFormMain
       OptionsBehavior.ImmediateEditor = False
       OptionsBehavior.ExpandOnDblClick = False
       OptionsBehavior.RecordScrollMode = rsmByRecord
+      OptionsBehavior.ShowHourGlass = False
       OptionsCustomizing.BandCustomizing = False
       OptionsCustomizing.BandMoving = False
       OptionsCustomizing.ColumnFiltering = bTrue
@@ -376,6 +377,7 @@ object FormMain: TFormMain
     OptionsBehavior.ExpandOnDblClick = False
     OptionsBehavior.FocusCellOnCycle = True
     OptionsBehavior.RecordScrollMode = rsmByRecord
+    OptionsBehavior.ShowHourGlass = False
     OptionsCustomizing.BandCustomizing = False
     OptionsCustomizing.BandMoving = False
     OptionsCustomizing.ColumnFiltering = bTrue
@@ -1414,7 +1416,6 @@ object FormMain: TFormMain
     end
   end
   object SkinController: TdxSkinController
-    NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
     Left = 736

@@ -20,6 +20,7 @@ uses
   amLocale,
   amVersionInfo,
   amSplash,
+  amCursorService,
   DelphiDabbler.SingleInstance,
   amLocalization.Dialog in 'amLocalization.Dialog.pas' {FormDialog},
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {FormMain},
@@ -316,6 +317,8 @@ begin
   end;
 end;
 
+var
+  CursorRecall: ICursorRecall;
 begin
   // Grab restart semaphore.
   // If we were restarted then a previous instance of the application will have grabbed the semaphore before lauching this instance
@@ -353,10 +356,14 @@ begin
   Application.Title := GetApplicationTitle;
 
   DisplaySplash;
+  CursorRecall := SaveCursorScoped(crAppStart, True);
 
   Application.CreateForm(TFormMain, FormMain);
   // Make sure main form does not activate when it is shown as this would cause the
   // splash to hide itself.
   ShowWindow(FormMain.Handle, SW_SHOWNA);
+
+  CursorRecall := nil;
+
   Application.Run;
 end.
