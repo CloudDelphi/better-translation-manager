@@ -372,6 +372,7 @@ type
     procedure TimerToastTimer(Sender: TObject);
     procedure StatusBarHint(Sender: TObject);
     procedure TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
+    procedure StatusBarPanels2Click(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -4273,6 +4274,11 @@ begin
 
       Result := (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Warnings <> []);
     end, True, True);
+end;
+
+procedure TFormMain.StatusBarPanels2Click(Sender: TObject);
+begin
+  ActionProjectSave.Execute;
 end;
 
 // -----------------------------------------------------------------------------

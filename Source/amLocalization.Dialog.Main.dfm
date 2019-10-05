@@ -119,6 +119,7 @@ object FormMain: TFormMain
       item
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
         Width = 20
+        OnClick = StatusBarPanels2Click
       end
       item
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
