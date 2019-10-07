@@ -268,6 +268,23 @@ type
     PopupMenuTranslateProviders: TdxRibbonPopupMenu;
     ActionImportCSV: TAction;
     TimerToast: TTimer;
+    BarManagerBarFilters: TdxBar;
+    BarButtonFilters: TdxBarButton;
+    ActionFilters: TAction;
+    ActionFiltersAdd: TAction;
+    dxBarSubItem4: TdxBarSubItem;
+    dxBarButton1: TdxBarButton;
+    dxBarButton3: TdxBarButton;
+    dxBarButton4: TdxBarButton;
+    dxBarButton5: TdxBarButton;
+    dxBarButton6: TdxBarButton;
+    ActionFiltersAddModule: TAction;
+    ActionFiltersAddElement: TAction;
+    ActionFiltersAddType: TAction;
+    ActionFiltersAddName: TAction;
+    ActionFiltersAddValue: TAction;
+    ActionFiltersApply: TAction;
+    dxBarButton7: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -373,6 +390,11 @@ type
     procedure StatusBarHint(Sender: TObject);
     procedure TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
     procedure StatusBarPanels2Click(Sender: TObject);
+    procedure ActionFiltersExecute(Sender: TObject);
+    procedure ActionFiltersAddExecute(Sender: TObject);
+    procedure dxBarSubItem4Popup(Sender: TObject);
+    procedure ActionFiltersApplyExecute(Sender: TObject);
+    procedure ActionFiltersApplyUpdate(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -626,12 +648,14 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Settings,
+  amLocalization.Filters,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
   amLocalization.Dialog.Languages,
   amLocalization.Dialog.Settings,
-  amLocalization.Dialog.Feedback;
+  amLocalization.Dialog.Feedback,
+  amLocalization.Dialog.Filters;
 
 resourcestring
   sLocalizerFindNone = 'None found';
@@ -2317,6 +2341,102 @@ begin
   end;
 end;
 
+procedure TFormMain.ActionFiltersAddExecute(Sender: TObject);
+var
+  FormFilters: TFormFilters;
+  FilterField: TFilterField;
+  Value: string;
+begin
+  FormFilters := TFormFilters.Create(nil);
+  try
+    FilterField := TFilterField(TAction(Sender).Tag);
+
+    case FilterField of
+      ffModule:
+        Value := FocusedModule.Name;
+      ffElement:
+        Value := FocusedProperty.Item.Name;
+      ffType:
+        Value := FocusedProperty.Item.TypeName;
+      ffName:
+        Value := FocusedProperty.Name;
+      ffText:
+        Value := FocusedProperty.Value;
+    end;
+
+    if (FormFilters.Execute('', FilterField, foEquals, Value)) then
+      ActionFiltersApply.Execute;
+  finally
+    FormFilters.Free;
+  end;
+end;
+
+procedure TFormMain.ActionFiltersApplyExecute(Sender: TObject);
+resourcestring
+  sFiltersApply = 'Applying filters';
+  sFiltersApplyPromptTitle = 'Apply Never Translate filters';
+  sFiltersApplyPrompt = 'Applying the Never Translate filters will mark all properties which match any filter as "Don''t translate".'#13#13+
+    'Do you want to apply the Never Translate filters to your project now?';
+var
+  Progress: IProgress;
+begin
+  if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  SaveCursor(crHourGlass);
+  Progress := ShowProgress(sFiltersApply);
+  Progress.Progress(psBegin, 0, FProject.Modules.Count+FProject.PropertyCount);
+
+  FProject.Traverse(
+    function(Module: TLocalizerModule): boolean
+    begin
+      Progress.AdvanceProgress;
+
+      if (Module.EffectiveStatus <> ItemStatusDontTranslate) then
+        if (TranslationManagerSettings.Filters.Filters.Evaluate(Module)) then
+        begin
+          Module.Status := ItemStatusDontTranslate;
+          LoadItem(Module);
+        end;
+      Result := True;
+    end);
+
+  FProject.Traverse(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Progress.AdvanceProgress;
+
+      if (Prop.EffectiveStatus <> ItemStatusDontTranslate) then
+        if (TranslationManagerSettings.Filters.Filters.Evaluate(Prop)) then
+        begin
+          Prop.Status := ItemStatusDontTranslate;
+          ReloadProperty(Prop);
+        end;
+      Result := True;
+    end);
+
+  Progress.Progress(psEnd, 1, 1);
+end;
+
+procedure TFormMain.ActionFiltersApplyUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (TranslationManagerSettings.Filters.Filters.Count > 0);
+end;
+
+procedure TFormMain.ActionFiltersExecute(Sender: TObject);
+var
+  FormFilters: TFormFilters;
+begin
+  FormFilters := TFormFilters.Create(nil);
+  try
+
+    FormFilters.Execute;
+
+  finally
+    FormFilters.Free;
+  end;
+end;
+
 procedure TFormMain.ActionFindNextExecute(Sender: TObject);
 begin
   FSearchProvider.SelectNextResult;
@@ -3558,10 +3678,39 @@ end;
 
 // -----------------------------------------------------------------------------
 
-const
-  RemoteSession = False;
-
 procedure TFormMain.SetSkin(const Value: string);
+
+  function DetectRemoteSession: boolean;
+  const
+    SM_REMOTECONTROL      = $2001; // This system metric is used in a Terminal
+                                   // Services environment. Its value is nonzero
+                                   // if the current session is remotely
+                                   // controlled; otherwise, 0.
+
+    SM_REMOTESESSION      = $1000; // This system metric is used in a Terminal
+                                   // Services environment. If the calling process
+                                   // is associated with a Terminal Services
+                                   // client session, the return value is nonzero.
+                                   // If the calling process is associated with
+                                   // the Terminal Server console session, the
+                                   // return value is 0. The console session is
+                                   // not necessarily the physical console.
+  var
+    Mode: string;
+  begin
+    Result := (GetSystemMetrics(SM_REMOTESESSION) <> 0) or (GetSystemMetrics(SM_REMOTECONTROL) <> 0);
+
+    // Test for emulated local/remote mode
+    if (FindCmdLineSwitch('Session', Mode, True)) then
+    begin
+      if (SameText(Mode, 'Remote')) then
+        Result := True
+      else
+      if (SameText(Mode, 'Local')) then
+        Result := False;
+    end;
+  end;
+
 var
   SkinName, SkinFilename: string;
   SkinIndex: integer;
@@ -3715,7 +3864,7 @@ begin
     SkinController.SkinName := SkinName;
 
     // Switch to Alternate skin mode (use Fills instead of BitBlts) if remote session
-    if (RemoteSession) then
+    if (DetectRemoteSession) then
       SkinController.UseImageSet := imsAlternate;
 
     SkinController.UseSkins := (FSkin <> ''); // Causes splash to flicker if skinned
@@ -4223,6 +4372,34 @@ begin
     s := FStatusBarPanelHint[FStatusBarPanel.Index];
     if (s <> '') then
       HintStr := s;
+  end;
+end;
+
+procedure TFormMain.dxBarSubItem4Popup(Sender: TObject);
+var
+  i: integer;
+  s: string;
+begin
+  for i := 0 to TdxBarSubItem(Sender).ItemLinks.Count-1 do
+  begin
+    s := '-';
+    case TFilterField(TAction(TdxBarSubItem(Sender).ItemLinks[i].Item.Action).Tag) of
+      ffModule:
+        s := FocusedModule.Name;
+      ffElement:
+        if (FocusedProperty <> nil) then
+          s := FocusedProperty.Item.Name;
+      ffType:
+        if (FocusedProperty <> nil) then
+          s := FocusedProperty.Item.TypeName;
+      ffName:
+        if (FocusedProperty <> nil) then
+          s := FocusedProperty.Name;
+      ffText:
+        if (FocusedProperty <> nil) then
+          s := FocusedProperty.Value;
+    end;
+    TdxBarSubItem(Sender).ItemLinks[i].Item.Caption := Format(TAction(TdxBarSubItem(Sender).ItemLinks[i].Item.Action).Caption, [s]);
   end;
 end;
 

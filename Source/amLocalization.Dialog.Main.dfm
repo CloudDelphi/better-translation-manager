@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -64,10 +63,14 @@ object FormMain: TFormMain
         end
         item
           ToolbarName = 'BarManagerBarMark'
+        end
+        item
+          ToolbarName = 'BarManagerBarFilters'
         end>
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -852,7 +855,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton26'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -880,7 +883,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton12'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -912,7 +915,7 @@ object FormMain: TFormMain
           ItemName = 'BarButtonGotoNext'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -988,7 +991,7 @@ object FormMain: TFormMain
           ItemName = 'ButtonItemBookmark'
         end>
       OneOnRow = False
-      Row = 0
+      Row = 1
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -1041,6 +1044,30 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'BarButtonFeedback'
+        end>
+      OneOnRow = True
+      Row = 0
+      UseOwnFont = False
+      Visible = True
+      WholeRow = False
+    end
+    object BarManagerBarFilters: TdxBar
+      Caption = 'Filters'
+      CaptionButtons = <>
+      DockedLeft = 693
+      DockedTop = 0
+      FloatLeft = 998
+      FloatTop = 8
+      FloatClientWidth = 0
+      FloatClientHeight = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'BarButtonFilters'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton7'
         end>
       OneOnRow = True
       Row = 0
@@ -1414,6 +1441,60 @@ object FormMain: TFormMain
       Action = ActionAbout
       Category = 0
       LargeImageIndex = 14
+    end
+    object BarButtonFilters: TdxBarButton
+      Action = ActionFilters
+      Category = 0
+    end
+    object dxBarSubItem4: TdxBarSubItem
+      Action = ActionFiltersAdd
+      Category = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton1'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton3'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton5'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton4'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton6'
+        end>
+      OnPopup = dxBarSubItem4Popup
+    end
+    object dxBarButton1: TdxBarButton
+      Action = ActionFiltersAddModule
+      Category = 0
+    end
+    object dxBarButton3: TdxBarButton
+      Action = ActionFiltersAddElement
+      Category = 0
+    end
+    object dxBarButton4: TdxBarButton
+      Action = ActionFiltersAddName
+      Category = 0
+    end
+    object dxBarButton5: TdxBarButton
+      Action = ActionFiltersAddType
+      Category = 0
+    end
+    object dxBarButton6: TdxBarButton
+      Action = ActionFiltersAddValue
+      Category = 0
+    end
+    object dxBarButton7: TdxBarButton
+      Action = ActionFiltersApply
+      Category = 0
     end
   end
   object SkinController: TdxSkinController
@@ -1836,6 +1917,57 @@ object FormMain: TFormMain
       Category = 'Import'
       Caption = 'Import CSV...'
     end
+    object ActionFilters: TAction
+      Category = 'Filters'
+      Caption = 'Filters...'
+      OnExecute = ActionFiltersExecute
+    end
+    object ActionFiltersAdd: TAction
+      Category = 'Filters'
+      Caption = 'Add to Never Translate filters...'
+      OnExecute = ActionDummyExecute
+      OnUpdate = ActionHasItemFocusedUpdate
+    end
+    object ActionFiltersAddModule: TAction
+      Category = 'Filters'
+      Caption = 'Module: %s'
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasItemFocusedUpdate
+    end
+    object ActionFiltersAddElement: TAction
+      Tag = 1
+      Category = 'Filters'
+      Caption = 'Element: %s'
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasPropertyFocusedUpdate
+    end
+    object ActionFiltersAddType: TAction
+      Tag = 2
+      Category = 'Filters'
+      Caption = 'Type: %s'
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasPropertyFocusedUpdate
+    end
+    object ActionFiltersAddName: TAction
+      Tag = 3
+      Category = 'Filters'
+      Caption = 'Name: %s'
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasPropertyFocusedUpdate
+    end
+    object ActionFiltersAddValue: TAction
+      Tag = 4
+      Category = 'Filters'
+      Caption = 'Value: %s'
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasPropertyFocusedUpdate
+    end
+    object ActionFiltersApply: TAction
+      Category = 'Filters'
+      Caption = 'Apply filters...'
+      OnExecute = ActionFiltersApplyExecute
+      OnUpdate = ActionFiltersApplyUpdate
+    end
   end
   object OpenDialogProject: TOpenDialog
     Filter = 'Translation projects (*.xlat)|*.xlat|All files (*.*)|*.*'
@@ -1893,7 +2025,10 @@ object FormMain: TFormMain
         ItemName = 'dxBarButton10'
       end
       item
-        BeginGroup = True
+        Visible = True
+        ItemName = 'dxBarSubItem4'
+      end
+      item
         Visible = True
         ItemName = 'ButtonItemBookmark'
       end>

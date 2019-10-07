@@ -36,8 +36,8 @@ type
     procedure WriteDateTime(const Section, Name: string; Value: TDateTime);
     procedure WriteBinaryData(const Section, Ident: string; var Buffer; BufSize: Integer);
     function ReadBinaryData(const Section, Ident: string; var Buffer; BufSize: Integer): Integer;
-    function ReadStrings(const Section, Ident, Default: string): string;
-    procedure WriteStrings(const Section, Ident, Value: string);
+    function ReadStrings(const Section, Ident, Default: string): string; deprecated 'untested';
+    procedure WriteStrings(const Section, Ident, Value: string); deprecated 'untested and has known bugs';
     procedure ReadSectionNames(const Section: string; Strings: TStrings);
     // Default TRegIniFile ReadBool and WriteBool uses string format
     function ReadBoolean(const Section, Ident: string; Default: boolean): boolean;

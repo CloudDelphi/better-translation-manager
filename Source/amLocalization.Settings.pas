@@ -24,7 +24,8 @@ uses
   Graphics,
   dxSpellChecker,
   cxCustomData,
-  amRegConfig;
+  amRegConfig,
+  amLocalization.Filters;
 
 
 //------------------------------------------------------------------------------
@@ -315,6 +316,22 @@ type
     property StatusGlyphHints: boolean read FStatusGlyphHints write FStatusGlyphHints default False;
   end;
 
+  TTranslationManagerFiltersSettings = class(TConfigurationSection)
+  private
+    FValid: boolean;
+    FFilters: TFilterItemList;
+  protected
+    procedure WriteSection(const Key: string); override;
+    procedure ReadSection(const Key: string); override;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+
+    property Filters: TFilterItemList read FFilters;
+  published
+    property Valid: boolean read FValid write FValid;
+  end;
+
   TTranslationManagerSystemSettings = class(TConfigurationSection)
   private
     FSingleInstance: boolean;
@@ -383,6 +400,7 @@ type
     FLayout: TTranslationManagerLayoutSettings;
     FBackup: TTranslationManagerBackupSettings;
     FEditor: TTranslationManagerEditorSettings;
+    FFilters: TTranslationManagerFiltersSettings;
   private
   protected
   public
@@ -401,6 +419,7 @@ type
     property Layout: TTranslationManagerLayoutSettings read FLayout;
     property Backup: TTranslationManagerBackupSettings read FBackup;
     property Editor: TTranslationManagerEditorSettings read FEditor;
+    property Filters: TTranslationManagerFiltersSettings read FFilters;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -655,6 +674,7 @@ begin
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
   FBackup := TTranslationManagerBackupSettings.Create(Self);
   FEditor := TTranslationManagerEditorSettings.Create(Self);
+  FFilters := TTranslationManagerFiltersSettings.Create(Self);
 end;
 
 destructor TTranslationManagerSettings.Destroy;
@@ -667,6 +687,7 @@ begin
   FLayout.Free;
   FBackup.Free;
   FEditor.Free;
+  FFilters.Free;
 
   inherited;
 end;
@@ -1075,6 +1096,67 @@ const
   );
 begin
   Result := sStyleNames[FListStyle];
+end;
+
+{ TTranslationManagerFiltersSettings }
+
+constructor TTranslationManagerFiltersSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+  FFilters := TFilterItemList.Create;
+end;
+
+destructor TTranslationManagerFiltersSettings.Destroy;
+begin
+  FFilters.Free;
+  inherited;
+end;
+
+procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
+var
+  Filter: TFilterItem;
+  Count, n: integer;
+begin
+  inherited ReadSection(Key);
+
+  FFilters.Clear;
+  if (not Valid) then
+    Exit;
+
+  Count := Registry.ReadInteger(Key, 'Count', 0);
+
+  for n := 0 to Count-1 do
+  begin
+    Filter := TFilterItem.Create;
+    FFilters.Add(Filter);
+    Filter.Enabled := Registry.ReadBoolean(Key, Format('Filter%dEnabled', [n]), False);
+    Filter.Group := Registry.ReadString(Key, Format('Filter%dGroup', [n]), '');
+    Filter.Field := TFilterField(Registry.ReadInteger(Key, Format('Filter%dField', [n]), 0));
+    Filter.FilterOperator := TFilterOperator(Registry.ReadInteger(Key, Format('Filter%dOperator', [n]), 0));
+    Filter.Value := Registry.ReadString(Key, Format('Filter%dValue', [n]), '');
+  end;
+end;
+
+procedure TTranslationManagerFiltersSettings.WriteSection(const Key: string);
+var
+  Filter: TFilterItem;
+  n: integer;
+begin
+  FValid := True;
+  inherited WriteSection(Key);
+
+  Registry.WriteInteger(Key, 'Count', FFilters.Count);
+
+  n := 0;
+  for Filter in FFilters do
+  begin
+    Registry.WriteBoolean(Key, Format('Filter%dEnabled', [n]), Filter.Enabled);
+    Registry.WriteString(Key, Format('Filter%dGroup', [n]), Filter.Group);
+    Registry.WriteInteger(Key, Format('Filter%dField', [n]), Ord(Filter.Field));
+    Registry.WriteInteger(Key, Format('Filter%dOperator', [n]), Ord(Filter.FilterOperator));
+    Registry.WriteString(Key, Format('Filter%dValue', [n]), Filter.Value);
+    Inc(n);
+  end;
 end;
 
 initialization

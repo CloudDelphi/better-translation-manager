@@ -55,7 +55,9 @@ uses
   amLocalization.Translator.Microsoft.Terminology.SOAP in 'amLocalization.Translator.Microsoft.Terminology.SOAP.pas',
   amLocalization.Translator.Microsoft.Terminology in 'amLocalization.Translator.Microsoft.Terminology.pas',
   amLocalization.TranslationMemory.FileFormats.GenericCSV in 'amLocalization.TranslationMemory.FileFormats.GenericCSV.pas',
-  amLocalization.Dialog.TranslationMemory.SelectFileFormat in 'amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas' {FormSelectFileFormat};
+  amLocalization.Dialog.TranslationMemory.SelectFileFormat in 'amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas' {FormSelectFileFormat},
+  amLocalization.Dialog.Filters in 'amLocalization.Dialog.Filters.pas' {FormFilters},
+  amLocalization.Filters in 'amLocalization.Filters.pas';
 
 {$R *.res}
 
