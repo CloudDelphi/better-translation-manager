@@ -316,7 +316,7 @@ type
     property StatusGlyphHints: boolean read FStatusGlyphHints write FStatusGlyphHints default False;
   end;
 
-  TTranslationManagerFiltersSettings = class(TConfigurationSection)
+  TTranslationManagerFiltersSettings = class(TConfigurationSectionValues<TConfigurationStringList>)
   private
     FValid: boolean;
     FFilters: TFilterItemList;
@@ -1102,7 +1102,8 @@ end;
 
 constructor TTranslationManagerFiltersSettings.Create(AOwner: TConfigurationSection);
 begin
-  inherited;
+  inherited Create(AOwner);
+  PurgeOnWrite := True;
   FFilters := TFilterItemList.Create;
 end;
 
@@ -1113,50 +1114,86 @@ begin
 end;
 
 procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
+
+  procedure StringToFilter(const Group, Value: string);
+  var
+    Values: TArray<string>;
+    s: string;
+    Filter: TFilterItem;
+  begin
+    Filter := TFilterItem.Create;
+    FFilters.Add(Filter);
+
+    s := Group;
+    if (s = sFilterGroupGeneral) then
+      s := '';
+    Filter.Group := s;
+
+    Values := Value.Split([':', '/']);
+
+    Filter.Enabled := boolean(StrToInt(Values[0]));
+    Filter.Field := TFilterField(StrToInt(Values[1]));
+    Filter.FilterOperator := TFilterOperator(StrToInt(Values[2]));
+    Filter.Value := Values[3];
+  end;
+
 var
-  Filter: TFilterItem;
-  Count, n: integer;
+  i, j: integer;
+  Group: string;
+  GroupSection: TConfigurationStringList;
 begin
   inherited ReadSection(Key);
 
   FFilters.Clear;
   if (not Valid) then
-    Exit;
-
-  Count := Registry.ReadInteger(Key, 'Count', 0);
-
-  for n := 0 to Count-1 do
   begin
-    Filter := TFilterItem.Create;
-    FFilters.Add(Filter);
-    Filter.Enabled := Registry.ReadBoolean(Key, Format('Filter%dEnabled', [n]), False);
-    Filter.Group := Registry.ReadString(Key, Format('Filter%dGroup', [n]), '');
-    Filter.Field := TFilterField(Registry.ReadInteger(Key, Format('Filter%dField', [n]), 0));
-    Filter.FilterOperator := TFilterOperator(Registry.ReadInteger(Key, Format('Filter%dOperator', [n]), 0));
-    Filter.Value := Registry.ReadString(Key, Format('Filter%dValue', [n]), '');
+    // Add a few filters just to get us going
+    StringToFilter('', '1/3/0/Font.Name');
+    StringToFilter('', '1/3/0/Category');
+    StringToFilter('', '1/4/1/Lorem ipsum');
+    StringToFilter('DevExpress', '1/2/0/TdxLayoutEmptySpaceItem');
+    StringToFilter('DevExpress', '1/2/0/TdxLayoutSeparatorItem');
+    StringToFilter('DevExpress', '1/2/0/TcxImageList');
+    StringToFilter('DevExpress', '1/3/0/Properties.KeyFieldNames');
+    StringToFilter('DevExpress', '1/3/0/DataBinding.ValueType');
+    Exit;
+  end;
+
+  for i := 0 to Count-1 do
+  begin
+    Group := Names[i];
+    GroupSection := Items[Group];
+    for j := 0 to GroupSection.Count-1 do
+      StringToFilter(Group, GroupSection[j]);
   end;
 end;
 
 procedure TTranslationManagerFiltersSettings.WriteSection(const Key: string);
+
+  function FilterToString(Filter: TFilterItem): string;
+  begin
+    Result := Format('%d/%d/%d/%s', [Ord(Filter.Enabled), Ord(Filter.Field), Ord(Filter.FilterOperator), Filter.Value]);
+  end;
+
 var
   Filter: TFilterItem;
-  n: integer;
+  Group: string;
+  GroupSection: TConfigurationStringList;
 begin
-  FValid := True;
-  inherited WriteSection(Key);
+  Clear;
 
-  Registry.WriteInteger(Key, 'Count', FFilters.Count);
-
-  n := 0;
   for Filter in FFilters do
   begin
-    Registry.WriteBoolean(Key, Format('Filter%dEnabled', [n]), Filter.Enabled);
-    Registry.WriteString(Key, Format('Filter%dGroup', [n]), Filter.Group);
-    Registry.WriteInteger(Key, Format('Filter%dField', [n]), Ord(Filter.Field));
-    Registry.WriteInteger(Key, Format('Filter%dOperator', [n]), Ord(Filter.FilterOperator));
-    Registry.WriteString(Key, Format('Filter%dValue', [n]), Filter.Value);
-    Inc(n);
+    Group := Filter.Group;
+    if (Group = '') then
+      Group := sFilterGroupGeneral;
+    GroupSection := FindOrAdd(Group);
+    GroupSection.Add(FilterToString(Filter));
   end;
+
+  FValid := True;
+
+  inherited WriteSection(Key);
 end;
 
 initialization

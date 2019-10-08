@@ -39,6 +39,7 @@ type
     procedure TreeListFiltersNodeChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AColumn: TcxTreeListColumn);
     procedure TreeListFiltersNodeCheckChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AState: TcxCheckBoxState);
     procedure TreeListFiltersKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure TreeListFiltersInitEditValue(Sender, AItem: TObject; AEdit: TcxCustomEdit; var AValue: Variant);
   private
     FFilters: TFilterItemList;
   protected
@@ -46,13 +47,13 @@ type
     procedure SaveFilters;
     function AddGroup(const Name: string): TcxTreeListNode;
     function LoadFilter(Filter: TFilterItem): TcxTreeListNode;
-    function AddFilter(AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
+    function AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     function Execute: boolean; overload;
-    function Execute(AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean; overload;
+    function Execute(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean; overload;
   end;
 
 implementation
@@ -61,9 +62,6 @@ implementation
 
 uses
   amLocalization.Settings;
-
-resourcestring
-  sFilterGroupGeneral = 'General';
 
 constructor TFormFilters.Create(AOwner: TComponent);
 begin
@@ -81,7 +79,7 @@ begin
   inherited;
 end;
 
-function TFormFilters.Execute(AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
+function TFormFilters.Execute(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
 begin
   LoadFilters;
 
@@ -113,9 +111,6 @@ begin
   for Filter in FFilters do
     LoadFilter(Filter);
 
-  if (FFilters.Count = 0) then
-    AddFilter('DevExpress', ffType, foEquals, 'TdxLayoutEmptySpaceItem');
-
   TreeListFilters.FullExpand;
 end;
 
@@ -126,34 +121,30 @@ end;
 
 function TFormFilters.LoadFilter(Filter: TFilterItem): TcxTreeListNode;
 var
-  Group: string;
   GroupNode: TcxTreeListNode;
 begin
-  Group := Filter.Group;
-  if (Group = '') then
-    Group := sFilterGroupGeneral;
-
   // Find group node
-  GroupNode := AddGroup(Group);
+  GroupNode := AddGroup(Filter.Group);
 
   // Add filter node
   Result := GroupNode.AddChild;
   Result.Data := Filter;
   Result.CheckGroupType := ncgCheckGroup;
   Result.Checked := Filter.Enabled;
-  Result.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
+  Result.Values[TreeListFiltersColumnGroup.ItemIndex] := Filter.Group;
   Result.Values[TreeListFiltersColumnField.ItemIndex] := Ord(Filter.Field);
   Result.Values[TreeListFiltersColumnOperator.ItemIndex] := Ord(Filter.FilterOperator);
   Result.Values[TreeListFiltersColumnValue.ItemIndex] := Filter.Value;
 end;
 
-function TFormFilters.AddFilter(AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
+function TFormFilters.AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
 var
   Node: TcxTreeListNode;
 begin
   // Add filter
   Result := TFilterItem.Create;
   FFilters.Add(Result);
+
   Result.Group := AGroup;
   Result.Field := AField;
   Result.FilterOperator := AOperator;
@@ -169,11 +160,16 @@ end;
 function TFormFilters.AddGroup(const Name: string): TcxTreeListNode;
 var
   i: integer;
+  Group: string;
 begin
+  Group := Name;
+  if (Group = '') then
+    Group := sFilterGroupGeneralDisplay;
+
   // Find group node
   Result := nil;
   for i := 0 to TreeListFilters.Root.Count-1 do
-    if (AnsiSameText(Name, TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex])) then
+    if (AnsiSameText(Group, TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex])) then
     begin
       Result := TreeListFilters.Root.Items[i];
       break;
@@ -184,7 +180,7 @@ begin
     Result := TreeListFilters.Add;
     Result.CheckGroupType := ncgCheckGroup;
     Result.Checked := True;
-    Result.Values[TreeListFiltersColumnGroup.ItemIndex] := Name;
+    Result.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
   end;
 end;
 
@@ -207,6 +203,12 @@ begin
   Accept := (TargetNode <> nil) and
     (((TargetNode.Level = 0) and (TargetNode <> TreeListFilters.FocusedNode.Parent)) or
      ((TargetNode.Level = 1) and (TargetNode.Parent <> TreeListFilters.FocusedNode.Parent)));
+end;
+
+procedure TFormFilters.TreeListFiltersInitEditValue(Sender, AItem: TObject; AEdit: TcxCustomEdit; var AValue: Variant);
+begin
+  if (AItem = TreeListFiltersColumnGroup) and (AnsiSameText(VarToStr(AValue), sFilterGroupGeneralDisplay)) then
+    AValue := '';
 end;
 
 procedure TFormFilters.TreeListFiltersKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -274,18 +276,19 @@ begin
   if (AColumn = TreeListFiltersColumnGroup) then
   begin
     Group := VarToStr(ANode.Values[TreeListFiltersColumnGroup.ItemIndex]);
-    if (Group = '') then
-    begin
-      Group := sFilterGroupGeneral;
-      ANode.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
-    end;
 
     if (ANode.Level = 0) then
     begin
+      if (Group = '') then
+        ANode.Values[TreeListFiltersColumnGroup.ItemIndex] := sFilterGroupGeneralDisplay
+      else
+      if (Group = sFilterGroupGeneralDisplay) then
+        Group := '';
+
       // TODO : Check for duplicate group
       GroupNode := ANode;
       // Modifying the group node also modifies all child nodes
-      for i := 0 to Node.Count-1 do
+      for i := 0 to GroupNode.Count-1 do
       begin
         Node := GroupNode.Items[i];
         Node.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
@@ -294,6 +297,9 @@ begin
       end;
     end else
     begin
+      if (Group = sFilterGroupGeneralDisplay) then
+        Group := '';
+
       // Modifying a child node moves it to the specified group
       GroupNode := AddGroup(Group);
       if (ANode.Parent <> GroupNode) then

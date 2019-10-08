@@ -46,6 +46,12 @@ type
     function Evaluate(Prop: TLocalizerProperty; SkipModule: boolean = True): boolean; overload;
   end;
 
+resourcestring
+  sFilterGroupGeneralDisplay = 'General';
+
+const
+  sFilterGroupGeneral = 'General';
+
 implementation
 
 uses

@@ -11,7 +11,7 @@ inherited FormFilters: TFormFilters
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 480
     Width = 625
-    ExplicitTop = 242
+    ExplicitTop = 480
     ExplicitWidth = 625
     inherited ButtonOK: TcxButton
       Left = 458
@@ -36,13 +36,13 @@ inherited FormFilters: TFormFilters
     Height = 441
     ExplicitTop = 39
     ExplicitWidth = 625
-    ExplicitHeight = 203
+    ExplicitHeight = 441
     inherited LayoutControl: TdxLayoutControl
       Width = 609
       Height = 429
       ExplicitLeft = 8
       ExplicitWidth = 609
-      ExplicitHeight = 191
+      ExplicitHeight = 429
       object TreeListFilters: TcxTreeList [0]
         Left = 6
         Top = 6
@@ -68,6 +68,7 @@ inherited FormFilters: TFormFilters
         OnBeginDragNode = TreeListFiltersBeginDragNode
         OnDeletion = TreeListFiltersDeletion
         OnDragOver = TreeListFiltersDragOver
+        OnInitEditValue = TreeListFiltersInitEditValue
         OnKeyDown = TreeListFiltersKeyDown
         OnMoveTo = TreeListFiltersMoveTo
         OnNodeChanged = TreeListFiltersNodeChanged
