@@ -17,6 +17,9 @@ interface
 
 {$weakpackageunit on}
 
+// Define INT64_BINARY to read/write int64 values as binary strings. Otherwise use HEX.
+{.$define INT64_BINARY}
+
 uses
   Generics.Collections,
   Windows,
@@ -163,19 +166,22 @@ type
 
     function GetCount: integer;
     function GetValueName(Index: integer): string;
-    function GetValue(Name: string): T;
+    function GetValue(const Name: string): T; overload;
+    function GetValue(Index: integer): T; overload;
 
     property PurgeOnWrite: boolean read FPurgeOnWrite write FPurgeOnWrite;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
     function Add(const Name: string): T;
+    function FindOrAdd(const Name: string): T;
     function Find(const Name: string): T;
     procedure Remove(const Name: string);
     procedure Clear;
     property Count: integer read GetCount;
     property Names[Index: integer]: string read GetValueName;
-    property Items[Name: string]: T read GetValue; default;
+    property Items[const Name: string]: T read GetValue; default;
+    property Items[Index: integer]: T read GetValue; default;
   end;
 
   TConfiguration = class(TConfigurationSection)
@@ -422,13 +428,13 @@ begin
   Result := (ReadInteger(Section, Ident, Ord(Default)) <> 0);
 end;
 
+{$ifdef INT64_BINARY}
 function Int64ToBinStr(Value: int64): string;
 var
   p: PChar;
 begin
-  SetLength(Result, 64);
+  Result := String.Create('0', 64);
   p := PChar(Result);
-  FillChar(p^, 64, Ord('0'));
   while (Value <> 0) do
   begin
     if (Value and Int64($8000000000000000) <> 0) then
@@ -454,6 +460,7 @@ begin
     inc(p);
   end;
 end;
+{$endif INT64_BINARY}
 
 procedure TFixedRegIniFile.ReadSectionNames(const Section: string;
   Strings: TStrings);
@@ -862,6 +869,10 @@ var
   StringList: TStrings;
   p: PChar;
   Section: IConfigurationSection;
+  v64: Int64;
+{$ifndef INT64_BINARY}
+  s: string;
+{$endif INT64_BINARY}
 begin
   Assert(Instance <> nil);
 
@@ -886,29 +897,32 @@ begin
       if IsStoredProp(Instance, PropList[i]) then
       case (PropList[i]^.PropType^.Kind) of
         tkInteger, tkChar, tkEnumeration, tkSet, tkWChar:
-          Registry.WriteInteger(Key, string(PropList[i]^.Name),
-            GetOrdProp(Instance, PropList[i]));
+          Registry.WriteInteger(Key, string(PropList[i]^.Name), GetOrdProp(Instance, PropList[i]));
 
         tkInt64:
-          Registry.WriteString(Key, string(PropList[i]^.Name),
-            Int64ToBinStr(GetInt64Prop(Instance, PropList[i])));
+          begin
+            v64 := GetInt64Prop(Instance, PropList[i]);
+{$ifdef INT64_BINARY}
+            Registry.WriteString(Key, string(PropList[i]^.Name), Int64ToBinStr(v64));
+{$else INT64_BINARY}
+            SetLength(s, SizeOf(v64)*2);
+            BinToHex(v64, PChar(s), SizeOf(v64));
+            Registry.WriteString(Key, string(PropList[i]^.Name), s);
+{$endif INT64_BINARY}
+          end;
 
         tkString, tkLString, tkWString, tkUString:
-          Registry.WriteString(Key, string(PropList[i]^.Name),
-            GetStrProp(Instance, PropList[i]));
+          Registry.WriteString(Key, string(PropList[i]^.Name), GetStrProp(Instance, PropList[i]));
 
         tkFloat:
           if (PropList[i]^.PropType^.Name = 'TDateTime') then
-            Registry.WriteDateTime(Key, string(PropList[i]^.Name),
-              GetFloatProp(Instance, PropList[i]))
+            Registry.WriteDateTime(Key, string(PropList[i]^.Name), GetFloatProp(Instance, PropList[i]))
           else
-            Registry.WriteFloat(Key, string(PropList[i]^.Name),
-              GetFloatProp(Instance, PropList[i]));
+            Registry.WriteFloat(Key, string(PropList[i]^.Name), GetFloatProp(Instance, PropList[i]));
 
         tkClass:
           if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TConfigurationSection)) then
-            TConfigurationSection(GetOrdProp(Instance, PropList[i])).
-              WriteSection(Key+string(PropList[i]^.Name)+'\')
+            TConfigurationSection(GetOrdProp(Instance, PropList[i])).WriteSection(Key+string(PropList[i]^.Name)+'\')
           else
           begin
             if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TStrings)) then
@@ -929,8 +943,7 @@ begin
                   finally
                     StrDispose(p);
                   end;
-                  Registry.WriteBinaryData(Key, string(PropList[i]^.Name),
-                    MemStream.Memory^, MemStream.Position);
+                  Registry.WriteBinaryData(Key, string(PropList[i]^.Name), MemStream.Memory^, MemStream.Position);
                 finally
                   MemStream.Free;
                 end;
@@ -972,6 +985,8 @@ var
 
 var
   Section: IConfigurationSection;
+  v64, n64: Int64;
+  s: string;
 begin
   Assert(Instance <> nil);
 
@@ -996,24 +1011,32 @@ begin
               IntDefault(PropList[i]^.Default, GetOrdProp(Instance, PropList[i]))));
 
         tkInt64:
-          SetInt64Prop(Instance, PropList[i],
-            BinStrToInt64(Registry.ReadString(Key, string(PropList[i]^.Name),
-              Int64ToBinStr(IntDefault(PropList[i]^.Default, GetInt64Prop(Instance, PropList[i]))))));
+          begin
+            v64 := IntDefault(PropList[i]^.Default, GetInt64Prop(Instance, PropList[i]));
+            s := Registry.ReadString(Key, string(PropList[i]^.Name), '');
+{$ifdef INT64_BINARY}
+            if (Length(s) >= SizeOf(v64)*8) then
+              v64 := BinStrToInt64(s);
+{$else INT64_BINARY}
+            if (Length(s) >= SizeOf(n64)*2) then
+            begin
+              n64 := 0;
+              if (HexToBin(PChar(s), n64, SizeOf(n64)) = SizeOf(n64)*2) then
+                v64 := n64;
+            end;
+{$endif INT64_BINARY}
+            SetInt64Prop(Instance, PropList[i], v64);
+          end;
 
         tkString, tkLString, tkWString, tkUString:
-          SetStrProp(Instance, PropList[i],
-            Registry.ReadString(Key, string(PropList[i]^.Name),
-              GetStrProp(Instance, PropList[i])));
+          SetStrProp(Instance, PropList[i], Registry.ReadString(Key, string(PropList[i]^.Name), GetStrProp(Instance, PropList[i])));
 
         tkFloat:
-          SetFloatProp(Instance, PropList[i],
-            Registry.ReadFloat(Key, string(PropList[i]^.Name),
-              GetFloatProp(Instance, PropList[i])));
+          SetFloatProp(Instance, PropList[i], Registry.ReadFloat(Key, string(PropList[i]^.Name), GetFloatProp(Instance, PropList[i])));
 
         tkClass:
           if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TConfigurationSection)) then
-            TConfigurationSection(GetOrdProp(Instance, PropList[i])).
-              ReadSection(Key+string(PropList[i]^.Name)+'\')
+            TConfigurationSection(GetOrdProp(Instance, PropList[i])).ReadSection(Key+string(PropList[i]^.Name)+'\')
           else
           begin
             if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TConfigurationStringValues)) then
@@ -1029,8 +1052,7 @@ begin
                  if (Size > 0) then
                  begin
                    MemStream.SetSize(Size);
-                   if (Registry.ReadBinaryData(Key, string(PropList[i]^.Name),
-                     MemStream.Memory^, Size) > 0) then
+                   if (Registry.ReadBinaryData(Key, string(PropList[i]^.Name), MemStream.Memory^, Size) > 0) then
                      Strings.LoadFromStream(MemStream);
                  end;
                finally
@@ -1299,6 +1321,13 @@ begin
     Result := nil;
 end;
 
+function TConfigurationSectionValues<T>.FindOrAdd(const Name: string): T;
+begin
+  Result := Find(Name);
+  if (Result = nil) then
+    Result := Add(Name);
+end;
+
 function TConfigurationSectionValues<T>.Add(const Name: string): T;
 begin
   Result := T.Create(Self);
@@ -1315,12 +1344,19 @@ begin
   Result := FItems.Count;
 end;
 
+function TConfigurationSectionValues<T>.GetValue(Index: integer): T;
+begin
+  Result := Items[Names[Index]];
+  // We could have used FItems.Keys.ToArray[] but then the returned order would
+  // not be the same Names[] and Items[].
+end;
+
 function TConfigurationSectionValues<T>.GetValueName(Index: integer): string;
 begin
   Result := FItems.Keys.ToArray[Index];
 end;
 
-function TConfigurationSectionValues<T>.GetValue(Name: string): T;
+function TConfigurationSectionValues<T>.GetValue(const Name: string): T;
 begin
   if (not FItems.TryGetValue(Name, Result)) then
     Result := Add(Name);
