@@ -51,6 +51,9 @@ type
     procedure SaveFilters;
     function AddGroup(const Name: string): TcxTreeListNode;
     function LoadFilter(Filter: TFilterItem): TcxTreeListNode;
+    function DoExecute: boolean;
+    procedure SaveLayout;
+    procedure RestoreLayout;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -86,6 +89,50 @@ begin
   inherited;
 end;
 
+procedure TFormFilters.RestoreLayout;
+var
+  i: integer;
+  Group: string;
+begin
+  if (not TranslationManagerSettings.Layout.BlackList.Valid) then
+    Exit;
+
+  TreeListFilters.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.BlackList.Name);
+
+  TreeListFilters.FullExpand;
+  for i := 0 to TreeListFilters.Root.Count-1 do
+  begin
+    Group := VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]);
+    if (TranslationManagerSettings.Layout.BlackList.CollapsedGroups.IndexOf(Group) <> -1) then
+      TreeListFilters.Root.Items[i].Collapse(False)
+    else
+      TreeListFilters.Root.Items[i].Expand(False);
+  end;
+end;
+
+procedure TFormFilters.SaveLayout;
+var
+  i: integer;
+begin
+  TreeListFilters.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.BlackList.Name);
+
+  TranslationManagerSettings.Layout.BlackList.CollapsedGroups.Clear;
+  for i := 0 to TreeListFilters.Root.Count-1 do
+    if (not TreeListFilters.Root.Items[i].Expanded) then
+      TranslationManagerSettings.Layout.BlackList.CollapsedGroups.Add(VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]));
+
+  TranslationManagerSettings.Layout.BlackList.Valid := True;
+end;
+
+function TFormFilters.DoExecute: boolean;
+begin
+  RestoreLayout;
+
+  Result := (ShowModal = mrOK);
+
+  SaveLayout;
+end;
+
 function TFormFilters.AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
 begin
   BeginAddFilter;
@@ -102,7 +149,7 @@ end;
 
 function TFormFilters.EndAddFilter: boolean;
 begin
-  Result := (ShowModal = mrOK);
+  Result := DoExecute;
 
   if (Result) then
     SaveFilters;
@@ -112,7 +159,7 @@ function TFormFilters.Execute: boolean;
 begin
   LoadFilters;
 
-  Result := (ShowModal = mrOK);
+  Result := DoExecute;
 
   if (Result) then
     SaveFilters;

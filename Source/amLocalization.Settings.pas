@@ -224,11 +224,22 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
+  TTranslationManagerLayoutBlackListSettings = class(TTranslationManagerLayoutGridSettings)
+  private
+    FCollapsedGroups: TConfigurationStringList;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+  published
+    property CollapsedGroups: TConfigurationStringList read FCollapsedGroups;
+  end;
+
   TTranslationManagerLayoutSettings = class(TConfigurationSection)
   private
     FItemTree: TTranslationManagerLayoutTreeSettings;
     FModuleTree: TTranslationManagerLayoutTreeSettings;
     FTranslationMemory: TTranslationManagerLayoutGridSettings;
+    FBlackList: TTranslationManagerLayoutBlackListSettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
@@ -236,6 +247,7 @@ type
     property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
     property ItemTree: TTranslationManagerLayoutTreeSettings read FItemTree;
     property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
+    property BlackList: TTranslationManagerLayoutBlackListSettings read FBlackList;
   end;
 
 
@@ -857,6 +869,7 @@ begin
   FItemTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FModuleTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FTranslationMemory := TTranslationManagerLayoutGridSettings.Create(Self);
+  FBlackList := TTranslationManagerLayoutBlackListSettings.Create(Self);
 end;
 
 destructor TTranslationManagerLayoutSettings.Destroy;
@@ -864,6 +877,7 @@ begin
   FItemTree.Free;
   FModuleTree.Free;
   FTranslationMemory.Free;
+  BlackList.Free;
 
   inherited;
 end;
@@ -1214,6 +1228,22 @@ begin
   FValid := True;
 
   inherited WriteSection(Key);
+end;
+
+{ TTranslationManagerLayoutBlackListSettings }
+
+constructor TTranslationManagerLayoutBlackListSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+
+  FCollapsedGroups := TConfigurationStringList.Create(Self);
+end;
+
+destructor TTranslationManagerLayoutBlackListSettings.Destroy;
+begin
+  FCollapsedGroups.Free;
+
+  inherited;
 end;
 
 initialization
