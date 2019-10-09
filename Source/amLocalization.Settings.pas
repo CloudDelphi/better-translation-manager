@@ -428,6 +428,7 @@ implementation
 
 uses
   IOUtils,
+  StrUtils,
   Math,
   Types,
   cxPropertiesStore,
@@ -1120,6 +1121,7 @@ procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
     Values: TArray<string>;
     s: string;
     Filter: TFilterItem;
+    n, Start, Next: integer;
   begin
     Filter := TFilterItem.Create;
     FFilters.Add(Filter);
@@ -1129,7 +1131,24 @@ procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
       s := '';
     Filter.Group := s;
 
-    Values := Value.Split([':', '/']);
+    SetLength(Values, 4);
+    n := 0;
+    Start := 1;
+    while (n < Length(Values)) do
+    begin
+      if (n < Length(Values)-1) then
+        Next := PosEx('/', Value, Start)
+      else
+        Next := MaxInt-1;
+
+      if (Next > Start) then
+        Values[n] := Copy(Value, Start, Next-Start)
+      else
+        Values[n] := '';
+
+      Inc(n);
+      Start := Next + 1;
+    end;
 
     Filter.Enabled := boolean(StrToInt(Values[0]));
     Filter.Field := TFilterField(StrToInt(Values[1]));
@@ -1148,9 +1167,10 @@ begin
   if (not Valid) then
   begin
     // Add a few filters just to get us going
+    // Don't translate
     StringToFilter('', '1/3/0/Font.Name');
-    StringToFilter('', '1/3/0/Category');
-    StringToFilter('', '1/4/1/Lorem ipsum');
+    StringToFilter('', '1/4/0/TAction.Category');
+    StringToFilter('', '1/5/1/Lorem ipsum');
     StringToFilter('DevExpress', '1/2/0/TdxLayoutEmptySpaceItem');
     StringToFilter('DevExpress', '1/2/0/TdxLayoutSeparatorItem');
     StringToFilter('DevExpress', '1/2/0/TcxImageList');

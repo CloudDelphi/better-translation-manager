@@ -15,7 +15,7 @@ uses
   amLocalization.Model;
 
 type
-  TFilterField = (ffModule, ffElement, ffType, ffName, ffText);
+  TFilterField = (ffModule, ffElement, ffType, ffName, ffTypeAndName, ffText);
   TFilterOperator = (foEquals, foStarts, foEnds, ftContains, foRegExp);
 
   TFilterItem = class
@@ -27,6 +27,9 @@ type
     FEnabled: boolean;
   public
     procedure Assign(Filter: TFilterItem);
+
+    function ExtractValue(Prop: TLocalizerProperty): string; overload;
+    class function ExtractValue(FilterField: TFilterField; Prop: TLocalizerProperty): string; overload;
 
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty): boolean; overload;
@@ -51,6 +54,7 @@ resourcestring
 
 const
   sFilterGroupGeneral = 'General';
+  sFilterTypeNameSeparator = '.';
 
 implementation
 
@@ -71,28 +75,20 @@ end;
 
 function TFilterItem.Evaluate(Prop: TLocalizerProperty): boolean;
 begin
-  Result := False;
-
   if (not Enabled) then
-    Exit;
+    Exit(False);
 
-  case FField of
-    ffModule:
-      Result := Evaluate(Prop.Item.Module.Name);
-    ffElement:
-      Result := Evaluate(Prop.Item.Name);
-    ffType:
-      Result := Evaluate(Prop.Item.TypeName);
-    ffName:
-      Result := Evaluate(Prop.Name);
-    ffText:
-      Result := Evaluate(Prop.Value);
+  Result := Evaluate(ExtractValue(Prop));
+(*
+  if (Result) and (Field = ffName) then
+  begin
+    FField := ffTypeAndName;
+    FValue := Prop.Item.TypeName+':'+Prop.Name;
   end;
+*)
 end;
 
 function TFilterItem.Evaluate(Module: TLocalizerModule): boolean;
-var
-  Text: string;
 begin
   Result := False;
 
@@ -110,7 +106,7 @@ begin
   Result := False;
   case FFilterOperator of
     foEquals:
-      Result := AnsiSameText(Text, Value);
+      Result := AnsiSameText(Value, Text);
     foStarts:
       Result := Text.StartsWith(Value, True);
     foEnds:
@@ -120,6 +116,31 @@ begin
     foRegExp:
       Result := False; // TODO
   end;
+end;
+
+class function TFilterItem.ExtractValue(FilterField: TFilterField; Prop: TLocalizerProperty): string;
+begin
+  case FilterField of
+    ffModule:
+      Result := Prop.Item.Module.Name;
+    ffElement:
+      Result := Prop.Item.Name;
+    ffType:
+      Result := Prop.Item.TypeName;
+    ffName:
+      Result := Prop.Name;
+    ffTypeAndName:
+      Result := Prop.Item.TypeName + sFilterTypeNameSeparator + Prop.Name;
+    ffText:
+      Result := Prop.Value;
+  else
+    Result := '';
+  end;
+end;
+
+function TFilterItem.ExtractValue(Prop: TLocalizerProperty): string;
+begin
+  Result := ExtractValue(FField, Prop);
 end;
 
 { TFilterItemList }

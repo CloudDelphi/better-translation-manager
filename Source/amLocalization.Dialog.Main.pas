@@ -28,6 +28,7 @@ uses
   cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit,
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
+  dxGallery, dxRibbonGallery,
 
   amLocale,
   amProgress,
@@ -272,12 +273,6 @@ type
     BarButtonFilters: TdxBarButton;
     ActionFilters: TAction;
     ActionFiltersAdd: TAction;
-    dxBarSubItem4: TdxBarSubItem;
-    dxBarButton1: TdxBarButton;
-    dxBarButton3: TdxBarButton;
-    dxBarButton4: TdxBarButton;
-    dxBarButton5: TdxBarButton;
-    dxBarButton6: TdxBarButton;
     ActionFiltersAddModule: TAction;
     ActionFiltersAddElement: TAction;
     ActionFiltersAddType: TAction;
@@ -285,6 +280,15 @@ type
     ActionFiltersAddValue: TAction;
     ActionFiltersApply: TAction;
     dxBarButton7: TdxBarButton;
+    ActionFiltersAddTypeAndName: TAction;
+    RibbonGalleryItemFilters: TdxRibbonGalleryItem;
+    RibbonGalleryItemGroup: TdxRibbonGalleryGroup;
+    dxRibbonGalleryItem1Group1Item1: TdxRibbonGalleryGroupItem;
+    dxRibbonGalleryItem1Group1Item2: TdxRibbonGalleryGroupItem;
+    dxRibbonGalleryItem1Group1Item3: TdxRibbonGalleryGroupItem;
+    dxRibbonGalleryItem1Group1Item4: TdxRibbonGalleryGroupItem;
+    dxRibbonGalleryItem1Group1Item5: TdxRibbonGalleryGroupItem;
+    dxRibbonGalleryItem1Group1Item6: TdxRibbonGalleryGroupItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -392,9 +396,9 @@ type
     procedure StatusBarPanels2Click(Sender: TObject);
     procedure ActionFiltersExecute(Sender: TObject);
     procedure ActionFiltersAddExecute(Sender: TObject);
-    procedure dxBarSubItem4Popup(Sender: TObject);
     procedure ActionFiltersApplyExecute(Sender: TObject);
     procedure ActionFiltersApplyUpdate(Sender: TObject);
+    procedure RibbonGalleryItemFiltersPopup(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -2300,17 +2304,7 @@ begin
     end);
 end;
 
-procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
-begin
-  if (FSearchProvider = nil) then
-    FSearchProvider := TFormSearch.Create(Self);
-
-  // Make sure we have a module selected or the search dialog will burn
-  if (FocusedModule = nil) then
-    TreeListModules.Root.GetFirstChildVisible.Focused := True;
-
-  FSearchProvider.Show;
-end;
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionFeedbackHideExecute(Sender: TObject);
 begin
@@ -2335,14 +2329,47 @@ var
 begin
   FormFeedback := TFormFeedback.Create(nil);
   try
+
     FormFeedback.Execute(FeedbackPositive);
+
   finally
     FormFeedback.Free;
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.RibbonGalleryItemFiltersPopup(Sender: TObject);
+var
+  i: integer;
+  FilterField: TFilterField;
+  Value: string;
+  Item: TCustomLocalizerItem;
+begin
+  for i := 0 to RibbonGalleryItemGroup.Items.Count-1 do
+  begin
+    RibbonGalleryItemGroup.Items[i].Selected := False;
+
+    FilterField := TFilterField(RibbonGalleryItemGroup.Items[i].Action.Tag);
+
+    Item := FocusedItem;
+
+    if (Item is TLocalizerProperty) then
+      Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
+    else
+    if (FilterField = ffModule) then
+      Value := Item.Name // Module name
+    else
+      Value := '-';
+
+    RibbonGalleryItemGroup.Items[i].Description := cxGetStringAdjustedToWidth(0, 0, Value, 200, mstEndEllipsis);
+  end;
+end;
+
 procedure TFormMain.ActionFiltersAddExecute(Sender: TObject);
 var
+  i: integer;
+  Item: TCustomLocalizerItem;
   FormFilters: TFormFilters;
   FilterField: TFilterField;
   Value: string;
@@ -2351,20 +2378,21 @@ begin
   try
     FilterField := TFilterField(TAction(Sender).Tag);
 
-    case FilterField of
-      ffModule:
-        Value := FocusedModule.Name;
-      ffElement:
-        Value := FocusedProperty.Item.Name;
-      ffType:
-        Value := FocusedProperty.Item.TypeName;
-      ffName:
-        Value := FocusedProperty.Name;
-      ffText:
-        Value := FocusedProperty.Value;
+    FormFilters.BeginAddFilter;
+
+    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    begin
+      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+
+      if (Item is TLocalizerProperty) then
+        Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
+      else
+        Value := Item.Name; // Module name
+
+      FormFilters.ContinueAddFilter('', FilterField, foEquals, Value);
     end;
 
-    if (FormFilters.Execute('', FilterField, foEquals, Value)) then
+    if (FormFilters.EndAddFilter) then
       ActionFiltersApply.Execute;
   finally
     FormFilters.Free;
@@ -2377,8 +2405,11 @@ resourcestring
   sFiltersApplyPromptTitle = 'Apply Never Translate filters';
   sFiltersApplyPrompt = 'Applying the Never Translate filters will mark all properties which match any filter as "Don''t translate".'#13#13+
     'Do you want to apply the Never Translate filters to your project now?';
+  sFiltersResultTitle = 'Filters applied';
+  sFiltersResult = '%.0n modules, %.0n properties were marked "Don''t Translate".';
 var
   Progress: IProgress;
+  ModuleCount, PropCount: integer;
 begin
   if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
@@ -2387,35 +2418,51 @@ begin
   Progress := ShowProgress(sFiltersApply);
   Progress.Progress(psBegin, 0, FProject.Modules.Count+FProject.PropertyCount);
 
-  FProject.Traverse(
-    function(Module: TLocalizerModule): boolean
-    begin
-      Progress.AdvanceProgress;
+  FProject.BeginUpdate;
+  try
 
-      if (Module.EffectiveStatus <> ItemStatusDontTranslate) then
-        if (TranslationManagerSettings.Filters.Filters.Evaluate(Module)) then
-        begin
-          Module.Status := ItemStatusDontTranslate;
-          LoadItem(Module);
-        end;
-      Result := True;
-    end);
+    ModuleCount := 0;
+    PropCount := 0;
 
-  FProject.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    begin
-      Progress.AdvanceProgress;
+    FProject.Traverse(
+      function(Module: TLocalizerModule): boolean
+      begin
+        Progress.AdvanceProgress;
 
-      if (Prop.EffectiveStatus <> ItemStatusDontTranslate) then
-        if (TranslationManagerSettings.Filters.Filters.Evaluate(Prop)) then
-        begin
-          Prop.Status := ItemStatusDontTranslate;
-          ReloadProperty(Prop);
-        end;
-      Result := True;
-    end);
+        if (Module.EffectiveStatus <> ItemStatusDontTranslate) then
+          if (TranslationManagerSettings.Filters.Filters.Evaluate(Module)) then
+          begin
+            Module.Status := ItemStatusDontTranslate;
+            LoadItem(Module);
+            Inc(ModuleCount);
+          end;
+        Result := True;
+      end);
+
+    FProject.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Progress.AdvanceProgress;
+
+        if (Prop.EffectiveStatus <> ItemStatusDontTranslate) then
+          if (TranslationManagerSettings.Filters.Filters.Evaluate(Prop)) then
+          begin
+            Prop.Status := ItemStatusDontTranslate;
+            ReloadProperty(Prop);
+            Inc(PropCount);
+          end;
+        Result := True;
+      end);
+
+  finally
+    FProject.EndUpdate;
+  end;
 
   Progress.Progress(psEnd, 1, 1);
+  Progress.Hide;
+  Progress := nil;
+
+  TaskMessageDlg(sFiltersResultTitle, Format(sFiltersResult, [ModuleCount*1.0, PropCount*1.0]), mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionFiltersApplyUpdate(Sender: TObject);
@@ -2437,6 +2484,20 @@ begin
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionFindSearchExecute(Sender: TObject);
+begin
+  if (FSearchProvider = nil) then
+    FSearchProvider := TFormSearch.Create(Self);
+
+  // Make sure we have a module selected or the search dialog will burn
+  if (FocusedModule = nil) then
+    TreeListModules.Root.GetFirstChildVisible.Focused := True;
+
+  FSearchProvider.Show;
+end;
+
 procedure TFormMain.ActionFindNextExecute(Sender: TObject);
 begin
   FSearchProvider.SelectNextResult;
@@ -2446,6 +2507,8 @@ procedure TFormMain.ActionFindNextUpdate(Sender: TObject);
 begin
   TAction(sender).Enabled := (FSearchProvider <> nil) and (FSearchProvider.CanSelectNextResult);
 end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionImportXLIFFExecute(Sender: TObject);
 var
@@ -4372,34 +4435,6 @@ begin
     s := FStatusBarPanelHint[FStatusBarPanel.Index];
     if (s <> '') then
       HintStr := s;
-  end;
-end;
-
-procedure TFormMain.dxBarSubItem4Popup(Sender: TObject);
-var
-  i: integer;
-  s: string;
-begin
-  for i := 0 to TdxBarSubItem(Sender).ItemLinks.Count-1 do
-  begin
-    s := '-';
-    case TFilterField(TAction(TdxBarSubItem(Sender).ItemLinks[i].Item.Action).Tag) of
-      ffModule:
-        s := FocusedModule.Name;
-      ffElement:
-        if (FocusedProperty <> nil) then
-          s := FocusedProperty.Item.Name;
-      ffType:
-        if (FocusedProperty <> nil) then
-          s := FocusedProperty.Item.TypeName;
-      ffName:
-        if (FocusedProperty <> nil) then
-          s := FocusedProperty.Name;
-      ffText:
-        if (FocusedProperty <> nil) then
-          s := FocusedProperty.Value;
-    end;
-    TdxBarSubItem(Sender).ItemLinks[i].Item.Caption := Format(TAction(TdxBarSubItem(Sender).ItemLinks[i].Item.Action).Caption, [s]);
   end;
 end;
 

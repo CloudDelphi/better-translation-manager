@@ -646,8 +646,8 @@ object FormMain: TFormMain
     PopupMenuLinks = <>
     ShowShortCutInHint = True
     UseSystemFont = True
-    Left = 664
-    Top = 72
+    Left = 428
+    Top = 16
     PixelsPerInch = 96
     object BarManagerBarFile: TdxBar
       Caption = 'File'
@@ -746,7 +746,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 347
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -855,7 +855,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton26'
         end>
       OneOnRow = False
-      Row = 1
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -883,7 +883,7 @@ object FormMain: TFormMain
           ItemName = 'dxBarButton12'
         end>
       OneOnRow = False
-      Row = 1
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -915,7 +915,7 @@ object FormMain: TFormMain
           ItemName = 'BarButtonGotoNext'
         end>
       OneOnRow = False
-      Row = 1
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -991,7 +991,7 @@ object FormMain: TFormMain
           ItemName = 'ButtonItemBookmark'
         end>
       OneOnRow = False
-      Row = 1
+      Row = 0
       UseOwnFont = False
       Visible = True
       WholeRow = False
@@ -1066,10 +1066,15 @@ object FormMain: TFormMain
           ItemName = 'BarButtonFilters'
         end
         item
+          ViewLevels = [ivlLargeControlOnly, ivlSmallIconWithText, ivlSmallIcon, ivlControlOnly]
+          Visible = True
+          ItemName = 'RibbonGalleryItemFilters'
+        end
+        item
           Visible = True
           ItemName = 'dxBarButton7'
         end>
-      OneOnRow = True
+      OneOnRow = False
       Row = 0
       UseOwnFont = False
       Visible = True
@@ -1446,62 +1451,57 @@ object FormMain: TFormMain
       Action = ActionFilters
       Category = 0
     end
-    object dxBarSubItem4: TdxBarSubItem
-      Action = ActionFiltersAdd
-      Category = 0
-      ItemLinks = <
-        item
-          Visible = True
-          ItemName = 'dxBarButton1'
-        end
-        item
-          Visible = True
-          ItemName = 'dxBarButton3'
-        end
-        item
-          Visible = True
-          ItemName = 'dxBarButton5'
-        end
-        item
-          Visible = True
-          ItemName = 'dxBarButton4'
-        end
-        item
-          Visible = True
-          ItemName = 'dxBarButton6'
-        end>
-      OnPopup = dxBarSubItem4Popup
-    end
-    object dxBarButton1: TdxBarButton
-      Action = ActionFiltersAddModule
-      Category = 0
-    end
-    object dxBarButton3: TdxBarButton
-      Action = ActionFiltersAddElement
-      Category = 0
-    end
-    object dxBarButton4: TdxBarButton
-      Action = ActionFiltersAddName
-      Category = 0
-    end
-    object dxBarButton5: TdxBarButton
-      Action = ActionFiltersAddType
-      Category = 0
-    end
-    object dxBarButton6: TdxBarButton
-      Action = ActionFiltersAddValue
-      Category = 0
-    end
     object dxBarButton7: TdxBarButton
       Action = ActionFiltersApply
       Category = 0
+    end
+    object RibbonGalleryItemFilters: TdxRibbonGalleryItem
+      Action = ActionFiltersAdd
+      Category = 0
+      GalleryOptions.ColumnCount = 1
+      GalleryOptions.ItemAllowDeselect = True
+      GalleryFilter.Categories = <>
+      GalleryInRibbonOptions.Collapsed = True
+      GalleryInRibbonOptions.MinColumnCount = 1
+      GalleryInMenuOptions.DropDownGalleryResizing = gsrNone
+      GalleryInMenuOptions.ItemTextKind = itkCaptionAndDescription
+      ItemLinks = <>
+      OnPopup = RibbonGalleryItemFiltersPopup
+      object RibbonGalleryItemGroup: TdxRibbonGalleryGroup
+        Options.AssignedValues = [avItemTextKind]
+        Options.ItemTextKind = itkCaptionAndDescription
+        object dxRibbonGalleryItem1Group1Item1: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddModule
+          ActionIndex = nil
+        end
+        object dxRibbonGalleryItem1Group1Item2: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddElement
+          ActionIndex = nil
+        end
+        object dxRibbonGalleryItem1Group1Item3: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddType
+          ActionIndex = nil
+        end
+        object dxRibbonGalleryItem1Group1Item4: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddName
+          ActionIndex = nil
+        end
+        object dxRibbonGalleryItem1Group1Item5: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddTypeAndName
+          ActionIndex = nil
+        end
+        object dxRibbonGalleryItem1Group1Item6: TdxRibbonGalleryGroupItem
+          Action = ActionFiltersAddValue
+          ActionIndex = nil
+        end
+      end
     end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
-    Left = 736
-    Top = 72
+    Left = 500
+    Top = 16
   end
   object OpenDialogXLIFF: TOpenDialog
     Filter = 
@@ -1516,8 +1516,8 @@ object FormMain: TFormMain
   end
   object ActionList: TActionList
     Images = DataModuleMain.ImageListSmall
-    Left = 592
-    Top = 72
+    Left = 356
+    Top = 16
     object ActionProofingCheck: TAction
       Category = 'Validation'
       Caption = 'Spell check'
@@ -1919,54 +1919,69 @@ object FormMain: TFormMain
     end
     object ActionFilters: TAction
       Category = 'Filters'
-      Caption = 'Filters...'
+      Caption = 'Black List...'
+      Hint = 'List of items that should never be translated'
       OnExecute = ActionFiltersExecute
+    end
+    object ActionFiltersApply: TAction
+      Category = 'Filters'
+      Caption = 'Apply black list...'
+      Hint = 'Apply black list to the project'
+      OnExecute = ActionFiltersApplyExecute
+      OnUpdate = ActionFiltersApplyUpdate
     end
     object ActionFiltersAdd: TAction
       Category = 'Filters'
-      Caption = 'Add to Never Translate filters...'
+      Caption = 'Add to black list...'
       OnExecute = ActionDummyExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
     object ActionFiltersAddModule: TAction
       Category = 'Filters'
-      Caption = 'Module: %s'
+      Caption = 'Module:'
+      ShortCut = 24624
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
     object ActionFiltersAddElement: TAction
       Tag = 1
       Category = 'Filters'
-      Caption = 'Element: %s'
+      Caption = 'Element:'
+      ShortCut = 24625
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
     object ActionFiltersAddType: TAction
       Tag = 2
       Category = 'Filters'
-      Caption = 'Type: %s'
+      Caption = 'Type:'
+      ShortCut = 24626
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
     object ActionFiltersAddName: TAction
       Tag = 3
       Category = 'Filters'
-      Caption = 'Name: %s'
+      Caption = 'Name:'
+      ShortCut = 24627
+      OnExecute = ActionFiltersAddExecute
+      OnUpdate = ActionHasPropertyFocusedUpdate
+    end
+    object ActionFiltersAddTypeAndName: TAction
+      Tag = 4
+      Category = 'Filters'
+      Caption = 'Type and Name:'
+      ShortCut = 24628
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
     object ActionFiltersAddValue: TAction
-      Tag = 4
+      Tag = 5
       Category = 'Filters'
-      Caption = 'Value: %s'
+      Caption = 'Value:'
+      ShortCut = 24629
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
-    end
-    object ActionFiltersApply: TAction
-      Category = 'Filters'
-      Caption = 'Apply filters...'
-      OnExecute = ActionFiltersApplyExecute
-      OnUpdate = ActionFiltersApplyUpdate
     end
   end
   object OpenDialogProject: TOpenDialog
@@ -2026,7 +2041,7 @@ object FormMain: TFormMain
       end
       item
         Visible = True
-        ItemName = 'dxBarSubItem4'
+        ItemName = 'RibbonGalleryItemFilters'
       end
       item
         Visible = True

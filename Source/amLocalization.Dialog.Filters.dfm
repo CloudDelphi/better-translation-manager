@@ -1,52 +1,53 @@
 inherited FormFilters: TFormFilters
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSizeable
-  Caption = 'Filters'
+  Caption = 'Black List'
   ClientHeight = 528
-  ClientWidth = 625
-  ExplicitWidth = 641
+  ClientWidth = 655
+  OnShow = FormShow
+  ExplicitWidth = 671
   ExplicitHeight = 566
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 480
-    Width = 625
+    Width = 655
     ExplicitTop = 480
-    ExplicitWidth = 625
+    ExplicitWidth = 655
     inherited ButtonOK: TcxButton
-      Left = 458
-      ExplicitLeft = 458
+      Left = 488
+      ExplicitLeft = 488
     end
     inherited ButtonCancel: TcxButton
-      Left = 539
-      ExplicitLeft = 539
+      Left = 569
+      ExplicitLeft = 569
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
-    Width = 625
-    ExplicitWidth = 625
+    Width = 655
+    ExplicitWidth = 655
     inherited LabelHeader: TcxLabel
       Caption = 'List of items that should never be translated'
-      ExplicitWidth = 603
-      Width = 603
+      ExplicitWidth = 633
+      Width = 633
     end
   end
   inherited PanelMain: TPanel
-    Width = 625
+    Width = 655
     Height = 441
     ExplicitTop = 39
-    ExplicitWidth = 625
+    ExplicitWidth = 655
     ExplicitHeight = 441
     inherited LayoutControl: TdxLayoutControl
-      Width = 609
+      Width = 639
       Height = 429
       ExplicitLeft = 8
-      ExplicitWidth = 609
+      ExplicitWidth = 639
       ExplicitHeight = 429
       object TreeListFilters: TcxTreeList [0]
         Left = 6
         Top = 6
-        Width = 597
+        Width = 627
         Height = 417
         Bands = <
           item
@@ -60,6 +61,7 @@ inherited FormFilters: TFormFilters
         OptionsCustomizing.ColumnVertSizing = False
         OptionsCustomizing.StackedColumns = False
         OptionsData.AnsiSort = True
+        OptionsSelection.MultiSelect = True
         OptionsView.CategorizedColumn = TreeListFiltersColumnGroup
         OptionsView.CheckGroups = True
         OptionsView.PaintStyle = tlpsCategorized
@@ -74,10 +76,10 @@ inherited FormFilters: TFormFilters
         OnNodeChanged = TreeListFiltersNodeChanged
         OnNodeCheckChanged = TreeListFiltersNodeCheckChanged
         object TreeListFiltersColumnGroup: TcxTreeListColumn
-          PropertiesClassName = 'TcxTextEditProperties'
+          PropertiesClassName = 'TcxComboBoxProperties'
           Caption.Text = 'Group'
           DataBinding.ValueType = 'String'
-          Width = 100
+          Width = 140
           Position.ColIndex = 0
           Position.RowIndex = 0
           Position.BandIndex = 0
@@ -85,6 +87,8 @@ inherited FormFilters: TFormFilters
           SortIndex = 0
           Summary.FooterSummaryItems = <>
           Summary.GroupFooterSummaryItems = <>
+          OnGetDisplayText = TreeListFiltersColumnGroupGetDisplayText
+          OnGetEditingProperties = TreeListFiltersColumnGroupGetEditingProperties
         end
         object TreeListFiltersColumnField: TcxTreeListColumn
           PropertiesClassName = 'TcxImageComboBoxProperties'
@@ -106,13 +110,17 @@ inherited FormFilters: TFormFilters
               Value = 3
             end
             item
-              Description = 'Value'
+              Description = 'Type and Name'
               Value = 4
+            end
+            item
+              Description = 'Value'
+              Value = 5
             end>
           BestFitMaxWidth = 200
           Caption.Text = 'Field'
           DataBinding.ValueType = 'Integer'
-          Width = 120
+          Width = 100
           Position.ColIndex = 1
           Position.RowIndex = 0
           Position.BandIndex = 0
@@ -181,6 +189,13 @@ inherited FormFilters: TFormFilters
         ControlOptions.ShowBorder = False
         Index = 0
       end
+    end
+  end
+  object EditRepository: TcxEditRepository
+    Left = 368
+    Top = 123
+    PixelsPerInch = 96
+    object EditRepositoryTextItem: TcxEditRepositoryTextItem
     end
   end
 end

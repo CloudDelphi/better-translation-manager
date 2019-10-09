@@ -18,7 +18,7 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, dxLayoutControlAdapters,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxContainer, cxEdit, cxCustomData, cxStyles, cxTL, cxTextEdit,
   cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxClasses, cxButtons, dxLayoutControl, cxDropDownEdit,
-  cxImageComboBox,
+  cxImageComboBox, cxEditRepositoryItems,
 
   amLocalization.Dialog,
   amLocalization.Filters;
@@ -31,15 +31,19 @@ type
     TreeListFiltersColumnValue: TcxTreeListColumn;
     TreeListFiltersColumnGroup: TcxTreeListColumn;
     TreeListFiltersColumnOperator: TcxTreeListColumn;
+    EditRepository: TcxEditRepository;
+    EditRepositoryTextItem: TcxEditRepositoryTextItem;
     procedure TreeListFiltersBeginDragNode(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; var Allow: Boolean);
     procedure TreeListFiltersDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
-    procedure TreeListFiltersMoveTo(Sender: TcxCustomTreeList; AttachNode: TcxTreeListNode; AttachMode: TcxTreeListNodeAttachMode;
-      Nodes: TList; var IsCopy, Done: Boolean);
+    procedure TreeListFiltersMoveTo(Sender: TcxCustomTreeList; AttachNode: TcxTreeListNode; AttachMode: TcxTreeListNodeAttachMode; Nodes: TList; var IsCopy, Done: Boolean);
     procedure TreeListFiltersDeletion(Sender: TcxCustomTreeList; ANode: TcxTreeListNode);
     procedure TreeListFiltersNodeChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AColumn: TcxTreeListColumn);
     procedure TreeListFiltersNodeCheckChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AState: TcxCheckBoxState);
     procedure TreeListFiltersKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure TreeListFiltersInitEditValue(Sender, AItem: TObject; AEdit: TcxCustomEdit; var AValue: Variant);
+    procedure TreeListFiltersColumnGroupGetEditingProperties(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; var EditProperties: TcxCustomEditProperties);
+    procedure TreeListFiltersColumnGroupGetDisplayText(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; var Value: string);
+    procedure FormShow(Sender: TObject);
   private
     FFilters: TFilterItemList;
   protected
@@ -47,13 +51,16 @@ type
     procedure SaveFilters;
     function AddGroup(const Name: string): TcxTreeListNode;
     function LoadFilter(Filter: TFilterItem): TcxTreeListNode;
-    function AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    function Execute: boolean; overload;
-    function Execute(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean; overload;
+    function Execute: boolean;
+    function AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
+
+    procedure BeginAddFilter;
+    function ContinueAddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
+    function EndAddFilter: boolean;
   end;
 
 implementation
@@ -79,12 +86,22 @@ begin
   inherited;
 end;
 
-function TFormFilters.Execute(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
+function TFormFilters.AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): boolean;
+begin
+  BeginAddFilter;
+
+  ContinueAddFilter(AGroup, AField, AOperator, AValue);
+
+  Result := EndAddFilter;
+end;
+
+procedure TFormFilters.BeginAddFilter;
 begin
   LoadFilters;
+end;
 
-  AddFilter(AGroup, AField, AOperator, AValue);
-
+function TFormFilters.EndAddFilter: boolean;
+begin
   Result := (ShowModal = mrOK);
 
   if (Result) then
@@ -101,17 +118,28 @@ begin
     SaveFilters;
 end;
 
+procedure TFormFilters.FormShow(Sender: TObject);
+begin
+  if (TreeListFilters.FocusedNode <> nil) then
+    TreeListFilters.FocusedNode.MakeVisible;
+end;
+
 procedure TFormFilters.LoadFilters;
 var
   Filter: TFilterItem;
 begin
-  TreeListFilters.Clear;
-  FFilters.Assign(TranslationManagerSettings.Filters.Filters);
+  TreeListFilters.BeginUpdate;
+  try
+    TreeListFilters.Clear;
+    FFilters.Assign(TranslationManagerSettings.Filters.Filters);
 
-  for Filter in FFilters do
-    LoadFilter(Filter);
+    for Filter in FFilters do
+      LoadFilter(Filter);
 
-  TreeListFilters.FullExpand;
+    TreeListFilters.FullExpand;
+  finally
+    TreeListFilters.EndUpdate;
+  end;
 end;
 
 procedure TFormFilters.SaveFilters;
@@ -137,7 +165,7 @@ begin
   Result.Values[TreeListFiltersColumnValue.ItemIndex] := Filter.Value;
 end;
 
-function TFormFilters.AddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
+function TFormFilters.ContinueAddFilter(const AGroup: string; AField: TFilterField; AOperator: TFilterOperator; const AValue: string): TFilterItem;
 var
   Node: TcxTreeListNode;
 begin
@@ -154,7 +182,8 @@ begin
   // Add filter node
   Node := LoadFilter(Result);
   Node.MakeVisible;
-  Node.Focused := True;
+
+  TreeListFilters.FocusedNode := Node;
 end;
 
 function TFormFilters.AddGroup(const Name: string): TcxTreeListNode;
@@ -163,8 +192,8 @@ var
   Group: string;
 begin
   Group := Name;
-  if (Group = '') then
-    Group := sFilterGroupGeneralDisplay;
+  if (Group = sFilterGroupGeneralDisplay) then
+    Group := '';
 
   // Find group node
   Result := nil;
@@ -187,6 +216,36 @@ end;
 procedure TFormFilters.TreeListFiltersBeginDragNode(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; var Allow: Boolean);
 begin
   Allow := (ANode.Level > 0);
+end;
+
+procedure TFormFilters.TreeListFiltersColumnGroupGetDisplayText(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; var Value: string);
+begin
+  if (ANode.Level = 0) then
+  begin
+    if (Value = '') then
+      Value := sFilterGroupGeneralDisplay;
+  end;
+end;
+
+procedure TFormFilters.TreeListFiltersColumnGroupGetEditingProperties(Sender: TcxTreeListColumn; ANode: TcxTreeListNode;
+  var EditProperties: TcxCustomEditProperties);
+var
+  i: integer;
+  s: string;
+begin
+  if (ANode.Level = 0) then
+  begin
+    EditProperties := EditRepositoryTextItem.Properties;
+    Exit;
+  end;
+
+  TcxComboBoxProperties(EditProperties).Items.Clear;
+  for i := 0 to TreeListFilters.Root.Count-1 do
+  begin
+    s := VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]);
+    if (TcxComboBoxProperties(EditProperties).Items.IndexOf(s) = -1) then
+      TcxComboBoxProperties(EditProperties).Items.Add(s);
+  end;
 end;
 
 procedure TFormFilters.TreeListFiltersDeletion(Sender: TcxCustomTreeList; ANode: TcxTreeListNode);
@@ -215,13 +274,14 @@ procedure TFormFilters.TreeListFiltersKeyDown(Sender: TObject; var Key: Word; Sh
 var
   Group: string;
 begin
-  if (Key = VK_INSERT) then
+  if (Key = VK_INSERT) and (Shift = []) then
   begin
     if (TreeListFilters.FocusedNode <> nil) then
       Group := TreeListFilters.FocusedNode.Values[TreeListFiltersColumnGroup.ItemIndex]
     else
       Group := '';
-    AddFilter(Group, ffType, foEquals, '');
+
+    ContinueAddFilter(Group, ffType, foEquals, '');
     Key := 0;
   end;
 end;
@@ -229,6 +289,8 @@ end;
 procedure TFormFilters.TreeListFiltersMoveTo(Sender: TcxCustomTreeList; AttachNode: TcxTreeListNode; AttachMode: TcxTreeListNodeAttachMode; Nodes: TList; var IsCopy, Done: Boolean);
 var
   SourceNode, TargetNode: TcxTreeListNode;
+  Group: string;
+  i: integer;
 begin
   TargetNode := AttachNode;
 
@@ -238,20 +300,22 @@ begin
   if (TargetNode.Level > 0) then
     TargetNode := TargetNode.Parent;
 
-  SourceNode := TreeListFilters.FocusedNode;
+  Group := TargetNode.Values[TreeListFiltersColumnGroup.ItemIndex];
 
-  if (TargetNode = SourceNode.Parent) then
-    Exit;
-
-  if (TargetNode <> AttachNode) then
+  for i := 0 to Nodes.Count-1 do
   begin
+    SourceNode := TcxTreeListNode(Nodes[i]);
+
+    if (TargetNode = SourceNode.Parent) then
+      Exit;
+
     SourceNode.MoveTo(TargetNode, tlamAddChild);
-    Done := True;
+
+    TFilterItem(SourceNode.Data).Group := Group;
+    SourceNode.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
   end;
 
-  TFilterItem(SourceNode.Data).Group := TargetNode.Values[TreeListFiltersColumnGroup.ItemIndex];
-  SourceNode.Values[TreeListFiltersColumnGroup.ItemIndex] := TFilterItem(SourceNode.Data).Group;
-
+  Done := True;
   IsCopy := False;
 end;
 
@@ -261,9 +325,6 @@ var
   GroupNode, Node: TcxTreeListNode;
   Group: string;
 begin
-  if (ANode.Level <> 1) then
-    Exit;
-
   if (AColumn = TreeListFiltersColumnField) then
     TFilterItem(ANode.Data).Field := TFilterField(ANode.Values[AColumn.ItemIndex])
   else
@@ -276,19 +337,15 @@ begin
   if (AColumn = TreeListFiltersColumnGroup) then
   begin
     Group := VarToStr(ANode.Values[TreeListFiltersColumnGroup.ItemIndex]);
+    if (Group = sFilterGroupGeneralDisplay) then
+      Group := '';
 
     if (ANode.Level = 0) then
     begin
-      if (Group = '') then
-        ANode.Values[TreeListFiltersColumnGroup.ItemIndex] := sFilterGroupGeneralDisplay
-      else
-      if (Group = sFilterGroupGeneralDisplay) then
-        Group := '';
-
       // TODO : Check for duplicate group
       GroupNode := ANode;
       // Modifying the group node also modifies all child nodes
-      for i := 0 to GroupNode.Count-1 do
+      for i := GroupNode.Count-1 downto 0 do
       begin
         Node := GroupNode.Items[i];
         Node.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
@@ -297,9 +354,6 @@ begin
       end;
     end else
     begin
-      if (Group = sFilterGroupGeneralDisplay) then
-        Group := '';
-
       // Modifying a child node moves it to the specified group
       GroupNode := AddGroup(Group);
       if (ANode.Parent <> GroupNode) then
