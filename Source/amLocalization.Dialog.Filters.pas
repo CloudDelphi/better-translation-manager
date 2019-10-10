@@ -46,6 +46,7 @@ type
     procedure FormShow(Sender: TObject);
   private
     FFilters: TFilterItemList;
+    FUpdatingNode: boolean;
   protected
     procedure LoadFilters;
     procedure SaveFilters;
@@ -94,34 +95,33 @@ var
   i: integer;
   Group: string;
 begin
-  if (not TranslationManagerSettings.Layout.BlackList.Valid) then
-    Exit;
+  if (TranslationManagerSettings.Layout.BlackList.Valid) then
+    TreeListFilters.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.BlackList.Name);
 
-  TreeListFilters.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.BlackList.Name);
-
-  TreeListFilters.FullExpand;
   for i := 0 to TreeListFilters.Root.Count-1 do
   begin
     Group := VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]);
-    if (TranslationManagerSettings.Layout.BlackList.CollapsedGroups.IndexOf(Group) <> -1) then
-      TreeListFilters.Root.Items[i].Collapse(False)
+
+    if (TranslationManagerSettings.Filters.Expanded[Group]) then
+      TreeListFilters.Root.Items[i].Expand(False)
     else
-      TreeListFilters.Root.Items[i].Expand(False);
+      TreeListFilters.Root.Items[i].Collapse(False);
   end;
 end;
 
 procedure TFormFilters.SaveLayout;
 var
   i: integer;
+  Group: string;
 begin
   TreeListFilters.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.BlackList.Name);
-
-  TranslationManagerSettings.Layout.BlackList.CollapsedGroups.Clear;
-  for i := 0 to TreeListFilters.Root.Count-1 do
-    if (not TreeListFilters.Root.Items[i].Expanded) then
-      TranslationManagerSettings.Layout.BlackList.CollapsedGroups.Add(VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]));
-
   TranslationManagerSettings.Layout.BlackList.Valid := True;
+
+  for i := 0 to TreeListFilters.Root.Count-1 do
+  begin
+    Group := VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]);
+    TranslationManagerSettings.Filters.Expanded[Group] := TreeListFilters.Root.Items[i].Expanded;
+  end;
 end;
 
 function TFormFilters.DoExecute: boolean;
@@ -182,8 +182,6 @@ begin
 
     for Filter in FFilters do
       LoadFilter(Filter);
-
-    TreeListFilters.FullExpand;
   finally
     TreeListFilters.EndUpdate;
   end;
@@ -228,8 +226,6 @@ begin
 
   // Add filter node
   Node := LoadFilter(Result);
-  Node.MakeVisible;
-
   TreeListFilters.FocusedNode := Node;
 end;
 
@@ -372,6 +368,9 @@ var
   GroupNode, Node: TcxTreeListNode;
   Group: string;
 begin
+  if (FUpdatingNode) then
+    Exit;
+
   if (AColumn = TreeListFiltersColumnField) then
     TFilterItem(ANode.Data).Field := TFilterField(ANode.Values[AColumn.ItemIndex])
   else
@@ -379,7 +378,7 @@ begin
     TFilterItem(ANode.Data).FilterOperator := TFilterOperator(ANode.Values[AColumn.ItemIndex])
   else
   if (AColumn = TreeListFiltersColumnValue) then
-    TFilterItem(ANode.Data).Value := ANode.Values[AColumn.ItemIndex]
+    TFilterItem(ANode.Data).Value := VarToStr(ANode.Values[AColumn.ItemIndex])
   else
   if (AColumn = TreeListFiltersColumnGroup) then
   begin
@@ -387,32 +386,41 @@ begin
     if (Group = sFilterGroupGeneralDisplay) then
       Group := '';
 
-    if (ANode.Level = 0) then
-    begin
-      // TODO : Check for duplicate group
-      GroupNode := ANode;
-      // Modifying the group node also modifies all child nodes
-      for i := GroupNode.Count-1 downto 0 do
+    FUpdatingNode := True;
+    try
+      if (ANode.Level = 0) then
       begin
-        Node := GroupNode.Items[i];
-        Node.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
+        // TODO : Check for duplicate group
+        GroupNode := ANode;
+        // Modifying the group node also modifies all child nodes
+        // Note: We cannot iterate using the Items[] array as the order of items can change when we modify their values due to sorting
+        Node := GroupNode.getFirstChild;
+        while (Node <> nil) do
+        begin
+          // Note: Modifying the node value recursively calls NodeChanged event
+          Node.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
+          TFilterItem(Node.Data).Group := Group;
 
-        TFilterItem(Node.Data).Group := Group;
+          Node := Node.getNextSibling;
+        end;
+      end else
+      begin
+        // Modifying a child node moves it to the specified group
+        GroupNode := AddGroup(Group);
+        if (ANode.Parent <> GroupNode) then
+          ANode.MoveTo(GroupNode, tlamAddChild);
+
+        TFilterItem(ANode.Data).Group := Group;
+
+        if (ANode.Values[TreeListFiltersColumnGroup.ItemIndex] <> Group) then
+          // Note: Modifying the node value recursively calls NodeChanged event
+          ANode.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
+
+        ANode.MakeVisible;
+        ANode.Focused := True;
       end;
-    end else
-    begin
-      // Modifying a child node moves it to the specified group
-      GroupNode := AddGroup(Group);
-      if (ANode.Parent <> GroupNode) then
-        ANode.MoveTo(GroupNode, tlamAddChild);
-
-      TFilterItem(ANode.Data).Group := Group;
-
-      if (ANode.Values[TreeListFiltersColumnGroup.ItemIndex] <> Group) then
-        ANode.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
-
-      ANode.MakeVisible;
-      ANode.Focused := True;
+    finally
+      FUpdatingNode := False;
     end;
   end;
 end;

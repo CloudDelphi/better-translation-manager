@@ -375,7 +375,6 @@ object FormMain: TFormMain
     Images = DataModuleMain.ImageListTree
     Navigator.Buttons.CustomButtons = <>
     OptionsBehavior.CellHints = True
-    OptionsBehavior.GoToNextCellOnEnter = True
     OptionsBehavior.GoToNextCellOnTab = True
     OptionsBehavior.ImmediateEditor = False
     OptionsBehavior.ExpandOnDblClick = False

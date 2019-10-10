@@ -54,7 +54,6 @@ inherited FormFilters: TFormFilters
           end>
         DragMode = dmAutomatic
         Navigator.Buttons.CustomButtons = <>
-        OptionsBehavior.GoToNextCellOnEnter = True
         OptionsBehavior.GoToNextCellOnTab = True
         OptionsBehavior.FocusCellOnCycle = True
         OptionsCustomizing.ColumnFiltering = bFalse

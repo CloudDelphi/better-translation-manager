@@ -1107,6 +1107,7 @@ begin
 
   TranslationManagerSettings.System.HideFeedback := not RibbonMain.TabAreaToolbar.Visible;
 
+  TranslationManagerSettings.Valid := True;
   TranslationManagerSettings.WriteConfig;
 end;
 

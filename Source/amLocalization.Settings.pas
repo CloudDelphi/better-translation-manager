@@ -17,6 +17,7 @@ interface
 // -----------------------------------------------------------------------------
 
 uses
+  Generics.Collections,
   Windows,
   SysUtils,
   Classes,
@@ -224,22 +225,12 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
-  TTranslationManagerLayoutBlackListSettings = class(TTranslationManagerLayoutGridSettings)
-  private
-    FCollapsedGroups: TConfigurationStringList;
-  public
-    constructor Create(AOwner: TConfigurationSection); override;
-    destructor Destroy; override;
-  published
-    property CollapsedGroups: TConfigurationStringList read FCollapsedGroups;
-  end;
-
   TTranslationManagerLayoutSettings = class(TConfigurationSection)
   private
     FItemTree: TTranslationManagerLayoutTreeSettings;
     FModuleTree: TTranslationManagerLayoutTreeSettings;
     FTranslationMemory: TTranslationManagerLayoutGridSettings;
-    FBlackList: TTranslationManagerLayoutBlackListSettings;
+    FBlackList: TTranslationManagerLayoutGridSettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
@@ -247,7 +238,7 @@ type
     property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
     property ItemTree: TTranslationManagerLayoutTreeSettings read FItemTree;
     property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
-    property BlackList: TTranslationManagerLayoutBlackListSettings read FBlackList;
+    property BlackList: TTranslationManagerLayoutGridSettings read FBlackList;
   end;
 
 
@@ -328,11 +319,21 @@ type
     property StatusGlyphHints: boolean read FStatusGlyphHints write FStatusGlyphHints default False;
   end;
 
-  TTranslationManagerFiltersSettings = class(TConfigurationSectionValues<TConfigurationStringList>)
+  TTranslationManagerFilterGroupSettings = class(TConfigurationStringList)
+  private
+    FExpanded: boolean;
+  published
+    property Expanded: boolean read FExpanded write FExpanded default False;
+  end;
+
+  TTranslationManagerFiltersSettings = class(TConfigurationSectionValues<TTranslationManagerFilterGroupSettings>)
   private
     FValid: boolean;
     FFilters: TFilterItemList;
+    FExpandedState: TDictionary<string, boolean>;
   protected
+    function GetGroupExpanded(const Name: string): boolean;
+    procedure SetGroupExpanded(const Name: string; const Value: boolean);
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
   public
@@ -340,6 +341,7 @@ type
     destructor Destroy; override;
 
     property Filters: TFilterItemList read FFilters;
+    property Expanded[const Name: string]: boolean read GetGroupExpanded write SetGroupExpanded;
   published
     property Valid: boolean read FValid write FValid;
   end;
@@ -731,6 +733,8 @@ begin
     FTranslationManagerSettings := TTranslationManagerSettings.Create(TranslationManagerRegistryKey, TranslationManagerRegistryRoot);
 
     FTranslationManagerSettings.ReadConfig;
+    if (not FTranslationManagerSettings.Valid) then
+      FTranslationManagerSettings.ResetSettings;
   end;
   Result := FTranslationManagerSettings;
 end;
@@ -869,7 +873,7 @@ begin
   FItemTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FModuleTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FTranslationMemory := TTranslationManagerLayoutGridSettings.Create(Self);
-  FBlackList := TTranslationManagerLayoutBlackListSettings.Create(Self);
+  FBlackList := TTranslationManagerLayoutGridSettings.Create(Self);
 end;
 
 destructor TTranslationManagerLayoutSettings.Destroy;
@@ -1120,12 +1124,25 @@ begin
   inherited Create(AOwner);
   PurgeOnWrite := True;
   FFilters := TFilterItemList.Create;
+  FExpandedState := TDictionary<string, boolean>.Create;
 end;
 
 destructor TTranslationManagerFiltersSettings.Destroy;
 begin
   FFilters.Free;
+  FExpandedState.Free;
   inherited;
+end;
+
+function TTranslationManagerFiltersSettings.GetGroupExpanded(const Name: string): boolean;
+var
+  Group: string;
+begin
+  Group := Name;
+  if (Group = '') then
+    Group := sFilterGroupGeneral;
+  if (not FExpandedState.TryGetValue(Group, Result)) then
+    Result := False;
 end;
 
 procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
@@ -1173,11 +1190,13 @@ procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
 var
   i, j: integer;
   Group: string;
-  GroupSection: TConfigurationStringList;
+  GroupSection: TTranslationManagerFilterGroupSettings;
 begin
   inherited ReadSection(Key);
 
   FFilters.Clear;
+  FExpandedState.Clear;
+
   if (not Valid) then
   begin
     // Add a few filters just to get us going
@@ -1197,9 +1216,24 @@ begin
   begin
     Group := Names[i];
     GroupSection := Items[Group];
+
     for j := 0 to GroupSection.Count-1 do
       StringToFilter(Group, GroupSection[j]);
+
+    if (Group = sFilterGroupGeneral) then
+      Group := '';
+    FExpandedState.AddOrSetValue(Group, GroupSection.Expanded);
   end;
+end;
+
+procedure TTranslationManagerFiltersSettings.SetGroupExpanded(const Name: string; const Value: boolean);
+var
+  Group: string;
+begin
+  Group := Name;
+  if (Group = '') then
+    Group := sFilterGroupGeneral;
+  FExpandedState.AddOrSetValue(Group, Value);
 end;
 
 procedure TTranslationManagerFiltersSettings.WriteSection(const Key: string);
@@ -1212,7 +1246,9 @@ procedure TTranslationManagerFiltersSettings.WriteSection(const Key: string);
 var
   Filter: TFilterItem;
   Group: string;
-  GroupSection: TConfigurationStringList;
+  GroupSection: TTranslationManagerFilterGroupSettings;
+  i: integer;
+  Expanded: boolean;
 begin
   Clear;
 
@@ -1225,26 +1261,22 @@ begin
     GroupSection.Add(FilterToString(Filter));
   end;
 
+  for i := 0 to Count-1 do
+  begin
+    Group := Names[i];
+    if (Group = sFilterGroupGeneral) then
+      Group := '';
+    if (not FExpandedState.TryGetValue(Group, Expanded)) then
+      Expanded := False;
+
+    Items[i].Expanded := Expanded;
+  end;
+
   FValid := True;
 
   inherited WriteSection(Key);
 end;
 
-{ TTranslationManagerLayoutBlackListSettings }
-
-constructor TTranslationManagerLayoutBlackListSettings.Create(AOwner: TConfigurationSection);
-begin
-  inherited;
-
-  FCollapsedGroups := TConfigurationStringList.Create(Self);
-end;
-
-destructor TTranslationManagerLayoutBlackListSettings.Destroy;
-begin
-  FCollapsedGroups.Free;
-
-  inherited;
-end;
 
 initialization
 //  ConfigurationServiceRegistryKey := TranslationManagerRegistryKey;

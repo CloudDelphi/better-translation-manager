@@ -100,7 +100,7 @@ type
     function SectionByName(const Name: string): TConfigurationSection;
 
     property Owner: TConfigurationSection read FOwner;
-    // Name of this registry key
+    // Name of this registry key - Note this is the name of the property by which this object is published by the owner object
     property Name: string read GetName;
     // Registry key relative to configuration root
     property Key: string read GetKey;
@@ -1346,7 +1346,7 @@ end;
 
 function TConfigurationSectionValues<T>.GetValue(Index: integer): T;
 begin
-  Result := Items[Names[Index]];
+  Result := Items[GetValueName(Index)];
   // We could have used FItems.Keys.ToArray[] but then the returned order would
   // not be the same Names[] and Items[].
 end;
