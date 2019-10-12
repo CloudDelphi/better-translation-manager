@@ -76,6 +76,7 @@ inherited FormFilters: TFormFilters
         OnNodeCheckChanged = TreeListFiltersNodeCheckChanged
         object TreeListFiltersColumnGroup: TcxTreeListColumn
           PropertiesClassName = 'TcxComboBoxProperties'
+          Properties.OnValidate = TreeListFiltersColumnGroupPropertiesValidate
           Caption.Text = 'Group'
           DataBinding.ValueType = 'String'
           Width = 140
@@ -195,6 +196,8 @@ inherited FormFilters: TFormFilters
     Top = 123
     PixelsPerInch = 96
     object EditRepositoryTextItem: TcxEditRepositoryTextItem
+      Properties.ValidateOnEnter = True
+      Properties.OnValidate = TreeListFiltersColumnGroupPropertiesValidate
     end
   end
 end

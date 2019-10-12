@@ -44,12 +44,15 @@ type
     procedure TreeListFiltersColumnGroupGetEditingProperties(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; var EditProperties: TcxCustomEditProperties);
     procedure TreeListFiltersColumnGroupGetDisplayText(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; var Value: string);
     procedure FormShow(Sender: TObject);
+    procedure TreeListFiltersColumnGroupPropertiesValidate(Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
+      var Error: Boolean);
   private
     FFilters: TFilterItemList;
     FUpdatingNode: boolean;
   protected
     procedure LoadFilters;
     procedure SaveFilters;
+    function FindGroup(const Name: string): TcxTreeListNode;
     function AddGroup(const Name: string): TcxTreeListNode;
     function LoadFilter(Filter: TFilterItem): TcxTreeListNode;
     function DoExecute: boolean;
@@ -229,13 +232,13 @@ begin
   TreeListFilters.FocusedNode := Node;
 end;
 
-function TFormFilters.AddGroup(const Name: string): TcxTreeListNode;
+function TFormFilters.FindGroup(const Name: string): TcxTreeListNode;
 var
   i: integer;
   Group: string;
 begin
   Group := Name;
-  if (Group = sFilterGroupGeneralDisplay) then
+  if (AnsiSameText(Group, sFilterGroupGeneralDisplay)) then
     Group := '';
 
   // Find group node
@@ -246,6 +249,18 @@ begin
       Result := TreeListFilters.Root.Items[i];
       break;
     end;
+end;
+
+function TFormFilters.AddGroup(const Name: string): TcxTreeListNode;
+var
+  Group: string;
+begin
+  Group := Name;
+  if (AnsiSameText(Group, sFilterGroupGeneralDisplay)) then
+    Group := '';
+
+  // Find group node
+  Result := FindGroup(Group);
 
   if (Result = nil) then
   begin
@@ -288,6 +303,29 @@ begin
     s := VarToStr(TreeListFilters.Root.Items[i].Values[TreeListFiltersColumnGroup.ItemIndex]);
     if (TcxComboBoxProperties(EditProperties).Items.IndexOf(s) = -1) then
       TcxComboBoxProperties(EditProperties).Items.Add(s);
+  end;
+end;
+
+procedure TFormFilters.TreeListFiltersColumnGroupPropertiesValidate(Sender: TObject; var DisplayValue: Variant;
+  var ErrorText: TCaption; var Error: Boolean);
+var
+  Group: string;
+  GroupNode: TcxTreeListNode;
+resourcestring
+  sFilterDuplicateGroup = 'Duplicate group names not allowed';
+begin
+  if (TreeListFilters.FocusedNode.Level <> 0) then
+    Exit;
+
+  Group := VarToStr(DisplayValue);
+
+  // Disallow duplicate group values
+  GroupNode := FindGroup(Group);
+  if (GroupNode <> nil) and (GroupNode <> TreeListFilters.FocusedNode) then
+  begin
+    Error := True;
+    ErrorText := sFilterDuplicateGroup;
+    MessageDlg(sFilterDuplicateGroup, mtWarning, [mbOK], 0);
   end;
 end;
 
@@ -365,7 +403,7 @@ end;
 procedure TFormFilters.TreeListFiltersNodeChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AColumn: TcxTreeListColumn);
 var
   i: integer;
-  GroupNode, Node: TcxTreeListNode;
+  GroupNode, Node, NextNode: TcxTreeListNode;
   Group: string;
 begin
   if (FUpdatingNode) then
@@ -383,29 +421,33 @@ begin
   if (AColumn = TreeListFiltersColumnGroup) then
   begin
     Group := VarToStr(ANode.Values[TreeListFiltersColumnGroup.ItemIndex]);
-    if (Group = sFilterGroupGeneralDisplay) then
+    if (AnsiSameText(Group, sFilterGroupGeneralDisplay)) then
       Group := '';
 
     FUpdatingNode := True;
     try
       if (ANode.Level = 0) then
       begin
-        // TODO : Check for duplicate group
+        // Note: Check for duplicate group has already been done in OnValidate handler.
         GroupNode := ANode;
-        // Modifying the group node also modifies all child nodes
-        // Note: We cannot iterate using the Items[] array as the order of items can change when we modify their values due to sorting
+
+        // Update all child nodes with the new group name value
+        // Note: We cannot iterate using the Items[] array as the order of items can
+        // change when we modify their values due to sorting.
         Node := GroupNode.getFirstChild;
         while (Node <> nil) do
         begin
+          NextNode := Node.getNextSibling;
+
           // Note: Modifying the node value recursively calls NodeChanged event
           Node.Values[TreeListFiltersColumnGroup.ItemIndex] := Group;
           TFilterItem(Node.Data).Group := Group;
 
-          Node := Node.getNextSibling;
+          Node := NextNode;
         end;
       end else
       begin
-        // Modifying a child node moves it to the specified group
+        // Modifying a child node group moves it to the specified group
         GroupNode := AddGroup(Group);
         if (ANode.Parent <> GroupNode) then
           ANode.MoveTo(GroupNode, tlamAddChild);
