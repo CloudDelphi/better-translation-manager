@@ -37,7 +37,7 @@ procedure DecomposeSkinName(const Value: string; var Name, Filename: string; var
 // -----------------------------------------------------------------------------
 // Removes hotkeys and format specifiers
 type
-  TSanitizeKind = (skAccelerator, skFormat);
+  TSanitizeKind = (skAccelerator, skFormat, skEnding);
   TSanitizeKinds = set of TSanitizeKind;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
@@ -208,7 +208,7 @@ end;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
 begin
-  Result := SanitizeText(Value, [skAccelerator, skFormat], ReduceToNothing);
+  Result := SanitizeText(Value, [skAccelerator, skFormat, skEnding], ReduceToNothing);
 end;
 
 function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing: boolean): string;
@@ -262,15 +262,30 @@ begin
         if (Result[n] in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
           Delete(Result, n, 1)
         else
+        begin
           // Not a format string - undo
-          Exit(Value);
+          Result := Value;
+          break;
+        end;
       end else
+      begin
         // Not a format string - undo
-        Exit(Value);
+        Result := Value;
+        break;
+      end;
 
       // Find next format specifier
       n := PosEx('%', Result, n);
     end;
+  end;
+
+  if (skEnding in Kind) then
+  begin
+    if (Result.EndsWith(':')) then
+      SetLength(Result, Length(Result)-1)
+    else
+    if (Result.EndsWith('...')) then
+      SetLength(Result, Length(Result)-3);
   end;
 
   if (not ReduceToNothing) and (Result.Trim.IsEmpty) then

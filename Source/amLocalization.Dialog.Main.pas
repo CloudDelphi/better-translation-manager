@@ -5215,11 +5215,11 @@ begin
   ACanvas.SaveDC;
   try
 
-    ACanvas.Brush.Color := clSkyBlue;
     ACanvas.Brush.Style := bsSolid;
+    ACanvas.Brush.Color := clSkyBlue;
 
-    ACanvas.Pen.Color := clBlue;
     ACanvas.Pen.Style := psSolid;
+    ACanvas.Pen.Color := $00E39C5B;
 
     if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
     begin
@@ -5232,7 +5232,7 @@ begin
       Triangle[0].X := AViewInfo.BoundsRect.Right-1;
       Triangle[1].X := Triangle[0].X - HintCornerSize;
     end;
-    Triangle[0].Y := AViewInfo.BoundsRect.Top;
+    Triangle[0].Y := AViewInfo.BoundsRect.Top+1;
     Triangle[1].Y := Triangle[0].Y;
     Triangle[2].X := Triangle[0].X;
     Triangle[2].Y := Triangle[0].Y + HintCornerSize;
