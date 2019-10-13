@@ -923,6 +923,8 @@ end;
 
 destructor TLocalizerProject.Destroy;
 begin
+  FOnChanged := nil;
+  FOnModuleChanged := nil;
   FModules.Free;
   FTranslationLanguages.Free;
   inherited;
@@ -1237,15 +1239,12 @@ end;
 
 destructor TLocalizerModule.Destroy;
 begin
-  BeginUpdate;
-  try
-    Clear;
-    FProject.Modules.ExtractPair(Name);
-    FItems.Free;
-    Changed;
-  finally
-    EndUpdate;
-  end;
+  BeginUpdate; // No EndUpdate
+
+  Clear;
+  FProject.Modules.ExtractPair(Name);
+  FItems.Free;
+
   inherited;
 end;
 

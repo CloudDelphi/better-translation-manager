@@ -58,7 +58,7 @@ type
     TabSheetGeneral: TcxTabSheet;
     LayoutControlGeneral: TdxLayoutControl;
     LabelEditingHeader: TcxLabel;
-    CheckUseProposed: TcxCheckBox;
+    CheckBoxEditUseProposed: TcxCheckBox;
     CheckBoxAtstart: TcxCheckBox;
     cxLabel2: TcxLabel;
     ImageComboBoxSkin: TcxImageComboBox;
@@ -301,6 +301,10 @@ type
     ActionEditStatusHint: TAction;
     dxLayoutItem54: TdxLayoutItem;
     CheckBoxEditBiDiMode: TcxCheckBox;
+    dxLayoutItem55: TdxLayoutItem;
+    CheckBoxEditAutoApplyTranslations: TcxCheckBox;
+    dxLayoutItem56: TdxLayoutItem;
+    CheckBoxEditAutoApplyTranslationsSimilar: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -547,7 +551,9 @@ begin
   ** General section
   *)
   SetSkin(TranslationManagerSettings.System.Skin);
-  CheckUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
+  CheckBoxEditUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
+  CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.System.AutoApplyTranslations;
+  CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.System.AutoApplyTranslationsSimilar;
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.System.EditBiDiMode;
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
@@ -607,7 +613,9 @@ begin
   ** General section
   *)
   TranslationManagerSettings.System.Skin := GetSkin;
-  TranslationManagerSettings.System.UseProposedStatus := CheckUseProposed.Checked;
+  TranslationManagerSettings.System.UseProposedStatus := CheckBoxEditUseProposed.Checked;
+  TranslationManagerSettings.System.AutoApplyTranslations := CheckBoxEditAutoApplyTranslations.Checked;
+  TranslationManagerSettings.System.AutoApplyTranslationsSimilar := CheckBoxEditAutoApplyTranslationsSimilar.Checked;
   if (TranslationManagerSettings.System.UseProposedStatus) then
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else

@@ -364,6 +364,8 @@ type
     FBootCount: integer;
     FHideFeedback: boolean;
     FEditBiDiMode: boolean;
+    FAutoApplyTranslations: boolean;
+    FAutoApplyTranslationsSimilar: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -393,6 +395,9 @@ type
 
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
     property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
+    property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
+    property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
+
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
 
     property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;

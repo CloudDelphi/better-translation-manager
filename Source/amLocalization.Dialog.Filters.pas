@@ -402,7 +402,6 @@ end;
 
 procedure TFormFilters.TreeListFiltersNodeChanged(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AColumn: TcxTreeListColumn);
 var
-  i: integer;
   GroupNode, Node, NextNode: TcxTreeListNode;
   Group: string;
 begin

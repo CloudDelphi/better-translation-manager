@@ -45,6 +45,7 @@ const
   MSG_RESTART = WM_USER+3;
   MSG_FILE_OPEN = WM_USER+4;
   MSG_AFTER_SHOW = WM_USER+5;
+  MSG_REFRESH_MODULE_STATS = WM_USER+6;
 
 // -----------------------------------------------------------------------------
 //
@@ -408,7 +409,7 @@ type
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
-    FRefreshingModuleStats: boolean;
+    FRefreshModuleStatsQueued: boolean;
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
   private
@@ -504,6 +505,7 @@ type
     procedure MsgRestart(var Msg: TMessage); message MSG_RESTART;
     procedure MsgAfterShow(var Msg: TMessage); message MSG_AFTER_SHOW;
     procedure MsgFileOpen(var Msg: TMsgFileOpen); message MSG_FILE_OPEN;
+    procedure MsgRefreshModuleStats(var Msg: TMessage); message MSG_REFRESH_MODULE_STATS;
   private
     // Translation project event handlers
     procedure OnProjectChanged(Sender: TObject);
@@ -543,8 +545,9 @@ type
     procedure ReloadNode(Node: TcxTreeListNode);
     procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure RefreshModuleStats;
+    procedure DoRefreshModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
-    procedure TranslationAdded(Prop: TLocalizerProperty);
+    procedure TranslationAdded(AProp: TLocalizerProperty);
   protected
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
@@ -1128,6 +1131,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.MsgRefreshModuleStats(var Msg: TMessage);
+begin
+  DoRefreshModuleStats;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
   SourceLanguageID := BarEditItemSourceLanguage.EditValue;
@@ -1664,6 +1674,8 @@ begin
   Progress.Hide;
   Progress := nil;
 
+  RefreshModuleStats;
+
   TaskMessageDlg(sTranslateAutoResultTitle, Format(sTranslateAutoResult, [Counts.TranslatedCount, Counts.UpdatedCount, Counts.ElegibleCount-Counts.TranslatedCount]),
     mtInformation, [mbOK], 0);
 end;
@@ -1745,9 +1757,14 @@ begin
   end;
 end;
 
-procedure TFormMain.TranslationAdded(Prop: TLocalizerProperty);
+procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
+var
+  SourceValue, TranslatedValue: string;
+  SanitizedSourceValue, SanitizedTranslatedValue: string;
+  Count: integer;
 begin
   (*
+  ** TODO :
   ** 1. Check if translation doesn't exist in TM and
   **    a) Other identical translations of same term exist.
   **    b) Term exist in TM but with other translation.
@@ -1757,6 +1774,44 @@ begin
   **     so it can be reused for future translations."
   **
   *)
+  if (TranslationManagerSettings.System.AutoApplyTranslations) then
+  begin
+    SourceValue := AProp.Value;
+    TranslatedValue := AProp.TranslatedValue[TranslationLanguage];
+
+    if (TranslationManagerSettings.System.AutoApplyTranslationsSimilar) then
+    begin
+      SanitizedSourceValue := SanitizeText(SourceValue, False);
+      SanitizedTranslatedValue := SanitizeText(TranslatedValue, False);
+    end else
+    begin
+      SanitizedSourceValue := SourceValue;
+      SanitizedTranslatedValue := TranslatedValue;
+    end;
+
+    Count := 0;
+    SaveCursor(crAppStart);
+
+    FProject.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        if ((SourceValue = Prop.Value) or ((TranslationManagerSettings.System.AutoApplyTranslationsSimilar) and (SanitizedSourceValue = SanitizeText(Prop.Value, False)))) and
+          (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TranslationLanguage)) then
+        begin
+          if (TranslationManagerSettings.System.AutoApplyTranslationsSimilar) and (SourceValue <> Prop.Value) then
+            Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, SanitizedTranslatedValue)
+          else
+            Prop.TranslatedValue[TranslationLanguage] := TranslatedValue;
+
+          ReloadProperty(Prop);
+
+          Inc(Count);
+        end;
+        Result := True;
+      end);
+  end;
+  if (Count > 0) then
+    QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
@@ -2462,6 +2517,8 @@ begin
   Progress.Progress(psEnd, 1, 1);
   Progress.Hide;
   Progress := nil;
+
+  RefreshModuleStats;
 
   TaskMessageDlg(sFiltersResultTitle, Format(sFiltersResult, [ModuleCount*1.0, PropCount*1.0]), mtInformation, [mbOK], 0);
 end;
@@ -5760,25 +5817,31 @@ begin
 end;
 
 procedure TFormMain.RefreshModuleStats;
+begin
+  // Prevent recursion - GetTranslatedCount will call RefreshModuleStats
+  if (FRefreshModuleStatsQueued) then
+    Exit;
+
+  FRefreshModuleStatsQueued := True;
+  PostMessage(Handle, MSG_REFRESH_MODULE_STATS, 0, 0);
+end;
+
+procedure TFormMain.DoRefreshModuleStats;
 var
+  i: integer;
+  Module: TLocalizerModule;
   TranslatedCount: integer;
   TranslatableCount: integer;
   PendingCount: integer;
 begin
-  // Prevent recursion - GetTranslatedCount will call RefreshModuleStats
-  if (FRefreshingModuleStats) then
-    Exit;
-
-  FRefreshingModuleStats := True;
   try
-    if (FLocalizerDataSource.Module <> nil) then
+    TranslatedCount := 0;
+    TranslatableCount := 0;
+    for i := 0 to TreeListModules.SelectionCount-1 do
     begin
-      TranslatedCount := GetTranslatedCount(FLocalizerDataSource.Module);
-      TranslatableCount := FLocalizerDataSource.Module.StatusCount[ItemStatusTranslate];
-    end else
-    begin
-      TranslatedCount := 0;
-      TranslatableCount := 0;
+      Module := TLocalizerModule(TreeListModules.Selections[i].Data);
+      Inc(TranslatedCount, GetTranslatedCount(Module));
+      Inc(TranslatableCount, Module.StatusCount[ItemStatusTranslate]);
     end;
     PendingCount := TranslatableCount - TranslatedCount;
 
@@ -5789,7 +5852,7 @@ begin
     else
       LabelCountTranslatedPercent.Caption := '';
   finally
-    FRefreshingModuleStats := False;
+    FRefreshModuleStatsQueued := False;
   end;
 end;
 
