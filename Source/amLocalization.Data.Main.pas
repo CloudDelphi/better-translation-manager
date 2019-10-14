@@ -101,20 +101,25 @@ begin
   FFilterTargetLanguages := True;
 
   ClientDataSetLanguages.CreateDataSet;
-  for i := 0 to TLocaleItems.Count-1 do
-  begin
-    ClientDataSetLanguages.Append;
-    try
-      ClientDataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
-      ClientDataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
-      ClientDataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
-      ClientDataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
+  ClientDataSetLanguages.DisableControls;
+  try
+    for i := 0 to TLocaleItems.Count-1 do
+    begin
+      ClientDataSetLanguages.Append;
+      try
+        ClientDataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
+        ClientDataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
+        ClientDataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
+        ClientDataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
 
-      ClientDataSetLanguages.Post;
-    except
-      ClientDataSetLanguages.Cancel;
-      raise;
+        ClientDataSetLanguages.Post;
+      except
+        ClientDataSetLanguages.Cancel;
+        raise;
+      end;
     end;
+  finally
+    ClientDataSetLanguages.EnableControls;
   end;
 end;
 
