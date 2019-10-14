@@ -55,7 +55,7 @@ uses
   amLocale,
   amVersionInfo,
   amLocalization.Utils,
-  amLocalization.Translator.TM;
+  amLocalization.Provider.TM;
 
 // -----------------------------------------------------------------------------
 //

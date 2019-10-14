@@ -16,7 +16,7 @@ uses
   DB,
   amProgress,
   amLocalization.Model,
-  amLocalization.Translator.TM;
+  amLocalization.Provider.TM;
 
 // -----------------------------------------------------------------------------
 //

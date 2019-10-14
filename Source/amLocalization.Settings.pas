@@ -453,7 +453,7 @@ uses
   Types,
   cxPropertiesStore,
   amVersionInfo,
-  amLocalization.Translator.TM;
+  amLocalization.Provider.TM;
 
 //------------------------------------------------------------------------------
 //

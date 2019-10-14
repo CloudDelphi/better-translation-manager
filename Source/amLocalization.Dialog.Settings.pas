@@ -451,7 +451,7 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Data.Main,
-  amLocalization.Translator.Microsoft.Version3;
+  amLocalization.Provider.Microsoft.Version3;
 
 const
   FolderOrder: array[Ord(Low(TTranslationManagerFolder))..Ord(High(TTranslationManagerFolder))] of TTranslationManagerFolder =

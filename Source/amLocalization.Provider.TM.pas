@@ -1,4 +1,4 @@
-﻿unit amLocalization.Translator.TM;
+﻿unit amLocalization.Provider.TM;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -23,7 +23,7 @@ uses
   amLocale,
   amProgress,
   amLocalization.Model,
-  amLocalization.Translator;
+  amLocalization.Provider;
 
 
 type

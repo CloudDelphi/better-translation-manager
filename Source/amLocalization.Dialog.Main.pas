@@ -33,9 +33,9 @@ uses
   amLocale,
   amProgress,
   amLocalization.Model,
-  amLocalization.Translator,
+  amLocalization.Provider,
   amLocalization.Dialog.Search,
-  amLocalization.Translator.TM;
+  amLocalization.Provider.TM;
 
 
 const

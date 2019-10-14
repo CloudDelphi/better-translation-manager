@@ -1,4 +1,4 @@
-﻿unit amLocalization.Translator.Microsoft.Terminology;
+﻿unit amLocalization.Provider.Microsoft.Terminology;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -15,8 +15,8 @@ uses
 
   amLocale,
   amLocalization.Model,
-  amLocalization.Translator,
-  amLocalization.Translator.Microsoft.Terminology.SOAP;
+  amLocalization.Provider,
+  amLocalization.Provider.Microsoft.Terminology.SOAP;
 
 // -----------------------------------------------------------------------------
 //

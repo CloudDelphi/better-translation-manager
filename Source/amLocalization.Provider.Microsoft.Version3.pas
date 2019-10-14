@@ -1,4 +1,4 @@
-﻿unit amLocalization.Translator.Microsoft.Version3;
+﻿unit amLocalization.Provider.Microsoft.Version3;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -16,7 +16,7 @@ uses
 
   amLocale,
   amLocalization.Model,
-  amLocalization.Translator;
+  amLocalization.Provider;
 
 type
   ITranslationProviderMicrosoftV3 = interface

@@ -13,7 +13,7 @@ interface
 uses
   Classes,
   amProgress,
-  amLocalization.Translator.TM,
+  amLocalization.Provider.TM,
   amLocalization.TranslationMemory.FileFormats;
 
 // -----------------------------------------------------------------------------

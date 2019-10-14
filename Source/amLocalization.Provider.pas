@@ -1,4 +1,4 @@
-﻿unit amLocalization.Translator;
+﻿unit amLocalization.Provider;
 
 (*
  * Copyright © 2019 Anders Melander

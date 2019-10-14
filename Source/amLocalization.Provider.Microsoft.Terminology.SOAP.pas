@@ -13,7 +13,7 @@
 // (25-09-2019 16:48:52 - - $Rev: 90173 $)
 // ************************************************************************ //
 
-unit amLocalization.Translator.Microsoft.Terminology.SOAP;
+unit amLocalization.Provider.Microsoft.Terminology.SOAP;
 
 interface
 

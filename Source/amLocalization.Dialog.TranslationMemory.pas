@@ -26,7 +26,7 @@ uses
   dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu,
 
   amLocalization.Dialog,
-  amLocalization.Translator.TM;
+  amLocalization.Provider.TM;
 
 type
   TFormTranslationMemory = class(TFormDialog)
