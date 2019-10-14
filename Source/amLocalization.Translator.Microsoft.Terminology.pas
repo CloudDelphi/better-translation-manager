@@ -32,7 +32,7 @@ type
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
-    function GetServiceName: string;
+    function GetProviderName: string;
   public
   end;
 
@@ -67,7 +67,7 @@ begin
   FTerminology := nil;
 end;
 
-function TTranslationProviderMicrosoftTerminology.GetServiceName: string;
+function TTranslationProviderMicrosoftTerminology.GetProviderName: string;
 begin
   Result := sTranslatorNameMSTerminology;
 end;

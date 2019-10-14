@@ -9,12 +9,12 @@ object TranslationProviderMicrosoftV3: TTranslationProviderMicrosoftV3
     Params = <
       item
         Kind = pkURLSEGMENT
-        name = 'from'
+        Name = 'from'
         Value = 'en'
       end
       item
         Kind = pkURLSEGMENT
-        name = 'to'
+        Name = 'to'
         Value = 'da'
       end>
     Resource = 'translate'
@@ -36,9 +36,8 @@ object TranslationProviderMicrosoftV3: TTranslationProviderMicrosoftV3
     Params = <
       item
         Kind = pkHTTPHEADER
-        name = 'Ocp-Apim-Subscription-Key'
+        Name = 'Ocp-Apim-Subscription-Key'
       end>
-    HandleRedirects = True
     RaiseExceptionOn500 = False
     Left = 72
     Top = 28

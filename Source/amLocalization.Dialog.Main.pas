@@ -1543,7 +1543,7 @@ begin
       end, False);
   end;
 
-  TaskDialogTranslate.Title := Format(sTranslateAutoPromptTitle, [TranslationProvider.ServiceName]);
+  TaskDialogTranslate.Title := Format(sTranslateAutoPromptTitle, [TranslationProvider.ProviderName]);
 
   if (Counts.TranslatedCount > 0) then
     TaskDialogTranslate.VerificationText := sTranslateAutoPromptCheck
@@ -1604,7 +1604,7 @@ begin
       Counts.Count := 0;
 
       SaveCursor(crHourGlass);
-      Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationProvider.ServiceName]));
+      Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationProvider.ProviderName]));
       Progress.EnableAbort := True;
 
       FProject.BeginUpdate;

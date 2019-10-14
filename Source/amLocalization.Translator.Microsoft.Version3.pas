@@ -12,7 +12,7 @@ interface
 
 uses
   System.SysUtils, System.Classes,
-  IPPeerClient, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope,
+  IPPeerClient, REST.Client, REST.Types, Data.Bind.Components, Data.Bind.ObjectScope,
 
   amLocale,
   amLocalization.Model,
@@ -48,7 +48,7 @@ type
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
-    function GetServiceName: string;
+    function GetProviderName: string;
 
     // ITranslationProviderMicrosoftV3
     function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
@@ -64,7 +64,6 @@ implementation
 uses
   SyncObjs,
   System.json,
-  Rest.Types,
   System.json.Types,
   System.json.Writers,
   Dialogs,
@@ -125,7 +124,7 @@ begin
 //
 end;
 
-function TTranslationProviderMicrosoftV3.GetServiceName: string;
+function TTranslationProviderMicrosoftV3.GetProviderName: string;
 begin
   Result := sTranslatorNameMS;
 end;

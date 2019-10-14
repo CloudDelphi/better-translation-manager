@@ -122,7 +122,7 @@ type
     function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
-    function GetServiceName: string;
+    function GetProviderName: string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -490,7 +490,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.GetServiceName: string;
+function TDataModuleTranslationMemory.GetProviderName: string;
 begin
   Result := sTranslatorNameTM;
 end;

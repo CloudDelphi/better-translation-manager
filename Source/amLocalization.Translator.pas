@@ -28,8 +28,8 @@ type
     function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
     procedure EndLookup;
 
-    function GetServiceName: string;
-    property ServiceName: string read GetServiceName;
+    function GetProviderName: string;
+    property ProviderName: string read GetProviderName;
   end;
 
 
