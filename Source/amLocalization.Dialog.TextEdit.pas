@@ -100,7 +100,7 @@ begin
   PanelSource.Visible := ShowSourceValue;
   SplitterEditors.Visible := ShowSourceValue;
 
-  if (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.System.EditBiDiMode) then
+  if (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     if (FTargetRightToLeft) then
       EditText.BiDiMode := bdRightToLeft

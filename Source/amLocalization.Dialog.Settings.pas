@@ -305,6 +305,17 @@ type
     CheckBoxEditAutoApplyTranslations: TcxCheckBox;
     dxLayoutItem56: TdxLayoutItem;
     CheckBoxEditAutoApplyTranslationsSimilar: TcxCheckBox;
+    dxLayoutItem57: TdxLayoutItem;
+    cxCheckBox1: TcxCheckBox;
+    dxLayoutItem58: TdxLayoutItem;
+    cxSpinEdit1: TcxSpinEdit;
+    dxLayoutItem59: TdxLayoutItem;
+    cxSpinEdit2: TcxSpinEdit;
+    dxLayoutLabeledItem1: TdxLayoutLabeledItem;
+    dxLayoutLabeledItem2: TdxLayoutLabeledItem;
+    dxLayoutGroup20: TdxLayoutGroup;
+    dxLayoutGroup21: TdxLayoutGroup;
+    dxLayoutGroup22: TdxLayoutGroup;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -551,10 +562,10 @@ begin
   ** General section
   *)
   SetSkin(TranslationManagerSettings.System.Skin);
-  CheckBoxEditUseProposed.Checked := TranslationManagerSettings.System.UseProposedStatus;
-  CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.System.AutoApplyTranslations;
-  CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.System.AutoApplyTranslationsSimilar;
-  CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.System.EditBiDiMode;
+  CheckBoxEditUseProposed.Checked := TranslationManagerSettings.Editor.UseProposedStatus;
+  CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.Editor.AutoApplyTranslations;
+  CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+  CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
@@ -613,14 +624,14 @@ begin
   ** General section
   *)
   TranslationManagerSettings.System.Skin := GetSkin;
-  TranslationManagerSettings.System.UseProposedStatus := CheckBoxEditUseProposed.Checked;
-  TranslationManagerSettings.System.AutoApplyTranslations := CheckBoxEditAutoApplyTranslations.Checked;
-  TranslationManagerSettings.System.AutoApplyTranslationsSimilar := CheckBoxEditAutoApplyTranslationsSimilar.Checked;
-  if (TranslationManagerSettings.System.UseProposedStatus) then
+  TranslationManagerSettings.Editor.UseProposedStatus := CheckBoxEditUseProposed.Checked;
+  TranslationManagerSettings.Editor.AutoApplyTranslations := CheckBoxEditAutoApplyTranslations.Checked;
+  TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar := CheckBoxEditAutoApplyTranslationsSimilar.Checked;
+  if (TranslationManagerSettings.Editor.UseProposedStatus) then
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
-  TranslationManagerSettings.System.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
+  TranslationManagerSettings.Editor.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
   TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
   TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);

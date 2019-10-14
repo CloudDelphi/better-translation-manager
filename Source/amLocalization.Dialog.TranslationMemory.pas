@@ -436,7 +436,7 @@ begin
       // Set RTL
       Flags := Flags or CXTO_RTLREADING;
       // Swap left/right alignment
-      if (TranslationManagerSettings.System.EditBiDiMode) then
+      if (TranslationManagerSettings.Editor.EditBiDiMode) then
       begin
         if ((Flags and $0000000F) = CXTO_LEFT) then
           Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
@@ -457,7 +457,7 @@ procedure TFormTranslationMemory.GridTMDBTableViewInitEdit(Sender: TcxCustomGrid
 begin
   // Editor is reused between columns so we need to reset this for every column
   // in case one of the columns has changed it
-  if (TranslationManagerSettings.System.EditBiDiMode) then
+  if (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     if (FRightToLeft[AItem.Index]) then
       AEdit.BiDiMode := bdRightToLeft

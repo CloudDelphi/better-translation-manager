@@ -1030,7 +1030,7 @@ begin
 
   TableTranslationMemory.DisableControls;
   try
-    // If either the source- or target language doesn't exist in the dataset then we
+    // If either the source- or target languages doesn't exist in the dataset then we
     // will need to add them.
     // We save a copy of the dataset, close the original dataset, add the field(s) and
     // the restore the dataset from the copy.

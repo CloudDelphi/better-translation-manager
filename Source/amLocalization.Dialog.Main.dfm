@@ -403,7 +403,6 @@ object FormMain: TFormMain
     OptionsView.ShowRoot = False
     OptionsView.TreeLineStyle = tllsNone
     PopupMenu = PopupMenuTree
-    StateImages = DataModuleMain.ImageListState
     Styles.Background = DataModuleMain.StyleDefault
     Styles.Inactive = DataModuleMain.StyleInactive
     Styles.Selection = DataModuleMain.StyleSelected
@@ -610,6 +609,7 @@ object FormMain: TFormMain
           Hint = 'Open in text editor'
           Kind = bkEllipsis
         end>
+      Properties.ValidationOptions = [evoShowErrorIcon]
       Properties.OnButtonClick = TreeListColumnTargetPropertiesButtonClick
       BestFitMaxWidth = 400
       Caption.AlignVert = vaTop
@@ -622,6 +622,7 @@ object FormMain: TFormMain
       Position.BandIndex = 0
       Summary.FooterSummaryItems = <>
       Summary.GroupFooterSummaryItems = <>
+      OnValidateDrawValue = TreeListColumnTargetValidateDrawValue
     end
   end
   object BarManager: TdxBarManager
@@ -1497,6 +1498,7 @@ object FormMain: TFormMain
     end
   end
   object SkinController: TdxSkinController
+    NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
     Left = 500

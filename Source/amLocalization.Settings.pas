@@ -310,6 +310,10 @@ type
     FStyle: TTranslationManagerStyleSettings;
     FDisplayStatusGlyphs: boolean;
     FStatusGlyphHints: boolean;
+    FUseProposedStatus: boolean;
+    FEditBiDiMode: boolean;
+    FAutoApplyTranslations: boolean;
+    FAutoApplyTranslationsSimilar: boolean;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
@@ -317,6 +321,11 @@ type
     property Style: TTranslationManagerStyleSettings read FStyle;
     property DisplayStatusGlyphs: boolean read FDisplayStatusGlyphs write FDisplayStatusGlyphs default True;
     property StatusGlyphHints: boolean read FStatusGlyphHints write FStatusGlyphHints default False;
+
+    property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
+    property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
+    property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
+    property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
   end;
 
   TTranslationManagerFilterGroupSettings = class(TConfigurationStringList)
@@ -348,24 +357,21 @@ type
 
   TTranslationManagerSystemSettings = class(TConfigurationSection)
   private
+    FBooting: boolean;
+    FBootCount: integer;
+    FFirstRun: boolean;
+    FFirstRunThisVersion: boolean;
+    FLastBootCompleted: boolean;
+  private
+    FHideFeedback: boolean;
+  private
     FSingleInstance: boolean;
     FSkin: string;
-    FUseProposedStatus: boolean;
     FIncludeVersionInfo: boolean;
     FDefaultTargetLanguage: LCID;
     FDefaultSourceLanguage: LCID;
     FApplicationLanguage: LCID;
     FSafeMode: boolean;
-    FFirstRun: boolean;
-    FFirstRunThisVersion: boolean;
-    FLastBootCompleted: boolean;
-  private
-    FBooting: boolean;
-    FBootCount: integer;
-    FHideFeedback: boolean;
-    FEditBiDiMode: boolean;
-    FAutoApplyTranslations: boolean;
-    FAutoApplyTranslationsSimilar: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -392,11 +398,6 @@ type
 
     property Skin: string read FSkin write FSkin;
     property HideFeedback: boolean read FHideFeedback write FHideFeedback;
-
-    property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
-    property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
-    property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
-    property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
 
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
 
@@ -634,7 +635,9 @@ end;
 
 function TTranslationManagerFolderSettings.GetFolder(Index: TTranslationManagerFolder): string;
 begin
-  Result := IncludeTrailingPathDelimiter(FFolders[Index]);
+  Result := FFolders[Index];
+  if (Result <>'') then
+    Result := IncludeTrailingPathDelimiter(Result);
 end;
 
 function TTranslationManagerFolderSettings.GetFolderName(Index: TTranslationManagerFolder): string;

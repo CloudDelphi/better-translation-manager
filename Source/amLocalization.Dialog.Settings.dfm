@@ -1,4 +1,5 @@
 inherited FormSettings: TFormSettings
+  BorderIcons = [biSystemMenu]
   BorderStyle = bsSizeable
   Caption = 'Settings'
   ClientHeight = 597
@@ -7,7 +8,7 @@ inherited FormSettings: TFormSettings
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   ExplicitWidth = 611
-  ExplicitHeight = 635
+  ExplicitHeight = 636
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
@@ -569,7 +570,7 @@ inherited FormSettings: TFormSettings
               413
               414)
             object ImageComboBoxSkin: TcxImageComboBox
-              Left = 45
+              Left = 53
               Top = 23
               Properties.DefaultDescription = '(none)'
               Properties.Images = ImageListSkin
@@ -815,7 +816,7 @@ inherited FormSettings: TFormSettings
             end
             object LayoutControlGeneralItem15: TdxLayoutItem
               Parent = LayoutGroup3
-              CaptionOptions.Text = 'Style:'
+              CaptionOptions.Text = 'Theme:'
               Control = ImageComboBoxSkin
               ControlOptions.AlignHorz = ahLeft
               ControlOptions.OriginalHeight = 21
@@ -893,7 +894,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 164
+              Top = 243
               AutoSize = False
               Caption = 'Microsoft Translation Service'
               Style.HotTrack = False
@@ -905,8 +906,8 @@ inherited FormSettings: TFormSettings
               Width = 413
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
-              Left = 76
-              Top = 187
+              Left = 152
+              Top = 266
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -918,8 +919,8 @@ inherited FormSettings: TFormSettings
               Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
               Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
               Style.HotTrack = False
-              TabOrder = 7
-              Width = 337
+              TabOrder = 10
+              Width = 261
             end
             object CheckBoxTMBackgroundQuery: TcxCheckBox
               Left = 12
@@ -950,8 +951,8 @@ inherited FormSettings: TFormSettings
               Transparent = True
             end
             object SpinEditTranslatorTerminologyMaxResult: TcxSpinEdit
-              Left = 76
-              Top = 129
+              Left = 152
+              Top = 208
               Hint = 'Maximum number of translations to return per term'
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 20.000000000000000000
@@ -959,13 +960,13 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 5
+              TabOrder = 8
               Value = 1
-              Width = 77
+              Width = 61
             end
             object cxLabel1: TcxLabel
               Left = 0
-              Top = 106
+              Top = 185
               AutoSize = False
               Caption = 'Microsoft Terminology Service'
               Style.HotTrack = False
@@ -976,12 +977,51 @@ inherited FormSettings: TFormSettings
               Height = 17
               Width = 413
             end
+            object cxCheckBox1: TcxCheckBox
+              Left = 12
+              Top = 98
+              Caption = 'Automatically add new translations:'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 4
+              Transparent = True
+            end
+            object cxSpinEdit1: TcxSpinEdit
+              Left = 152
+              Top = 123
+              Hint = 'Maximum number of translations to return per term'
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 20.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 5
+              Value = 2
+              Width = 61
+            end
+            object cxSpinEdit2: TcxSpinEdit
+              Left = 152
+              Top = 150
+              Hint = 'Maximum number of translations to return per term'
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 20.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 6
+              Value = 3
+              Width = 61
+            end
             object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
               AlignVert = avTop
               ButtonOptions.Buttons = <>
               Hidden = True
-              ItemIndex = 1
               ShowBorder = False
               Index = -1
             end
@@ -1017,6 +1057,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
+              ItemIndex = 3
               ShowBorder = False
               Index = 1
             end
@@ -1079,7 +1120,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Text = 'Max results:'
               Control = SpinEditTranslatorTerminologyMaxResult
               ControlOptions.OriginalHeight = 21
-              ControlOptions.OriginalWidth = 77
+              ControlOptions.OriginalWidth = 61
               ControlOptions.ShowBorder = False
               Index = 0
             end
@@ -1108,6 +1149,77 @@ inherited FormSettings: TFormSettings
               ButtonOptions.Buttons = <>
               ShowBorder = False
               Index = 1
+            end
+            object dxLayoutItem57: TdxLayoutItem
+              Parent = dxLayoutGroup22
+              CaptionOptions.Visible = False
+              Control = cxCheckBox1
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 94
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem58: TdxLayoutItem
+              Parent = dxLayoutGroup20
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'If they occur at least:'
+              Control = cxSpinEdit1
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 61
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutItem59: TdxLayoutItem
+              Parent = dxLayoutGroup21
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'And contains a maximum of:'
+              Control = cxSpinEdit2
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 61
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutLabeledItem1: TdxLayoutLabeledItem
+              Parent = dxLayoutGroup20
+              AlignVert = avClient
+              CaptionOptions.Text = 'times'
+              LayoutLookAndFeel = LayoutSkinLookAndFeel
+              Index = 1
+            end
+            object dxLayoutLabeledItem2: TdxLayoutLabeledItem
+              Parent = dxLayoutGroup21
+              AlignVert = avClient
+              CaptionOptions.Text = 'words'
+              LayoutLookAndFeel = LayoutSkinLookAndFeel
+              Index = 1
+            end
+            object dxLayoutGroup20: TdxLayoutGroup
+              Parent = dxLayoutGroup22
+              AlignHorz = ahLeft
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              LayoutDirection = ldHorizontal
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutGroup21: TdxLayoutGroup
+              Parent = dxLayoutGroup22
+              AlignHorz = ahLeft
+              AlignVert = avTop
+              CaptionOptions.Visible = False
+              ButtonOptions.Buttons = <>
+              LayoutDirection = ldHorizontal
+              ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutGroup22: TdxLayoutGroup
+              Parent = dxLayoutGroup2
+              CaptionOptions.Visible = False
+              Visible = False
+              ButtonOptions.Buttons = <>
+              ShowBorder = False
+              Index = 3
             end
           end
         end

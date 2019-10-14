@@ -400,6 +400,7 @@ type
     procedure ActionFiltersApplyExecute(Sender: TObject);
     procedure ActionFiltersApplyUpdate(Sender: TObject);
     procedure RibbonGalleryItemFiltersPopup(Sender: TObject);
+    procedure TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -785,7 +786,7 @@ begin
     end;
 
     r := CellRect(HitTest.HitNode, HitTest.HitColumn);
-    if (UseRightToLeftReading) or (TFormMain(Owner).TargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+    if (UseRightToLeftReading) or (TFormMain(Owner).TargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
       // Top left corner
       r.Right := r.Left + HintCornerSize
     else
@@ -1055,7 +1056,10 @@ begin
     TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
   end;
 
-  RibbonMain.TabAreaToolbar.Visible := not TranslationManagerSettings.System.HideFeedback;
+  if (TranslationManagerSettings.System.HideFeedback) then
+    BarButtonFeedback.Visible := ivInCustomizing
+  else
+    BarButtonFeedback.Visible := ivAlways;
 
   ApplyCustomSettings;
 end;
@@ -1069,7 +1073,7 @@ begin
 
   ApplyListStyles;
 
-  if (TranslationManagerSettings.System.UseProposedStatus) then
+  if (TranslationManagerSettings.Editor.UseProposedStatus) then
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
@@ -1108,7 +1112,7 @@ begin
   if (not TranslationManagerSettings.System.SafeMode) then // Spell checker setting are not complete in safe mode
     TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
 
-  TranslationManagerSettings.System.HideFeedback := not RibbonMain.TabAreaToolbar.Visible;
+  TranslationManagerSettings.System.HideFeedback := (BarButtonFeedback.Visible <> ivAlways);
 
   TranslationManagerSettings.Valid := True;
   TranslationManagerSettings.WriteConfig;
@@ -1774,12 +1778,12 @@ begin
   **     so it can be reused for future translations."
   **
   *)
-  if (TranslationManagerSettings.System.AutoApplyTranslations) then
+  if (TranslationManagerSettings.Editor.AutoApplyTranslations) then
   begin
     SourceValue := AProp.Value;
     TranslatedValue := AProp.TranslatedValue[TranslationLanguage];
 
-    if (TranslationManagerSettings.System.AutoApplyTranslationsSimilar) then
+    if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
     begin
       SanitizedSourceValue := SanitizeText(SourceValue, False);
       SanitizedTranslatedValue := SanitizeText(TranslatedValue, False);
@@ -1795,10 +1799,10 @@ begin
     FProject.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
-        if ((SourceValue = Prop.Value) or ((TranslationManagerSettings.System.AutoApplyTranslationsSimilar) and (SanitizedSourceValue = SanitizeText(Prop.Value, False)))) and
+        if ((SourceValue = Prop.Value) or ((TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (SanitizedSourceValue = SanitizeText(Prop.Value, False)))) and
           (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TranslationLanguage)) then
         begin
-          if (TranslationManagerSettings.System.AutoApplyTranslationsSimilar) and (SourceValue <> Prop.Value) then
+          if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (SourceValue <> Prop.Value) then
             Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, SanitizedTranslatedValue)
           else
             Prop.TranslatedValue[TranslationLanguage] := TranslatedValue;
@@ -2364,7 +2368,7 @@ end;
 
 procedure TFormMain.ActionFeedbackHideExecute(Sender: TObject);
 begin
-  RibbonMain.TabAreaToolbar.Visible := False;
+  BarButtonFeedback.Visible := ivInCustomizing;
 end;
 
 procedure TFormMain.ActionFeedbackNegativeExecute(Sender: TObject);
@@ -2706,7 +2710,7 @@ var
   Count: TCounts;
 resourcestring
   sProjectInitializedTitle = 'Project initialized';
-  sProjectInitialized = 'Project has been initialized. The following resources was read from the source file:'#13#13+
+  sProjectInitialized = 'Project has been initialized.'+#13#13+'The following resources was read from the source file:'#13#13+
     'Modules: %.0n'#13+
     'Items: %.0n'#13+
     'Properties: %.0n';
@@ -5197,6 +5201,52 @@ begin
   end;
 end;
 
+procedure TFormMain.TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+  Warning: TTranslationWarning;
+  s: string;
+  Bitmap: TBitmap;
+const
+  // TODO : Localization
+  sTranslationValidationWarnings: array[TTranslationWarning] of string = (
+    'Source or translation is empty and the other is not',
+    'Accelerator count mismatch',
+    'Format specifier count mismatch',
+    'Linebreak count mismatch',
+    'Leading space count mismatch',
+    'Trailing space count mismatch',
+    'Translation is terminated differently than source');
+resourcestring
+  sValidationWarning = 'Translation has validation warnings:%s';
+begin
+  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(ANode));
+  Assert(Prop <> nil);
+
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+    Exit;
+
+  if (Translation.Warnings <> []) then
+  begin
+    AData.ErrorType := eetCustom;
+    s := '';
+
+    for Warning in Translation.Warnings do
+      s := s + #13 + '- ' + sTranslationValidationWarnings[Warning];
+
+    AData.ErrorText := Format(sValidationWarning, [s]);
+
+    Bitmap := TBitmap.Create;
+    try
+      DataModuleMain.ImageListState.GetImage(NodeImageIndexStateWarning, Bitmap);
+      AData.ErrorIcon.Assign(Bitmap);
+    finally
+      Bitmap.Free;
+    end;
+  end;
+end;
+
 procedure TFormMain.TreeListItemsClick(Sender: TObject);
 var
   Msg: string;
@@ -5233,7 +5283,7 @@ begin
       // Set RTL
       Flags := Flags or CXTO_RTLREADING;
       // Swap left/right alignment
-      if (TranslationManagerSettings.System.EditBiDiMode) then
+      if (TranslationManagerSettings.Editor.EditBiDiMode) then
       begin
         if ((Flags and $0000000F) = CXTO_LEFT) then
           Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
@@ -5278,7 +5328,7 @@ begin
     ACanvas.Pen.Style := psSolid;
     ACanvas.Pen.Color := $00E39C5B;
 
-    if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+    if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     begin
       // Top left corner
       Triangle[0].X := AViewInfo.BoundsRect.Left+1;
@@ -5462,15 +5512,14 @@ begin
   end;
 end;
 
-procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode;
-  AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
+procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
 var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
   AIndex := -1;
 
-  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex, tlitStateIndex])) then
+  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
     Exit;
 
   if (not TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
@@ -5481,14 +5530,6 @@ begin
 
   if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
     Translation := nil;
-
-  if (AIndexType = tlitStateIndex) then
-  begin
-    if (Translation <> nil) and (Translation.Warnings <> []) then
-      AIndex := NodeImageIndexStateWarning;
-
-    Exit;
-  end;
 
   // Note: Image indicates effective status
 
@@ -5522,7 +5563,7 @@ end;
 
 procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
 begin
-  if (AItem = TreeListColumnTarget) and (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.System.EditBiDiMode) then
+  if (AItem = TreeListColumnTarget) and (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     // Target language is Right-to-Left but rest of UI isn't - or vice versa
     if (FTargetRightToLeft) then
@@ -5556,7 +5597,7 @@ begin
   Node := TreeListItems.HitTest.HitNode;
 
   r := TreeListItems.CellRect(Node, TreeListItems.HitTest.HitColumn);
-  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
   else
@@ -5611,7 +5652,7 @@ begin
     Exit;
 
   r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
-  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.System.EditBiDiMode) then
+  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
   else
