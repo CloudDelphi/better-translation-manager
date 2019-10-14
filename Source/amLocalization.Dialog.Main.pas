@@ -35,7 +35,7 @@ uses
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory;
 
 
 const
@@ -438,7 +438,7 @@ type
     // Translation Memory
     TTranslationMemoryPeekResult = (prNone, prQueued, prFound);
   private
-    FTranslationMemory: TDataModuleTranslationMemory;
+    FTranslationMemory: ITranslationMemory;
     FTranslationMemoryPeek: ITranslationMemoryPeek;
     procedure CreateTranslationMemoryPeeker(Force: boolean);
     procedure TranslationMemoryPeekHandler(Sender: TObject);
@@ -925,7 +925,7 @@ begin
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
   DataModuleMain := TDataModuleMain.Create(Self);
-  FTranslationMemory := TDataModuleTranslationMemory.Create(Self);
+  FTranslationMemory := TranslationMemory.PrimaryProvider;
 
   Application.OnHint := ShowHint;
   Application.OnShowHint := DoShowHint;
@@ -1747,7 +1747,7 @@ end;
 
 procedure TFormMain.CreateTranslationMemoryPeeker(Force: boolean);
 begin
-  if (not TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery) or (TranslationManagerSettings.System.SafeMode) then
+  if (not TranslationManagerSettings.Providers.TranslationMemory.BackgroundQuery) or (TranslationManagerSettings.System.SafeMode) then
   begin
     FTranslationMemoryPeek := nil;
     Exit;
@@ -2878,7 +2878,7 @@ begin
   // Release semaphore once SingleInstance handling has been set up and the boot marker has been cleared
   ReleaseRestartSemaphore;
 
-  if (not TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand) and (not TranslationManagerSettings.System.SafeMode) then
+  if (not TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand) and (not TranslationManagerSettings.System.SafeMode) then
   begin
     try
 

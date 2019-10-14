@@ -35,6 +35,7 @@ type
     class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
+  ETranslationMemoryTBX = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -55,7 +56,7 @@ uses
   amLocale,
   amVersionInfo,
   amLocalization.Utils,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory;
 
 // -----------------------------------------------------------------------------
 //
@@ -123,7 +124,7 @@ begin
   end;
 
   if (XML.DocumentElement.NodeName <> 'martif') then
-    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "martif": %s', [XML.DocumentElement.NodeName]);
+    raise ETranslationMemoryTBX.CreateFmt('XML document root node is not named "martif": %s', [XML.DocumentElement.NodeName]);
 
   HeaderNode := XML.DocumentElement.ChildNodes.FindNode('martifheader');
   if (HeaderNode <> nil) then
@@ -132,11 +133,11 @@ begin
 
   Node := XML.DocumentElement.ChildNodes.FindNode('text');
   if (Node = nil) then
-    raise ETranslationMemoryTMX.Create('Required node not found: martif\text');
+    raise ETranslationMemoryTBX.Create('Required node not found: martif\text');
 
   BodyNode := Node.ChildNodes.FindNode('body');
   if (BodyNode = nil) then
-    raise ETranslationMemoryTMX.Create('Required node not found: martif\text\body');
+    raise ETranslationMemoryTBX.Create('Required node not found: martif\text\body');
 
   SourceLanguage := '';
 
@@ -251,39 +252,39 @@ begin
   Node := XML.DocumentElement.AddChild('text');
   BodyNode := Node.AddChild('body');
 
-  if (TableTranslationMemory.Active) and (TableTranslationMemory.RecordCount > 0) then
+  if (TranslationMemoryDataSet.Active) and (TranslationMemoryDataSet.RecordCount > 0) then
   begin
     SaveCursor(crAppStart);
 
     Progress := ShowProgress(sTranslationMemorySaving);
     Progress.EnableAbort := True;
 
-    Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount);
+    Progress.Progress(psBegin, 0, TranslationMemoryDataSet.RecordCount);
 
-    TableTranslationMemory.DisableControls;
+    TranslationMemoryDataSet.DisableControls;
     try
-      TableTranslationMemory.First;
+      TranslationMemoryDataSet.First;
 
-      while (not TableTranslationMemory.EOF) and (not Progress.Aborted) do
+      while (not TranslationMemoryDataSet.EOF) and (not Progress.Aborted) do
       begin
         Progress.AdvanceProgress;
 
         TermEntryNode := BodyNode.AddChild('termEntry');
 
-        for i := 0 to TableTranslationMemory.FieldCount-1 do
+        for i := 0 to TranslationMemoryDataSet.FieldCount-1 do
         begin
-          if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
+          if (not TranslationMemoryDataSet.Fields[i].IsNull) and (not TranslationMemoryDataSet.Fields[i].AsString.IsEmpty) then
           begin
             LangSetNode := TermEntryNode.AddChild('langSet');
-            LangSetNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-            LangSetNode.AddChild('tig').AddChild('term').Text := TableTranslationMemory.Fields[i].AsString;
+            LangSetNode.Attributes['xml:lang'] := TranslationMemoryDataSet.Fields[i].FieldName;
+            LangSetNode.AddChild('tig').AddChild('term').Text := TranslationMemoryDataSet.Fields[i].AsString;
           end;
         end;
 
-        TableTranslationMemory.Next;
+        TranslationMemoryDataSet.Next;
       end;
     finally
-      TableTranslationMemory.EnableControls;
+      TranslationMemoryDataSet.EnableControls;
     end;
 
     if (Progress.Aborted) then

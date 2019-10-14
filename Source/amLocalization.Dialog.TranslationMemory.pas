@@ -26,7 +26,7 @@ uses
   dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu,
 
   amLocalization.Dialog,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory;
 
 type
   TFormTranslationMemory = class(TFormDialog)
@@ -49,6 +49,7 @@ type
     TaskDialogOpen: TTaskDialog;
     ActionExport: TAction;
     ActionImport: TAction;
+    DataSourceTranslationMemory: TDataSource;
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
@@ -59,7 +60,7 @@ type
     procedure ActionImportExecute(Sender: TObject);
     procedure GridTMDBTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
   private
-    FDataModuleTranslationMemory: TDataModuleTranslationMemory;
+    FTranslationMemory: ITranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
     FRightToLeft: array of boolean;
   protected
@@ -67,7 +68,7 @@ type
     procedure SaveLayout;
     procedure RestoreLayout;
   public
-    function Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
+    function Execute(ATranslationMemory: ITranslationMemory): boolean;
   end;
 
 resourcestring
@@ -96,6 +97,7 @@ uses
   amLocalization.Settings,
   amLocalization.Data.Main,
   amLocalization.Dialog.TranslationMemory.SelectFileFormat,
+  amLocalization.TranslationMemory.Data,
   amLocalization.TranslationMemory.FileFormats,
   amLocalization.TranslationMemory.FileFormats.TMX;
 
@@ -111,13 +113,13 @@ begin
   TranslationManagerSettings.Layout.TranslationMemory.Valid := True;
 end;
 
-function TFormTranslationMemory.Execute(ADataModuleTranslationMemory: TDataModuleTranslationMemory): boolean;
+function TFormTranslationMemory.Execute(ATranslationMemory: ITranslationMemory): boolean;
 begin
-  FDataModuleTranslationMemory := ADataModuleTranslationMemory;
+  FTranslationMemory := ATranslationMemory;
 
   try
 
-    if (not FDataModuleTranslationMemory.CheckLoaded(True)) then
+    if (not FTranslationMemory.CheckLoaded(True)) then
       Exit(false);
 
   except
@@ -131,7 +133,7 @@ begin
   GridTMDBTableView.BeginUpdate;
   try
 
-    GridTMDBTableView.DataController.DataSource := FDataModuleTranslationMemory.DataSourceTranslationMemory;
+    DataSourceTranslationMemory.DataSet := FTranslationMemory.TranslationMemoryDataSet;
     CreateColumns;
 
   finally
@@ -151,7 +153,7 @@ procedure TFormTranslationMemory.ActionDeleteLanguageExecute(Sender: TObject);
 var
   LocaleItem: TLocaleItem;
   Field: TField;
-  Clone: TFDMemTable;
+  Clone: IInterface;
 resourcestring
   sDeleteLanguage = 'Are you sure you want to delete the "%s" language from the Translation Memory?';
 begin
@@ -168,26 +170,13 @@ begin
     FPoupMenuColumn.Free;
 
     // Then remove the field
-    if (FDataModuleTranslationMemory.TableTranslationMemory.Fields.Count > 1) then
+    if (FTranslationMemory.TranslationMemoryDataSet.Fields.Count > 1) then
     begin
-      FDataModuleTranslationMemory.TableTranslationMemory.DisableControls;
+      Clone := FTranslationMemory.SaveTableTranslationMemoryClone;
       try
-        Clone := TFDMemTable.Create(nil);
-        try
-          Clone.CopyDataSet(FDataModuleTranslationMemory.TableTranslationMemory, [coStructure, coRestart, coAppend]);
-
-          FDataModuleTranslationMemory.TableTranslationMemory.Close;
-
-          Field.Free;
-
-          FDataModuleTranslationMemory.TableTranslationMemory.Open;
-
-          FDataModuleTranslationMemory.TableTranslationMemory.CopyDataSet(Clone, [coAppend]);
-        finally
-          Clone.Free;
-        end;
+        Field.Free;
       finally
-        FDataModuleTranslationMemory.TableTranslationMemory.EnableControls;
+        Clone := nil;
       end;
     end else
       Field.Free;
@@ -218,7 +207,7 @@ begin
   TranslationMemoryFileFormatClass := TTranslationMemoryFileFormat.FindFileFormat(SaveDialogTMX.FileName, ffcSave, TTranslationMemoryFileFormatTMX);
   Assert(TranslationMemoryFileFormatClass <> nil);
 
-  TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FDataModuleTranslationMemory);
+  TranslationMemoryFileFormat := TranslationMemoryFileFormatClass.Create(FTranslationMemory);
   try
 
     TranslationMemoryFileFormat.SaveToFile(SaveDialogTMX.FileName);
@@ -246,7 +235,7 @@ resourcestring
   sLoadTranslationMemoryMerge = 'Do you want to merge the selected file(s) into your existing Translation Memory?'+#13#13+
       'If you answer No then your current Translation Memory will be emptied and replaced with the translations in the specified file.';
 begin
-  if (not FDataModuleTranslationMemory.CheckSave) then
+  if (not FTranslationMemory.CheckSave) then
     Exit;
 
   if (OpenDialogTMX.InitialDir = '') then
@@ -258,7 +247,7 @@ begin
   // Remember folder for next time
   OpenDialogTMX.InitialDir := TPath.GetDirectoryName(OpenDialogTMX.FileName);
 
-  if (FDataModuleTranslationMemory.TableTranslationMemory.Active) and (FDataModuleTranslationMemory.TableTranslationMemory.RecordCount > 0) then
+  if (FTranslationMemory.TranslationMemoryDataSet.Active) and (FTranslationMemory.TranslationMemoryDataSet.RecordCount > 0) then
   begin
     Res := TaskMessageDlg(sLoadTranslationMemoryMergeTitle, sLoadTranslationMemoryMerge, mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
 
@@ -311,7 +300,7 @@ begin
 
     Assert(FileFormatClass <> nil);
 
-    FileFormat := FileFormatClass.Create(FDataModuleTranslationMemory);
+    FileFormat := FileFormatClass.Create(FTranslationMemory);
     try
       for Filename in OpenDialogTMX.Files do
       begin
@@ -338,7 +327,7 @@ begin
     end;
 
     if (not Merge) then
-      FDataModuleTranslationMemory.SetLoaded;
+      FTranslationMemory.SetLoaded;
 
     if (Progress <> nil) then
       Progress.Progress(psEnd, 1, 1);

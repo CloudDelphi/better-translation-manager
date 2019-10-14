@@ -6,7 +6,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
   ClientWidth = 702
   OnCreate = FormCreate
   ExplicitWidth = 718
-  ExplicitHeight = 474
+  ExplicitHeight = 475
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
@@ -123,6 +123,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
           Navigator.Buttons.CustomButtons = <>
           OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
           OnInitEdit = GridTMDBTableViewInitEdit
+          DataController.DataSource = DataSourceTranslationMemory
           DataController.Summary.DefaultGroupSummaryItems = <>
           DataController.Summary.FooterSummaryItems = <>
           DataController.Summary.SummaryGroups = <>
@@ -236,5 +237,9 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Title = 'Replace or Merge Translation Memory'
     Left = 128
     Top = 135
+  end
+  object DataSourceTranslationMemory: TDataSource
+    Left = 76
+    Top = 63
   end
 end

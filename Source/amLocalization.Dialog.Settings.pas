@@ -581,14 +581,14 @@ begin
   (*
   ** Translators section
   *)
-  CheckBoxTMLoadOnDemand.Checked := TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand;
-  CheckBoxTMPromptToSave.Checked := TranslationManagerSettings.Translators.TranslationMemory.PromptToSave;
-  CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery;
+  CheckBoxTMLoadOnDemand.Checked := TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand;
+  CheckBoxTMPromptToSave.Checked := TranslationManagerSettings.Providers.TranslationMemory.PromptToSave;
+  CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Providers.TranslationMemory.BackgroundQuery;
 
-  SpinEditTranslatorTerminologyMaxResult.Value := TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult;
+  SpinEditTranslatorTerminologyMaxResult.Value := TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult;
 
-  EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
-  if (TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated) then
+  EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey;
+  if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKeyValidated) then
     EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex := 1;
 
   (*
@@ -647,14 +647,14 @@ begin
   (*
   ** Translators section
   *)
-  TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
-  TranslationManagerSettings.Translators.TranslationMemory.PromptToSave := CheckBoxTMPromptToSave.Checked;
-  TranslationManagerSettings.Translators.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
+  TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
+  TranslationManagerSettings.Providers.TranslationMemory.PromptToSave := CheckBoxTMPromptToSave.Checked;
+  TranslationManagerSettings.Providers.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
 
-  TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult := SpinEditTranslatorTerminologyMaxResult.Value;
+  TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult := SpinEditTranslatorTerminologyMaxResult.Value;
 
-  TranslationManagerSettings.Translators.MicrosoftV3.APIKey := EditTranslatorMSAPIKey.Text;
-  TranslationManagerSettings.Translators.MicrosoftV3.APIKeyValidated := (EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex = 1);
+  TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey := EditTranslatorMSAPIKey.Text;
+  TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKeyValidated := (EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex = 1);
 
   (*
   ** Files section

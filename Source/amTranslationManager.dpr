@@ -36,7 +36,7 @@ uses
   amLocalization.Provider.Microsoft.Version3 in 'amLocalization.Provider.Microsoft.Version3.pas' {TranslationProviderMicrosoftV3: TDataModule},
   amLocalization.Dialog.Search in 'amLocalization.Dialog.Search.pas' {FormSearch},
   amLocalization.Dialog.TranslationMemory in 'amLocalization.Dialog.TranslationMemory.pas' {FormTranslationMemory},
-  amLocalization.Provider.TM in 'amLocalization.Provider.TM.pas' {DataModuleTranslationMemory: TDataModule},
+  amLocalization.TranslationMemory.Data in 'amLocalization.TranslationMemory.Data.pas' {DataModuleTranslationMemory: TDataModule},
   amLocalization.Utils in 'amLocalization.Utils.pas',
   amLocalization.Dialog.TranslationMemory.SelectDuplicate in 'amLocalization.Dialog.TranslationMemory.SelectDuplicate.pas' {FormSelectDuplicate},
   amLocalization.Provider in 'amLocalization.Provider.pas',
@@ -57,7 +57,9 @@ uses
   amLocalization.TranslationMemory.FileFormats.GenericCSV in 'amLocalization.TranslationMemory.FileFormats.GenericCSV.pas',
   amLocalization.Dialog.TranslationMemory.SelectFileFormat in 'amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas' {FormSelectFileFormat},
   amLocalization.Dialog.Filters in 'amLocalization.Dialog.Filters.pas' {FormFilters},
-  amLocalization.Filters in 'amLocalization.Filters.pas';
+  amLocalization.Filters in 'amLocalization.Filters.pas',
+  amLocalization.Provider.TranslationMemory in 'amLocalization.Provider.TranslationMemory.pas',
+  amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas';
 
 {$R *.res}
 

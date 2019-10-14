@@ -1,4 +1,4 @@
-﻿unit amLocalization.Provider.TM;
+﻿unit amLocalization.TranslationMemory.Data;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -23,57 +23,9 @@ uses
   amLocale,
   amProgress,
   amLocalization.Model,
-  amLocalization.Provider;
+  amLocalization.Provider,
+  amLocalization.TranslationMemory;
 
-
-type
-  TTranslationMemoryMergeStats = record
-    Added: integer;             // New row added with value
-    Merged: integer;            // Value merged into existing row
-    Skipped: integer;           // Value skipped (e.g. empty value)
-    Duplicate: integer;         // Exact duplicate found
-  end;
-
-  TTranslationMemoryDuplicateAction = (
-    tmDupActionPrompt,          // Prompt to select action
-    tmDupActionAbort,           // Abort import
-    tmDupActionAcceptAll,       // Accept all duplicates
-    tmDupActionRejectAll        // Reject all duplicates
-  );
-
-type
-  TDuplicate = record
-    SourceValue: string;
-    Value: string;
-    RecordID: int64;
-  end;
-  TDuplicateValues = class(TList<TDuplicate>)
-  public
-    EmptyCount: integer;
-  end;
-
-  TDuplicateTerms = TObjectDictionary<string, TDuplicateValues>;
-
-  TDuplicates = TObjectDictionary<TField, TDuplicateTerms>;
-
-type
-  ITranslationMemoryPeek = interface
-    ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
-    procedure EnqueueQuery(Prop: TLocalizerProperty);
-    procedure Cancel;
-  end;
-
-  ITranslationMemory = interface
-    ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
-    function CreateField(LocaleItem: TLocaleItem): TField;
-    function SaveTableTranslationMemoryClone: IInterface;
-    function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
-      Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
-    procedure Lock;
-    procedure Unlock;
-    function GetTableTranslationMemory: TDataSet;
-    property TableTranslationMemory: TDataSet read GetTableTranslationMemory;
-  end;
 
 // -----------------------------------------------------------------------------
 //
@@ -94,9 +46,7 @@ type
     FProviderHandle: integer;
   private
     function FindField(LocaleItem: TLocaleItem): TField;
-    function GetHasData: boolean;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
-    function GetAvailable: boolean;
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
     function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
@@ -113,19 +63,10 @@ type
     // ITranslationMemory
     function CreateField(LocaleItem: TLocaleItem): TField;
     function SaveTableTranslationMemoryClone: IInterface;
-    function GetTableTranslationMemory: TDataSet;
+    function GetTranslationMemoryDataSet: TDataSet;
     function ITranslationMemory.AddTerm = AddTerm;
     procedure ITranslationMemory.Lock = Lock;
     procedure ITranslationMemory.Unlock = Unlock;
-  protected
-    // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
-    procedure EndLookup;
-    function GetProviderName: string;
-  public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
 
     procedure SaveToStream(Stream: TStream);
     procedure SaveToFile(const Filename: string);
@@ -142,30 +83,33 @@ type
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 
-    property IsLoaded: boolean read FLoaded;
-    property IsAvailable: boolean read GetAvailable;
-    property HasData: boolean read GetHasData;
-    property Modified: boolean read FModified;
-    property Enabled: boolean read FEnabled write FEnabled;
-  end;
+    function GetEnabled: boolean;
+    procedure SetEnabled(const Value: boolean);
+    function GetIsLoaded: boolean;
+    function GetModified: boolean;
+    function GetIsAvailable: boolean;
+    function GetHasData: boolean;
 
-type
-  ETranslationMemory = class(Exception);
-  ETranslationMemoryTMX = class(ETranslationMemory);
+    property IsLoaded: boolean read GetIsLoaded;
+    property IsAvailable: boolean read GetIsAvailable;
+    property HasData: boolean read GetHasData;
+    property Modified: boolean read GetModified;
+    property Enabled: boolean read GetEnabled write SetEnabled;
+  protected
+    // ITranslationProvider
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+    procedure EndLookup;
+    function GetProviderName: string;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  end;
 
 // -----------------------------------------------------------------------------
 
 const
   sTranslationMemoryFilename = 'TranslationMemory.dat';
-
-resourcestring
-  sTranslationMemoryLoading = 'Loading Translation Memory';
-  sTranslationMemoryLoad = 'Loading...';
-  sTranslationMemoryReadingTerms = 'Reading terms...';
-  sTranslationMemoryIndexingTerms = 'Indexing terms...';
-  sTranslationMemoryAddingTerms = 'Adding terms...';
-  sTranslationMemoryLoadingTerms = 'Loading terms...';
-  sTranslationMemorySaving = 'Saving Translation Memory';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -194,9 +138,6 @@ uses
   amFileUtils,
   amLocalization.Settings,
   amLocalization.Utils;
-
-resourcestring
-  sTranslatorNameTM = 'Translation Memory';
 
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
@@ -471,16 +412,11 @@ begin
 
   FRefreshEvent := TEvent.Create(nil, False, False, '');
   FEnabled := True;
-
-  FProviderHandle := TranslationProviderRegistry.RegisterProvider(sTranslatorNameTM,
-    function(): ITranslationProvider
-    begin
-      Result := Self;
-    end);
 end;
 
 destructor TDataModuleTranslationMemory.Destroy;
 begin
+  FreeAndNil(FLookupIndex);
   TranslationProviderRegistry.UnregisterProvider(FProviderHandle);
 
   FRefreshEvent.Free;
@@ -492,7 +428,7 @@ end;
 
 function TDataModuleTranslationMemory.GetProviderName: string;
 begin
-  Result := sTranslatorNameTM;
+  Result := '';
 end;
 
 // -----------------------------------------------------------------------------
@@ -504,15 +440,15 @@ resourcestring
   sLocalizerNoTMFileTitle = 'Translation Memory does not exist';
   sLocalizerNoTMFile = 'The Translation Memory database does not exist.'#13#13'Filename: %s'#13#13'A new database will be created when you save the Translation Memory.'#13#13'Do you want to save an new empty database now?';
 begin
-  if (not FLoaded) and ((Force) or (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand)) then
+  if (not FLoaded) and ((Force) or (TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand)) then
   begin
     if (not FEnabled) and (not Force) then
       Exit(False);
 
-    if (not TFile.Exists(TranslationManagerSettings.Translators.TranslationMemory.Filename)) then
+    if (not TFile.Exists(TranslationManagerSettings.Providers.TranslationMemory.Filename)) then
     begin
       Res := TaskMessageDlg(sLocalizerNoTMFileTitle,
-        Format(sLocalizerNoTMFile, [TranslationManagerSettings.Translators.TranslationMemory.Filename]),
+        Format(sLocalizerNoTMFile, [TranslationManagerSettings.Providers.TranslationMemory.Filename]),
         mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbNo);
 
       if (Res = mrCancel) then
@@ -522,9 +458,9 @@ begin
       if (Res = mrYes) then
       begin
         // Save empty
-        SaveToFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+        SaveToFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
         // ...and load it
-        LoadFromFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+        LoadFromFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
       end else
       begin
         // Pretend we have loaded to avoid further prompts
@@ -533,7 +469,7 @@ begin
         FModified := True;
       end;
     end else
-      LoadFromFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+      LoadFromFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
   end;
 
   if (FLoaded) then
@@ -553,7 +489,7 @@ resourcestring
 begin
   if (IsLoaded) and (Modified) then
   begin
-    if (TranslationManagerSettings.Translators.TranslationMemory.PromptToSave) then
+    if (TranslationManagerSettings.Providers.TranslationMemory.PromptToSave) then
     begin
       Res := TaskMessageDlg(sLocalizerSaveTMPromptTitle, sLocalizerSaveTMPrompt,
         mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
@@ -567,7 +503,7 @@ begin
 
     SaveCursor(crHourGlass);
 
-    SaveToFile(TranslationManagerSettings.Translators.TranslationMemory.Filename);
+    SaveToFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
 
     Result := (not Modified);
   end else
@@ -619,7 +555,7 @@ begin
   Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
 end;
 
-function TDataModuleTranslationMemory.GetTableTranslationMemory: TDataSet;
+function TDataModuleTranslationMemory.GetTranslationMemoryDataSet: TDataSet;
 begin
   Result := TableTranslationMemory;
 end;
@@ -638,6 +574,8 @@ constructor TTableTranslationMemoryClone.Create(AOriginal: TFDMemTable);
 begin
   inherited Create;
   FOriginal := AOriginal;
+  FOriginal.DisableControls;
+
   FClone := TFDMemTable.Create(nil);
   try
     if (FOriginal.Fields.Count > 0) then
@@ -646,6 +584,7 @@ begin
     FreeAndNil(FClone);
     raise;
   end;
+
   FOriginal.Close;
 end;
 
@@ -660,6 +599,8 @@ begin
   finally
     FClone.Free;
   end;
+
+  FOriginal.EnableControls;
 
   inherited;
 end;
@@ -690,14 +631,34 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.GetAvailable: boolean;
+function TDataModuleTranslationMemory.GetIsAvailable: boolean;
 begin
-  Result := (FLoaded) or ((FEnabled) and (TranslationManagerSettings.Translators.TranslationMemory.LoadOnDemand));
+  Result := (FLoaded) or ((FEnabled) and (TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand));
+end;
+
+procedure TDataModuleTranslationMemory.SetEnabled(const Value: boolean);
+begin
+  FEnabled := Value;
+end;
+
+function TDataModuleTranslationMemory.GetEnabled: boolean;
+begin
+  Result := FEnabled;
 end;
 
 function TDataModuleTranslationMemory.GetHasData: boolean;
 begin
   Result := (TableTranslationMemory.Active) and (TableTranslationMemory.RecordCount > 0);
+end;
+
+function TDataModuleTranslationMemory.GetIsLoaded: boolean;
+begin
+  Result := FLoaded;
+end;
+
+function TDataModuleTranslationMemory.GetModified: boolean;
+begin
+  Result := FModified;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1603,6 +1564,7 @@ var
   SourceValue: string;
   List: TList<integer>;
 begin
+  FreeAndNil(FLookupIndex);
   FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues], TTextComparer.Create);
 
   if (not CheckLoaded) then

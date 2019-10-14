@@ -148,7 +148,7 @@ type
   end;
 
 type
-  TTranslationManagerTranslatorMicrosoftV3Settings = class(TConfigurationSection)
+  TTranslationManagerProviderMicrosoftTranslatorV3Settings = class(TConfigurationSection)
   private
     FAPIKey: string;
     FAPIKeyValidated: boolean;
@@ -158,7 +158,7 @@ type
     property APIKeyValidated: boolean read FAPIKeyValidated write FAPIKeyValidated;
   end;
 
-  TTranslationManagerTranslatorMicrosoftTerminologySettings = class(TConfigurationSection)
+  TTranslationManagerProviderMicrosoftTerminologySettings = class(TConfigurationSection)
   private
     FMaxResult: integer;
   public
@@ -166,7 +166,7 @@ type
     property MaxResult: integer read FMaxResult write FMaxResult default 10;
   end;
 
-  TTranslationManagerTranslatorTMX = class(TConfigurationSection)
+  TTranslationManagerProviderTM = class(TConfigurationSection)
   private
     FFilename: string;
     FLoadOnDemand: boolean;
@@ -182,19 +182,19 @@ type
     property BackgroundQuery: boolean read FBackgroundQuery write FBackgroundQuery default True;
   end;
 
-  TTranslationManagerTranslatorSettings = class(TConfigurationSection)
+  TTranslationManagerProviderSettings = class(TConfigurationSection)
   private
-    FMicrosoftV3: TTranslationManagerTranslatorMicrosoftV3Settings;
-    FTranslationMemory: TTranslationManagerTranslatorTMX;
-    FMicrosoftTerminology: TTranslationManagerTranslatorMicrosoftTerminologySettings;
+    FMicrosoftV3: TTranslationManagerProviderMicrosoftTranslatorV3Settings;
+    FTranslationMemory: TTranslationManagerProviderTM;
+    FMicrosoftTerminology: TTranslationManagerProviderMicrosoftTerminologySettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
     procedure ResetSettings;
   published
-    property MicrosoftV3: TTranslationManagerTranslatorMicrosoftV3Settings read FMicrosoftV3;
-    property MicrosoftTerminology: TTranslationManagerTranslatorMicrosoftTerminologySettings read FMicrosoftTerminology;
-    property TranslationMemory: TTranslationManagerTranslatorTMX read FTranslationMemory;
+    property MicrosoftTranslatorV3: TTranslationManagerProviderMicrosoftTranslatorV3Settings read FMicrosoftV3;
+    property MicrosoftTerminology: TTranslationManagerProviderMicrosoftTerminologySettings read FMicrosoftTerminology;
+    property TranslationMemory: TTranslationManagerProviderTM read FTranslationMemory;
   end;
 
   TTranslationManagerProofingSettings = class(TConfigurationSection)
@@ -415,7 +415,7 @@ type
     FSystem: TTranslationManagerSystemSettings;
     FForms: TTranslationManagerFormsSettings;
     FFolders: TTranslationManagerFolderSettings;
-    FTranslators: TTranslationManagerTranslatorSettings;
+    FProviders: TTranslationManagerProviderSettings;
     FProofing: TTranslationManagerProofingSettings;
     FLayout: TTranslationManagerLayoutSettings;
     FBackup: TTranslationManagerBackupSettings;
@@ -434,7 +434,7 @@ type
     property System: TTranslationManagerSystemSettings read FSystem;
     property Folders: TTranslationManagerFolderSettings read FFolders;
     property Forms: TTranslationManagerFormsSettings read FForms;
-    property Translators: TTranslationManagerTranslatorSettings read FTranslators;
+    property Providers: TTranslationManagerProviderSettings read FProviders;
     property Proofing: TTranslationManagerProofingSettings read FProofing;
     property Layout: TTranslationManagerLayoutSettings read FLayout;
     property Backup: TTranslationManagerBackupSettings read FBackup;
@@ -453,7 +453,7 @@ uses
   Types,
   cxPropertiesStore,
   amVersionInfo,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory.Data;
 
 //------------------------------------------------------------------------------
 //
@@ -692,7 +692,7 @@ begin
   FSystem := TTranslationManagerSystemSettings.Create(Self);
   FForms := TTranslationManagerFormsSettings.Create(Self);
   FFolders := TTranslationManagerFolderSettings.Create(Self);
-  FTranslators := TTranslationManagerTranslatorSettings.Create(Self);
+  FProviders := TTranslationManagerProviderSettings.Create(Self);
   FProofing := TTranslationManagerProofingSettings.Create(Self);
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
   FBackup := TTranslationManagerBackupSettings.Create(Self);
@@ -705,7 +705,7 @@ begin
   FSystem.Free;
   FForms.Free;
   FFolders.Free;
-  FTranslators.Free;
+  FProviders.Free;
   FProofing.Free;
   FLayout.Free;
   FBackup.Free;
@@ -749,17 +749,17 @@ end;
 
 //------------------------------------------------------------------------------
 
-{ TTranslationManagerTranslatorSettings }
+{ TTranslationManagerProviderSettings }
 
-constructor TTranslationManagerTranslatorSettings.Create(AOwner: TConfigurationSection);
+constructor TTranslationManagerProviderSettings.Create(AOwner: TConfigurationSection);
 begin
   inherited;
-  FMicrosoftV3 := TTranslationManagerTranslatorMicrosoftV3Settings.Create(Self);
-  FMicrosoftTerminology := TTranslationManagerTranslatorMicrosoftTerminologySettings.Create(Self);
-  FTranslationMemory := TTranslationManagerTranslatorTMX.Create(Self);
+  FMicrosoftV3 := TTranslationManagerProviderMicrosoftTranslatorV3Settings.Create(Self);
+  FMicrosoftTerminology := TTranslationManagerProviderMicrosoftTerminologySettings.Create(Self);
+  FTranslationMemory := TTranslationManagerProviderTM.Create(Self);
 end;
 
-destructor TTranslationManagerTranslatorSettings.Destroy;
+destructor TTranslationManagerProviderSettings.Destroy;
 begin
   FMicrosoftV3.Free;
   FMicrosoftTerminology.Free;
@@ -767,7 +767,7 @@ begin
   inherited;
 end;
 
-procedure TTranslationManagerTranslatorSettings.ResetSettings;
+procedure TTranslationManagerProviderSettings.ResetSettings;
 begin
   ApplyDefault;
 
@@ -776,9 +776,9 @@ begin
   FTranslationMemory.ApplyDefault;
 end;
 
-{ TTranslationManagerTranslatorTMX }
+{ TTranslationManagerProviderTM }
 
-procedure TTranslationManagerTranslatorTMX.ApplyDefault;
+procedure TTranslationManagerProviderTM.ApplyDefault;
 begin
   inherited;
   FFilename := TTranslationManagerFolderSettings.DocumentFolder + sTranslationMemoryFilename;

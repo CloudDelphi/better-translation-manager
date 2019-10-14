@@ -16,7 +16,7 @@ uses
   DB,
   amProgress,
   amLocalization.Model,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory;
 
 // -----------------------------------------------------------------------------
 //
@@ -37,7 +37,7 @@ type
     class var FFileFormatRegistry: TList<TTranslationMemoryFileFormatClass>;
   private
     FTranslationMemory: ITranslationMemory;
-    FTableTranslationMemory: TDataSet;
+    FTranslationMemoryDataSet: TDataSet;
     FFileCreateDate: TDateTime;
   protected type
     TTerm = record
@@ -54,7 +54,7 @@ type
     procedure CreateTermIndex(Duplicates: TDuplicates; SourceField: TField; const Progress: IProgress; DetailedProgress: boolean);
 
     property TranslationMemory: ITranslationMemory read FTranslationMemory;
-    property TableTranslationMemory: TDataSet read FTableTranslationMemory;
+    property TranslationMemoryDataSet: TDataSet read FTranslationMemoryDataSet;
 
   protected
     class procedure RegisterFileFormat(FileFormatClass: TTranslationMemoryFileFormatClass);
@@ -85,6 +85,10 @@ type
     class function FindFileFormats(const Filename: string; Capability: TFileFormatCapability): TTranslationMemoryFileFormatClasses;
   end;
 
+type
+  ETranslationMemoryFileFormat = class(ETranslationMemory);
+
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -107,7 +111,8 @@ uses
   amVersionInfo,
   amFileUtils,
   amLocalization.Settings,
-  amLocalization.Utils;
+  amLocalization.Utils,
+  amLocalization.TranslationMemory.Data;
 
 // -----------------------------------------------------------------------------
 //
@@ -119,7 +124,7 @@ begin
   inherited Create;
 
   FTranslationMemory := ATranslationMemory;
-  FTableTranslationMemory := FTranslationMemory.TableTranslationMemory; // Cache for performance
+  FTranslationMemoryDataSet := FTranslationMemory.TranslationMemoryDataSet; // Cache for performance
   FFileCreateDate := Now;
 end;
 
@@ -289,22 +294,22 @@ begin
   // Create one term list per language.
   // A term list holds the target language terms that correspond to a given source language term.
   // Assume language[0] is the source language. This assumption seems to no longer be true...
-  SetLength(DuplicateTermsList, TableTranslationMemory.Fields.Count);
+  SetLength(DuplicateTermsList, TranslationMemoryDataSet.Fields.Count);
 
-  for i := 0 to TableTranslationMemory.Fields.Count-1 do
+  for i := 0 to TranslationMemoryDataSet.Fields.Count-1 do
   begin
-    if (TableTranslationMemory.Fields[i] = SourceField) then
+    if (TranslationMemoryDataSet.Fields[i] = SourceField) then
     begin
       DuplicateTermsList[i] := nil;
       continue;
     end;
     DuplicateTerms := TDuplicateTerms.Create([doOwnsValues], TTextComparer.Create);
     DuplicateTermsList[i] := DuplicateTerms;
-    Duplicates.Add(TableTranslationMemory.Fields[i], DuplicateTerms);
+    Duplicates.Add(TranslationMemoryDataSet.Fields[i], DuplicateTerms);
   end;
 
-  TableTranslationMemory.First;
-  while (not TableTranslationMemory.EOF) do
+  TranslationMemoryDataSet.First;
+  while (not TranslationMemoryDataSet.EOF) do
   begin
     if (DetailedProgress) then
       Progress.AdvanceProgress
@@ -319,9 +324,9 @@ begin
     if (not SanitizedSourceValue.Trim.IsEmpty) then
     begin
       // ..., For each target language...
-      for i := 0 to TableTranslationMemory.Fields.Count-1 do
+      for i := 0 to TranslationMemoryDataSet.Fields.Count-1 do
       begin
-        if (TableTranslationMemory.Fields[i] = SourceField) then
+        if (TranslationMemoryDataSet.Fields[i] = SourceField) then
           continue;
 
         // ... save the target term in the term list of the source language term
@@ -332,8 +337,8 @@ begin
         end;
 
         Duplicate.SourceValue := SourceValue;
-        Duplicate.Value := TableTranslationMemory.Fields[i].AsString;
-        Duplicate.RecordID := TableTranslationMemory.RecNo;
+        Duplicate.Value := TranslationMemoryDataSet.Fields[i].AsString;
+        Duplicate.RecordID := TranslationMemoryDataSet.RecNo;
 
         DuplicateValues.Add(Duplicate);
 
@@ -342,7 +347,7 @@ begin
       end;
     end;
 
-    TableTranslationMemory.Next;
+    TranslationMemoryDataSet.Next;
   end;
 end;
 
@@ -375,7 +380,7 @@ begin
   if (not DetailedProgress) then
     LocalProgress.UpdateMessage(sTranslationMemoryLoading);
 
-  TableTranslationMemory.DisableControls;
+  TranslationMemoryDataSet.DisableControls;
   try
     TranslationMemory.Lock;
     try
@@ -388,17 +393,17 @@ begin
           Clone := nil;
         try
 
-          TableTranslationMemory.Close;
+          TranslationMemoryDataSet.Close;
 
           Languages := TLanguageFields.Create(TTextComparer.Create);
           try
 
             if (Merge) then
             begin
-              for i := 0 to TableTranslationMemory.Fields.Count-1 do
-                Languages.Add(TableTranslationMemory.Fields[i].FieldName, TableTranslationMemory.Fields[i]);
+              for i := 0 to TranslationMemoryDataSet.Fields.Count-1 do
+                Languages.Add(TranslationMemoryDataSet.Fields[i].FieldName, TranslationMemoryDataSet.Fields[i]);
             end else
-              TableTranslationMemory.Fields.Clear;
+              TranslationMemoryDataSet.Fields.Clear;
 
             (*
             ** Call derived class to read terms from import file
@@ -419,8 +424,8 @@ begin
           Clone := nil;
         end;
 
-        if (not TableTranslationMemory.Active) then
-          TableTranslationMemory.Open;
+        if (not TranslationMemoryDataSet.Active) then
+          TranslationMemoryDataSet.Open;
 
         (*
         ** Create index of duplicates per languag
@@ -430,20 +435,20 @@ begin
           if (Merge) then
           begin
             if (DetailedProgress) then
-              LocalProgress.Progress(psBegin, 0, TableTranslationMemory.RecordCount, sTranslationMemoryIndexingTerms)
+              LocalProgress.Progress(psBegin, 0, TranslationMemoryDataSet.RecordCount, sTranslationMemoryIndexingTerms)
             else
               LocalProgress.UpdateMessage(sTranslationMemoryIndexingTerms);
 
             // Find the source field corresponding to the source language specified in the header
             if (SourceLanguage <> '') then
-              SourceField := TableTranslationMemory.Fields.FindField(SourceLanguage)
+              SourceField := TranslationMemoryDataSet.Fields.FindField(SourceLanguage)
             else
               SourceField := nil;
 
             if (SourceField <> nil) then
               Field := SourceField
             else
-              Field := TableTranslationMemory.Fields[0];
+              Field := TranslationMemoryDataSet.Fields[0];
 
             // Note: Duplicate detection doesn't work with per-tu source languages
             CreateTermIndex(Duplicates, Field, LocalProgress, DetailedProgress);
@@ -523,15 +528,15 @@ begin
               else
                 LocalProgress.ProcessMessages;
 
-              TableTranslationMemory.Append;
+              TranslationMemoryDataSet.Append;
               try
 
                 for j := 0 to Translations[i].Count-1 do
                   Translations[i][j].Field.AsString := Translations[i][j].Value;
 
-                TableTranslationMemory.Post;
+                TranslationMemoryDataSet.Post;
               except
-                TableTranslationMemory.Cancel;
+                TranslationMemoryDataSet.Cancel;
                 raise;
               end;
               Inc(Result.Added);
@@ -551,7 +556,7 @@ begin
       TranslationMemory.Unlock;
     end;
   finally
-    TableTranslationMemory.EnableControls;
+    TranslationMemoryDataSet.EnableControls;
   end;
 end;
 

@@ -76,7 +76,7 @@ uses
 {$R *.dfm}
 
 resourcestring
-  sTranslatorNameMS = 'Microsoft Translation Service';
+  sProviderNameMSTranslator = 'Microsoft Translation Service';
 
 // -----------------------------------------------------------------------------
 //
@@ -109,12 +109,12 @@ function TTranslationProviderMicrosoftV3.BeginLookup(SourceLanguage, TargetLangu
 resourcestring
   sPrompMicrosoftV3APIKey = 'You must register an API key before the Microsoft Translator v3 service can be used.';
 begin
-  if (TranslationManagerSettings.Translators.MicrosoftV3.APIKey = '') then
+  if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey = '') then
   begin
     ShowMessage(sPrompMicrosoftV3APIKey);
     Exit(False);
   end else
-    RESTClient.Params[0].Value := TranslationManagerSettings.Translators.MicrosoftV3.APIKey;
+    RESTClient.Params[0].Value := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey;
 
   Result := True;
 end;
@@ -126,7 +126,7 @@ end;
 
 function TTranslationProviderMicrosoftV3.GetProviderName: string;
 begin
-  Result := sTranslatorNameMS;
+  Result := sProviderNameMSTranslator;
 end;
 
 function TTranslationProviderMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
@@ -166,8 +166,8 @@ begin
   end else
   begin
     // API key is valid - Save it if we haven't already
-    if (TranslationManagerSettings.Translators.MicrosoftV3.APIKey = '') then
-      TranslationManagerSettings.Translators.MicrosoftV3.APIKey := RESTClient.Params[0].Value;
+    if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey = '') then
+      TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey := RESTClient.Params[0].Value;
 
     JsonResultArray := RESTResponseResult.JSONValue as TJsonArray;
     JsonTranslationItem := JsonResultArray.items[0] as TJsonObject;
@@ -224,7 +224,7 @@ var
   ProviderHandle: integer = -1;
 
 initialization
-  ProviderHandle := TranslationProviderRegistry.RegisterProvider(sTranslatorNameMS,
+  ProviderHandle := TranslationProviderRegistry.RegisterProvider(sProviderNameMSTranslator,
     function(): ITranslationProvider
     begin
       Result := TTranslationProviderMicrosoftV3.Create(nil);

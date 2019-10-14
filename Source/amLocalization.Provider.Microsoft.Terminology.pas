@@ -49,7 +49,7 @@ uses
 
 
 resourcestring
-  sTranslatorNameMSTerminology = 'Microsoft Terminology Service';
+  sProviderNameMSTerminology = 'Microsoft Terminology Service';
 
 // -----------------------------------------------------------------------------
 //
@@ -69,7 +69,7 @@ end;
 
 function TTranslationProviderMicrosoftTerminology.GetProviderName: string;
 begin
-  Result := sTranslatorNameMSTerminology;
+  Result := sProviderNameMSTerminology;
 end;
 
 function TTranslationProviderMicrosoftTerminology.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
@@ -93,7 +93,7 @@ begin
    // Call web service
   ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleSName, TargetLanguage.LocaleSName,
     SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True,
-    TranslationManagerSettings.Translators.MicrosoftTerminology.MaxResult, False, nil);
+    TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult, False, nil);
 
   // Get result
   Result := False;
@@ -138,7 +138,7 @@ var
   ProviderHandle: integer = -1;
 
 initialization
-  ProviderHandle := TranslationProviderRegistry.RegisterProvider(sTranslatorNameMSTerminology,
+  ProviderHandle := TranslationProviderRegistry.RegisterProvider(sProviderNameMSTerminology,
     function(): ITranslationProvider
     begin
       Result := TTranslationProviderMicrosoftTerminology.Create;

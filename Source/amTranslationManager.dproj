@@ -197,7 +197,7 @@
         <DCCReference Include="amLocalization.Dialog.TranslationMemory.pas">
             <Form>FormTranslationMemory</Form>
         </DCCReference>
-        <DCCReference Include="amLocalization.Provider.TM.pas">
+        <DCCReference Include="amLocalization.TranslationMemory.Data.pas">
             <Form>DataModuleTranslationMemory</Form>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
@@ -237,6 +237,8 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="amLocalization.Filters.pas"/>
+        <DCCReference Include="amLocalization.Provider.TranslationMemory.pas"/>
+        <DCCReference Include="amLocalization.TranslationMemory.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

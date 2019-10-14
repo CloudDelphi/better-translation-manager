@@ -35,6 +35,8 @@ type
     class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
+type
+  ETranslationMemoryTMX = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -55,7 +57,7 @@ uses
   amLocale,
   amVersionInfo,
   amLocalization.Utils,
-  amLocalization.Provider.TM;
+  amLocalization.TranslationMemory;
 
 // -----------------------------------------------------------------------------
 //
@@ -258,39 +260,39 @@ begin
 
   Body := XML.DocumentElement.AddChild('body');
 
-  if (TableTranslationMemory.Active) and (TableTranslationMemory.RecordCount > 0) then
+  if (TranslationMemoryDataSet.Active) and (TranslationMemoryDataSet.RecordCount > 0) then
   begin
     SaveCursor(crAppStart);
 
     Progress := ShowProgress(sTranslationMemorySaving);
     Progress.EnableAbort := True;
 
-    Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount);
+    Progress.Progress(psBegin, 0, TranslationMemoryDataSet.RecordCount);
 
-    TableTranslationMemory.DisableControls;
+    TranslationMemoryDataSet.DisableControls;
     try
-      TableTranslationMemory.First;
+      TranslationMemoryDataSet.First;
 
-      while (not TableTranslationMemory.EOF) and (not Progress.Aborted) do
+      while (not TranslationMemoryDataSet.EOF) and (not Progress.Aborted) do
       begin
         Progress.AdvanceProgress;
 
         ItemNode := Body.AddChild('tu');
 
-        for i := 0 to TableTranslationMemory.FieldCount-1 do
+        for i := 0 to TranslationMemoryDataSet.FieldCount-1 do
         begin
-          if (not TableTranslationMemory.Fields[i].IsNull) and (not TableTranslationMemory.Fields[i].AsString.IsEmpty) then
+          if (not TranslationMemoryDataSet.Fields[i].IsNull) and (not TranslationMemoryDataSet.Fields[i].AsString.IsEmpty) then
           begin
             LanguageNode := ItemNode.AddChild('tuv');
-            LanguageNode.Attributes['xml:lang'] := TableTranslationMemory.Fields[i].FieldName;
-            LanguageNode.AddChild('seg').Text := TableTranslationMemory.Fields[i].AsString;
+            LanguageNode.Attributes['xml:lang'] := TranslationMemoryDataSet.Fields[i].FieldName;
+            LanguageNode.AddChild('seg').Text := TranslationMemoryDataSet.Fields[i].AsString;
           end;
         end;
 
-        TableTranslationMemory.Next;
+        TranslationMemoryDataSet.Next;
       end;
     finally
-      TableTranslationMemory.EnableControls;
+      TranslationMemoryDataSet.EnableControls;
     end;
 
     if (Progress.Aborted) then
