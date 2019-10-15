@@ -1395,7 +1395,7 @@ begin
     ElegibleWarning :=  '';
 
   if (TaskMessageDlg(sAddToDictionaryPromptTitle, Format(sAddToDictionaryPrompt, [ElegibleCount, ElegibleWarning]),
-    mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
   if (FTranslationMemoryPeek <> nil) then
@@ -2471,7 +2471,7 @@ var
   Progress: IProgress;
   ModuleCount, PropCount: integer;
 begin
-  if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+  if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
   SaveCursor(crHourGlass);
