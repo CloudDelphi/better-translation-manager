@@ -570,7 +570,7 @@ var
             Result := not AnsiSameText(Item.Name, ItemName);
             if (not Result) then
              Module := Item.Module;
-          end, False);
+          end);
       end)) then
     begin
       Assert(Module <> nil);

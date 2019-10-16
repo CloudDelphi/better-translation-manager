@@ -498,7 +498,7 @@ begin
     FSearchInProgress := True;
     try
 
-      SearchRoot.Traverse(SearchItem);
+      SearchRoot.Traverse(SearchItem, True);
 
     finally
       FSearchInProgress := False;

@@ -75,6 +75,7 @@ implementation
 {$R *.dfm}
 
 uses
+  UITypes,
   amLocalization.Settings;
 
 constructor TFormFilters.Create(AOwner: TComponent);

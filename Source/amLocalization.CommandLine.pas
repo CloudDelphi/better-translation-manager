@@ -297,9 +297,9 @@ begin
           begin
             Inc(CountProperty);
             Result := True;
-          end, False);
+          end);
         Result := True;
-      end, False);
+      end);
     Message(Format('  Modules        : %6.0n', [FProject.Modules.Count*1.0]));
     Message(Format('  Items          : %6.0n', [CountItem*1.0]));
     Message(Format('  Properties     : %6.0n', [CountProperty*1.0]));

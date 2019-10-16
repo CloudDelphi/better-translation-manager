@@ -1383,7 +1383,7 @@ begin
         if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
           Inc(ElegibleCount);
         Result := True;
-      end, False);
+      end);
   end;
 
   if (ElegibleCount = 0) then
@@ -1425,7 +1425,7 @@ begin
         end;
 
         Result := (DuplicateAction <> tmDupActionAbort) and (not Progress.Aborted);
-      end, False);
+      end);
 
     if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
       break;
@@ -1466,7 +1466,7 @@ begin
         begin
           Inc(Count);
           Result := (Count < 100) and (not Prop.HasTranslation(TranslationLanguage));
-        end, False);
+        end);
       if (Enabled) then
         break;
     end;
@@ -1540,7 +1540,7 @@ begin
             Inc(Counts.TranslatedCount);
         end;
         Result := True;
-      end, False);
+      end);
   end;
 
   TaskDialogTranslate.Title := Format(sTranslateAutoPromptTitle, [TranslationProvider.ProviderName]);
@@ -1658,7 +1658,7 @@ begin
                 ReloadProperty(Prop);
               end;
               Result := True;
-            end, False);
+            end);
         end;
 
         Progress.Progress(psEnd, Counts.Count, Counts.ElegibleCount);
@@ -1812,7 +1812,7 @@ begin
           Inc(Count);
         end;
         Result := True;
-      end, False);
+      end);
   end;
   if (Count > 0) then
     QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
@@ -1993,7 +1993,7 @@ begin
             if (Node <> nil) then
               Node.Repaint(True);
           end;
-        end, False);
+        end);
 
       // ...Then set new (on single item)
       Prop.SetFlag(Flag);
@@ -3239,7 +3239,7 @@ begin
     function(Prop: TLocalizerProperty): boolean
     begin
       Result := PerformSpellCheck(Prop);
-    end, False);
+    end);
 
   SpellChecker.ShowSpellingCompleteMessage;
 end;
@@ -3436,7 +3436,7 @@ begin
       end;
 
       Result := True;
-    end, False);
+    end);
 
   // Update node state images
   if (NeedRefresh) then
@@ -3682,7 +3682,7 @@ begin
             begin
               Prop.Translations.Remove(Language);
               Result := True;
-            end, False);
+            end);
 
           Assert(Language.TranslatedCount = 0);
 
@@ -4257,13 +4257,13 @@ begin
                 end;
 
               Result := True;
-            end, False);
+            end);
 
           Result := True;
-        end, False);
+        end);
 
       Result := True;
-    end, False);
+    end);
 
   Result := Counts;
 end;
@@ -4671,7 +4671,7 @@ begin
       if (not Prop.IsUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
         Inc(Count);
       Result := True;
-    end, False);
+    end);
 
   Result := Count;
 
@@ -4747,7 +4747,7 @@ begin
           function(Prop: TLocalizerProperty): boolean
           begin
             Result := not Predicate(Prop);
-          end, False)) then
+          end)) then
         begin
           // Select module node - this loads the property nodes
           ModuleNode.MakeVisible;
@@ -4860,7 +4860,7 @@ begin
       end;
 
       Result := True;
-    end, False);
+    end);
 
   if (not Found) then
 *)
@@ -6092,7 +6092,7 @@ begin
       function(Prop: TLocalizerProperty): boolean
       begin
         Result := PerformSpellCheck(Prop);
-      end, False)) then
+      end)) then
       break;
   end;
 

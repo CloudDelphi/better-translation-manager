@@ -60,7 +60,7 @@ begin
     begin
       ComboBoxModule.Properties.Items.AddObject(Module.Name, Module);
       Result := True;
-    end);
+    end, True);
 
   ComboBoxModule.ItemIndex := 0;
 

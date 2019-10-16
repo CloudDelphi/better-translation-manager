@@ -116,7 +116,7 @@ type
     procedure EndUpdate;
     procedure Changed;
 
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; virtual; abstract;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; virtual; abstract;
 
     property Name: string read FName write SetName;
   end;
@@ -172,10 +172,10 @@ type
     procedure BeginLoad(MarkUpdating: boolean = False);
     procedure EndLoad(ClearUpdating: boolean = False; MarkUnused: boolean = False);
 
-    function Traverse(Delegate: TLocalizerModuleDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
-    function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; reintroduce; overload; override;
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Kinds: TLocalizerModuleKinds; Sorted: boolean = True): boolean; reintroduce; overload;
+    function Traverse(Delegate: TLocalizerModuleDelegate; Sorted: boolean = False): boolean; reintroduce; overload;
+    function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = False): boolean; reintroduce; overload;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; reintroduce; overload; override;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Kinds: TLocalizerModuleKinds; Sorted: boolean = False): boolean; reintroduce; overload;
 
     property State: TLocalizerProjectStates read FState;
 
@@ -301,8 +301,8 @@ type
     function AddItem(const AName, ATypeName: string): TLocalizerItem; overload;
     function AddItem(AResourceID: Word; const ATypeName: string): TLocalizerItem; overload;
 
-    function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = True): boolean; reintroduce; overload;
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; overload; override;
+    function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = False): boolean; reintroduce; overload;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; overload; override;
   end;
 
 
@@ -329,7 +329,7 @@ type
     function AddProperty(const AName: string): TLocalizerProperty; overload;
     function AddProperty(const AName: string; const AValue: string): TLocalizerProperty; overload;
 
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; override;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; override;
 
     property Module: TLocalizerModule read GetParent;
     property ResourceID: integer read FResourceID write FResourceID;
@@ -476,7 +476,7 @@ type
 
     procedure Clear; override;
 
-    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = True): boolean; overload; override;
+    function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; overload; override;
     function Traverse(Delegate: TLocalizerTranslationDelegate): boolean; reintroduce; overload;
 
     function HasTranslation(Language: TTranslationLanguage): boolean;
