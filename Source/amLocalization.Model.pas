@@ -19,6 +19,7 @@ const
   sModuleNameResourcestrings = 'resourcestrings';
 
 type
+  TCustomLocalizerItem = class;
   TLocalizerModule = class;
   TLocalizerItem = class;
   TLocalizerProperty = class;
@@ -28,6 +29,7 @@ type
   TLocalizerItems = TObjectDictionary<string, TLocalizerItem>;
   TLocalizerProperties = TObjectDictionary<string, TLocalizerProperty>;
 
+  TLocalizerObjectDelegate = reference to procedure(Item: TCustomLocalizerItem);
   TLocalizerModuleDelegate = reference to function(Item: TLocalizerModule): boolean;
   TLocalizerItemDelegate = reference to function(Item: TLocalizerItem): boolean;
   TLocalizerPropertyDelegate = reference to function(Prop: TLocalizerProperty): boolean;
@@ -151,6 +153,7 @@ type
     FOnModuleChanged: TLocalizerModuleEvent;
     FOnTranslationWarning: TLocalizerTranslationEvent;
   strict protected
+    procedure DoChanged; override;
     procedure SetModified(const Value: boolean);
     function GetStatusCount(Status: TLocalizerItemStatus): integer;
     procedure SetItemStateRecursive(Value: TLocalizerItemState);
@@ -158,7 +161,6 @@ type
     procedure UpdateStatusCount(Status: TLocalizerItemStatus; Delta: integer);
     procedure ModuleChanged(Module: TLocalizerModule);
     procedure NotifyWarnings(Translation: TLocalizerTranslation);
-    procedure DoChanged; override;
   public
     constructor Create(const AName: string; ASourceLanguageID: LCID);
     destructor Destroy; override;

@@ -12,6 +12,7 @@ interface
 
 uses
   Generics.Collections,
+  amProgress,
   amLocalization.Model;
 
 type
@@ -43,8 +44,16 @@ type
   end;
 
   TFilterItemList = class(TObjectList<TFilterItem>)
+  public type
+    TFilterStats = record
+      ModuleCount: integer;
+      PropertyCount: integer;
+    end;
   public
     procedure Assign(Filters: TFilterItemList);
+
+    function Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate = nil; const Progress: IProgress = nil): TFilterStats;
+
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty; SkipModule: boolean = True): boolean; overload;
   end;
@@ -144,6 +153,61 @@ begin
 end;
 
 { TFilterItemList }
+
+function TFilterItemList.Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate; const Progress: IProgress): TFilterStats;
+var
+  Stats: TFilterStats;
+begin
+  if (Progress <> nil) then
+    Progress.Progress(psBegin, 0, Project.Modules.Count+Project.PropertyCount);
+
+  Stats := Default(TFilterStats);
+
+  Project.BeginUpdate;
+  try
+
+    Project.Traverse(
+      function(Module: TLocalizerModule): boolean
+      begin
+        if (Progress <> nil) then
+          Progress.AdvanceProgress;
+
+        if (Module.EffectiveStatus <> ItemStatusDontTranslate) then
+          if (Evaluate(Module)) then
+          begin
+            Module.Status := ItemStatusDontTranslate;
+            Inc(Stats.ModuleCount);
+            if (Assigned(Callback)) then
+              Callback(Module);
+          end;
+        Result := True;
+      end);
+
+    Project.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        if (Progress <> nil) then
+          Progress.AdvanceProgress;
+
+        if (Prop.EffectiveStatus <> ItemStatusDontTranslate) then
+          if (Evaluate(Prop)) then
+          begin
+            Prop.Status := ItemStatusDontTranslate;
+            Inc(Stats.PropertyCount);
+            if (Assigned(Callback)) then
+              Callback(Prop);
+          end;
+        Result := True;
+      end);
+
+  finally
+    Project.EndUpdate;
+  end;
+
+  Progress.Progress(psEnd, 1, 1);
+
+  Result := Stats;
+end;
 
 procedure TFilterItemList.Assign(Filters: TFilterItemList);
 var

@@ -2470,62 +2470,33 @@ resourcestring
   sFiltersResult = '%.0n modules, %.0n properties were marked "Don''t Translate".';
 var
   Progress: IProgress;
-  ModuleCount, PropCount: integer;
+  Stats: TFilterItemList.TFilterStats;
 begin
   if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
   SaveCursor(crHourGlass);
   Progress := ShowProgress(sFiltersApply);
-  Progress.Progress(psBegin, 0, FProject.Modules.Count+FProject.PropertyCount);
 
-  FProject.BeginUpdate;
-  try
-
-    ModuleCount := 0;
-    PropCount := 0;
-
-    FProject.Traverse(
-      function(Module: TLocalizerModule): boolean
+  Stats := TranslationManagerSettings.Filters.Filters.Apply(FProject,
+    procedure(Item: TCustomLocalizerItem)
+    begin
+      if (Item is TLocalizerProperty) then
       begin
-        Progress.AdvanceProgress;
+        if (TLocalizerProperty(Item).Item.Module = FocusedModule) then
+          ReloadProperty(TLocalizerProperty(Item));
+      end else
+      if (Item is TLocalizerModule) then
+        LoadItem(TLocalizerModule(Item));
+    end, Progress);
 
-        if (Module.EffectiveStatus <> ItemStatusDontTranslate) then
-          if (TranslationManagerSettings.Filters.Filters.Evaluate(Module)) then
-          begin
-            Module.Status := ItemStatusDontTranslate;
-            LoadItem(Module);
-            Inc(ModuleCount);
-          end;
-        Result := True;
-      end);
 
-    FProject.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      begin
-        Progress.AdvanceProgress;
-
-        if (Prop.EffectiveStatus <> ItemStatusDontTranslate) then
-          if (TranslationManagerSettings.Filters.Filters.Evaluate(Prop)) then
-          begin
-            Prop.Status := ItemStatusDontTranslate;
-            ReloadProperty(Prop);
-            Inc(PropCount);
-          end;
-        Result := True;
-      end);
-
-  finally
-    FProject.EndUpdate;
-  end;
-
-  Progress.Progress(psEnd, 1, 1);
   Progress.Hide;
   Progress := nil;
 
   RefreshModuleStats;
 
-  TaskMessageDlg(sFiltersResultTitle, Format(sFiltersResult, [ModuleCount*1.0, PropCount*1.0]), mtInformation, [mbOK], 0);
+  TaskMessageDlg(sFiltersResultTitle, Format(sFiltersResult, [Stats.ModuleCount*1.0, Stats.PropertyCount*1.0]), mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionFiltersApplyUpdate(Sender: TObject);
