@@ -2462,11 +2462,11 @@ end;
 
 procedure TFormMain.ActionFiltersApplyExecute(Sender: TObject);
 resourcestring
-  sFiltersApply = 'Applying filters';
-  sFiltersApplyPromptTitle = 'Apply Never Translate filters';
-  sFiltersApplyPrompt = 'Applying the Never Translate filters will mark all properties which match any filter as "Don''t translate".'#13#13+
-    'Do you want to apply the Never Translate filters to your project now?';
-  sFiltersResultTitle = 'Filters applied';
+  sFiltersApply = 'Applying Stop List';
+  sFiltersApplyPromptTitle = 'Apply Stop List';
+  sFiltersApplyPrompt = 'Applying the Stop List will mark all properties which match any stop list criteria as "Don''t translate".'#13#13+
+    'Do you want to apply the stop list to your project now?';
+  sFiltersResultTitle = 'Stop list applied';
   sFiltersResult = '%.0n modules, %.0n properties were marked "Don''t Translate".';
 var
   Progress: IProgress;

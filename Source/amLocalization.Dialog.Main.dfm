@@ -50,6 +50,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -70,7 +71,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -1924,18 +1924,21 @@ object FormMain: TFormMain
       Category = 'Filters'
       Caption = 'Stop List...'
       Hint = 'List of items that should never be translated'
+      ImageIndex = 70
       OnExecute = ActionFiltersExecute
     end
     object ActionFiltersApply: TAction
       Category = 'Filters'
       Caption = 'Apply stop list...'
       Hint = 'Apply stop list to the project'
+      ImageIndex = 71
       OnExecute = ActionFiltersApplyExecute
       OnUpdate = ActionFiltersApplyUpdate
     end
     object ActionFiltersAdd: TAction
       Category = 'Filters'
       Caption = 'Add to stop list...'
+      ImageIndex = 69
       ShortCut = 24624
       OnExecute = ActionDummyExecute
       OnUpdate = ActionHasItemFocusedUpdate
