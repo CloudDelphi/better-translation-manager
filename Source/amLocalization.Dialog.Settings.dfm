@@ -8,7 +8,7 @@ inherited FormSettings: TFormSettings
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   ExplicitWidth = 611
-  ExplicitHeight = 636
+  ExplicitHeight = 635
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
@@ -115,7 +115,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetTranslationServices
+        Properties.ActivePage = TabSheetGeneral
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -851,7 +851,7 @@ inherited FormSettings: TFormSettings
           Margins.Top = 12
           Margins.Right = 12
           Margins.Bottom = 8
-          Caption = 'Translators'
+          Caption = 'Providers'
           ImageIndex = 5
           object LayoutControlTranslators: TdxLayoutControl
             Left = 0
@@ -2571,6 +2571,7 @@ inherited FormSettings: TFormSettings
         BevelOuter = bvNone
         Color = 16053234
         FullRepaint = False
+        ParentBackground = False
         ShowCaption = False
         TabOrder = 0
         object ButtonCategoryGeneral: TcxButton
@@ -2737,7 +2738,7 @@ inherited FormSettings: TFormSettings
     end
     object ActionCategoryTranslators: TAction
       Category = 'Category'
-      Caption = 'Translators'
+      Caption = 'Providers'
       GroupIndex = 1
       OnExecute = ActionCategoryExecute
       OnUpdate = ActionCategoryUpdate

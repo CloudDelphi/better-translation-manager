@@ -37,7 +37,7 @@ procedure DecomposeSkinName(const Value: string; var Name, Filename: string; var
 // -----------------------------------------------------------------------------
 // Removes hotkeys and format specifiers
 type
-  TSanitizeKind = (skAccelerator, skFormat, skEnding);
+  TSanitizeKind = (skAccelerator, skFormat, skEnding, skSurround);
   TSanitizeKinds = set of TSanitizeKind;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
@@ -72,10 +72,10 @@ function MakeTitleCase(const Value: string): string;
 function MakeSentenceCase(const Value: string): string;
 
 type
-  TMakeAlikeAction = (EqualizeCase, EqualizeEnding, EqualizeAccelerators);
+  TMakeAlikeAction = (EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround);
   TMakeAlikeActions = set of TMakeAlikeAction;
 
-function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions = [EqualizeCase, EqualizeEnding, EqualizeAccelerators]): string;
+function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions = [EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround]): string;
 
 
 // -----------------------------------------------------------------------------
@@ -91,6 +91,22 @@ uses
   SyncObjs,
   StrUtils,
   SysUtils;
+
+type
+  TSurroundPair = record
+    StartSurround: Char;
+    EndSurround: Char;
+  end;
+
+const
+  SurroundPairs: array[0..5] of TSurroundPair = (
+    (StartSurround: '('; EndSurround: ')'),
+    (StartSurround: '['; EndSurround: ']'),
+    (StartSurround: '{'; EndSurround: '}'),
+    (StartSurround: '"'; EndSurround: '"'),
+    (StartSurround: ''''; EndSurround: ''''),
+    (StartSurround: '<'; EndSurround: '>')
+    );
 
 function StripAccelerator(const Value: string): string;
 var
@@ -208,12 +224,13 @@ end;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
 begin
-  Result := SanitizeText(Value, [skAccelerator, skFormat, skEnding], ReduceToNothing);
+  Result := SanitizeText(Value, [skAccelerator, skFormat, skEnding, skSurround], ReduceToNothing);
 end;
 
 function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing: boolean): string;
 var
   n: integer;
+  SurroundPair: TSurroundPair;
 begin
   // Handle & accelerator chars
   if (skAccelerator in Kind) then
@@ -277,6 +294,18 @@ begin
       // Find next format specifier
       n := PosEx('%', Result, n);
     end;
+  end;
+
+  if (skSurround in Kind) and (Length(Result) > 2) then
+  begin
+    for SurroundPair in SurroundPairs do
+      if (Result.StartsWith(SurroundPair.StartSurround)) and (Result.EndsWith(SurroundPair.EndSurround)) then
+      begin
+        SetLength(Result, Length(Result)-1);
+        Delete(Result, 1, 1);
+        Exclude(Kind, skEnding);
+        break;
+      end;
   end;
 
   if (skEnding in Kind) then
@@ -469,6 +498,7 @@ var
   SourceHasAccelerator: boolean;
   IgnoreAccelerator: boolean;
   Accelerator: string;
+  SurroundPair: TSurroundPair;
 begin
   Result := Value;
 
@@ -524,6 +554,17 @@ begin
       if (Result.EndsWith('...')) then
         SetLength(Result, Length(Result)-3);
     end;
+  end;
+
+  if (EqualizeSurround in Kinds) and (Length(SourceValue) > 2) then
+  begin
+    for SurroundPair in SurroundPairs do
+      if (SourceValue.StartsWith(SurroundPair.StartSurround)) and (SourceValue.EndsWith(SurroundPair.EndSurround)) then
+      begin
+        if (not Result.StartsWith(SurroundPair.StartSurround)) and (not Result.EndsWith(SurroundPair.EndSurround)) then
+          Result := SurroundPair.StartSurround + Result + SurroundPair.EndSurround;
+        break;
+      end;
   end;
 
   if (EqualizeCase in Kinds) then

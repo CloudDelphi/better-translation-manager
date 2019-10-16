@@ -1,7 +1,7 @@
 inherited FormFilters: TFormFilters
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSizeable
-  Caption = 'Black List'
+  Caption = 'Stop List'
   ClientHeight = 528
   ClientWidth = 655
   OnShow = FormShow

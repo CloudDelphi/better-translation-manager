@@ -1137,19 +1137,21 @@ object FormMain: TFormMain
     object BarButtonStatusTranslate: TdxBarButton
       Action = ActionStatusTranslate
       Category = 0
+      AllowAllUp = True
       ButtonStyle = bsChecked
       GroupIndex = 1
-      Down = True
     end
     object BarButtonStatusDontTranslate: TdxBarButton
       Action = ActionStatusDontTranslate
       Category = 0
+      AllowAllUp = True
       ButtonStyle = bsChecked
       GroupIndex = 1
     end
     object BarButtonStatusHold: TdxBarButton
       Action = ActionStatusHold
       Category = 0
+      AllowAllUp = True
       ButtonStyle = bsChecked
       GroupIndex = 1
     end
@@ -1459,13 +1461,14 @@ object FormMain: TFormMain
       Action = ActionFiltersAdd
       Category = 0
       GalleryOptions.ColumnCount = 1
-      GalleryOptions.ItemAllowDeselect = True
       GalleryFilter.Categories = <>
       GalleryInRibbonOptions.Collapsed = True
       GalleryInRibbonOptions.MinColumnCount = 1
       GalleryInMenuOptions.DropDownGalleryResizing = gsrNone
       GalleryInMenuOptions.ItemTextKind = itkCaptionAndDescription
       ItemLinks = <>
+      ItemOptions.ShowDescriptions = True
+      ItemOptions.ShowShortCuts = True
       OnPopup = RibbonGalleryItemFiltersPopup
       object RibbonGalleryItemGroup: TdxRibbonGalleryGroup
         Options.AssignedValues = [avItemTextKind]
@@ -1498,7 +1501,6 @@ object FormMain: TFormMain
     end
   end
   object SkinController: TdxSkinController
-    NativeStyle = False
     ScrollbarMode = sbmClassic
     SkinName = 'UserSkin'
     Left = 500
@@ -1920,27 +1922,28 @@ object FormMain: TFormMain
     end
     object ActionFilters: TAction
       Category = 'Filters'
-      Caption = 'Black List...'
+      Caption = 'Stop List...'
       Hint = 'List of items that should never be translated'
       OnExecute = ActionFiltersExecute
     end
     object ActionFiltersApply: TAction
       Category = 'Filters'
-      Caption = 'Apply black list...'
-      Hint = 'Apply black list to the project'
+      Caption = 'Apply stop list...'
+      Hint = 'Apply stop list to the project'
       OnExecute = ActionFiltersApplyExecute
       OnUpdate = ActionFiltersApplyUpdate
     end
     object ActionFiltersAdd: TAction
       Category = 'Filters'
-      Caption = 'Add to black list...'
+      Caption = 'Add to stop list...'
+      ShortCut = 24624
       OnExecute = ActionDummyExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
     object ActionFiltersAddModule: TAction
       Category = 'Filters'
       Caption = 'Module:'
-      ShortCut = 24624
+      ShortCut = 24625
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
@@ -1948,7 +1951,7 @@ object FormMain: TFormMain
       Tag = 1
       Category = 'Filters'
       Caption = 'Element:'
-      ShortCut = 24625
+      ShortCut = 24626
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
@@ -1956,7 +1959,7 @@ object FormMain: TFormMain
       Tag = 2
       Category = 'Filters'
       Caption = 'Type:'
-      ShortCut = 24626
+      ShortCut = 24627
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
@@ -1964,7 +1967,7 @@ object FormMain: TFormMain
       Tag = 3
       Category = 'Filters'
       Caption = 'Name:'
-      ShortCut = 24627
+      ShortCut = 24628
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
@@ -1972,7 +1975,7 @@ object FormMain: TFormMain
       Tag = 4
       Category = 'Filters'
       Caption = 'Type and Name:'
-      ShortCut = 24628
+      ShortCut = 24629
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
@@ -1980,7 +1983,7 @@ object FormMain: TFormMain
       Tag = 5
       Category = 'Filters'
       Caption = 'Value:'
-      ShortCut = 24629
+      ShortCut = 24630
       OnExecute = ActionFiltersAddExecute
       OnUpdate = ActionHasPropertyFocusedUpdate
     end
@@ -2042,11 +2045,16 @@ object FormMain: TFormMain
       end
       item
         Visible = True
-        ItemName = 'RibbonGalleryItemFilters'
+        ItemName = 'ButtonItemBookmark'
+      end
+      item
+        BeginGroup = True
+        Visible = True
+        ItemName = 'BarButtonTMLookup'
       end
       item
         Visible = True
-        ItemName = 'ButtonItemBookmark'
+        ItemName = 'RibbonGalleryItemFilters'
       end>
     Ribbon = RibbonMain
     UseOwnFont = False

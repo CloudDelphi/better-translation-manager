@@ -1799,8 +1799,8 @@ begin
     FProject.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
-        if ((SourceValue = Prop.Value) or ((TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (SanitizedSourceValue = SanitizeText(Prop.Value, False)))) and
-          (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TranslationLanguage)) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TranslationLanguage)) and
+          ((SourceValue = Prop.Value) or ((TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (AnsiSameText(SanitizedSourceValue, SanitizeText(Prop.Value, False))))) then
         begin
           if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (SourceValue <> Prop.Value) then
             Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, SanitizedTranslatedValue)
@@ -1812,7 +1812,7 @@ begin
           Inc(Count);
         end;
         Result := True;
-      end);
+      end, False);
   end;
   if (Count > 0) then
     QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
@@ -2422,6 +2422,7 @@ begin
     else
       Value := '-';
 
+    RibbonGalleryItemGroup.Items[i].Hint := Value;
     RibbonGalleryItemGroup.Items[i].Description := cxGetStringAdjustedToWidth(0, 0, Value, 200, mstEndEllipsis);
   end;
 end;
@@ -3271,28 +3272,36 @@ begin
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionStatusDontTranslateExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+  SaveCursor(crAppStart);
+  FocusedNode.TreeList.BeginUpdate;
+  try
+    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    begin
+      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
 
-    if (Item.Status = ItemStatusDontTranslate) then
-      continue;
+      if (Item.Status = ItemStatusDontTranslate) then
+        continue;
 
-    Item.Status := ItemStatusDontTranslate;
+      Item.Status := ItemStatusDontTranslate;
 
-    // TODO : This should be done in LoadItem()
-    if (Item = FocusedModule) then
-      QueueTranslationMemoryPeek
-    else
-    if (Item is TLocalizerProperty) then
-      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+      // TODO : This should be done in LoadItem()
+      if (Item = FocusedModule) then
+        QueueTranslationMemoryPeek
+      else
+      if (Item is TLocalizerProperty) then
+        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
 
-    LoadItem(Item, True);
+      LoadItem(Item, True);
+    end;
+  finally
+    FocusedNode.TreeList.EndUpdate;
   end;
 end;
 
@@ -3308,23 +3317,29 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+  SaveCursor(crAppStart);
+  FocusedNode.TreeList.BeginUpdate;
+  try
+    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    begin
+      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
 
-    if (Item.Status = ItemStatusHold) then
-      continue;
+      if (Item.Status = ItemStatusHold) then
+        continue;
 
-    Item.Status := ItemStatusHold;
+      Item.Status := ItemStatusHold;
 
-    // TODO : This should be done in LoadItem()
-    if (Item = FocusedModule) then
-      QueueTranslationMemoryPeek
-    else
-    if (Item is TLocalizerProperty) then
-      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+      // TODO : This should be done in LoadItem()
+      if (Item = FocusedModule) then
+        QueueTranslationMemoryPeek
+      else
+      if (Item is TLocalizerProperty) then
+        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
 
-    LoadItem(Item, True);
+      LoadItem(Item, True);
+    end;
+  finally
+    FocusedNode.TreeList.EndUpdate;
   end;
 end;
 
@@ -3340,23 +3355,29 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-  begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+  SaveCursor(crAppStart);
+  FocusedNode.TreeList.BeginUpdate;
+  try
+    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    begin
+      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
 
-    if (Item.Status = ItemStatusTranslate) then
-      continue;
+      if (Item.Status = ItemStatusTranslate) then
+        continue;
 
-    Item.Status := ItemStatusTranslate;
+      Item.Status := ItemStatusTranslate;
 
-    // TODO : This should be done in LoadItem()
-    if (Item = FocusedModule) then
-      QueueTranslationMemoryPeek
-    else
-    if (Item is TLocalizerProperty) then
-      QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+      // TODO : This should be done in LoadItem()
+      if (Item = FocusedModule) then
+        QueueTranslationMemoryPeek
+      else
+      if (Item is TLocalizerProperty) then
+        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
 
-    LoadItem(Item, True);
+      LoadItem(Item, True);
+    end;
+  finally
+    FocusedNode.TreeList.EndUpdate;
   end;
 end;
 
@@ -3444,20 +3465,26 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  for i := 0 to TreeListItems.SelectionCount-1 do
-  begin
-    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+  SaveCursor(crAppStart);
+  TreeListItems.BeginUpdate;
+  try
+    for i := 0 to TreeListItems.SelectionCount-1 do
+    begin
+      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-      Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
+      if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+        Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
-    Translation.Status := tStatusTranslated;
+      Translation.Status := tStatusTranslated;
 
-    TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+      TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
 
-    LoadItem(Prop);
+      LoadItem(Prop);
 
-    TranslationAdded(Prop);
+      TranslationAdded(Prop);
+    end;
+  finally
+    TreeListItems.EndUpdate;
   end;
 end;
 
@@ -3467,20 +3494,26 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  for i := 0 to TreeListItems.SelectionCount-1 do
-  begin
-    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+  SaveCursor(crAppStart);
+  TreeListItems.BeginUpdate;
+  try
+    for i := 0 to TreeListItems.SelectionCount-1 do
+    begin
+      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-      Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
+      if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+        Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
-    Translation.Status := tStatusProposed;
+      Translation.Status := tStatusProposed;
 
-    TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+      TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
 
-    LoadItem(Prop);
+      LoadItem(Prop);
 
-    TranslationAdded(Prop);
+      TranslationAdded(Prop);
+    end;
+  finally
+    TreeListItems.EndUpdate;
   end;
 end;
 
@@ -3489,16 +3522,22 @@ var
   i: integer;
   Prop: TLocalizerProperty;
 begin
-  for i := 0 to TreeListItems.SelectionCount-1 do
-  begin
-    Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+  SaveCursor(crAppStart);
+  TreeListItems.BeginUpdate;
+  try
+    for i := 0 to TreeListItems.SelectionCount-1 do
+    begin
+      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
 
-    Prop.Translations.Remove(TranslationLanguage);
+      Prop.Translations.Remove(TranslationLanguage);
 
-    LoadItem(Prop);
+      LoadItem(Prop);
 
-    // Prop is now tranlatable again - check for match in TM
-    QueueTranslationMemoryPeek(TreeListItems.Selections[i], True);
+      // Prop is now tranlatable again - check for match in TM
+      QueueTranslationMemoryPeek(TreeListItems.Selections[i], True);
+    end;
+  finally
+    TreeListItems.EndUpdate;
   end;
 end;
 
