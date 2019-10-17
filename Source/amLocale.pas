@@ -60,7 +60,9 @@ type
     function ReleaseFlag: TBitmap;
     procedure DestroyFlag;
     class function GetLocaleData(ID: LCID; Flag: DWORD): string; overload;
+    class function GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD; overload;
     function GetLocaleData(Flag: DWORD): string; overload;
+    function GetLocaleDataInt(Flag: DWORD): DWORD; overload;
     property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
     property DisplayName: string read GetDisplayName;
     property ISO3166Name: string read GetISO3166Name;
@@ -889,6 +891,16 @@ begin
   Result := GetLocaleData(Locale, Flag);
 end;
 
+function TLocaleItem.GetLocaleDataInt(Flag: DWORD): DWORD;
+begin
+  Result := GetLocaleDataInt(Locale, Flag);
+end;
+
+class function TLocaleItem.GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD;
+begin
+  GetLocaleInfoW(ID, Flag or LOCALE_RETURN_NUMBER, PWideChar(@Result), SizeOf(Result));
+end;
+
 class function TLocaleItem.GetLocaleData(ID: LCID; Flag: DWORD): string;
 var
   Buffer: array[0..1023] of WideChar;
@@ -970,7 +982,7 @@ begin
   including a terminating null character. If no ANSI code page is available,
   only Unicode can be used for the locale. In this case, the value is CP_ACP (0).
   *)
-  Result := StrToInt(GetLocaleData(LOCALE_IDEFAULTANSICODEPAGE));
+  Result := GetLocaleDataInt(LOCALE_IDEFAULTANSICODEPAGE);
 end;
 
 //------------------------------------------------------------------------------
@@ -1007,7 +1019,7 @@ begin
   IBM country/region codes. The maximum number of characters allowed for this
   string is six, including a terminating null character.
   *)
-  Result := StrToInt(GetLocaleData(LOCALE_ICOUNTRY));
+  Result := GetLocaleDataInt(LOCALE_ICOUNTRY);
 end;
 
 //------------------------------------------------------------------------------
