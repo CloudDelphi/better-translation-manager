@@ -316,6 +316,12 @@ type
     dxLayoutGroup20: TdxLayoutGroup;
     dxLayoutGroup21: TdxLayoutGroup;
     dxLayoutGroup22: TdxLayoutGroup;
+    dxLayoutItem60: TdxLayoutItem;
+    cxLabel3: TcxLabel;
+    dxLayoutItem61: TdxLayoutItem;
+    CheckBoxProjectAutoApplyStopList: TcxCheckBox;
+    dxLayoutGroup23: TdxLayoutGroup;
+    dxLayoutGroup24: TdxLayoutGroup;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -562,11 +568,16 @@ begin
   ** General section
   *)
   SetSkin(TranslationManagerSettings.System.Skin);
+
+  CheckBoxProjectAutoApplyStopList.Checked := TranslationManagerSettings.System.AutoApplyStopList;
+
   CheckBoxEditUseProposed.Checked := TranslationManagerSettings.Editor.UseProposedStatus;
   CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.Editor.AutoApplyTranslations;
   CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
+
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
+
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
   ComboBoxApplicationLanguage.EditValue := TranslationManagerSettings.System.ApplicationLanguage;
@@ -624,6 +635,9 @@ begin
   ** General section
   *)
   TranslationManagerSettings.System.Skin := GetSkin;
+
+  TranslationManagerSettings.System.AutoApplyStopList := CheckBoxProjectAutoApplyStopList.Checked;
+
   TranslationManagerSettings.Editor.UseProposedStatus := CheckBoxEditUseProposed.Checked;
   TranslationManagerSettings.Editor.AutoApplyTranslations := CheckBoxEditAutoApplyTranslations.Checked;
   TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar := CheckBoxEditAutoApplyTranslationsSimilar.Checked;
@@ -632,7 +646,9 @@ begin
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
   TranslationManagerSettings.Editor.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
+
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
+
   TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
   TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);
   TranslationManagerSettings.System.ApplicationLanguage := VarToLCID(ComboBoxApplicationLanguage.EditValue);

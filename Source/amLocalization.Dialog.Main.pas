@@ -35,7 +35,8 @@ uses
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
-  amLocalization.TranslationMemory;
+  amLocalization.TranslationMemory,
+  amLocalization.Filters;
 
 
 const
@@ -549,6 +550,7 @@ type
     procedure DoRefreshModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
     procedure TranslationAdded(AProp: TLocalizerProperty);
+    function ApplyStopList(const Progress: IProgress = nil): TFilterItemList.TFilterStats;
   protected
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
@@ -656,7 +658,6 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Settings,
-  amLocalization.Filters,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -2460,6 +2461,21 @@ begin
   end;
 end;
 
+function TFormMain.ApplyStopList(const Progress: IProgress): TFilterItemList.TFilterStats;
+begin
+  Result := TranslationManagerSettings.Filters.Filters.Apply(FProject,
+    procedure(Item: TCustomLocalizerItem)
+    begin
+      if (Item is TLocalizerProperty) then
+      begin
+        if (TLocalizerProperty(Item).Item.Module = FocusedModule) then
+          ReloadProperty(TLocalizerProperty(Item));
+      end else
+      if (Item is TLocalizerModule) then
+        LoadItem(TLocalizerModule(Item));
+    end, Progress);
+end;
+
 procedure TFormMain.ActionFiltersApplyExecute(Sender: TObject);
 resourcestring
   sFiltersApply = 'Applying Stop List';
@@ -2478,17 +2494,7 @@ begin
   SaveCursor(crHourGlass);
   Progress := ShowProgress(sFiltersApply);
 
-  Stats := TranslationManagerSettings.Filters.Filters.Apply(FProject,
-    procedure(Item: TCustomLocalizerItem)
-    begin
-      if (Item is TLocalizerProperty) then
-      begin
-        if (TLocalizerProperty(Item).Item.Module = FocusedModule) then
-          ReloadProperty(TLocalizerProperty(Item));
-      end else
-      if (Item is TLocalizerModule) then
-        LoadItem(TLocalizerModule(Item));
-    end, Progress);
+  Stats := ApplyStopList(Progress);
 
 
   Progress.Hide;
@@ -2729,6 +2735,9 @@ begin
   finally
     ProjectProcessor.Free;
   end;
+
+  if (TranslationManagerSettings.System.AutoApplyStopList) then
+    ApplyStopList;
 
   CreateTranslationMemoryPeeker(False);
 
@@ -3165,6 +3174,9 @@ begin
   finally
     ProjectProcessor.Free;
   end;
+
+  if (TranslationManagerSettings.System.AutoApplyStopList) then
+    ApplyStopList;
 
   // Doesn't work:
   // Project will always be modified as some of the modules that are created during

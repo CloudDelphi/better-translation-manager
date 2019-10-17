@@ -204,7 +204,8 @@ begin
     Project.EndUpdate;
   end;
 
-  Progress.Progress(psEnd, 1, 1);
+  if (Progress <> nil) then
+    Progress.Progress(psEnd, 1, 1);
 
   Result := Stats;
 end;

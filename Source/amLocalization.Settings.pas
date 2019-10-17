@@ -372,6 +372,7 @@ type
     FDefaultSourceLanguage: LCID;
     FApplicationLanguage: LCID;
     FSafeMode: boolean;
+    FAutoApplyStopList: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -398,6 +399,8 @@ type
 
     property Skin: string read FSkin write FSkin;
     property HideFeedback: boolean read FHideFeedback write FHideFeedback;
+
+    property AutoApplyStopList: boolean read FAutoApplyStopList write FAutoApplyStopList default True;
 
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
 
