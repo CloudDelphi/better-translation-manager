@@ -59,7 +59,8 @@ type
     destructor Destroy; override;
     function ReleaseFlag: TBitmap;
     procedure DestroyFlag;
-    class function GetLocaleDataW(ID: LCID; Flag: DWORD): string;
+    class function GetLocaleData(ID: LCID; Flag: DWORD): string; overload;
+    function GetLocaleData(Flag: DWORD): string; overload;
     property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
     property DisplayName: string read GetDisplayName;
     property ISO3166Name: string read GetISO3166Name;
@@ -444,21 +445,10 @@ end;
 var
   FISO3166Name: string = '';
 
-function GetLocaleDataW(ID: LCID; Flag: DWORD): string;
-var
-  Buffer: array[0..1023] of WideChar;
-begin
-  Buffer[0] := #0;
-  GetLocaleInfoW(ID, Flag, Buffer, SizeOf(Buffer) div 2);
-  Result := Buffer;
-end;
-
-//------------------------------------------------------------------------------
-
 function LocaleISO3166Name: string;
 begin
   if (FISO3166Name = '') then
-    FISO3166Name := GetLocaleDataW(GetThreadLocale, LOCALE_SISO3166CTRYNAME);
+    FISO3166Name := TLocaleItem.GetLocaleData(GetThreadLocale, LOCALE_SISO3166CTRYNAME);
   Result := FISO3166Name;
 end;
 
@@ -466,7 +456,7 @@ end;
 
 function LocaleName: string;
 begin
-  Result := GetLocaleDataW(GetThreadLocale, LOCALE_SLANGUAGE);
+  Result := TLocaleItem.GetLocaleData(GetThreadLocale, LOCALE_SLANGUAGE);
 end;
 
 //------------------------------------------------------------------------------
@@ -874,7 +864,7 @@ begin
   localized name of language.
   *)
   if (FLanguageName = '') then
-    FLanguageName := GetLocaleDataW(Locale, LOCALE_SLANGUAGE);
+    FLanguageName := GetLocaleData(LOCALE_SLANGUAGE);
   Result := FLanguageName;
 end;
 
@@ -888,18 +878,23 @@ begin
   http://www.microsoft.com/globaldev/reference/winxp/langtla.mspx
   *)
   if (FLanguageShortName = '') then
-    FLanguageShortName := GetLocaleDataW(Locale, LOCALE_SABBREVLANGNAME);
+    FLanguageShortName := GetLocaleData(LOCALE_SABBREVLANGNAME);
   Result := FLanguageShortName;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItem.GetLocaleDataW(ID: LCID; Flag: DWORD): string;
+function TLocaleItem.GetLocaleData(Flag: DWORD): string;
+begin
+  Result := GetLocaleData(Locale, Flag);
+end;
+
+class function TLocaleItem.GetLocaleData(ID: LCID; Flag: DWORD): string;
 var
   Buffer: array[0..1023] of WideChar;
 begin
   Buffer[0] := #0;
-  GetLocaleInfoW(ID, Flag, Buffer, SizeOf(Buffer) div 2);
+  GetLocaleInfoW(ID, Flag, Buffer, SizeOf(Buffer) div SizeOf(WideChar));
   Result := Buffer;
 end;
 
@@ -916,7 +911,7 @@ begin
   A multi-part tag to uniquely identify the locale.
   The tag is based on the language tagging conventions of RFC 4646..
   *)
-  Result := GetLocaleDataW(Locale, LOCALE_SNAME);
+  Result := GetLocaleData(LOCALE_SNAME);
 end;
 
 //------------------------------------------------------------------------------
@@ -975,7 +970,7 @@ begin
   including a terminating null character. If no ANSI code page is available,
   only Unicode can be used for the locale. In this case, the value is CP_ACP (0).
   *)
-  Result := StrToInt(GetLocaleDataW(Locale, LOCALE_IDEFAULTANSICODEPAGE));
+  Result := StrToInt(GetLocaleData(LOCALE_IDEFAULTANSICODEPAGE));
 end;
 
 //------------------------------------------------------------------------------
@@ -1012,7 +1007,7 @@ begin
   IBM country/region codes. The maximum number of characters allowed for this
   string is six, including a terminating null character.
   *)
-  Result := StrToInt(GetLocaleDataW(Locale, LOCALE_ICOUNTRY));
+  Result := StrToInt(GetLocaleData(LOCALE_ICOUNTRY));
 end;
 
 //------------------------------------------------------------------------------
@@ -1027,7 +1022,7 @@ begin
   localized version.
   *)
   if (FCountryName = '') then
-    FCountryName := GetLocaleDataW(Locale, LOCALE_SCOUNTRY);
+    FCountryName := GetLocaleData(LOCALE_SCOUNTRY);
   Result := FCountryName;
 end;
 
@@ -1041,7 +1036,7 @@ begin
   if (FDisplayName = '') then
   begin
     if (CheckWin32Version(6)) then
-      FDisplayName := GetLocaleDataW(Locale, LOCALE_SLANGDISPLAYNAME)
+      FDisplayName := GetLocaleData(LOCALE_SLANGDISPLAYNAME)
     else
       FDisplayName := LanguageName;
   end;
@@ -1079,7 +1074,7 @@ begin
   nine, including a terminating null character.
   *)
   if (FISO3166Name = '') then
-    FISO3166Name := GetLocaleDataW(Locale, LOCALE_SISO3166CTRYNAME);
+    FISO3166Name := GetLocaleData(LOCALE_SISO3166CTRYNAME);
   Result := FISO3166Name;
 end;
 
@@ -1094,7 +1089,7 @@ begin
   of characters allowed for this string is nine, including a terminating null
   character.
   *)
-  Result := GetLocaleDataW(Locale, LOCALE_SISO639LANGNAME);
+  Result := GetLocaleData(LOCALE_SISO639LANGNAME);
 end;
 
 //------------------------------------------------------------------------------

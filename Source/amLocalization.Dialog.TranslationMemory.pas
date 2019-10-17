@@ -367,7 +367,7 @@ begin
 
     for i := 0 to GridTMDBTableView.ColumnCount-1 do
     begin
-      FRightToLeft[i] := (StrToInt(TLocaleItem.GetLocaleDataW(GridTMDBTableView.Columns[i].DataBinding.Field.Tag, LOCALE_IREADINGLAYOUT)) = 1);
+      FRightToLeft[i] := (StrToIntDef(TLocaleItem.GetLocaleData(GridTMDBTableView.Columns[i].DataBinding.Field.Tag, LOCALE_IREADINGLAYOUT), 0) = 1);
       GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
       GridTMDBTableView.Columns[i].Width := 200;
       GridTMDBTableView.Columns[i].BestFitMaxWidth := 400;

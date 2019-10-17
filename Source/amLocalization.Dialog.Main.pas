@@ -4115,7 +4115,7 @@ begin
     ClearTranslationMemoryPeekResult;
 
     FTargetLanguage := LocaleItem;
-    FTargetRightToLeft := (StrToInt(TLocaleItem.GetLocaleDataW(FTargetLanguage.Locale, LOCALE_IREADINGLAYOUT)) = 1);
+    FTargetRightToLeft := (StrToIntDef(FTargetLanguage.GetLocaleData(LOCALE_IREADINGLAYOUT), 0) = 1);
 
     BarEditItemTargetLanguage.EditValue := FTargetLanguage.Locale;
 
