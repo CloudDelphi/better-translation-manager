@@ -119,6 +119,9 @@ type
   end;
 
 
+const
+  LOCALE_SLANGDISPLAYNAME = $0000006f;
+  LOCALE_SLOCALIZEDLANGUAGENAME = $0000006f;
 
 //------------------------------------------------------------------------------
 //
@@ -898,16 +901,18 @@ end;
 
 class function TLocaleItem.GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD;
 begin
-  GetLocaleInfoW(ID, Flag or LOCALE_RETURN_NUMBER, PWideChar(@Result), SizeOf(Result));
+  if (GetLocaleInfo(ID, Flag or LOCALE_RETURN_NUMBER, PChar(@Result), SizeOf(Result) div SizeOf(Char)) = 0) then
+    RaiseLastOSError;
 end;
 
 class function TLocaleItem.GetLocaleData(ID: LCID; Flag: DWORD): string;
 var
-  Buffer: array[0..1023] of WideChar;
+  Size: integer;
 begin
-  Buffer[0] := #0;
-  GetLocaleInfoW(ID, Flag, Buffer, SizeOf(Buffer) div SizeOf(WideChar));
-  Result := Buffer;
+  Size := GetLocaleInfo(ID, Flag, nil, 0);
+  SetLength(Result, Size-1);
+  if (GetLocaleInfo(ID, Flag, PChar(Result), Size) = 0) then
+    RaiseLastOSError;
 end;
 
 function TLocaleItem.GetLocaleName: string;
@@ -1041,9 +1046,6 @@ end;
 //------------------------------------------------------------------------------
 
 function TLocaleItem.GetDisplayName: string;
-const
-  LOCALE_SLANGDISPLAYNAME = $0000006f;
-  LOCALE_SLOCALIZEDLANGUAGENAME = $0000006f;
 begin
   if (FDisplayName = '') then
   begin
