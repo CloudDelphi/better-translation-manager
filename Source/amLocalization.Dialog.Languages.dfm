@@ -2,8 +2,6 @@ inherited FormLanguages: TFormLanguages
   Caption = 'Languages'
   ClientHeight = 371
   ClientWidth = 601
-  OnCreate = FormCreate
-  OnResize = FormResize
   ExplicitWidth = 607
   ExplicitHeight = 399
   PixelsPerInch = 96
@@ -44,46 +42,26 @@ inherited FormLanguages: TFormLanguages
       ExplicitWidth = 585
       ExplicitHeight = 272
       object ComboBoxSourceLanguage: TcxExtLookupComboBox [0]
-        Left = 99
+        Left = 95
         Top = 6
         RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
         Style.HotTrack = False
         TabOrder = 0
         Width = 199
       end
-      object CheckListBoxLanguages: TcxCheckListBox [1]
-        Left = 99
-        Top = 33
-        Width = 480
-        Height = 181
-        Columns = 2
-        EditValueFormat = cvfIndices
-        Items = <
-          item
-            State = cbsChecked
-            Text = 'DA-dk'
-          end
-          item
-            Text = 'EN-us'
-          end>
-        ParentColor = True
-        Sorted = True
-        Style.TransparentBorder = True
-        TabOrder = 1
-      end
-      object CheckBoxApplyFilter: TcxCheckBox [2]
-        Left = 99
+      object CheckBoxApplyFilter: TcxCheckBox [1]
+        Left = 95
         Top = 220
         Action = ActionApplyFilter
         Style.HotTrack = False
-        TabOrder = 2
+        TabOrder = 1
         Transparent = True
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
         ItemIndex = 3
       end
-      object dxLayoutItem2: TdxLayoutItem
+      object LayoutItemSourceLanguage: TdxLayoutItem
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = '&Source language:'
         Control = ComboBoxSourceLanguage
@@ -102,13 +80,12 @@ inherited FormLanguages: TFormLanguages
         ShowBorder = False
         Index = 4
       end
-      object dxLayoutItem1: TdxLayoutItem
+      object LayoutItemTargetLanguage: TdxLayoutItem
         Parent = LayoutControlGroup_Root
         AlignHorz = ahClient
         AlignVert = avClient
         CaptionOptions.AlignVert = tavTop
         CaptionOptions.Text = '&Target languages:'
-        Control = CheckListBoxLanguages
         ControlOptions.OriginalHeight = 249
         ControlOptions.OriginalWidth = 474
         ControlOptions.ShowBorder = False
