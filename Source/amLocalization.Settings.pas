@@ -107,10 +107,10 @@ type
     FFolders: array[TTranslationManagerFolder] of string;
   strict private const
     sFolderDisplayName: array[TTranslationManagerFolder] of string = ( // TODO : Localization
-      'Skins (user)',
       'Skins (system)',
-      'Spell Check dictionaries (user)',
+      'Skins (user)',
       'Spell Check dictionaries (system)',
+      'Spell Check dictionaries (user)',
       'TMX translation memory files'
       );
   private
