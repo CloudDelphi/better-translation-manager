@@ -94,12 +94,20 @@ So returning to our example above, in order to make `HelloWorld.ENU` region neut
 
 
 ## The Application
-In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application ready to run here: [Downloads](https://bitbucket.org/anders_melander/better-translation-manager/downloads/)
+In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application installer here: [Downloads](https://bitbucket.org/anders_melander/better-translation-manager/downloads/)
 
 Note that the compiled application will almost always lag behind the source code since it has to go through a bit of QA before I upload it. The application has been virus checked with BitDefender.
 
-The application does not require any installation but you should copy it to its own folder before you run it.
-Settings are stored in the registry: `HKCU\Software\Melander\TranslationManager`
+The installer contains the main application, the command line tool, a sample translation memory database and a few spell check dictionaries.
+
+Settings are stored in the registry under `HKCU\Software\Melander\TranslationManager` and files are stored in the `%AppData%\TranslationManager` folder.
+
+### Spell Check dictionaries
+The spell checker uses dictionaries in the [HunSpell](https://en.wikipedia.org/wiki/Hunspell) format.
+It is up to yourself to [find](https://www.google.com/search?client=firefox-b-d&q=hunspell%20dictionary) and download dictionaries.
+To add a new dictionary you must copy the dictionary files to the `Dictionaries` folder under the application folder.
+The dictionary for a language is contained in two files; `language.dic` and `language.aff` where language is specified with one of [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag). For example the dictionary files for Danish could be named `dan.dic` and `dan.aff`, `da.dic` and `da.aff` or `da-DK.dic` and `da-DK.aff` - or any combination of these.
+You can find a good collection of dictionaries [here](https://github.com/wooorm/dictionaries). Just remember to  rename the files.
 
 ## The Source
 [The source](https://bitbucket.org/anders_melander/better-translation-manager/src/master/) is available primarily so you can build your own custom versions and to ensure that BTM can be updated if I should get hit by a bus.

@@ -4172,8 +4172,22 @@ begin
     // Add and load new dictionary
     if (not AnyFound) then
     begin
-      FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LanguageShortName]);
+      FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LanguageShortName]); // DAN
+      if (not TFile.Exists(FilenameDic)) then
+      begin
+        FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LocaleName]); // da-DK
+        if (not TFile.Exists(FilenameDic)) then
+          FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.ISO639_1Name]); // DA
+      end;
+
       FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.LanguageShortName]);
+      if (not TFile.Exists(FilenameAff)) then
+      begin
+        FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.LocaleName]);
+        if (not TFile.Exists(FilenameAff)) then
+          FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.ISO639_1Name]);
+      end;
+
       if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
       begin
         // AnyFound := True;
