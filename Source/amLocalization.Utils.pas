@@ -222,6 +222,11 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function IsAnsi(c: char): boolean; Inline;
+begin
+  Result := (c <= #$FF);
+end;
+
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
 begin
   Result := SanitizeText(Value, [skAccelerator, skFormat, skEnding, skSurround], ReduceToNothing);
@@ -253,12 +258,12 @@ begin
         // Escaped % - ignore
         Delete(Result, n, 1);
       end else
-      if (Result[n] in ['0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
+      if (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
       begin
         Result[n-1] := ' '; // Replace %... with space
 
         // Remove chars until end of format specifier
-        while (Result[n] in ['0'..'9']) do
+        while (Result[n].IsDigit) do
           Delete(Result, n, 1);
 
         if (Result[n] = ':') then
@@ -267,16 +272,16 @@ begin
         if (Result[n] = '-') then
           Delete(Result, n, 1);
 
-        while (Result[n] in ['0'..'9']) do
+        while (Result[n].IsDigit) do
           Delete(Result, n, 1);
 
         if (Result[n] = '.') then
           Delete(Result, n, 1);
 
-        while (Result[n] in ['0'..'9']) do
+        while (Result[n].IsDigit) do
           Delete(Result, n, 1);
 
-        if (Result[n] in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
+        if (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
           Delete(Result, n, 1)
         else
         begin

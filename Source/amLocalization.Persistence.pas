@@ -66,6 +66,7 @@ uses
   Windows,
   Variants,
   XMLDoc, XMLIntf,
+  System.Character,
   amLocale,
   amPath,
   amVersionInfo;
@@ -163,7 +164,7 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
       Exit;
     for c in Uppercase(Value) do
     begin
-      if (c in ['0'..'9']) then
+      if (c.IsDigit) then
         n := Ord(c)-Ord('0')
       else
         n := 10+Ord(c)-Ord('A');

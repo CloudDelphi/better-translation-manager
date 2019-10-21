@@ -108,6 +108,11 @@ const
     tStatusObsolete);           // tsUnknown
 
 
+function IsAnsi(c: char): boolean; Inline;
+begin
+  Result := (c <= #$FF);
+end;
+
 function EscapeChar(c: Char; IsUnicode: boolean): string;
 begin
 //  if (TCharacter.GetUnicodeCategory(c) in [TUnicodeCategory.ucControl, TUnicodeCategory.ucUnassigned, TUnicodeCategory.ucPrivateUse]) then
@@ -120,7 +125,7 @@ const
   UnicodePrefix = 'L';
 
 type
-  SetOfChar = set of char;
+  SetOfChar = set of AnsiChar;
 
 function Escape(const s: string; Quote: boolean = False; DontEscape: SetOfChar = []; ForceUnicode: boolean = False): string;
 var
@@ -153,7 +158,7 @@ begin
   p := PChar(s);
   for i := 1 to Length(s) do
   begin
-    if (p^ in DontEscape) then
+    if (IsAnsi(p^)) and (AnsiChar(p^) in DontEscape) then
       Chunk := p^
     else
     case integer(p^) of
@@ -455,7 +460,7 @@ var
                 // String in .dfn are ' delimited. Strings in .rcn are " delimited.
                 if (TranslationStatus = tsUntranslated) then
                 begin
-                  if (Length(SourceValue) < 2) or (not(SourceValue[1] in ['"', ''''])) then
+                  if (Length(SourceValue) < 2) or (IsAnsi(SourceValue[1]) and (not(AnsiChar(SourceValue[1]) in ['"', '''']))) then
                     TranslationStatus := tsDontTranslate;
                 end;
 

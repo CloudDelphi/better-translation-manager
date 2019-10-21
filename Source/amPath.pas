@@ -154,7 +154,7 @@ begin
 
     // OK -- UNC
   end else
-  if (Length(Result) >= 2) and (Result[1] in ['a'..'z', 'A'..'Z']) and (Result[2] = ':') then
+  if (Length(Result) >= 2) and (Result[1] <= #127) and (AnsiChar(Result[1]) in ['a'..'z', 'A'..'Z']) and (Result[2] = ':') then
   begin
     // OK -- drive letter -- unwind subst'ing
     SetLength(Drive, 2);
