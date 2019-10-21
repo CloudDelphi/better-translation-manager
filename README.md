@@ -94,7 +94,7 @@ So returning to our example above, in order to make `HelloWorld.ENU` region neut
 
 
 ## The Application
-In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application ready to run here: 
+In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application ready to run here: [Downloads](https://bitbucket.org/anders_melander/better-translation-manager/downloads/)
 
 Note that the compiled application will almost always lag behind the source code since it has to go through a bit of QA before I upload it. The application has been virus checked with BitDefender.
 
@@ -103,7 +103,8 @@ Settings are stored in the registry: `HKCU\Software\Melander\TranslationManager`
 
 ## The Source
 [The source](https://bitbucket.org/anders_melander/better-translation-manager/src/master/) is available primarily so you can build your own custom versions and to ensure that BTM can be updated if I should get hit by a bus.
-I will accept [pull requests](https://bitbucket.org/anders_melander/better-translation-manager/pull-requests/) for bug fixes. Pull requests for new features should be backed by well argued use cases. Start by [creating an issue](https://bitbucket.org/anders_melander/better-translation-manager/issues).
+I will accept [pull requests](https://bitbucket.org/anders_melander/better-translation-manager/pull-requests/) for bug fixes provided I can reproduce the problem or it is obvious.
+Pull requests for new features or other changes should be backed by well argued use cases. Start by [creating an issue](https://bitbucket.org/anders_melander/better-translation-manager/issues).
 
 ### License
 The source code is released under the MPL 2.0 license:
