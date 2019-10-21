@@ -4,10 +4,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, dxSkinscxPCPainter, cxContainer,
-  cxEdit, dxLayoutcxEditAdapters, dxLayoutControlAdapters, Menus, StdCtrls, cxButtons, cxTextEdit, dxGDIPlusClasses,
-  cxImage, cxMemo, dxLayoutContainer, cxCheckBox, dxLayoutLookAndFeels, cxClasses, dxLayoutControl, ExtCtrls, cxLabel,
-  ActnList, System.Actions;
+  Dialogs, Menus, StdCtrls, ExtCtrls, ActnList, System.Actions,
+
+  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, dxSkinscxPCPainter, cxContainer,
+  cxEdit, dxLayoutcxEditAdapters, dxLayoutControlAdapters, cxButtons, cxTextEdit, dxGDIPlusClasses,
+  cxImage, cxMemo, dxLayoutContainer, cxCheckBox, dxLayoutLookAndFeels, cxClasses, dxLayoutControl, cxLabel;
 
 type
   TFeedbackKind = (FeedbackPositive, FeedbackNegative);
@@ -150,6 +151,8 @@ begin
   LayoutItemCheckBoxBug.Visible := (FKind = FeedbackNegative);
 
   UpdateDescription(False);
+
+  AutoSize := True;
 
   Result := (ShowModal = mrOK);
 end;

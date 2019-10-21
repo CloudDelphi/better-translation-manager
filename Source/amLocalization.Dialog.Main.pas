@@ -663,7 +663,9 @@ uses
   amLocalization.Dialog.TranslationMemory,
   amLocalization.Dialog.Languages,
   amLocalization.Dialog.Settings,
+{$ifdef MADEXCEPT}
   amLocalization.Dialog.Feedback,
+{$endif MADEXCEPT}
   amLocalization.Dialog.Filters;
 
 resourcestring
@@ -1057,10 +1059,15 @@ begin
     TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
   end;
 
+{$ifdef MADEXCEPT}
   if (TranslationManagerSettings.System.HideFeedback) then
     BarButtonFeedback.Visible := ivInCustomizing
   else
     BarButtonFeedback.Visible := ivAlways;
+{$else MADEXCEPT}
+  ActionFeedback.Visible := False;
+  BarButtonFeedback.Visible := ivNever;
+{$endif MADEXCEPT}
 
   ApplyCustomSettings;
 end;
@@ -2373,21 +2380,28 @@ begin
 end;
 
 procedure TFormMain.ActionFeedbackNegativeExecute(Sender: TObject);
+{$ifdef MADEXCEPT}
 var
   FormFeedback: TFormFeedback;
+{$endif MADEXCEPT}
 begin
+{$ifdef MADEXCEPT}
   FormFeedback := TFormFeedback.Create(nil);
   try
     FormFeedback.Execute(FeedbackNegative);
   finally
     FormFeedback.Free;
   end;
+{$endif MADEXCEPT}
 end;
 
 procedure TFormMain.ActionFeedbackPositiveExecute(Sender: TObject);
+{$ifdef MADEXCEPT}
 var
   FormFeedback: TFormFeedback;
+{$endif MADEXCEPT}
 begin
+{$ifdef MADEXCEPT}
   FormFeedback := TFormFeedback.Create(nil);
   try
 
@@ -2396,6 +2410,7 @@ begin
   finally
     FormFeedback.Free;
   end;
+{$endif MADEXCEPT}
 end;
 
 // -----------------------------------------------------------------------------

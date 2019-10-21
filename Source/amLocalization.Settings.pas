@@ -394,11 +394,13 @@ type
     property FirstRunThisVersion: boolean read FFirstRunThisVersion;
 
     procedure SetSafeMode;
+
+    // HideFeedback: Experimental. Not yet persisted
+    property HideFeedback: boolean read FHideFeedback write FHideFeedback;
   published
     property SingleInstance: boolean read FSingleInstance write FSingleInstance default False;
 
     property Skin: string read FSkin write FSkin;
-    property HideFeedback: boolean read FHideFeedback write FHideFeedback;
 
     property AutoApplyStopList: boolean read FAutoApplyStopList write FAutoApplyStopList default True;
 
@@ -936,6 +938,7 @@ begin
 
   FFirstRun := True;
   FFirstRunThisVersion := True;
+  FHideFeedback := True;
 end;
 
 procedure TTranslationManagerSystemSettings.BeginBoot;

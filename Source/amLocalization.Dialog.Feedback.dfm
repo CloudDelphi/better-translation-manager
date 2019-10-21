@@ -1,12 +1,11 @@
 object FormFeedback: TFormFeedback
   Left = 0
   Top = 0
-  AutoSize = True
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Translation Manager feedback'
   ClientHeight = 629
-  ClientWidth = 616
+  ClientWidth = 620
   Color = clBtnFace
   ParentFont = True
   OldCreateOrder = False
@@ -17,7 +16,7 @@ object FormFeedback: TFormFeedback
   object PanelBackground: TPanel
     Left = 0
     Top = 0
-    Width = 616
+    Width = 620
     Height = 629
     Align = alTop
     AutoSize = True
@@ -30,7 +29,7 @@ object FormFeedback: TFormFeedback
     object LayoutControl: TdxLayoutControl
       Left = 0
       Top = 0
-      Width = 616
+      Width = 620
       Height = 629
       Align = alTop
       ParentBackground = True
@@ -49,7 +48,7 @@ object FormFeedback: TFormFeedback
         OnEnter = MemoDescriptionEnter
         OnExit = MemoDescriptionExit
         Height = 85
-        Width = 558
+        Width = 562
       end
       object CheckBoxBug: TcxCheckBox
         Left = 29
@@ -951,10 +950,10 @@ object FormFeedback: TFormFeedback
         Style.HotTrack = False
         TabOrder = 6
         TextHint = 'Enter your email address'
-        Width = 428
+        Width = 432
       end
       object ButtonSend: TcxButton
-        Left = 248
+        Left = 250
         Top = 487
         Width = 119
         Height = 25
@@ -963,7 +962,7 @@ object FormFeedback: TFormFeedback
         TabOrder = 7
       end
       object LabelScreenShotEdit: TcxLabel
-        Left = 534
+        Left = 538
         Top = 198
         Cursor = crHandPoint
         Caption = 'Edit image'

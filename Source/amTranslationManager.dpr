@@ -45,7 +45,6 @@ uses
   amLocalization.Dialog.SelectModule in 'amLocalization.Dialog.SelectModule.pas' {FormSelectModule},
   amLocalization.CommandLine in 'amLocalization.CommandLine.pas',
   amLocalization.System.SingleInst in 'amLocalization.System.SingleInst.pas',
-  amLocalization.Dialog.Feedback in 'amLocalization.Dialog.Feedback.pas' {FormFeedback},
   amLocalization.Shell in 'amLocalization.Shell.pas',
   amLocalization.TranslationMemory.FileFormats.TMX in 'amLocalization.TranslationMemory.FileFormats.TMX.pas',
   amLocalization.TranslationMemory.FileFormats in 'amLocalization.TranslationMemory.FileFormats.pas',
