@@ -19,13 +19,13 @@ The core functionality of the  Better Translation Manager was written in two wee
 
 ## Features
 
-* Does not require any changes to the source of the application.
+* Does not require any changes to the source code of the application being translated.
 * Works with the existing standard Delphi localization system.
 * Translates resourcestrings and all strings in forms regardless of any 3rd party components used.
 * Works on compiled application. Source code is never used.
 * Generates localized binary resource modules (resource DLLs). Does not use an external compiler.
-* Import existing translations from compiled application and resource modules or from XLIFF localization source files (dfn, rcn files).
-* Read and save TMX translation memory files.
+* Can import existing translations from compiled application and resource modules or from XLIFF localization source files (dfn, rcn files).
+* Read and save TMX and TBX translation memory files.
 * Import Translation Memory from TMX (Translation Memory eXchange), TBX (TermBase eXchange), Microsoft Glossary and CSV.
 * Machine Translation using Translation Memory, Microsoft Translation Service or Microsoft Terminology Service.
 * Forms, Components, Types and Values that should be ignored can be specified in a Stop List.
@@ -39,7 +39,7 @@ The core functionality of the  Better Translation Manager was written in two wee
 * Resource modules contain the version resource of the source  application.
 
 
-## What it doesn't do?
+## What it doesn't do
 
 There's one task that BTM, by design, doesn't attempt to solve: Localizing the placement and size of controls.
 
@@ -76,7 +76,7 @@ To deploy a localized application all you need to do is make sure that the resou
 
 Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have `HelloWorld.exe`, `HelloWorld.DAN` and `HelloWorld.DEU` in one directory.  
 The native (or source) language of the application is US English, so if you run the application on a Windows where the regional settings have been configured as English (United States), then no resource module is loaded. All texts are  already as they should be.  
-However if you run the application where the regional settings have been configured as German (Germany), then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.  
+However if you run the application where the regional settings have been configured as "German (Germany)", then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.  
 If no resource module is found, that matches the language of the  regional settings, then the application will always just fall back to the native language.
 
 The point is that the Delphi Run Time Library already knows how to load resource modules and how to determine which resource module, if any, should be loaded based on the regional settings of the use.  
@@ -89,9 +89,9 @@ One point that the Delphi help doesn't emphasize but which could be important fo
 When you specify a source or target language you have to specify it as a regional language. That is you cannot just specify the language as "English". You have to include a region. E.g. "English (United States)" or "English (United Kingdom)" etc.  
 Correspondingly, if you have a resource module named `HelloWorld.ENU` then that resource module will only be used for US English. If all you wanted was to provide an English translation and you don't really care about regions, dialects and whatnot then in principle you would have to provide resource module for each of the 16 regional variants of English currently supported by Window.
 
-Luckily the developers at Borland was smart enough to anticipate this problem when they implemented the resource module loading logic (see the `GetResourceModuleName` function in the  `System` unit); When the resource module loader looks for resource module files it first looks for the region specific filenames and then for the region neutral filenames[^2].
+Luckily the developers at Borland were smart enough to anticipate this problem when they implemented the resource module loading logic (see the `GetResourceModuleName` function in the  `System` unit); When the resource module loader looks for resource module files it first looks for the region specific filenames and then for the region neutral filenames [^2].
 
-So returning to our example above, in order to make `HelloWorld.ENU` region neutral you just remove the region part from the filename: `HelloWorld.EN`
+So returning to our example above, in order to make `HelloWorld.ENU` region neutral you just remove the region part from the filename: `HelloWorld.EN` and now the resource module will be used for all variants of English.
 
 
 ## The Application
@@ -101,16 +101,22 @@ Note that the compiled application will almost always lag behind the source code
 
 The installer contains the main application, the command line tool, a sample translation memory database and a few spell check dictionaries.
 
-Settings are stored in the registry under `HKCU\Software\Melander\TranslationManager` and files are stored in the `%AppData%\TranslationManager` folder.
+Settings are stored in the registry under `HKCU\Software\Melander\TranslationManager` and files are stored in the `%APPDATA%\TranslationManager` folder.
 
 ### Spell Check dictionaries
 The spell checker uses dictionaries in the [HunSpell](https://en.wikipedia.org/wiki/Hunspell) format.
 
 It is up to yourself to [find](https://www.google.com/search?client=firefox-b-d&q=hunspell%20dictionary) and download dictionaries.  
-To add a new dictionary you must copy the dictionary files to the `Dictionaries` folder under the application folder.  
-The dictionary for a language is contained in two files; `language.dic` and `language.aff` where language is specified with one of [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag). For example the dictionary files for Danish could be named `dan.dic` and `dan.aff`, `da.dic` and `da.aff` or `da-DK.dic` and `da-DK.aff` - or any combination of these.
+To add a new dictionary you must copy the dictionary files to the `%APPDATA%\TranslationManager\Dictionaries` folder.  
+The dictionary for a language is contained in two files; `language.dic` and `language.aff` where "language" is specified as one of the [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [IETF](https://en.wikipedia.org/wiki/IETF_language_tag) language codes.  
+For example the dictionary files for Danish should be named `dan.dic` and `dan.aff`, `da.dic` and `da.aff` or `da-DK.dic` and `da-DK.aff` - or any combination of these.
 
-You can find a good collection of dictionaries [here](https://github.com/wooorm/dictionaries). Just remember to  rename the files.
+You can find good collections of open source dictionaries here:
+
+* https://github.com/wooorm/dictionaries
+* https://www.freeoffice.com/en/download/dictionaries
+
+Just remember to rename the dictionary files to fit the above rules.
 
 ## The Source
 [The source](https://bitbucket.org/anders_melander/better-translation-manager/src/master/) is available primarily so you can build your own custom versions and to ensure that BTM can be updated if I should get hit by a bus.
@@ -131,14 +137,14 @@ The source code is released under the MPL 2.0 license:
 BTM has been tested with the following versions but probably works with older (and newer) versions too:
 
 * Delphi 10.2.3
-* Developer Express VCL version 19.1.4
+* DevExpress VCL version 19.1.4
 * madCollection 2.8.8.9
 
 ### Dependencies
 The following commercial 3rd party libraries are required in order to compile the source:
 
-* Developer Express VCL
-* MadExcept (optional)
+* [DevExpress VCL](https://www.devexpress.com/products/vcl/)
+* [MadExcept](http://madshi.net/) (optional)
 
 The libraries must in the Delphi default library search path.
 
@@ -155,4 +161,4 @@ For use in automated build systems the `amResourceModuleBuilder` command line ut
 
 
 [^1]: The Delphi help uses an example with resource module files named Test.exe.fr-FR and Test.exe.de-DE. This example is wrong. The correct file names for that example would be Test.fr-FR and Test.de-DE.
-[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for Language Culture names was added. The current search order is now: Language Culture with region, Language Culture without region, [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region).
+[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: Language Culture with region, Language Culture without region, [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region).

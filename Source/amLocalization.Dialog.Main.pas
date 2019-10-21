@@ -4108,6 +4108,32 @@ begin
 end;
 
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
+
+  function FindDictionaryFile(LocaleItem: TLocaleItem; const FileType: string): string;
+  var
+    Folder: TTranslationManagerFolder;
+  begin
+    for Folder in [tmFolderSpellCheck, tmFolderUserSpellCheck] do
+    begin
+      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.LanguageShortName, FileType]); // DAN
+      if (TFile.Exists(Result)) then
+        Exit;
+
+      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.LocaleName, FileType]); // da-DK
+      if (TFile.Exists(Result)) then
+        Exit;
+
+      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s_%s.%s', [LocaleItem.ISO639_1Name, LocaleItem.ISO3166Name, FileType]); // DA_DK
+      if (TFile.Exists(Result)) then
+        Exit;
+
+      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.ISO639_1Name, FileType]); // DA
+      if (TFile.Exists(Result)) then
+        Exit;
+    end;
+    Result := '';
+  end;
+
 var
   LocaleItem: TLocaleItem;
   i: integer;
@@ -4172,23 +4198,13 @@ begin
     // Add and load new dictionary
     if (not AnyFound) then
     begin
-      FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LanguageShortName]); // DAN
-      if (not TFile.Exists(FilenameDic)) then
-      begin
-        FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.LocaleName]); // da-DK
-        if (not TFile.Exists(FilenameDic)) then
-          FilenameDic := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.dic', [FTargetLanguage.ISO639_1Name]); // DA
-      end;
+      FilenameDic := FindDictionaryFile(FTargetLanguage, 'dic');
+      if (FilenameDic <> '') then
+        FilenameAff := FindDictionaryFile(FTargetLanguage, 'aff')
+      else
+        FilenameAff := '';
 
-      FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.LanguageShortName]);
-      if (not TFile.Exists(FilenameAff)) then
-      begin
-        FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.LocaleName]);
-        if (not TFile.Exists(FilenameAff)) then
-          FilenameAff := TranslationManagerSettings.Folders.FolderSpellCheck+Format('%s.aff', [FTargetLanguage.ISO639_1Name]);
-      end;
-
-      if (TFile.Exists(FilenameDic)) and (TFile.Exists(FilenameAff)) then
+      if (FilenameDic <> '') and (FilenameAff <> '') then
       begin
         // AnyFound := True;
         SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
