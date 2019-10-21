@@ -73,9 +73,9 @@ Instead I just localize all string values - and only string values.
 
 To deploy a localized application all you need to do is make sure that the resources modules are placed in the same directory as the application executable.
 
-Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have HelloWorld.exe, HelloWorld.DAN and HelloWorld.DEU in one directory.
+Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have `HelloWorld.exe`, `HelloWorld.DAN` and `HelloWorld.DEU` in one directory.
 The native (or source) language of the application is US English, so if you run the application on a Windows where the regional settings have been configured as English (United States), then no resource module is loaded. All texts are  already as they should be.
-However if you run the application where the regional settings have been configured as German (Germany), then the HelloWorld.DEU resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.
+However if you run the application where the regional settings have been configured as German (Germany), then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.
 If no resource module is found, that matches the language of the  regional settings, then the application will always just fall back to the native language.
 
 The point is that the Delphi Run Time Library already knows how to load resource modules and how to determine which resource module, if any, should be loaded based on the regional settings of the use.
@@ -86,11 +86,11 @@ You can read more about this in the Delphi help: http://docwiki.embarcadero.com/
 One point that the Delphi help doesn't emphasize but which could be important for you is that you can create region neutral resource modules.
 
 When you specify a source or target language you have to specify it as a regional language. That is you cannot just specify the language as "English". You have to include a region. E.g. "English (United States)" or "English (United Kingdom)" etc.
-Correspondingly, if you have a resource module named HelloWorld.ENU then that resource module will only be used for US English. If all you wanted was to provide an English translation and you don't really care about regions, dialects and whatnot then in principle you would have to provide resource module for each of the 16 regional variants of English currently supported by Window.
+Correspondingly, if you have a resource module named `HelloWorld.ENU` then that resource module will only be used for US English. If all you wanted was to provide an English translation and you don't really care about regions, dialects and whatnot then in principle you would have to provide resource module for each of the 16 regional variants of English currently supported by Window.
 
-Luckily the developers at Borland was smart enough to anticipate this problem when they implemented the resource module loading logic (see the GetResourceModuleName function in the  System unit); When the resource module loader looks for resource module files it first looks for the region specific filenames and then for the region neutral filenames[^2].
+Luckily the developers at Borland was smart enough to anticipate this problem when they implemented the resource module loading logic (see the `GetResourceModuleName` function in the  `System` unit); When the resource module loader looks for resource module files it first looks for the region specific filenames and then for the region neutral filenames[^2].
 
-So returning to our example above, in order to make HelloWorld.ENU region neutral you just remove the region part from the filename: HelloWorld.EN
+So returning to our example above, in order to make `HelloWorld.ENU` region neutral you just remove the region part from the filename: `HelloWorld.EN`
 
 
 ## The Application
@@ -116,9 +116,10 @@ The source code is released under the MPL 2.0 license:
 
 ### Requirements
 BTM has been tested with the following versions but probably works with older (and newer) versions too:
-- Delphi 10.2.3
-- Developer Express VCL version 19.1.4
-- madCollection 2.8.8.9
+
+* Delphi 10.2.3
+* Developer Express VCL version 19.1.4
+* madCollection 2.8.8.9
 
 ### Dependencies
 The following commercial 3rd party libraries are required in order to compile the source:
@@ -126,10 +127,10 @@ The following commercial 3rd party libraries are required in order to compile th
 * Developer Express VCL
 * MadExcept (optional)
 
-The libraries must in the Delphi default library search.
+The libraries must in the Delphi default library search path.
 
 ## Command Line Interface
-For use in automated build systems a command line utility is provided. Using this tool you can build resource module for specific languages or for all languages supported by a given translation project.
+For use in automated build systems the `amResourceModuleBuilder` command line utility is provided. Using this tool you can build resource module for specific languages or for all languages supported by a given translation project.
 
     Usage: amResourceModuleBuilder <projectfile> [options]
     
