@@ -1,4 +1,5 @@
 
+
 # Better Translation Manager
 https://bitbucket.org/anders_melander/better-translation-manager
 
@@ -6,7 +7,7 @@ The Better Translation Manager (BTM) is a replacement for the Delphi Translation
 
 ## Why?
 
-The standard Translation Manager that ships with Delphi today was originally an individual product known as the Borland Translation Suite. With [Delphi 5 it became a part of the enterprise edition](https://web.archive.org/web/20020220081654/http://www.borland.com:80/delphi/del5/feaben/translation.html).
+The standard Translation Manager that ships with Delphi today was originally an individual product known as the Borland Translation Suite. With [Delphi 5 it became a part of the enterprise edition](https://web.archive.org/web/20020220081654/http://www.borland.com:80/delphi/del5/feaben/translation.html).  
 The Borland Translation Suite showed great promise but unfortunately it never evolved from its roots as an external tool and has always been hampered by severe bugs that made it completely unusable in practice. As a result nobody uses it. This can be witnessed by the plethora of homegrown and commercial alternatives.
 
 The great benefit of the standard translation system is that it just works (this is the system itself I'm talking about, not the tools. The tools suck). Apart from the requirement that you must use  resourcestrings you don't need to do anything special when writing your code. At run time you just place the compiled resource modules in the same folder as your application and the Delphi Run Time Library automatically takes care of loading and using the translations based on the current Windows user interface language.
@@ -73,19 +74,19 @@ Instead I just localize all string values - and only string values.
 
 To deploy a localized application all you need to do is make sure that the resources modules are placed in the same directory as the application executable.
 
-Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have `HelloWorld.exe`, `HelloWorld.DAN` and `HelloWorld.DEU` in one directory.
-The native (or source) language of the application is US English, so if you run the application on a Windows where the regional settings have been configured as English (United States), then no resource module is loaded. All texts are  already as they should be.
-However if you run the application where the regional settings have been configured as German (Germany), then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.
+Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have `HelloWorld.exe`, `HelloWorld.DAN` and `HelloWorld.DEU` in one directory.  
+The native (or source) language of the application is US English, so if you run the application on a Windows where the regional settings have been configured as English (United States), then no resource module is loaded. All texts are  already as they should be.  
+However if you run the application where the regional settings have been configured as German (Germany), then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.  
 If no resource module is found, that matches the language of the  regional settings, then the application will always just fall back to the native language.
 
-The point is that the Delphi Run Time Library already knows how to load resource modules and how to determine which resource module, if any, should be loaded based on the regional settings of the use.
+The point is that the Delphi Run Time Library already knows how to load resource modules and how to determine which resource module, if any, should be loaded based on the regional settings of the use.  
 You can read more about this in the Delphi help: http://docwiki.embarcadero.com/RADStudio/Rio/en/Deploying_Localized_Applications [^1]
 
 
 ### Region neutral translations
 One point that the Delphi help doesn't emphasize but which could be important for you is that you can create region neutral resource modules.
 
-When you specify a source or target language you have to specify it as a regional language. That is you cannot just specify the language as "English". You have to include a region. E.g. "English (United States)" or "English (United Kingdom)" etc.
+When you specify a source or target language you have to specify it as a regional language. That is you cannot just specify the language as "English". You have to include a region. E.g. "English (United States)" or "English (United Kingdom)" etc.  
 Correspondingly, if you have a resource module named `HelloWorld.ENU` then that resource module will only be used for US English. If all you wanted was to provide an English translation and you don't really care about regions, dialects and whatnot then in principle you would have to provide resource module for each of the 16 regional variants of English currently supported by Window.
 
 Luckily the developers at Borland was smart enough to anticipate this problem when they implemented the resource module loading logic (see the `GetResourceModuleName` function in the  `System` unit); When the resource module loader looks for resource module files it first looks for the region specific filenames and then for the region neutral filenames[^2].
@@ -104,14 +105,17 @@ Settings are stored in the registry under `HKCU\Software\Melander\TranslationMan
 
 ### Spell Check dictionaries
 The spell checker uses dictionaries in the [HunSpell](https://en.wikipedia.org/wiki/Hunspell) format.
-It is up to yourself to [find](https://www.google.com/search?client=firefox-b-d&q=hunspell%20dictionary) and download dictionaries.
-To add a new dictionary you must copy the dictionary files to the `Dictionaries` folder under the application folder.
+
+It is up to yourself to [find](https://www.google.com/search?client=firefox-b-d&q=hunspell%20dictionary) and download dictionaries.  
+To add a new dictionary you must copy the dictionary files to the `Dictionaries` folder under the application folder.  
 The dictionary for a language is contained in two files; `language.dic` and `language.aff` where language is specified with one of [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag). For example the dictionary files for Danish could be named `dan.dic` and `dan.aff`, `da.dic` and `da.aff` or `da-DK.dic` and `da-DK.aff` - or any combination of these.
+
 You can find a good collection of dictionaries [here](https://github.com/wooorm/dictionaries). Just remember to  rename the files.
 
 ## The Source
 [The source](https://bitbucket.org/anders_melander/better-translation-manager/src/master/) is available primarily so you can build your own custom versions and to ensure that BTM can be updated if I should get hit by a bus.
-I will accept [pull requests](https://bitbucket.org/anders_melander/better-translation-manager/pull-requests/) for bug fixes provided I can reproduce the problem or it is obvious.
+
+I will accept [pull requests](https://bitbucket.org/anders_melander/better-translation-manager/pull-requests/) for bug fixes provided I can reproduce the problem or it is obvious.  
 Pull requests for new features or other changes should be backed by well argued use cases. Start by [creating an issue](https://bitbucket.org/anders_melander/better-translation-manager/issues).
 
 ### License
