@@ -634,7 +634,10 @@ begin
   Result := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName));
 {$else DEBUG}
   // We should use AppData but for now Documents will do and is easier to locate
-  Result := IncludeTrailingPathDelimiter(TPath.GetDocumentsPath) + sApplicationFolder;
+  // Result := IncludeTrailingPathDelimiter(TPath.GetDocumentsPath) + sApplicationFolder;
+
+  // We now use AppData
+  Result := IncludeTrailingPathDelimiter(TPath.GetCachePath) + sApplicationFolder;
 {$endif DEBUG}
 end;
 
