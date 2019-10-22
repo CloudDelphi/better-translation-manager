@@ -12,6 +12,7 @@ interface
 
 uses
   Generics.Collections,
+  RegularExpressions,
   amProgress,
   amLocalization.Model;
 
@@ -26,6 +27,13 @@ type
     FFilterOperator: TFilterOperator;
     FGroup: string;
     FEnabled: boolean;
+    FRegEx: TRegEx;
+    FHasRegEx: boolean;
+  protected
+    procedure SetEnabled(const Value: boolean);
+    procedure SetFilterOperator(const Value: TFilterOperator);
+    procedure SetValue(const Value: string);
+    procedure ClearState; inline;
   public
     procedure Assign(Filter: TFilterItem);
 
@@ -38,9 +46,9 @@ type
 
     property Group: string read FGroup write FGroup;
     property Field: TFilterField read FField write FField;
-    property FilterOperator: TFilterOperator read FFilterOperator write FFilterOperator;
-    property Value: string read FValue write FValue;
-    property Enabled: boolean read FEnabled write FEnabled;
+    property FilterOperator: TFilterOperator read FFilterOperator write SetFilterOperator;
+    property Value: string read FValue write SetValue;
+    property Enabled: boolean read FEnabled write SetEnabled;
   end;
 
   TFilterItemList = class(TObjectList<TFilterItem>)
@@ -75,11 +83,40 @@ uses
 
 procedure TFilterItem.Assign(Filter: TFilterItem);
 begin
+  ClearState;
   FField := Filter.Field;
   FValue := Filter.Value;
   FFilterOperator := Filter.FilterOperator;
   FGroup := Filter.Group;
   FEnabled := Filter.Enabled;
+end;
+
+procedure TFilterItem.ClearState;
+begin
+  if (FFilterOperator = foRegExp) and (FHasRegEx) then
+  begin
+    FRegEx := Default(TRegEx);
+    FHasRegEx := False;
+  end;
+end;
+
+procedure TFilterItem.SetEnabled(const Value: boolean);
+begin
+  FEnabled := Value;
+  if (not FEnabled) then
+    ClearState;
+end;
+
+procedure TFilterItem.SetFilterOperator(const Value: TFilterOperator);
+begin
+  ClearState;
+  FFilterOperator := Value;
+end;
+
+procedure TFilterItem.SetValue(const Value: string);
+begin
+  ClearState;
+  FValue := Value;
 end;
 
 function TFilterItem.Evaluate(Prop: TLocalizerProperty): boolean;
@@ -123,7 +160,22 @@ begin
     ftContains:
       Result := Text.ToLower.Contains(Value.ToLower);
     foRegExp:
-      Result := False; // TODO
+      begin
+        if (not FHasRegEx) then
+        begin
+          try
+
+            FRegEx := TRegEx.Create(Value, [roCompiled]);
+
+          except
+            // RegEx is invalid - Disable filter
+            Enabled := False;
+            raise;
+          end;
+          FHasRegEx := True;
+        end;
+        Result := FRegEx.IsMatch(Text);
+      end;
   end;
 end;
 

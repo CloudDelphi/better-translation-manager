@@ -46,6 +46,8 @@ type
     procedure FormShow(Sender: TObject);
     procedure TreeListFiltersColumnGroupPropertiesValidate(Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
       var Error: Boolean);
+    procedure TreeListFiltersColumnValuePropertiesValidate(Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
+      var Error: Boolean);
   private
     FFilters: TFilterItemList;
     FUpdatingNode: boolean;
@@ -76,6 +78,7 @@ implementation
 
 uses
   UITypes,
+  RegularExpressions,
   amLocalization.Settings;
 
 constructor TFormFilters.Create(AOwner: TComponent);
@@ -192,7 +195,16 @@ begin
 end;
 
 procedure TFormFilters.SaveFilters;
+var
+  i: integer;
 begin
+  // Disable filters that would match everything
+  for i := 0 to FFilters.Count-1 do
+  begin
+    if (FFilters[i].FilterOperator <> foEquals) and (FFilters[i].Value = '') then
+      FFilters[i].Enabled := False;
+  end;
+
   TranslationManagerSettings.Filters.Filters.Assign(FFilters);
 end;
 
@@ -473,6 +485,32 @@ begin
     Exit;
 
   TFilterItem(ANode.Data).Enabled := (AState = cbsChecked);
+end;
+
+procedure TFormFilters.TreeListFiltersColumnValuePropertiesValidate(Sender: TObject; var DisplayValue: Variant;
+  var ErrorText: TCaption; var Error: Boolean);
+var
+  s: string;
+begin
+  if (TFilterOperator(TreeListFilters.FocusedNode.Values[TreeListFiltersColumnOperator.ItemIndex]) = foRegExp) then
+  begin
+    try
+      // Verify that RegEx is valid
+      s := VarToStr(DisplayValue);
+      if (s <> '') then
+        TRegEx.Create(s, [roCompiled])
+      else
+        // Disable filter if criteria is empty - This is also done when filters are saved
+        TreeListFilters.FocusedNode.Checked := False;
+
+    except
+      on E: Exception do
+      begin
+        Error := True;
+        MessageDlg(E.Message, mtWarning, [mbOK], 0);
+      end;
+    end;
+  end;
 end;
 
 end.

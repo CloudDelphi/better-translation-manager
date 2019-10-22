@@ -165,6 +165,9 @@ inherited FormFilters: TFormFilters
         end
         object TreeListFiltersColumnValue: TcxTreeListColumn
           PropertiesClassName = 'TcxTextEditProperties'
+          Properties.ValidateOnEnter = True
+          Properties.ValidationOptions = [evoShowErrorIcon]
+          Properties.OnValidate = TreeListFiltersColumnValuePropertiesValidate
           Caption.Text = 'Value'
           DataBinding.ValueType = 'String'
           Options.Sorting = False
