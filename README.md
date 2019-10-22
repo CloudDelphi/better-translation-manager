@@ -95,7 +95,7 @@ So returning to our example above, in order to make `HelloWorld.ENU` region neut
 
 
 ## The Application
-In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application installer here: [Downloads](https://bitbucket.org/anders_melander/better-translation-manager/downloads/)
+In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application installer here: http://melander.dk/download/
 
 Note that the compiled application will almost always lag behind the source code since it has to go through a bit of QA before I upload it. The application has been virus checked with BitDefender.
 
