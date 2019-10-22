@@ -174,7 +174,7 @@ begin
           TermGroupNode := nil;
           if (LocaleItem <> nil) then
           begin
-            LanguageName := LocaleItem.LocaleSName;
+            LanguageName := LocaleItem.LocaleName;
 
             // First language becomes the source language
             if (SourceLanguage = '') then

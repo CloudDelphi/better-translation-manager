@@ -134,11 +134,11 @@ var
   Module: HModule;
   ModuleFilename: string;
   ApplicationVersion, ModuleVersion: string;
-resourcestring
+const
+  // Do not localize - localizations has not yet been loaded
   sResourceModuleUnknownLanguage = 'Unknown language ID: %d'+#13#13+
     'The default language will be used instead.';
-const
-  // Do not localize
+
   sResourceModuleOutOfSync = 'The resource module for the current language (%s) appears to be out of sync with the application.'+#13#13+
     'Application version: %s'+#13+
     'Resource module version: %s'+#13#13+
@@ -157,7 +157,7 @@ begin
     Exit;
   end;
 
-  Module := LoadNewResourceModule(LocaleItem.LanguageShortName, ModuleFilename);
+  Module := LoadNewResourceModule(LocaleItem, ModuleFilename);
 
   if (Module <> 0) and (ModuleFilename <> '') then
   begin
@@ -167,12 +167,12 @@ begin
 
     if (ApplicationVersion <> ModuleVersion) then
     begin
-      LoadNewResourceModule('');
+      LoadNewResourceModule(nil, ModuleFilename);
       MessageDlg(Format(sResourceModuleOutOfSync, [LocaleItem.LanguageName, ApplicationVersion, ModuleVersion]), mtWarning, [mbOK], 0);
     end;
   end else
     // Use default application language if we failed to load a resource module
-    LoadNewResourceModule('');
+    LoadNewResourceModule(nil, ModuleFilename);
 end;
 
 procedure InitializeFonts;

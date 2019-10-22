@@ -144,7 +144,7 @@ begin
     begin
       LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
       if (LocaleItem <> nil) then
-        SourceLanguage := LocaleItem.LocaleSName;
+        SourceLanguage := LocaleItem.LocaleName;
     end;
 
     s := VarToStr(Node.Attributes['creationdate']);
@@ -179,7 +179,7 @@ begin
       begin
         LocaleItem := TLocaleItems.FindLocaleName(SourceLanguageTU);
         if (LocaleItem <> nil) then
-          SourceLanguage := LocaleItem.LocaleSName
+          SourceLanguage := LocaleItem.LocaleName
         else
           SourceLanguage := SourceLanguageTU;
       end;
@@ -196,7 +196,7 @@ begin
           LocaleItem := TLocaleItems.FindLocaleName(Language);
           if (LocaleItem <> nil) then
           begin
-            LanguageName := LocaleItem.LocaleSName;
+            LanguageName := LocaleItem.LocaleName;
 
             if (not Languages.TryGetValue(LanguageName, Field)) then
             begin

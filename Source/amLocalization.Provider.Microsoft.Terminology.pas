@@ -91,7 +91,7 @@ begin
   SourceValue := Prop.Value;
 
    // Call web service
-  ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleSName, TargetLanguage.LocaleSName,
+  ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleName, TargetLanguage.LocaleName,
     SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True,
     TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult, False, nil);
 

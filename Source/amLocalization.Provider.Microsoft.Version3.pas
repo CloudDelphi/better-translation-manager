@@ -141,8 +141,8 @@ var
 begin
   SourceValue := SanitizeText(Prop.Value, False);
 
-  RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleSName;
-  RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleSName;
+  RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleName;
+  RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleName;
 
   RESTRequestTranslate.Body.ClearBody;
   RESTRequestTranslate.Body.JSONWriter.WriteStartArray;

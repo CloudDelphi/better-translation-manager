@@ -549,7 +549,7 @@ begin
 
   Result.DisplayLabel := LocaleItem.LanguageName;
   Result.Tag := LocaleItem.Locale;
-  Result.FieldName := LocaleItem.LocaleSName;
+  Result.FieldName := LocaleItem.LocaleName;
   Result.DataSet := TableTranslationMemory;
   Result.DisplayWidth := 100;
   Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"

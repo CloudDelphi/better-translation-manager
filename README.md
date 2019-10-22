@@ -76,14 +76,14 @@ To deploy a localized application all you need to do is make sure that the resou
 
 Say you have localized the HelloWorld sample application; You have compiled the application, created a translation project, translated the texts to Danish and German and built the resource modules. You should now have `HelloWorld.exe`, `HelloWorld.DAN` and `HelloWorld.DEU` in one directory.  
 The native (or source) language of the application is US English, so if you run the application on a Windows where the regional settings have been configured as English (United States), then no resource module is loaded. All texts are  already as they should be.  
-However if you run the application where the regional settings have been configured as "German (Germany)", then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish.  
+However if you run the application where the regional settings have been configured as "German (Germany)", then the `HelloWorld.DEU` resource module will be automatically loaded and all translated texts will appear in German. Same principle for Danish; The `HelloWorld.DAN` resource module will be loaded if regional settings have been configured as "Danish (Denmark)".  
 If no resource module is found, that matches the language of the  regional settings, then the application will always just fall back to the native language.
 
 The point is that the Delphi Run Time Library already knows how to load resource modules and how to determine which resource module, if any, should be loaded based on the regional settings of the use.  
 You can read more about this in the Delphi help: http://docwiki.embarcadero.com/RADStudio/Rio/en/Deploying_Localized_Applications [^1]
 
 
-### Region neutral translations
+### Region Neutral translations
 One point that the Delphi help doesn't emphasize but which could be important for you is that you can create region neutral resource modules.
 
 When you specify a source or target language you have to specify it as a regional language. That is you cannot just specify the language as "English". You have to include a region. E.g. "English (United States)" or "English (United Kingdom)" etc.  
@@ -108,13 +108,14 @@ The spell checker uses dictionaries in the [HunSpell](https://en.wikipedia.org/w
 
 It is up to yourself to [find](https://www.google.com/search?client=firefox-b-d&q=hunspell%20dictionary) and download dictionaries.  
 To add a new dictionary you must copy the dictionary files to the `%APPDATA%\TranslationManager\Dictionaries` folder.  
-The dictionary for a language is contained in two files; `language.dic` and `language.aff` where "language" is specified as one of the [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [IETF](https://en.wikipedia.org/wiki/IETF_language_tag) language codes.  
+The dictionary for a language is contained in two files; `language.dic` and `language.aff` where "language" is specified as one of the [ISO639-2](https://en.wikipedia.org/wiki/ISO_639-2), [ISO639-1](https://en.wikipedia.org/wiki/ISO_639-1) or [RFC 4646](https://tools.ietf.org/html/rfc4646)/[IETF](https://en.wikipedia.org/wiki/IETF_language_tag) language codes.  
 For example the dictionary files for Danish should be named `dan.dic` and `dan.aff`, `da.dic` and `da.aff` or `da-DK.dic` and `da-DK.aff` - or any combination of these.
 
 You can find good collections of open source dictionaries here:
 
 * https://github.com/wooorm/dictionaries
 * https://www.freeoffice.com/en/download/dictionaries
+(the .sox files you can download here are in fact zip files. You will find the .dic and .aff files inside)
 
 Just remember to rename the dictionary files to fit the above rules.
 
@@ -161,4 +162,4 @@ For use in automated build systems the `amResourceModuleBuilder` command line ut
 
 
 [^1]: The Delphi help uses an example with resource module files named Test.exe.fr-FR and Test.exe.de-DE. This example is wrong. The correct file names for that example would be Test.fr-FR and Test.de-DE.
-[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: Language Culture with region, Language Culture without region, [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region).
+[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: [RFC 4646](https://tools.ietf.org/html/rfc4646) with region, RFC 4646 without region, [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region).

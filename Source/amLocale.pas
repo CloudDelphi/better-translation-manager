@@ -43,7 +43,6 @@ type
     function GetDisplayName: string;
     function GetISO3166Name: string;
     function GetLocaleName: string;
-    function GetLocaleSName: string;
     function GetCountryCode: integer;
     function GetAnsiCodePage: integer;
     function GetLanguageName: string;
@@ -65,10 +64,13 @@ type
     function GetLocaleDataInt(Flag: DWORD): DWORD; overload;
     property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
     property DisplayName: string read GetDisplayName;
+    /// <summary>ISO3166Name: The ISO3166-1 alpha-2 two letter country code. E.g. US, GB, DK, DE etc.</summary>
     property ISO3166Name: string read GetISO3166Name;
+    /// <summary>ISO639_1Name: The ISO639-1 two letter language code. E.g. EN, DA, DE etc.</summary>
     property ISO639_1Name: string read GetISO639_1Name;
+    /// <summary>LocaleName: The RFC 4646 language-region code. E.g. en-US, en-GB, da-DK, de-DE etc.</summary>
     property LocaleName: string read GetLocaleName;
-    property LocaleSName: string read GetLocaleSName;
+    function LocaleSName: string; deprecated 'Use LocaleName instead';
     property CountryCode: integer read GetCountryCode;
     property CountryName: string read GetCountryName;
     property AnsiCodePage: integer read GetAnsiCodePage;
@@ -76,6 +78,7 @@ type
     property PrimaryLanguage: Word read GetPrimaryLanguage;
     property SubLanguage: Word read GetSubLanguage;
     property LanguageName: string read GetLanguageName;
+    /// <summary>LanguageShortName: The ISO639-2 three letter language-region code. E.g. ENU, ENG, DAN, DEU etc.</summary>
     property LanguageShortName: string read GetLanguageShortName;
     property Language: LangID read GetLanguage;
     property CharSet: integer read GetCharSet;
@@ -135,8 +138,8 @@ procedure SetLocale(Locale: LCID);
 function MakeLangID(Primary, Region: Word ): Word;
 function LocaleName: string;
 function LoadNewResourceModule(Locale: LCID): HModule; overload;
-function LoadNewResourceModule(const ModuleTypeName: string): HModule; overload;
-function LoadNewResourceModule(const ModuleTypeName: string; var ModuleFilename: string): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLocaleItem): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLocaleItem; var ModuleFilename: string): HModule; overload;
 function TryLocaleToISO639_1Name(Locale: LCID; var Value: string): boolean;
 function LocaleToISO639_1Name(Locale: LCID; const Default: string = ''): string;
 function TryISO639_1NameToLocale(const Name: string; var Value: TLCID): boolean;
@@ -347,7 +350,8 @@ function GetCodePageDescription(Codepage: integer): string;
 implementation
 
 uses
-  SysUtils;
+  SysUtils,
+  IOUtils;
 
 //------------------------------------------------------------------------------
 //
@@ -378,45 +382,56 @@ end;
 
 function LoadNewResourceModule(Locale: LCID): HModule;
 var
-  LocaleName: array[0..4] of Char;
+  LocaleItem: TLocaleItem;
 begin
-  GetLocaleInfo(Locale, LOCALE_SABBREVLANGNAME, LocaleName, SizeOf(LocaleName));
-  Result := LoadNewResourceModule(LocaleName);
+  LocaleItem := TLocaleItems.FindLCID(Locale);
+  if (LocaleItem = nil) then
+    raise Exception.CreateFmt('Invalid language ID: %.4X', [Locale]);
+  Result := LoadNewResourceModule(LocaleItem);
 end;
 
-function LoadNewResourceModule(const ModuleTypeName: string): HModule;
+function LoadNewResourceModule(LocaleItem: TLocaleItem): HModule;
 var
   Filename: string;
 begin
-  Result := LoadNewResourceModule(ModuleTypeName, Filename);
+  Result := LoadNewResourceModule(LocaleItem, Filename);
 end;
 
-function LoadNewResourceModule(const ModuleTypeName: string; var ModuleFilename: string): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLocaleItem; var ModuleFilename: string): HModule; overload;
+const
+  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
+
+  function LoadResourceModule(const Filename: string; const FileType: string; var ModuleFilename: string): HModule;
+  begin
+    ModuleFilename := TPath.ChangeExtension(Filename, '.'+FileType);
+
+    if (not TFile.Exists(ModuleFilename)) then
+      Exit(0);
+
+    Result := LoadLibraryEx(PChar(ModuleFilename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+  end;
+
 var
   Filename: string;
   NewInst: HModule;
-const
-  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
 begin
   Result := 0;
 
-  if (ModuleTypeName <> '') then
+  if (LocaleItem <> nil) then
   begin
-    Filename := ExtractFilename(GetModuleName(HInstance));
+    Filename := GetModuleName(HInstance);
 
     if (Filename <> '') then
     begin
-      ModuleFilename := ChangeFileExt(Filename, '.' + ModuleTypeName);
-
-      // Then look for a potential language/country translation
-      NewInst := LoadLibraryEx(PChar(ModuleFilename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-
-      if (NewInst = 0) and (Length(ModuleTypeName) > 2) then
-      begin
-        // Finally look for a language only translation
-        ModuleFilename := ChangeFileExt(Filename, '.' + Copy(ModuleTypeName, 1, 2));
-        NewInst := LoadLibraryEx(PChar(ModuleFilename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-      end;
+      // Try to load resource modules in the following order (example for Danish):
+      // 1) filename.DAN (ISO639-2)
+      // 2) filename.da-DK (RFC 4646 = "ISO639-1"-"IISO3166" = IETF Language Culture)
+      // 3) filename.DA (ISO639-1)
+      NewInst := LoadResourceModule(Filename, LocaleItem.LanguageShortName, ModuleFilename);
+      if (NewInst = 0) then
+        NewInst := LoadResourceModule(Filename, LocaleItem.LocaleName, ModuleFilename);
+      if (NewInst = 0) then
+        NewInst := LoadResourceModule(Filename, LocaleItem.ISO639_1Name, ModuleFilename);
     end else
       NewInst := 0;
 
@@ -917,18 +932,18 @@ end;
 
 function TLocaleItem.GetLocaleName: string;
 begin
-  // en-us, da-dk, etc.
-  Result := Format('%s-%s', [ISO639_1Name, ISO3166Name]);
-end;
-
-function TLocaleItem.GetLocaleSName: string;
-begin
   (*
   LOCALE_SNAME
   A multi-part tag to uniquely identify the locale.
-  The tag is based on the language tagging conventions of RFC 4646..
+  The tag is based on the language tagging conventions of RFC 4646.
   *)
+  // en-us, da-dk, etc. = Format('%s-%s', [ISO639_1Name, ISO3166Name]);
   Result := GetLocaleData(LOCALE_SNAME);
+end;
+
+function TLocaleItem.LocaleSName: string;
+begin
+  Result := GetLocaleName;
 end;
 
 //------------------------------------------------------------------------------

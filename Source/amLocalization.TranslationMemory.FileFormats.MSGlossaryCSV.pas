@@ -128,7 +128,7 @@ begin
 
       LocaleItem := TLocaleItems.FindLCID(FormTargetLanguage.LanguageID);
       if (LocaleItem <> nil) then
-        FTargetLanguage := LocaleItem.LocaleSName;
+        FTargetLanguage := LocaleItem.LocaleName;
     finally
       FormTargetLanguage.Free;
     end;
@@ -152,7 +152,7 @@ function TTranslationMemoryFileFormatGlossaryCSV.DoLoadFromStream(Stream: TStrea
     if (LocaleItem = nil) then
       Exit(nil);
 
-    LanguageName := LocaleItem.LocaleSName;
+    LanguageName := LocaleItem.LocaleName;
 
     if (not Languages.TryGetValue(LanguageName, Result)) then
     begin

@@ -83,11 +83,10 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
         <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <DCC_UsePackage>DBXSqliteDriver;dxCoreRS25;dxSpreadSheetCoreDialogsRS25;DBXInterBaseDriver;dxRichEditControlCoreRS25;vclactnband;dxRibbonCustomizationFormRS25;vclFireDAC;cxExportRS25;dxPSPrVwRibbonRS25;cxSchedulerTreeBrowserRS25;dxSpreadSheetInplaceRichEditRS25;dxHttpIndyRequestRS25;tethering;dxPScxCommonRS25;HMT_SKINRS25;FireDACADSDriver;BasicUtilsD10Tokyo;cxPivotGridOLAPRS25;IFxEditorsD10Tokyo;dxPSdxFCLnkRS25;dxRichEditCoreRS25;cxSchedulerGridRS25;vcltouch;vcldb;inetdb;dxGaugeControlRS25;cxLibraryRS25;fmx;fmxdae;dxPScxPivotGridLnkRS25;dxBarDBNavRS25;dxTabbedMDIRS25;IFX_MetropolisRS25;dxFlowChartAdvancedCustomizeFormRS25;HRS_SkinRS25;dbexpress;IndyCore;dxFlowChartRS25;vclx;dxRichEditDocumentModelRS25;dsnap;dxBarRS25;dxSpreadSheetConditionalFormattingDialogsRS25;dxTileControlRS25;dxdborRS25;dxMapControlRS25;dxPDFViewerRS25;dxDockingRS25;VCLRESTComponents;dxPScxExtCommonRS25;cxPivotGridRS25;dxPSLnksRS25;dxWizardControlRS25;dxSpreadSheetReportDesignerRS25;dxNavBarRS25;dxRichEditControlRS25;dxPSdxSpreadSheetLnkRS25;vclie;cxSchedulerRibbonStyleEventEditorRS25;bindengine;DBXMySQLDriver;dxFireDACServerModeRS25;FireDACMySQLDriver;FireDACCommonODBC;cxTreeListRS25;dxPSdxPDFViewerLnkRS25;IFX_OptimizerBlueRS25;IndyIPCommon;dxPSdxLCLnkRS25;vcl;IndyIPServer;dxPScxVGridLnkRS25;dxBarExtItemsRS25;IndySystem;dxComnRS25;dxSkinsCoreRS25;dxPSdxDBTVLnkRS25;dsnapcon;dxPSRichEditControlLnkRS25;FireDACMSAccDriver;fmxFireDAC;vclimg;dxSpreadSheetCoreRS25;dxServerModeRS25;dxPScxPCProdRS25;dxdbtrRS25;dxSpreadSheetRS25;dxPScxTLLnkRS25;Skin_Horizon_PlannerRS25;FireDACPgDriver;IFXTrafficLightD10Tokyo;dxPScxSchedulerLnkRS25;cxGridRS25;dxSpreadSheetCoreConditionalFormattingDialogsRS25;DbxCommonDriver;dxorgcRS25;dxCloudServiceLibraryRS25;Skin_Horizon_dagkalkyleRS25;xmlrtl;dxPsPrVwAdvRS25;fmxobj;vclwinx;dxPScxGridLnkRS25;rtl;DbxClientDriver;dxRichEditInplaceRS25;cxTreeListdxBarPopupMenuRS25;dxPSCoreRS25;CustomIPTransport;vcldsnap;dxmdsRS25;cxSchedulerWebServiceStorageRS25;dxPSdxOCLnkRS25;HorizonMT_AltRS25;appanalytics;cxPivotGridChartRS25;IndyIPClient;dxBarExtDBItemsRS25;cxSchedulerRS25;SynEdit_R;dxDBXServerModeRS25;dxGDIPlusRS25;dxPSdxGaugeControlLnkRS25;dbxcds;VclSmp;adortl;dxPSdxDBOCLnkRS25;dxRibbonRS25;dsnapxml;dxSpellCheckerRS25;dbrtl;IndyProtocols;inetdbxpress;cxVerticalGridRS25;dxtrmdRS25;dxFlowChartDesignerRS25;dxADOServerModeRS25;dxPSdxMapControlLnkRS25;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
@@ -96,6 +95,7 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -114,11 +114,11 @@
         <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
         <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.25;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
-        <VerInfo_Build>25</VerInfo_Build>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <VerInfo_Debug>true</VerInfo_Debug>
+        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
@@ -139,16 +139,14 @@
         <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.25;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.0.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>resources\amTranslationManager.ico</Icon_MainIcon>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_MapFile>3</DCC_MapFile>
         <DCC_DebugInformation>2</DCC_DebugInformation>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <PostBuildEvent><![CDATA[]]></PostBuildEvent>
-        <VerInfo_Build>25</VerInfo_Build>
+        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
@@ -259,8 +257,13 @@
                     <Source Name="MainSource">amTranslationManager.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k260.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp260.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclbindcomp250.bpl">Embarcadero LiveBindings Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclbindcompfmx250.bpl">Embarcadero LiveBindings Components FireMonkey</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclbindcompvcl250.bpl">Embarcadero LiveBindings Components VCL</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclBindCompFireDAC250.bpl">LiveBinding Expression Components FireDac</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclbindcompdbx250.bpl">LiveBindings Expression Components DbExpress</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k250.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp250.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">

@@ -101,7 +101,7 @@ function TTranslationMemoryFileFormatGenericCSV.DoLoadFromStream(Stream: TStream
     if (LocaleItem = nil) then
       Exit(nil);
 
-    LanguageName := LocaleItem.LocaleSName;
+    LanguageName := LocaleItem.LocaleName;
 
     if (not Languages.TryGetValue(LanguageName, Result)) then
     begin
