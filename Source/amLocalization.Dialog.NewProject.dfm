@@ -108,6 +108,11 @@ inherited FormNewProject: TFormNewProject
       end
     end
   end
+  inherited ActionList: TActionList
+    inherited ActionOK: TAction
+      OnUpdate = ActionOKUpdate
+    end
+  end
   object FileOpenDialogApplication: TFileOpenDialog
     FavoriteLinks = <>
     FileTypes = <

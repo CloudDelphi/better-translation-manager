@@ -2045,27 +2045,36 @@ procedure TFormMain.ActionBuildExecute(Sender: TObject);
 var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
-  Filename, Path: string;
+  TargetFilename, Path: string;
   Filter: string;
+  SourceFilename: string;
 resourcestring
   sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
   sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
+  sLocalizerFileLockedTitle = 'File can not be replaced';
+  sLocalizerFileLocked = 'The file is currently in use and can not be overwritten.'#13#13+
+    'Filename: %s'#13+
+    'Error: %s';
 begin
   if (not CheckSourceFile) then
     Exit;
 
   CheckStringsSymbolFile;
 
-  Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+TargetLanguage.LanguageShortName);
+  SourceFilename := FProject.SourceFilename;
+  if (FProjectFilename <> '') then
+    SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProjectFilename), FProject.SourceFilename);
 
-  Path := TPath.GetDirectoryName(Filename);
-  Filename := TPath.GetFileName(Filename);
+  TargetFilename := TPath.ChangeExtension(SourceFilename, '.'+TargetLanguage.LanguageShortName);
+
+  Path := TPath.GetDirectoryName(TargetFilename);
+  TargetFilename := TPath.GetFileName(TargetFilename);
 
   Filter := SaveDialogEXE.Filter;
   if (TargetLanguage <> nil) then
     Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.LanguageShortName]) + Filter;
 
-  if (not PromptForFileName(Filename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
+  if (not PromptForFileName(TargetFilename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
     Exit;
 
   SaveCursor(crHourGlass);
@@ -2077,13 +2086,29 @@ begin
     FProject.BeginLoad;
     try
 
-      ResourceWriter := TResourceModuleWriter.Create(Filename);
-      try
+      while (True) do
+      begin
+        try
 
-        ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
+          ResourceWriter := TResourceModuleWriter.Create(TargetFilename);
+          try
 
-      finally
-        ResourceWriter := nil;
+            ProjectProcessor.Execute(liaTranslate, FProject, SourceFilename, TranslationLanguage, ResourceWriter);
+
+            break;
+
+          finally
+            ResourceWriter := nil;
+          end;
+
+        except
+          on E: EFCreateError do
+          begin
+            // Sharing violation - resource module is probably loaded
+            if (TaskMessageDlg(sLocalizerFileLockedTitle, Format(sLocalizerFileLocked, [TargetFilename, E.Message]), mtWarning, [mbRetry, mbAbort], 0, mbRetry) <> mrRetry) then
+              Exit;
+          end;
+        end;
       end;
 
     finally
@@ -2093,7 +2118,7 @@ begin
     ProjectProcessor.Free;
   end;
 
-  ShowMessageFmt(sLocalizerResourceModuleBuilt, [Filename]);
+  ShowMessageFmt(sLocalizerResourceModuleBuilt, [TargetFilename]);
 
   LoadProject(FProject, False);
 end;
@@ -2600,7 +2625,7 @@ end;
 function TFormMain.CheckStringsSymbolFile: boolean;
 var
   Res: Word;
-  Filename: string;
+  SourceFilename, SymbolFilename: string;
 resourcestring
   sStringSymbolsNotFoundTitle = 'Symbol file not found';
   sStringSymbolsNotFound = 'The resourcestring symbol file does not exist in the same folder as the source application file.'+#13#13+
@@ -2612,18 +2637,23 @@ begin
 
   SaveCursor(crAppStart);
 
+  // Get absolute source filename
+  SourceFilename := FProject.SourceFilename;
+  if (SourceFilename = '') and (FProjectFilename <> '') then // This should never happen
+    SourceFilename := TPath.ChangeExtension(FProjectFilename, '.exe');
+  // Relative path is relative to project file - make it absolute
+  if (FProjectFilename <> '') then
+    SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProjectFilename), SourceFilename);
+
   if (FProject.StringSymbolFilename = '') then
   begin
-    Filename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
-    FProject.StringSymbolFilename := TPath.GetFileName(Filename);
+    SymbolFilename := TPath.ChangeExtension(SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
+    Result := False;
   end else
-  if (FProject.SourceFilename <> '') then
     // Path might be relative - Get absolute path
-    Filename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename)
-  else
-    Filename := FProject.StringSymbolFilename;
+    SymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(SourceFilename), FProject.StringSymbolFilename);
 
-  while (not TFile.Exists(Filename)) do
+  while (not TFile.Exists(SymbolFilename)) do
   begin
     Result := False;
 
@@ -2633,20 +2663,20 @@ begin
     if (Res <> mrYes) then
       Exit(False);
 
-    if (Filename <> '') then
+    if (SymbolFilename <> '') then
     begin
-      OpenDialogDRC.InitialDir := TPath.GetDirectoryName(Filename);
-      OpenDialogDRC.FileName := TPath.GetFileName(Filename);
+      OpenDialogDRC.InitialDir := TPath.GetDirectoryName(SymbolFilename);
+      OpenDialogDRC.Filename := TPath.GetFileName(SymbolFilename);
     end;
 
     if (not OpenDialogDRC.Execute(Handle)) then
       Exit(False);
 
-    Filename := OpenDialogDRC.FileName;
+    SymbolFilename := OpenDialogDRC.Filename;
   end;
 
   if (not Result) then
-    FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(FProject.SourceFilename), Filename);
+    FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(SourceFilename), SymbolFilename);
 
   Result := True;
 end;
@@ -2671,7 +2701,7 @@ begin
   begin
     Result := False;
 
-    // Symbol file does not exist. Try to locate it.
+    // Source file does not exist. Try to locate it.
     Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [FProject.SourceFilename]),
       mtWarning, [mbYes, mbNo], 0, mbYes);
 
@@ -2721,7 +2751,7 @@ begin
     if (TranslationManagerSettings.Folders.RecentApplications.Count > 0) then
       FormNewProject.SourceApplication := TranslationManagerSettings.Folders.RecentApplications[0]
     else
-      FormNewProject.SourceApplication := Application.ExeName;
+      FormNewProject.SourceApplication := '';
 
     FormNewProject.SourceLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage);
 

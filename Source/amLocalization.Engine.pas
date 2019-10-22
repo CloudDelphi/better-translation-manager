@@ -79,7 +79,7 @@ type
     class function DefaultTranslator(Language: TTranslationLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
   public
     procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
-    procedure Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
+    procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
 
     procedure ScanProject(Project: TLocalizerProject; Instance: HINST); overload;
     procedure ScanProject(Project: TLocalizerProject; const Filename: string); overload;
@@ -601,11 +601,8 @@ begin
 
       if (Item <> nil) then
       begin
-        if (Action = liaUpdateSource) then
+        if (Action in [liaUpdateSource, liaTranslate]) then
           Prop := Item.AddProperty(PropertyName, Value)
-        else
-        if (Action = liaTranslate) then
-          Prop := Item.AddProperty(PropertyName)
         else
         if (Action = liaUpdateTarget) and (Language <> nil) then
         begin
@@ -676,7 +673,14 @@ begin
 
   Filename := Module.Project.SourceFilename;
 
-  if (not TFile.Exists(Filename)) then
+  // Note: GetModuleFileName will fail if the module was loaded with the LOAD_LIBRARY_AS_DATAFILE flag.
+  // According to MSDN we should be able to use the LDR_IS_DATAFILE macro (defined as
+  // "PULONG(AInstance) and 1" to test for this, but I've not been able to get that to work.
+
+  // SourceFileName is usually relative to the project file path so we will probably not find it.
+  // In any case we shouldn't try to since there might be a different file with the same name
+  // in the "current working directory".
+  if (TPath.IsRelativePath(Filename)) or (not TFile.Exists(Filename)) then
   begin
     SetLength(Filename, MAX_PATH);
     Size := GetModuleFileName(Instance, PChar(Filename), Length(Filename)+1);
@@ -803,11 +807,8 @@ begin
 
         if (Item <> nil) and (Item.Status <> ItemStatusDontTranslate) then
         begin
-          if (Action = liaUpdateSource) then
+          if (Action in [liaUpdateSource, liaTranslate]) then
             Prop := Item.AddProperty('', Value)
-          else
-          if (Action = liaTranslate) then
-            Prop := Item.AddProperty('')
           else
           if (Action = liaUpdateTarget) and (Language <> nil) then
           begin
@@ -876,16 +877,21 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Prop: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
+procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
 var
   Module: HModule;
+const
+  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
 begin
-  Module := LoadLibraryEx(PChar(FileName), 0, LOAD_LIBRARY_AS_DATAFILE);
+  // Do not load using LOAD_LIBRARY_AS_DATAFILE as we need to be able
+  // to call GetModuleFileName on the module handle.
+
+  Module := LoadLibraryEx(PChar(FileName), 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
   if (Module = 0) then
     RaiseLastOSError;
   try
 
-    Execute(Action, Prop, Module, Language, ResourceWriter, Translator);
+    Execute(Action, Project, Module, Language, ResourceWriter, Translator);
 
   finally
     FreeLibrary(Module);
