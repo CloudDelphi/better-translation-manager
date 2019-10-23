@@ -505,6 +505,9 @@ var
   Accelerator: string;
   SurroundPair: TSurroundPair;
 begin
+  if (Value.IsEmpty) then
+    Exit(Value);
+
   Result := Value;
 
   if (Kinds * [EqualizeAccelerators, EqualizeCase] <> []) then
