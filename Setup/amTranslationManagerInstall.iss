@@ -2,10 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Better Translation Manager"
+#define MyAppFolderName "Melander\Translation Manager"
 #define MyAppExeName "amTranslationManager.exe"
 ;#define MyAppSourceFolder "..\Bin\Win32\Debug\"
 #define MyAppSourceFolder "..\Bin\Win32\Release\"
-#define ApplicationVersion GetFileVersion(MyAppSourceFolder + '\' + MyAppExeName)
 #define MyAppVersion GetFileVersion(MyAppSourceFolder + '\' + MyAppExeName)
 #define MyAppPublisher "Anders Melander"
 #define MyAppURL "https://bitbucket.org/anders_melander/better-translation-manager"
@@ -22,17 +22,17 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={pf}\{#MyAppName}
+DefaultDirName={pf}\{#MyAppFolderName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=amTranslationManagerInstall{#ApplicationVersion}
+OutputBaseFilename=amTranslationManagerInstall-{#MyAppVersion}
 SetupIconFile=..\Source\resources\amTranslationManager.ico
 UninstallDisplayIcon={app}\amTranslationManager.exe
 MinVersion=0,6.0
 WizardSmallImageFile=.\Resources\logo 55x55.bmp
 WizardImageStretch=False
 SolidCompression=True
-VersionInfoVersion={#ApplicationVersion}
+VersionInfoVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -45,11 +45,13 @@ Source: "{#MyAppSourceFolder}\amTranslationManager.exe"; DestDir: "{app}"; Flags
 Source: "{#MyAppSourceFolder}\amResourceModuleBuilder.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: ".\Files\Dictionaries\*.*"; DestDir: "{app}\Dictionaries"; Components: SpellCheckDictionaries
-Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite
+Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite; Components: TranslationMemory
+Source: ".\Files\Examples\*.*"; DestDir: "{userdocs}\Translation Examples\"; Flags: recursesubdirs createallsubdirs; Components: Examples
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{group}\Translation Examples"; Filename: "{userdocs}\Translation Examples"; Components: Examples
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
@@ -58,5 +60,14 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 UseRelativePaths=True
 
 [Components]
-Name: "SpellCheckDictionaries"; Description: "Spell Check dictionaries"; Types: full
-Name: "TranslationMemory"; Description: "Sample Translation Memory"; Types: full
+Name: "Examples"; Description: "Examples"; Types: full custom
+Name: "SpellCheckDictionaries"; Description: "Spell Check dictionaries"; Types: full custom
+Name: "TranslationMemory"; Description: "Sample Translation Memory"; Types: full custom
+
+[Registry]
+Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: dword; ValueName: "Installed"; ValueData: "1"; Flags: createvalueifdoesntexist uninsdeletevalue
+Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: string; ValueName: "InstalledVersion"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
+Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: string; ValueName: "InstallRoot"; ValueData: "{app}"; Flags: createvalueifdoesntexist
+
+[Dirs]
+Name: "{userappdata}\TranslationManager\Dictionaries\Custom spell check dictionaries"
