@@ -228,16 +228,11 @@ var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
   LocaleItem: TLocaleItem;
-  SourceFilename: string;
   TargetFilename: string;
 begin
   LocaleItem := TLocaleItems.FindLCID(TranslationLanguage.LanguageID);
 
-  SourceFilename := FProject.SourceFilename;
-  if (AProjectFilename <> '') then
-    SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(AProjectFilename), FProject.SourceFilename);
-
-  TargetFilename := TPath.ChangeExtension(SourceFilename, '.'+LocaleItem.LanguageShortName);
+  TargetFilename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
 
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(TargetFilename)]));
 
@@ -246,7 +241,7 @@ begin
     ResourceWriter := TResourceModuleWriter.Create(TargetFilename);
     try
 
-      ProjectProcessor.Execute(liaTranslate, FProject, SourceFilename, TranslationLanguage, ResourceWriter);
+      ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
 
     finally
       ResourceWriter := nil;

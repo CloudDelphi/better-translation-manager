@@ -424,14 +424,13 @@ begin
   Node := RootNode.AddChild('meta');
   Node.AddChild('version').Text := '1';
   Node.AddChild('created').Text := DateToISO8601(Now, False);
-  Node.AddChild('origin').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
-  Node.AddChild('originversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
+  Node.AddChild('tool').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
+  Node.AddChild('toolversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
 
   ProjectNode := RootNode.AddChild('project');
-  ProjectNode.Attributes['name'] := Project.Name;
-  // TODO : Make paths relative to project file
-  ProjectNode.Attributes['sourcefile'] := TPath.GetFileName(Project.SourceFilename); // PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(???), Project.SourceFilename);
-  ProjectNode.Attributes['stringsymbolfile'] := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(Project.SourceFilename), Project.StringSymbolFilename);
+  // Paths are assumed to be absolute or relative to the project file
+  ProjectNode.Attributes['sourcefile'] := Project.SourceFilename;
+  ProjectNode.Attributes['stringsymbolfile'] := Project.StringSymbolFilename;
   ProjectNode.Attributes['language'] := Project.SourceLanguageID;
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');

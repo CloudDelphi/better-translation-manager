@@ -78,11 +78,11 @@ type
   protected
     class function DefaultTranslator(Language: TTranslationLanguage; Prop: TLocalizerProperty; var NewValue: string): boolean; static;
   public
-    procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
     procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
+    procedure Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc = nil); overload;
 
-    procedure ScanProject(Project: TLocalizerProject; Instance: HINST); overload;
     procedure ScanProject(Project: TLocalizerProject; const Filename: string); overload;
+    procedure ScanProject(Project: TLocalizerProject; Instance: HINST); overload;
 
     property TranslationCount: TTranslationCounts read FTranslationCount;
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo;
@@ -662,36 +662,14 @@ type
 // -----------------------------------------------------------------------------
 
 constructor TModuleStringResourceProcessor.Create(AModule: TLocalizerModule; AInstance: HINST; AResourceGroups: TResourceGroups);
-var
-  Size: integer;
-  Filename: string;
 begin
   inherited Create(AModule, AInstance);
 
   FResourceGroups := AResourceGroups;
   FSymbolMap := TResourceStringSymbolMap.Create;
 
-  Filename := Module.Project.SourceFilename;
-
-  // Note: GetModuleFileName will fail if the module was loaded with the LOAD_LIBRARY_AS_DATAFILE flag.
-  // According to MSDN we should be able to use the LDR_IS_DATAFILE macro (defined as
-  // "PULONG(AInstance) and 1" to test for this, but I've not been able to get that to work.
-
-  // SourceFileName is usually relative to the project file path so we will probably not find it.
-  // In any case we shouldn't try to since there might be a different file with the same name
-  // in the "current working directory".
-  if (TPath.IsRelativePath(Filename)) or (not TFile.Exists(Filename)) then
-  begin
-    SetLength(Filename, MAX_PATH);
-    Size := GetModuleFileName(Instance, PChar(Filename), Length(Filename)+1);
-    SetLength(Filename, Size);
-  end;
-
-  // Symbol filename is relative to source file. Get the absolute path.
-  Filename := PathUtil.PathCombinePath(TPath.GetDirectoryName(Filename), Module.Project.StringSymbolFilename);
-
-  if (TFile.Exists(Filename)) then
-    FSymbolMap.LoadFromFile(Filename);
+  if (TFile.Exists(Module.Project.StringSymbolFilename)) then
+    FSymbolMap.LoadFromFile(Module.Project.StringSymbolFilename);
 end;
 
 // -----------------------------------------------------------------------------
@@ -877,29 +855,6 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
-var
-  Module: HModule;
-const
-  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
-begin
-  // Do not load using LOAD_LIBRARY_AS_DATAFILE as we need to be able
-  // to call GetModuleFileName on the module handle.
-
-  Module := LoadLibraryEx(PChar(FileName), 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-  if (Module = 0) then
-    RaiseLastOSError;
-  try
-
-    Execute(Action, Project, Module, Language, ResourceWriter, Translator);
-
-  finally
-    FreeLibrary(Module);
-  end;
-end;
-
-// -----------------------------------------------------------------------------
-
 procedure TProjectResourceProcessor.ScanProject(Project: TLocalizerProject; const Filename: string);
 begin
   Execute(liaUpdateSource, Project, Filename, nil, nil);
@@ -939,6 +894,26 @@ begin
   AResourceGroups.Add(ResourceID);
 
   Result := True;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; const Filename: string; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
+var
+  Module: HModule;
+const
+  LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
+begin
+  Module := LoadLibraryEx(PChar(Filename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+  if (Module = 0) then
+    RaiseLastOSError;
+  try
+
+    Execute(Action, Project, Module, Language, ResourceWriter, Translator);
+
+  finally
+    FreeLibrary(Module);
+  end;
 end;
 
 procedure TProjectResourceProcessor.Execute(Action: TLocalizerImportAction; Project: TLocalizerProject; Instance: HINST; Language: TTranslationLanguage; const ResourceWriter: IResourceWriter; Translator: TTranslateProc);
