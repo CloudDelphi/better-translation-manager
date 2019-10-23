@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -50,7 +51,6 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
-      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -1102,6 +1102,8 @@ object FormMain: TFormMain
     object BarButtonBuildProject: TdxBarLargeButton
       Action = ActionBuild
       Category = 0
+      ButtonStyle = bsDropDown
+      DropDownMenu = PopupMenuBuild
     end
     object dxBarButton2: TdxBarButton
       Action = ActionImportXLIFF
@@ -1498,6 +1500,18 @@ object FormMain: TFormMain
           ActionIndex = nil
         end
       end
+    end
+    object ButtonBuildAll: TdxBarButton
+      Caption = 'All languages'
+      Category = 0
+      Hint = 'All languages'
+      Visible = ivAlways
+      OnClick = ButtonBuildAllClick
+    end
+    object ButtonSeparatorBuild: TdxBarSeparator
+      Category = 0
+      Visible = ivAlways
+      ShowCaption = False
     end
   end
   object SkinController: TdxSkinController
@@ -2210,5 +2224,23 @@ object FormMain: TFormMain
     OnTimer = TimerToastTimer
     Left = 296
     Top = 200
+  end
+  object PopupMenuBuild: TdxRibbonPopupMenu
+    BarManager = BarManager
+    ItemLinks = <
+      item
+        Visible = True
+        ItemName = 'ButtonBuildAll'
+      end
+      item
+        Visible = True
+        ItemName = 'ButtonSeparatorBuild'
+      end>
+    Ribbon = RibbonMain
+    UseOwnFont = False
+    OnPopup = PopupMenuBuildPopup
+    Left = 80
+    Top = 386
+    PixelsPerInch = 96
   end
 end

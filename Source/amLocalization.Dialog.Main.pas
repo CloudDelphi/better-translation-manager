@@ -291,6 +291,9 @@ type
     dxRibbonGalleryItem1Group1Item4: TdxRibbonGalleryGroupItem;
     dxRibbonGalleryItem1Group1Item5: TdxRibbonGalleryGroupItem;
     dxRibbonGalleryItem1Group1Item6: TdxRibbonGalleryGroupItem;
+    PopupMenuBuild: TdxRibbonPopupMenu;
+    ButtonBuildAll: TdxBarButton;
+    ButtonSeparatorBuild: TdxBarSeparator;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -402,6 +405,8 @@ type
     procedure ActionFiltersApplyUpdate(Sender: TObject);
     procedure RibbonGalleryItemFiltersPopup(Sender: TObject);
     procedure TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
+    procedure PopupMenuBuildPopup(Sender: TObject);
+    procedure ButtonBuildAllClick(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -582,6 +587,10 @@ type
     procedure InvalidateTranslatedCounts;
     procedure RemoveTranslatedCount(Module: TLocalizerModule);
   protected
+    // Build
+    function BuildLanguageModule(LocaleItem: TLocaleItem; const Filename: string): boolean;
+    procedure OnBuildSingleLanguageHandler(Sender: TObject);
+  protected
     // ILocalizerSearchHost
     function ILocalizerSearchHost.GetProject = GetProject;
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
@@ -691,6 +700,9 @@ resourcestring
 
 resourcestring
   sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
+
+resourcestring
+  sDone = 'Done!';
 
 const
   ImageIndexAbout               = 57;
@@ -2042,80 +2054,8 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionBuildExecute(Sender: TObject);
-var
-  ProjectProcessor: TProjectResourceProcessor;
-  ResourceWriter: IResourceWriter;
-  TargetFilename, Path: string;
-  Filter: string;
-resourcestring
-  sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
-  sLocalizerResourceModuleBuilt = 'Resource module built:'#13'%s';
-  sLocalizerFileLockedTitle = 'File can not be replaced';
-  sLocalizerFileLocked = 'The file is currently in use and can not be overwritten.'#13#13+
-    'Filename: %s'#13+
-    'Error: %s';
 begin
-  if (not CheckSourceFile) then
-    Exit;
-
-  CheckStringsSymbolFile;
-
-  TargetFilename := TPath.ChangeExtension(FProject.SourceFilename, '.'+TargetLanguage.LanguageShortName);
-
-  Path := TPath.GetDirectoryName(TargetFilename);
-  TargetFilename := TPath.GetFileName(TargetFilename);
-
-  Filter := SaveDialogEXE.Filter;
-  if (TargetLanguage <> nil) then
-    Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.LanguageShortName]) + Filter;
-
-  if (not PromptForFileName(TargetFilename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
-    Exit;
-
-  SaveCursor(crHourGlass);
-
-  ProjectProcessor := TProjectResourceProcessor.Create;
-  try
-    ProjectProcessor.IncludeVersionInfo := TranslationManagerSettings.System.IncludeVersionInfo;
-
-    FProject.BeginLoad;
-    try
-
-      while (True) do
-      begin
-        try
-
-          ResourceWriter := TResourceModuleWriter.Create(TargetFilename);
-          try
-
-            ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
-
-            break;
-
-          finally
-            ResourceWriter := nil;
-          end;
-
-        except
-          on E: EFCreateError do
-          begin
-            // Sharing violation - resource module is probably loaded
-            if (TaskMessageDlg(sLocalizerFileLockedTitle, Format(sLocalizerFileLocked, [TargetFilename, E.Message]), mtWarning, [mbRetry, mbAbort], 0, mbRetry) <> mrRetry) then
-              Exit;
-          end;
-        end;
-      end;
-
-    finally
-      FProject.EndLoad;
-    end;
-  finally
-    ProjectProcessor.Free;
-  end;
-
-  ShowMessageFmt(sLocalizerResourceModuleBuilt, [TargetFilename]);
-
-  LoadProject(FProject, False);
+  BarButtonBuildProject.DropDown(True);
 end;
 
 // -----------------------------------------------------------------------------
@@ -5177,6 +5117,178 @@ begin
       TdxBarButton(PopupMenuBookmark.ItemLinks[i].Item).Down := TAction(PopupMenuBookmark.ItemLinks[i].Item.Action).Checked;
     end;
 end;
+
+// -----------------------------------------------------------------------------
+
+function TFormMain.BuildLanguageModule(LocaleItem: TLocaleItem; const Filename: string): boolean;
+var
+  i: integer;
+  TranslationLanguage: TTranslationLanguage;
+  ProjectProcessor: TProjectResourceProcessor;
+  ResourceWriter: IResourceWriter;
+resourcestring
+  sLocalizerResourceModuleBuilding = 'Building resource module for %s';
+  sLocalizerResourceModuleBuilt = 'Resource module built: %s';
+  sLocalizerFileLockedTitle = 'File can not be replaced';
+  sLocalizerFileLocked = 'The file is currently in use and can not be overwritten.'#13#13+
+    'Filename: %s'#13+
+    'Error: %s';
+begin
+  Result := False;
+
+  TranslationLanguage := nil;
+
+  for i := 0 to FProject.TranslationLanguages.Count-1 do
+    if (FProject.TranslationLanguages[i].LanguageID = LocaleItem.Locale) then
+    begin
+      TranslationLanguage := FProject.TranslationLanguages[i];
+      break;
+    end;
+
+  if (TranslationLanguage = nil) then
+    Exit; // TODO : Should never happend but an error message would be nice anyway.
+
+  QueueToast(Format(sLocalizerResourceModuleBuilding, [LocaleItem.LanguageName]));
+
+  ProjectProcessor := TProjectResourceProcessor.Create;
+  try
+    ProjectProcessor.IncludeVersionInfo := TranslationManagerSettings.System.IncludeVersionInfo;
+
+    while (not Result) do
+    begin
+      try
+
+        ResourceWriter := TResourceModuleWriter.Create(Filename);
+        try
+
+          ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
+
+          QueueToast(Format(sLocalizerResourceModuleBuilt, [TPath.GetFileName(Filename)]));
+          Result := True;
+
+        finally
+          ResourceWriter := nil;
+        end;
+
+      except
+        on E: EFCreateError do
+        begin
+          // Sharing violation - resource module is probably loaded
+          if (TaskMessageDlg(sLocalizerFileLockedTitle, Format(sLocalizerFileLocked, [Filename, E.Message]), mtWarning, [mbRetry, mbAbort], 0, mbRetry) <> mrRetry) then
+            break;
+        end;
+      end;
+    end;
+
+  finally
+    ProjectProcessor.Free;
+  end;
+
+end;
+
+procedure TFormMain.ButtonBuildAllClick(Sender: TObject);
+var
+  i: integer;
+  LocaleItem: TLocaleItem;
+  Filename: string;
+begin
+  if (not CheckSourceFile) then
+    Exit;
+
+  CheckStringsSymbolFile;
+
+  SaveCursor(crHourGlass);
+
+  FProject.BeginLoad;
+  try
+
+    for i := 0 to FProject.TranslationLanguages.Count-1 do
+    begin
+      LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
+      Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
+
+      if (not BuildLanguageModule(LocaleItem, Filename)) then
+        break;
+    end;
+
+  finally
+    FProject.EndLoad;
+  end;
+
+  ShowMessage(sDone);
+
+  LoadProject(FProject, False);
+end;
+
+procedure TFormMain.OnBuildSingleLanguageHandler(Sender: TObject);
+var
+  LocaleItem: TLocaleItem;
+  TargetFilename, Path: string;
+  Filter: string;
+resourcestring
+  sLocalizerResourceModuleFilenamePrompt = 'Enter filename of resource module';
+begin
+  if (not CheckSourceFile) then
+    Exit;
+
+  CheckStringsSymbolFile;
+
+  LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
+
+  TargetFilename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
+
+  Path := TPath.GetDirectoryName(TargetFilename);
+  TargetFilename := TPath.GetFileName(TargetFilename);
+
+  Filter := SaveDialogEXE.Filter;
+  if (TargetLanguage <> nil) then
+    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + Filter;
+
+  if (not PromptForFileName(TargetFilename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
+    Exit;
+
+  SaveCursor(crHourGlass);
+
+  FProject.BeginLoad;
+  try
+
+    if (not BuildLanguageModule(LocaleItem, TargetFilename)) then
+      Exit;
+
+  finally
+    FProject.EndLoad;
+  end;
+
+  ShowMessage(sDone);
+
+  LoadProject(FProject, False);
+end;
+
+procedure TFormMain.PopupMenuBuildPopup(Sender: TObject);
+var
+  i: integer;
+  BarItemLink: TdxBarItemLink;
+  LocaleItem: TLocaleItem;
+begin
+  // Remove existing items
+  for i := PopupMenuBuild.ItemLinks.Count-1 downto 0 do
+    if (PopupMenuBuild.ItemLinks[i].Item.Tag <> 0) then
+      PopupMenuBuild.ItemLinks[i].Item.Free;
+
+  for i := 0 to FProject.TranslationLanguages.Count-1 do
+  begin
+    LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
+
+    BarItemLink := PopupMenuBuild.ItemLinks.AddButton;
+    BarItemLink.Item.Caption := Format('%s...', [LocaleItem.LanguageName]); // Add ellipsis since we're prompting for filename
+    BarItemLink.Item.Tag := LocaleItem.Locale;
+    BarItemLink.Item.OnClick := OnBuildSingleLanguageHandler;
+    TdxBarButton(BarItemLink.Item).ButtonStyle := bsChecked;
+    TdxBarButton(BarItemLink.Item).Down := (LocaleItem = TargetLanguage);
+  end;
+end;
+
+// -----------------------------------------------------------------------------
 
 function TFormMain.QueueRestart(Immediately: boolean): boolean;
 resourcestring
