@@ -2924,8 +2924,12 @@ begin
   end;
 
   // Register shell integration on first run
-  if (TranslationManagerSettings.System.FirstRun) then
-    TranslationManagerShell.RegisterShellIntegration;
+  if (TranslationManagerSettings.System.FirstRun) and (not TranslationManagerSettings.System.SafeMode) then
+    try
+      TranslationManagerShell.RegisterShellIntegration;
+    except
+      // Fail silently
+    end;
 
 
   InitializeProject('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
