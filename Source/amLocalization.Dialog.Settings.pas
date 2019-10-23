@@ -322,6 +322,8 @@ type
     CheckBoxProjectAutoApplyStopList: TcxCheckBox;
     dxLayoutGroup23: TdxLayoutGroup;
     dxLayoutGroup24: TdxLayoutGroup;
+    dxLayoutItem62: TdxLayoutItem;
+    ComboBoxModuleNameScheme: TcxImageComboBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -457,6 +459,7 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Data.Main,
+  amLocalization.ResourceWriter,
   amLocalization.Provider.Microsoft.Version3;
 
 const
@@ -577,6 +580,7 @@ begin
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
 
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
+  ComboBoxModuleNameScheme.EditValue := Ord(TranslationManagerSettings.System.ModuleNameScheme);
 
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
@@ -648,6 +652,7 @@ begin
   TranslationManagerSettings.Editor.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
 
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
+  TranslationManagerSettings.System.ModuleNameScheme := TModuleNameScheme(ComboBoxModuleNameScheme.EditValue);
 
   TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
   TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);

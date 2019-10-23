@@ -12,6 +12,7 @@ interface
 
 uses
   Classes,
+  amLocalization.ResourceWriter,
   amLocalization.Model;
 
 type
@@ -27,6 +28,7 @@ type
     FLogger: ICommandLineLogger;
     FProject: TLocalizerProject;
     FVerbose: boolean;
+    FModuleNameScheme: TModuleNameScheme;
   protected
     procedure Message(const Msg: string);
     procedure Error(const Msg: string);
@@ -65,7 +67,11 @@ resourcestring
     '  -?               Display help (this message)'+#13+
     '  -t language      Only build for specified language'+#13+
     '  -b               Build resource module(s)'+#13+
-    '  -v               Display verbose messages';
+    '  -v               Display verbose messages'+#13+
+    '  -n scheme        File name scheme:'+#13+
+    '                     0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)'+#13+
+    '                     1: ISO 639-1 (e.g. EN, DA, DE, etc)'+#13+
+    '                     2: RFC 4646 (e.g. en-US, da-DK, de-DE, etc)';
 
 implementation
 
@@ -78,7 +84,6 @@ uses
   amPath,
   amVersionInfo,
   amLocalization.Persistence,
-  amLocalization.ResourceWriter,
   amLocalization.Engine;
 
 
@@ -144,6 +149,8 @@ procedure TLocalizationCommandLineTool.Execute;
 var
   Filename: string;
   Language: string;
+  s: string;
+  n: integer;
 begin
   Header;
 
@@ -167,6 +174,15 @@ begin
 
   if (not FindCmdLineSwitch('t', Language)) and (not FindCmdLineSwitch('target', Language)) then
     Language := '';
+
+  if (FindCmdLineSwitch('n', s)) or (not FindCmdLineSwitch('name', s)) then
+  begin
+    n := StrToIntDef(s, 0);
+    if (n < 0) or (n > Ord(High(TModuleNameScheme))) then
+      n := 0;
+    FModuleNameScheme := TModuleNameScheme(n);
+  end else
+    FModuleNameScheme := Low(TModuleNameScheme);
 
   if (OptionBuild) then
     Build(Filename, Language);
@@ -232,8 +248,7 @@ var
 begin
   LocaleItem := TLocaleItems.FindLCID(TranslationLanguage.LanguageID);
 
-  TargetFilename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
-
+  TargetFilename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, FModuleNameScheme);
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(TargetFilename)]));
 
   ProjectProcessor := TProjectResourceProcessor.Create;

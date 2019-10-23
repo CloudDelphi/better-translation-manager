@@ -2165,14 +2165,14 @@ begin
   SaveFilter := OpenDialogEXE.Filter;
   try
 
-    OpenDialogEXE.Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.LanguageShortName]) + SaveFilter;
+    OpenDialogEXE.Filter := Format(sResourceModuleFilter, [TargetLanguage.LanguageName, TargetLanguage.ISO639_1Name+'*']) + SaveFilter;
     OpenDialogEXE.FilterIndex := 1;
 
     Filename := OpenDialogEXE.FileName;
     if (Filename <> '') then
     begin
       OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
-      OpenDialogEXE.FileName := TPath.ChangeExtension(TPath.GetFileName(Filename), '.'+TargetLanguage.LanguageShortName);
+      OpenDialogEXE.FileName := TResourceModuleWriter.BuildModuleFilename(TPath.GetFileName(Filename), TargetLanguage.Locale, TranslationManagerSettings.System.ModuleNameScheme);
     end;
 
     if (not OpenDialogEXE.Execute(Handle)) then
@@ -5205,7 +5205,7 @@ begin
     for i := 0 to FProject.TranslationLanguages.Count-1 do
     begin
       LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
-      Filename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
+      Filename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
 
       if (not BuildLanguageModule(LocaleItem, Filename)) then
         break;
@@ -5235,14 +5235,14 @@ begin
 
   LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
 
-  TargetFilename := TPath.ChangeExtension(FProject.SourceFilename, '.'+LocaleItem.LanguageShortName);
+  TargetFilename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
 
   Path := TPath.GetDirectoryName(TargetFilename);
   TargetFilename := TPath.GetFileName(TargetFilename);
 
   Filter := SaveDialogEXE.Filter;
   if (TargetLanguage <> nil) then
-    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.LanguageShortName]) + Filter;
+    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.ISO639_1Name+'*']) + Filter;
 
   if (not PromptForFileName(TargetFilename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
     Exit;

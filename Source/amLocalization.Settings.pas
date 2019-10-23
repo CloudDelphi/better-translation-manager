@@ -26,6 +26,7 @@ uses
   dxSpellChecker,
   cxCustomData,
   amRegConfig,
+  amLocalization.ResourceWriter,
   amLocalization.Filters;
 
 
@@ -368,6 +369,7 @@ type
     FSingleInstance: boolean;
     FSkin: string;
     FIncludeVersionInfo: boolean;
+    FModuleNameScheme: TModuleNameScheme;
     FDefaultTargetLanguage: LCID;
     FDefaultSourceLanguage: LCID;
     FApplicationLanguage: LCID;
@@ -405,6 +407,7 @@ type
     property AutoApplyStopList: boolean read FAutoApplyStopList write FAutoApplyStopList default True;
 
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo default True;
+    property ModuleNameScheme: TModuleNameScheme read FModuleNameScheme write FModuleNameScheme;
 
     property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;
     property DefaultSourceLanguage: LCID read FDefaultSourceLanguage write FDefaultSourceLanguage;
