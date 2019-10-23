@@ -4,6 +4,7 @@
 https://bitbucket.org/anders_melander/better-translation-manager
 
 The Better Translation Manager (BTM) is a replacement for the Delphi Translation Manager a.k.a. the Integrated Translation Environment (ITE) and External Translation Manager (ETM).
+![BTM in action](Artwork/amTranslationManager-main)
 
 ## Why?
 
@@ -129,8 +130,8 @@ Pull requests for new features or other changes should be backed by well argued 
 The source code is released under the MPL 2.0 license:
 
 > Copyright © 2019 Anders Melander  
-> This Source Code Form is subject to the terms of the Mozilla Public 
-> License, v. 2.0. If a copy of the MPL was not distributed with this 
+> This Source Code Form is subject to the terms of the Mozilla Public  
+> License, v. 2.0. If a copy of the MPL was not distributed with this  
 > file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
