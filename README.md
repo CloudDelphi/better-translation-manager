@@ -62,7 +62,7 @@ Instead I just localize all string values - and only string values.
  1. Compile your application.
  Make sure that the **Output resource string .drc file** linker option has been set.
  2. Start BTM.
- 3. Select **New project**,  enter the path to your compiled application and specify the language of the application.
+ 3. Select **New project**,  enter the path to your compiled application and specify the current language of the application.
  4. Select the desired translation language in the Target field.
  5. Select the module (form or resourcestrings) to translate.
  6. Translate individual text values.
@@ -114,7 +114,7 @@ For example the dictionary files for Danish should be named `dan.dic` and `dan.a
 You can find good collections of open source dictionaries here:
 
 * https://github.com/wooorm/dictionaries
-* https://www.freeoffice.com/en/download/dictionaries
+* https://www.freeoffice.com/en/download/dictionaries  
 (the .sox files you can download here are in fact zip files. You will find the .dic and .aff files inside)
 
 Just remember to rename the dictionary files to fit the above rules.
@@ -128,9 +128,9 @@ Pull requests for new features or other changes should be backed by well argued 
 ### License
 The source code is released under the MPL 2.0 license:
 
-> Copyright © 2019 Anders Melander 
-> This Source Code Form is subject to the terms of the Mozilla Public
-> License, v. 2.0. If a copy of the MPL was not distributed with this
+> Copyright © 2019 Anders Melander  
+> This Source Code Form is subject to the terms of the Mozilla Public 
+> License, v. 2.0. If a copy of the MPL was not distributed with this 
 > file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
@@ -162,4 +162,4 @@ For use in automated build systems the `amResourceModuleBuilder` command line ut
 
 
 [^1]: The Delphi help uses an example with resource module files named Test.exe.fr-FR and Test.exe.de-DE. This example is wrong. The correct file names for that example would be Test.fr-FR and Test.de-DE.
-[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: [RFC 4646](https://tools.ietf.org/html/rfc4646) with region, RFC 4646 without region, [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region).
+[^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: #1 [RFC 4646](https://tools.ietf.org/html/rfc4646) with region, #2 RFC 4646 without region, #3 [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), #4 [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region). Since the language code of RFC 4646 is in fact ISO 639-1, search order  #1 and #3 are identical and region neutral translations now has precedence over region specific ones. [This is clearly a bug](https://quality.embarcadero.com/browse/RSP-26515).
