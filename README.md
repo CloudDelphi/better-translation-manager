@@ -4,7 +4,8 @@
 https://bitbucket.org/anders_melander/better-translation-manager
 
 The Better Translation Manager (BTM) is a replacement for the Delphi Translation Manager a.k.a. the Integrated Translation Environment (ITE) and External Translation Manager (ETM).
-![BTM in action](Artwork/amTranslationManager-main)
+
+![BTM in action](Artwork/amTranslationManager-main.png)
 
 ## Why?
 
