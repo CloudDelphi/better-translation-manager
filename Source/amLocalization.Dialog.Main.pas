@@ -2663,7 +2663,10 @@ begin
   end;
 
   if (not Result) then
+  begin
     FProject.StringSymbolFilename := SymbolFilename;
+    FProject.Modified := True;
+  end;
 
   Result := True;
 end;
@@ -2719,6 +2722,7 @@ begin
       if (TFile.Exists(SourceFilename)) then
         FProject.StringSymbolFilename := SourceFilename;
     end;
+    FProject.Modified := True;
   end;
 
   Result := True;
@@ -2852,7 +2856,7 @@ begin
 
     UpdateProjectModifiedIndicator;
 
-    RibbonMain.DocumentName := FProject.Name;
+    RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
 
     // Find language with most translations
     BestLanguage := nil;
@@ -3166,7 +3170,7 @@ begin
   // Make sure we have the abosulte paths before the base path is changed
   if (FProjectFilename <> '') then
   begin
-    SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(ProjectFilename), SourceFilename);
+    SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProjectFilename), SourceFilename);
     SymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(SourceFilename), SymbolFilename);
 
     SaveDialogProject.InitialDir := TPath.GetDirectoryName(FProjectFilename);
@@ -3230,7 +3234,7 @@ end;
 
 procedure TFormMain.ActionProjectSaveUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (not FProject.Name.IsEmpty) and (FProject.Modified);
+  TAction(Sender).Enabled := (not FProject.SourceFilename.IsEmpty);
 end;
 
 procedure TFormMain.ActionProjectUpdateExecute(Sender: TObject);

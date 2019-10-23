@@ -213,12 +213,8 @@ begin
   try
     Project.Clear;
 
-    Project.Name := VarToStr(ProjectNode.Attributes['name']);
-
     Project.SourceFilename := VarToStr(ProjectNode.Attributes['sourcefile']);
-    if (Project.SourceFilename.IsEmpty) then
-      Project.SourceFilename := Project.Name;
-    if (TPath.GetExtension(Project.SourceFilename).IsEmpty) then
+    if (not Project.SourceFilename.IsEmpty) and (TPath.GetExtension(Project.SourceFilename).IsEmpty) then
       Project.SourceFilename := Project.SourceFilename + '.exe';
 
     // UI will handle if the symbol file doesn't exist
@@ -379,10 +375,13 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
       Node.Attributes['name'] := Item.Name;
   end;
 
-  procedure WriteItemID(const Node: IXMLNode; ID: Word);
+  procedure WriteItemID(const Node: IXMLNode; ID: integer);
   begin
-    if (ID <> 0) then
+    // We no longer save the ID - It isn't used for anything
+    (*
+    if (ID <> 0) and (ID <> -1) then
       Node.Attributes['id'] := ID;
+    *)
   end;
 
   procedure WritePropFlags(const Node: IXMLNode; Prop: TLocalizerProperty);
