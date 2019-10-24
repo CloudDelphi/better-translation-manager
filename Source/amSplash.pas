@@ -446,6 +446,16 @@ begin
   FBanner := StringReplace(FBanner, '<version>', FVersion, [rfReplaceAll, rfIgnoreCase]);
   FBannerOffset := 0;
   FBannerKind := Kind;
+
+  if (Visible) then
+  begin
+    if (FBannerKind in [sbStatic, sbStaticFade]) and (FBanner <> '') then
+      DrawBannerImage(255)
+    else
+      DrawSplashImage(255);
+
+    TimerBanner.Enabled := (FBannerKind = sbAnimate) and (FBanner <> '');
+  end;
 end;
 
 procedure TFormSplash.DisplayBannerResource(const ResName, ResType: UnicodeString; Kind: TSplashBannerKind);
