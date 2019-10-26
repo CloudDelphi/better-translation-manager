@@ -1,7 +1,6 @@
-
-
 # Better Translation Manager
 https://bitbucket.org/anders_melander/better-translation-manager
+Installer (no source): http://melander.dk/download/
 
 The Better Translation Manager (BTM) is a replacement for the Delphi Translation Manager a.k.a. the Integrated Translation Environment (ITE) and External Translation Manager (ETM).
 
@@ -45,7 +44,7 @@ The core functionality of the  Better Translation Manager was written in two wee
 
 There's one task that BTM, by design, doesn't attempt to solve: Localizing the placement and size of controls.
 
-Since it has been my experience that it is a far better idea to design the user interface so that the layout automatically accommodates changes in font- and text size and shorter/longer texts due to translation, I decided from the start that I would not be supporting localization of size and position of controls. This also relieved me of having to create a run time form designer, supporting 3rd party controls visually (something that nobody so far has managed to find a foolproof solution to) and deciding what individual properties constitutes size/position values.
+Since it has been my experience that it is a far better idea to design the user interface in such a way that the layout automatically accommodates changes in font- and text size and shorter/longer texts due to translation, I decided from the start that I would not be supporting localization of size and position of controls. This also relieved me of having to create a run time form designer, supporting 3rd party controls visually (something that nobody so far has managed to find a foolproof solution to) and deciding what individual properties constitutes size/position values.
 
 Instead I just localize all string values - and only string values.
 
@@ -161,6 +160,10 @@ For use in automated build systems the `amResourceModuleBuilder` command line ut
       -t language      Only build for specified language
       -b               Build resource module(s)
       -v               Display verbose messages
+      -n scheme        File name scheme:
+                         0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)
+                         1: ISO 639-1 (e.g. EN, DA, DE, etc)
+                         2: RFC 4646 (e.g. en-US, da-DK, de-DE, etc)
 
 
 [^1]: The Delphi help uses an example with resource module files named Test.exe.fr-FR and Test.exe.de-DE. This example is wrong. The correct file names for that example would be Test.fr-FR and Test.de-DE.
