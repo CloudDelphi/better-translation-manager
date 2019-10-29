@@ -136,8 +136,10 @@ uses
   amCursorService,
   amVersionInfo,
   amFileUtils,
+  amPath,
   amLocalization.Settings,
-  amLocalization.Utils;
+  amLocalization.Utils,
+  amLocalization.Environment;
 
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
@@ -435,6 +437,7 @@ end;
 
 function TDataModuleTranslationMemory.CheckLoaded(Force: boolean): boolean;
 var
+  Filename: string;
   Res: integer;
 resourcestring
   sLocalizerNoTMFileTitle = 'Translation Memory does not exist';
@@ -445,11 +448,12 @@ begin
     if (not FEnabled) and (not Force) then
       Exit(False);
 
-    if (not TFile.Exists(TranslationManagerSettings.Providers.TranslationMemory.Filename)) then
+    Filename := EnvironmentVars.ExpandString(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+    Filename := PathUtil.PathCombinePath(TranslationManagerSettings.Folders.FolderAppData, Filename);
+
+    if (not TFile.Exists(Filename)) then
     begin
-      Res := TaskMessageDlg(sLocalizerNoTMFileTitle,
-        Format(sLocalizerNoTMFile, [TranslationManagerSettings.Providers.TranslationMemory.Filename]),
-        mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbNo);
+      Res := TaskMessageDlg(sLocalizerNoTMFileTitle, Format(sLocalizerNoTMFile, [Filename]), mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbNo);
 
       if (Res = mrCancel) then
       begin
@@ -458,9 +462,9 @@ begin
       if (Res = mrYes) then
       begin
         // Save empty
-        SaveToFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+        SaveToFile(Filename);
         // ...and load it
-        LoadFromFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+        LoadFromFile(Filename);
       end else
       begin
         // Pretend we have loaded to avoid further prompts
@@ -469,7 +473,7 @@ begin
         FModified := True;
       end;
     end else
-      LoadFromFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+      LoadFromFile(Filename);
   end;
 
   if (FLoaded) then
@@ -483,6 +487,7 @@ end;
 function TDataModuleTranslationMemory.CheckSave: boolean;
 var
   Res: integer;
+  Filename: string;
 resourcestring
   sLocalizerSaveTMPromptTitle = 'Translation Memory has not been saved';
   sLocalizerSaveTMPrompt = 'Your changes to the Translation Memory has not been saved.'#13#13'Do you want to save them now?';
@@ -503,7 +508,11 @@ begin
 
     SaveCursor(crHourGlass);
 
-    SaveToFile(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+
+    Filename := EnvironmentVars.ExpandString(TranslationManagerSettings.Providers.TranslationMemory.Filename);
+    Filename := PathUtil.PathCombinePath(TranslationManagerSettings.Folders.FolderAppData, Filename);
+
+    SaveToFile(Filename);
 
     Result := (not Modified);
   end else

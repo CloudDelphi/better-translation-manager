@@ -205,6 +205,11 @@ type
     procedure ReadStream(const AKey, AName: string; Stream: TMemoryStream); override;
     procedure WriteObject(const AKey: string; Instance: TObject);
     procedure ReadObject(const AKey: string; Instance: TObject);
+
+    // Saves and loads registry - not configuration
+    procedure SaveRegistryToStream(Stream: TStream);
+    procedure LoadRegistryFromStream(Stream: TStream);
+
     property SubPath: string read FSubPath write SetSubPath;
   end;
 
@@ -670,6 +675,216 @@ end;
 function TConfiguration.GetRegistry: TFixedRegIniFile;
 begin
   Result := FRegistry;
+end;
+
+type
+  TRegistryCracker = class(TRegistry);
+
+procedure TConfiguration.SaveRegistryToStream(Stream: TStream);
+var
+  Writer: TWriter;
+  Reg: TRegistry;
+
+  procedure SaveKey(const Key: string);
+  var
+    RegKey, RegOldKey: HKEY;
+    Names: TStrings;
+    Name: string;
+    Buffer: Pointer;
+    BufSize: Integer;
+    DataType: Integer;
+  begin
+    RegKey := TRegistryCracker(Reg).GetKey(Key);
+    if (RegKey = 0) then
+      Exit;
+    try
+      RegOldKey := Reg.CurrentKey;
+      try
+        TRegistryCracker(Reg).SetCurrentKey(RegKey);
+
+        Writer.WriteString(Key); // Key
+
+        Names := TStringList.Create;
+        try
+          // Values
+          Writer.WriteListBegin;
+          begin
+            Reg.GetValueNames(Names);
+            for Name in Names do
+            begin
+              DataType := REG_NONE;
+              CheckOSError(RegQueryValueEx(Reg.CurrentKey, PChar(Name), nil, @DataType, nil, @BufSize));
+
+              GetMem(Buffer, BufSize);
+              try
+                CheckOSError(RegQueryValueEx(Reg.CurrentKey, PChar(Name), nil, @DataType, PByte(Buffer), @BufSize));
+
+                // Single Value
+                Writer.WriteListBegin;
+                  Writer.WriteString(Name); // Name
+                  Writer.WriteInteger(DataType); // Type
+                  Writer.WriteInteger(BufSize); // Value size
+                  Writer.Write(Buffer^, BufSize); // Value
+                Writer.WriteListEnd;
+
+              finally
+                FreeMem(Buffer);
+              end;
+            end;
+          end;
+          Writer.WriteListEnd;
+
+          // Keys relative to current key
+          Writer.WriteListBegin;
+          begin
+            // Recurse to save keys
+            Reg.GetKeyNames(Names);
+            for Name in Names do
+              SaveKey(Name);
+          end;
+          Writer.WriteListEnd;
+
+        finally
+          Names.Free;
+        end;
+      finally
+        TRegistryCracker(Reg).SetCurrentKey(RegOldKey);
+      end;
+    finally
+      if (RegKey <> 0) then
+        RegCloseKey(RegKey);
+    end;
+  end;
+
+begin
+  Writer := TWriter.Create(Stream, 4096);
+  try
+    Writer.WriteInteger(1); // Version
+    Writer.WriteInteger(Integer(Registry.RootKey)); // Root
+    Reg := TRegistry.Create(KEY_READ);
+    try
+      Reg.RootKey := Registry.RootKey;
+      if (not Reg.OpenKeyReadOnly(KeyPath)) then
+        Exit;
+
+      // Absolute keys
+      Writer.WriteListBegin;
+      begin
+
+        SaveKey(KeyPath);
+
+      end;
+      Writer.WriteListEnd;
+
+    finally
+      Reg.Free;
+    end;
+  finally
+    Writer.Free;
+  end;
+end;
+
+procedure TConfiguration.LoadRegistryFromStream(Stream: TStream);
+var
+  Reader: TReader;
+  Reg: TRegistry;
+
+  procedure LoadKey(const Key: string);
+  var
+    RegKey, RegOldKey: HKEY;
+    Name: string;
+    Buffer: Pointer;
+    BufSize: Integer;
+    DataType: Integer;
+  begin
+    if (not Reg.KeyExists(Key)) then
+      Reg.CreateKey(Key);
+
+    RegKey := TRegistryCracker(Reg).GetKey(Key);
+    if (RegKey = 0) then
+      Exit;
+    try
+      RegOldKey := Reg.CurrentKey;
+      try
+        TRegistryCracker(Reg).SetCurrentKey(RegKey);
+
+        // Values
+        Reader.ReadListBegin;
+        while (not Reader.EndOfList) do
+        begin
+          Reader.ReadListBegin;
+          begin
+            Name := Reader.ReadString;
+            DataType := Reader.ReadInteger;
+            BufSize := Reader.ReadInteger;
+            GetMem(Buffer, BufSize);
+            try
+              Reader.Read(Buffer^, BufSize);
+
+              CheckOSError(RegSetValueEx(Reg.CurrentKey, PChar(Name), 0, DataType, Buffer, BufSize));
+            finally
+              FreeMem(Buffer);
+            end;
+          end;
+          Reader.ReadListEnd;
+        end;
+        Reader.ReadListEnd;
+
+        // Relative keys
+        Reader.ReadListBegin;
+        while (not Reader.EndOfList) do
+        begin
+          // Recurse to load keys
+          Name := Reader.ReadString;
+          LoadKey(Name);
+        end;
+        Reader.ReadListEnd;
+
+      finally
+        TRegistryCracker(Reg).SetCurrentKey(RegOldKey);
+      end;
+    finally
+      if (RegKey <> 0) then
+        RegCloseKey(RegKey);
+    end;
+  end;
+
+begin
+  Reader := TReader.Create(Stream, 4096);
+  try
+    if (Reader.ReadInteger <> 1) then
+      raise Exception.Create('Invalid portable registry version');
+
+    if (HKEY(Reader.ReadInteger) <> Registry.RootKey) then
+      raise Exception.Create('Invalid portable registry root key');
+
+    Reg := TRegistry.Create(KEY_ALL_ACCESS);
+    try
+      Reg.RootKey := Registry.RootKey;
+
+      // RegCopyTree(...);
+      // RegDeleteTree(...);
+
+      Reader.ReadListBegin;
+      begin
+
+        if (Reader.ReadString <> KeyPath) then
+          raise Exception.Create('Invalid portable registry root path');
+
+        LoadKey(KeyPath);
+
+      end;
+      Reader.ReadListEnd;
+
+      // RegCopyTree(...);
+      // RegDeleteTree(...);
+
+    finally
+      Reg.Free;
+    end;
+  finally
+    Reader.Free;
+  end;
 end;
 
 { TConfigurationStringValues }

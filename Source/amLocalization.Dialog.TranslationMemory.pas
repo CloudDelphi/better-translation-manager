@@ -196,7 +196,7 @@ var
   TranslationMemoryFileFormat: TTranslationMemoryFileFormat;
 begin
   if (SaveDialogTMX.InitialDir = '') then
-    SaveDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderTMX;
+    SaveDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderDocuments;
   SaveDialogTMX.FileName := TPath.GetFileName(SaveDialogTMX.FileName);
 
   if (not SaveDialogTMX.Execute(Handle)) then
@@ -239,7 +239,7 @@ begin
     Exit;
 
   if (OpenDialogTMX.InitialDir = '') then
-    OpenDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderTMX;
+    OpenDialogTMX.InitialDir := TranslationManagerSettings.Folders.FolderDocuments;
 
   if (not OpenDialogTMX.Execute(Handle)) then
     Exit;

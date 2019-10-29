@@ -667,6 +667,7 @@ uses
   amLocalization.Utils,
   amLocalization.Shell,
   amLocalization.Settings,
+  amLocalization.Environment,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -906,13 +907,13 @@ procedure TFormMain.FormCreate(Sender: TObject);
     Filename: string;
   begin
     // Look for custom ribbon background image
-    Filename := ExtractFilepath(Application.ExeName) + 'banner.png';
+    Filename := TranslationManagerSettings.FolderInstall + 'banner.png';
     if (not FileExists(Filename)) then
     begin
-      Filename := ExtractFilepath(Application.ExeName) + 'banner.bmp';
+      Filename := TranslationManagerSettings.FolderInstall + 'banner.bmp';
       if (not FileExists(Filename)) then
       begin
-        Filename := ExtractFilepath(Application.ExeName) + 'banner.jpg';
+        Filename := TranslationManagerSettings.FolderInstall + 'banner.jpg';
         if (not FileExists(Filename)) then
           Filename := '';
       end;
@@ -973,7 +974,7 @@ begin
 
   SaveSettings;
 
-  TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
+  TDirectory.CreateDirectory(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck));
   SpellChecker.Dictionaries[0].Unload;
 
   Application.OnHint := nil;
@@ -1055,8 +1056,8 @@ begin
 
   LoadRecentFiles;
 
-  OpenDialogXLIFF.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
-  OpenDialogProject.InitialDir := TranslationManagerSettings.Folders.DocumentFolder;
+  OpenDialogXLIFF.InitialDir := EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderDocuments);
+  OpenDialogProject.InitialDir := OpenDialogXLIFF.InitialDir;
 
   if (TranslationManagerSettings.Layout.ModuleTree.Valid) then
   begin
@@ -2845,6 +2846,9 @@ begin
 end;
 
 procedure TFormMain.MsgAfterShow(var Msg: TMessage);
+var
+  i: integer;
+  Param: string;
 begin
   TranslationManagerSettings.System.EndBoot;
 
@@ -2879,11 +2883,24 @@ begin
   begin
     FPendingFileOpenLock.Enter;
     try
-      if (FPendingFileOpen = nil) then
-        FPendingFileOpen := TStringList.Create;
+      i := 1;
+      while (i <= ParamCount) do
+      begin
+        Param := ParamStr(i);
+        // Ignore parameters
+        if (Param <> '') and (not (AnsiChar(Param[1]) in SwitchChars)) then
+        begin
+          if (FPendingFileOpen = nil) then
+            FPendingFileOpen := TStringList.Create;
 
-      FPendingFileOpen.Add(ParamStr(1));
-      PostMessage(Handle, MSG_FILE_OPEN, Ord(True), 0);
+          FPendingFileOpen.Add(Param);
+          break; // We only handle a single file at a time
+        end;
+
+        inc(i);
+      end;
+      if (FPendingFileOpen <> nil) and (FPendingFileOpen.Count > 0) then
+        PostMessage(Handle, MSG_FILE_OPEN, Ord(True), 0);
     finally
       FPendingFileOpenLock.Leave;
     end;
@@ -3918,6 +3935,8 @@ begin
   DecomposeSkinName(Value, SkinName, SkinFilename, SkinIndex);
   OriginalSkinName := SkinName;
 
+  SkinFilename := EnvironmentVars.ExpandString(SkinFilename);
+
   SkinLoaded := False;
   if (SkinFilename <> '') then
   begin
@@ -4130,28 +4149,32 @@ end;
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
 
   function FindDictionaryFile(LocaleItem: TLocaleItem; const FileType: string): string;
-  var
-    Folder: TTranslationManagerFolder;
-  begin
-    for Folder in [tmFolderSpellCheck, tmFolderUserSpellCheck] do
+
+    function FindFile(const Folder: string): string;
     begin
-      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.LanguageShortName, FileType]); // DAN
+      Result := Format('%s%s.%s', [Folder, LocaleItem.LanguageShortName, FileType]); // DAN
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.LocaleName, FileType]); // da-DK
+      Result := Format('%s%s.%s', [Folder, LocaleItem.LocaleName, FileType]); // da-DK
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s_%s.%s', [LocaleItem.ISO639_1Name, LocaleItem.ISO3166Name, FileType]); // DA_DK
+      Result := Format('%s%s_%s.%s', [Folder, LocaleItem.ISO639_1Name, LocaleItem.ISO3166Name, FileType]); // DA_DK
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := TranslationManagerSettings.Folders.Folder[Folder]+Format('%s.%s', [LocaleItem.ISO639_1Name, FileType]); // DA
+      Result := Format('%s%s.%s', [Folder, LocaleItem.ISO639_1Name, FileType]); // DA
       if (TFile.Exists(Result)) then
         Exit;
+
+      Result := '';
     end;
-    Result := '';
+
+  begin
+    Result := FindFile(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.Folder[tmFolderUserSpellCheck]));
+    if (Result = '') then
+      Result := FindFile(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.Folder[tmFolderSpellCheck]));
   end;
 
 var
@@ -4195,10 +4218,10 @@ begin
     Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
     SpellChecker.Dictionaries[0].Enabled := False;
     // Make sure folder exist before we save
-    TDirectory.CreateDirectory(TranslationManagerSettings.Folders.FolderUserSpellCheck);
+    TDirectory.CreateDirectory(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck));
     SpellChecker.Dictionaries[0].Unload;
     // Load new custom dictionary
-    TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := TranslationManagerSettings.Folders.FolderUserSpellCheck+Format('user-%s.dic', [FTargetLanguage.LanguageShortName]);
+    TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck)+Format('user-%s.dic', [FTargetLanguage.LanguageShortName]);
     SpellChecker.Dictionaries[0].Enabled := True;
     SpellChecker.Dictionaries[0].Language := FTargetLanguage.Locale;
 

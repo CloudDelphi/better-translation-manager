@@ -58,7 +58,8 @@ uses
   amLocalization.Dialog.Filters in 'amLocalization.Dialog.Filters.pas' {FormFilters},
   amLocalization.Filters in 'amLocalization.Filters.pas',
   amLocalization.Provider.TranslationMemory in 'amLocalization.Provider.TranslationMemory.pas',
-  amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas';
+  amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas',
+  amLocalization.Portable in 'amLocalization.Portable.pas';
 
 {$R *.res}
 

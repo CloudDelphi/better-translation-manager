@@ -115,7 +115,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetGeneral
+        Properties.ActivePage = TabSheetSystem
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -1354,7 +1354,7 @@ inherited FormSettings: TFormSettings
               Left = 12
               Top = 23
               Width = 401
-              Height = 137
+              Height = 162
               TabOrder = 1
               object GridFoldersTableView: TcxGridTableView
                 Navigator.Buttons.CustomButtons = <>
@@ -1452,7 +1452,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonFilesReset: TcxButton
               Left = 338
-              Top = 166
+              Top = 191
               Width = 75
               Height = 23
               Action = ActionFolderReset
@@ -1463,7 +1463,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonFilesModify: TcxButton
               Left = 245
-              Top = 166
+              Top = 191
               Width = 75
               Height = 23
               Action = ActionFoldersModify
@@ -1472,7 +1472,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel6: TcxLabel
               Left = 0
-              Top = 203
+              Top = 228
               AutoSize = False
               Caption = 'Document file recovery'
               Style.HotTrack = False
@@ -1485,7 +1485,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoRecovery: TcxCheckBox
               Left = 12
-              Top = 226
+              Top = 251
               Caption = 'Save auto-recovery information'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1494,7 +1494,7 @@ inherited FormSettings: TFormSettings
             end
             object EditAutoRecoveryInterval: TcxSpinEdit
               Left = 152
-              Top = 251
+              Top = 276
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 60.000000000000000000
               Properties.MinValue = 1.000000000000000000
@@ -1507,7 +1507,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel10: TcxLabel
               Left = 0
-              Top = 286
+              Top = 311
               Anchors = [akLeft, akTop, akRight]
               AutoSize = False
               Caption = 'Backup files'
@@ -1521,7 +1521,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 334
+              Top = 359
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1530,7 +1530,7 @@ inherited FormSettings: TFormSettings
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 152
-              Top = 359
+              Top = 384
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
@@ -1543,7 +1543,7 @@ inherited FormSettings: TFormSettings
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 319
-              Top = 359
+              Top = 384
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -1558,7 +1558,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxSaveBackup: TcxCheckBox
               Left = 12
-              Top = 309
+              Top = 334
               Hint = 
                 'Save a backup of existing files when they are replaced with newe' +
                 'r files'
@@ -1588,7 +1588,7 @@ inherited FormSettings: TFormSettings
             object dxLayoutItem32: TdxLayoutItem
               Parent = dxLayoutGroup12
               Control = GridFolders
-              ControlOptions.OriginalHeight = 137
+              ControlOptions.OriginalHeight = 162
               ControlOptions.OriginalWidth = 250
               ControlOptions.ShowBorder = False
               Index = 0
@@ -2387,7 +2387,7 @@ inherited FormSettings: TFormSettings
             object LabelAutoUpdateIntro: TcxLabel
               AlignWithMargins = True
               Left = 12
-              Top = 139
+              Top = 164
               Margins.Left = 12
               Margins.Top = 6
               Margins.Right = 12
@@ -2415,7 +2415,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel4: TcxLabel
               Left = 0
-              Top = 56
+              Top = 81
               AutoSize = False
               Caption = 'File types'
               Style.HotTrack = False
@@ -2428,16 +2428,16 @@ inherited FormSettings: TFormSettings
             end
             object ButtonRegisterFiletypes: TcxButton
               Left = 12
-              Top = 79
+              Top = 104
               Width = 253
               Height = 23
               Caption = 'Restore Translation Manager file associations'
-              TabOrder = 3
+              TabOrder = 4
               OnClick = ButtonRegisterFiletypesClick
             end
             object cxLabel11: TcxLabel
               Left = 0
-              Top = 116
+              Top = 141
               AutoSize = False
               Caption = 'Auto Update'
               Style.HotTrack = False
@@ -2451,7 +2451,7 @@ inherited FormSettings: TFormSettings
             object CheckBoxAutoUpdateEnabled: TcxCheckBox
               AlignWithMargins = True
               Left = 12
-              Top = 188
+              Top = 213
               Margins.Left = 12
               Margins.Top = 6
               Margins.Right = 12
@@ -2459,24 +2459,24 @@ inherited FormSettings: TFormSettings
               Caption = 'Check for updates every time the application starts'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 6
+              TabOrder = 7
               Transparent = True
             end
             object ButtonAutoUpdateNow: TcxButton
               Left = 12
-              Top = 258
+              Top = 283
               Width = 197
               Height = 23
               Caption = 'Check for updates now'
-              TabOrder = 8
+              TabOrder = 9
             end
             object ButtonAutoUpdateReset: TcxButton
               Left = 12
-              Top = 229
+              Top = 254
               Width = 197
               Height = 23
               Caption = 'Reset declined updates'
-              TabOrder = 7
+              TabOrder = 8
             end
             object cxLabel14: TcxLabel
               Left = 0
@@ -2490,6 +2490,20 @@ inherited FormSettings: TFormSettings
               Transparent = True
               Height = 17
               Width = 413
+            end
+            object CheckBoxPortable: TcxCheckBox
+              Left = 12
+              Top = 48
+              Hint = 
+                'If enabled, the application will save and load settings and data' +
+                ' files in the installation folder'
+              Caption = 'Use as Portable Application'
+              Properties.OnChange = CheckBoxSingleInstancePropertiesChange
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 2
+              Transparent = True
+              OnClick = CheckBoxPortableClick
             end
             object LayoutControlAdvancedGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
@@ -2634,6 +2648,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 0
             end
@@ -2644,6 +2659,7 @@ inherited FormSettings: TFormSettings
               Offsets.Left = 12
               ButtonOptions.Buttons = <>
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -2653,6 +2669,15 @@ inherited FormSettings: TFormSettings
               SizeOptions.Height = 10
               SizeOptions.Width = 10
               Index = 2
+            end
+            object dxLayoutItem63: TdxLayoutItem
+              Parent = LayoutControlAdvancedGroup9
+              CaptionOptions.Visible = False
+              Control = CheckBoxPortable
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 151
+              ControlOptions.ShowBorder = False
+              Index = 1
             end
           end
         end

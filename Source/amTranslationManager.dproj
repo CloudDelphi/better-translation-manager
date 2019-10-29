@@ -235,6 +235,7 @@
         <DCCReference Include="amLocalization.Filters.pas"/>
         <DCCReference Include="amLocalization.Provider.TranslationMemory.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.pas"/>
+        <DCCReference Include="amLocalization.Portable.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

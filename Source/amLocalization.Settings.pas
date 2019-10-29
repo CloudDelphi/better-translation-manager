@@ -97,7 +97,7 @@ type
 
 
 type
-  TTranslationManagerFolder = (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck, tmFolderTMX);
+  TTranslationManagerFolder = (tmFolderAppData, tmFolderDocuments, tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
 
 type
   TTranslationManagerFolderSettings = class(TConfigurationSection)
@@ -108,17 +108,25 @@ type
     FFolders: array[TTranslationManagerFolder] of string;
   strict private const
     sFolderDisplayName: array[TTranslationManagerFolder] of string = ( // TODO : Localization
+      'Application data',
+      'Project default',
       'Skins (system)',
       'Skins (user)',
       'Spell Check dictionaries (system)',
-      'Spell Check dictionaries (user)',
-      'TMX translation memory files'
+      'Spell Check dictionaries (user)'
+      );
+    cFolderReadOnly: array[TTranslationManagerFolder] of boolean = (
+      True,
+      False,
+      True,
+      False,
+      True,
+      False
       );
   private
     function GetFolder(Index: TTranslationManagerFolder): string;
     procedure SetFolder(Index: TTranslationManagerFolder; const Value: string);
     function GetFolderName(Index: TTranslationManagerFolder): string;
-    class function GetDocumentFolder: string; static;
     function GetFolderReadOnly(Index: TTranslationManagerFolder): boolean;
   protected
     procedure ApplyDefault; override;
@@ -133,16 +141,15 @@ type
     property Folder[Index: TTranslationManagerFolder]: string read GetFolder write SetFolder;
     property FolderName[Index: TTranslationManagerFolder]: string read GetFolderName;
     property FolderReadOnly[Index: TTranslationManagerFolder]: boolean read GetFolderReadOnly;
-
-    class property DocumentFolder: string read GetDocumentFolder;
   published
     property Valid: boolean read FValid write FValid default False;
 
+    property FolderAppData: string index tmFolderAppData read GetFolder write SetFolder;
+    property FolderDocuments: string index tmFolderDocuments read GetFolder write SetFolder;
     property FolderSkins: string index tmFolderSkins read GetFolder write SetFolder;
     property FolderUserSkins: string index tmFolderUserSkins read GetFolder write SetFolder;
     property FolderSpellCheck: string index tmFolderSpellCheck read GetFolder write SetFolder;
     property FolderUserSpellCheck: string index tmFolderUserSpellCheck read GetFolder write SetFolder;
-    property FolderTMX: string index tmFolderTMX read GetFolder write SetFolder;
 
     property RecentFiles: TConfigurationStringList read FRecentFiles;
     property RecentApplications: TConfigurationStringList read FRecentApplications;
@@ -375,6 +382,8 @@ type
     FApplicationLanguage: LCID;
     FSafeMode: boolean;
     FAutoApplyStopList: boolean;
+    FPortable: boolean;
+    FPortablePurge: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -388,6 +397,7 @@ type
     property LastBootCompleted: boolean read FLastBootCompleted;
 
     property SafeMode: boolean read FSafeMode;
+    property Portable: boolean read FPortable write FPortable;
 
     /// <summary>FirstRun is True if the application has never run before.</summary>
     property FirstRun: boolean read FFirstRun;
@@ -412,11 +422,19 @@ type
     property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;
     property DefaultSourceLanguage: LCID read FDefaultSourceLanguage write FDefaultSourceLanguage;
     property DefaultTargetLanguage: LCID read FDefaultTargetLanguage write FDefaultTargetLanguage;
+
+    property PortablePurge: boolean read FPortablePurge write FPortablePurge;
   end;
 
 
 type
+  TTranslationManagerSettings = class;
+  TTranslationManagerSettingsEvent = reference to procedure(Settings: TTranslationManagerSettings);
+
   TTranslationManagerSettings = class(TConfiguration)
+  strict private class var
+    FOnSettingsCreating: TTranslationManagerSettingsEvent;
+    FOnSettingsDestroying: TTranslationManagerSettingsEvent;
   strict private
     FValid: boolean;
     FVersion: string;
@@ -430,11 +448,17 @@ type
     FEditor: TTranslationManagerEditorSettings;
     FFilters: TTranslationManagerFiltersSettings;
   private
+    class function GetFolderInstall: string; static;
   protected
   public
     constructor Create(Root: HKEY; const APath: string; AAccess: LongWord = KEY_ALL_ACCESS); override;
     destructor Destroy; override;
+
     procedure ResetSettings;
+
+    class property FolderInstall: string read GetFolderInstall;
+    class property OnSettingsCreating: TTranslationManagerSettingsEvent read FOnSettingsCreating write FOnSettingsCreating;
+    class property OnSettingsDestroying: TTranslationManagerSettingsEvent read FOnSettingsDestroying write FOnSettingsDestroying;
   published
     property Valid: boolean read FValid write FValid default False;
     property Version: string read FVersion write FVersion;
@@ -451,6 +475,7 @@ type
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
+
 
 implementation
 
@@ -583,10 +608,13 @@ const
 begin
   inherited;
 
-  FolderSkins := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName)) + sSkinFolder;
-  FolderUserSkins := DocumentFolder + sSkinFolder;
-  FolderSpellCheck := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName)) + sSpellCheckFolder;
-  FolderUserSpellCheck := DocumentFolder + sSpellCheckFolder;
+  FolderDocuments := '%DOCUMENTS%\';
+  FolderAppData := '%DATA%\';
+
+  FolderSkins := '%INSTALL%\' + sSkinFolder;
+  FolderUserSkins := FolderAppData + sSkinFolder;
+  FolderSpellCheck := '%INSTALL%\' + sSpellCheckFolder;
+  FolderUserSpellCheck := FolderAppData + sSpellCheckFolder;
 end;
 
 constructor TTranslationManagerFolderSettings.Create(AOwner: TConfigurationSection);
@@ -628,22 +656,6 @@ end;
 
 //------------------------------------------------------------------------------
 
-class function TTranslationManagerFolderSettings.GetDocumentFolder: string;
-const
-  sApplicationFolder = 'TranslationManager\';
-begin
-{$ifdef DEBUG}
-  // Place stuff with .exe during development so we don't have to hunt for it
-  Result := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(Application.ExeName));
-{$else DEBUG}
-  // We should use AppData but for now Documents will do and is easier to locate
-  // Result := IncludeTrailingPathDelimiter(TPath.GetDocumentsPath) + sApplicationFolder;
-
-  // We now use AppData
-  Result := IncludeTrailingPathDelimiter(TPath.GetCachePath) + sApplicationFolder;
-{$endif DEBUG}
-end;
-
 function TTranslationManagerFolderSettings.GetFolder(Index: TTranslationManagerFolder): string;
 begin
   Result := FFolders[Index];
@@ -658,14 +670,13 @@ end;
 
 function TTranslationManagerFolderSettings.GetFolderReadOnly(Index: TTranslationManagerFolder): boolean;
 begin
-  Result := False; // For now...
+  Result := cFolderReadOnly[Index];
 end;
 
 procedure TTranslationManagerFolderSettings.SetFolder(Index: TTranslationManagerFolder; const Value: string);
 begin
   FFolders[Index] := Value;
 end;
-
 
 //------------------------------------------------------------------------------
 //
@@ -709,10 +720,16 @@ begin
   FBackup := TTranslationManagerBackupSettings.Create(Self);
   FEditor := TTranslationManagerEditorSettings.Create(Self);
   FFilters := TTranslationManagerFiltersSettings.Create(Self);
+
+  if (Assigned(FOnSettingsCreating)) then
+    FOnSettingsCreating(Self);
 end;
 
 destructor TTranslationManagerSettings.Destroy;
 begin
+  if (Assigned(FOnSettingsDestroying)) then
+    FOnSettingsDestroying(Self);
+
   FSystem.Free;
   FForms.Free;
   FFolders.Free;
@@ -724,6 +741,14 @@ begin
   FFilters.Free;
 
   inherited;
+end;
+
+
+//------------------------------------------------------------------------------
+
+class function TTranslationManagerSettings.GetFolderInstall: string;
+begin
+  Result := IncludeTrailingPathDelimiter(TPath.GetDirectoryName(ParamStr(0)));
 end;
 
 //------------------------------------------------------------------------------
@@ -792,7 +817,8 @@ end;
 procedure TTranslationManagerProviderTM.ApplyDefault;
 begin
   inherited;
-  FFilename := TTranslationManagerFolderSettings.DocumentFolder + sTranslationMemoryFilename;
+
+  FFilename := '%DATA%\' + sTranslationMemoryFilename;
 end;
 
 { TTranslationManagerProofingSettings }

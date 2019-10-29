@@ -324,6 +324,8 @@ type
     dxLayoutGroup24: TdxLayoutGroup;
     dxLayoutItem62: TdxLayoutItem;
     ComboBoxModuleNameScheme: TcxImageComboBox;
+    dxLayoutItem63: TdxLayoutItem;
+    CheckBoxPortable: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -374,6 +376,7 @@ type
     procedure ButtonStyleResetClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionEditStatusHintUpdate(Sender: TObject);
+    procedure CheckBoxPortableClick(Sender: TObject);
   private
     type
       TSkinDetails = record
@@ -427,6 +430,10 @@ type
     property RestartRequired: boolean read FRestartRequired;
   end;
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 implementation
 
 {$R *.dfm}
@@ -460,13 +467,12 @@ uses
   amLocalization.Shell,
   amLocalization.Data.Main,
   amLocalization.ResourceWriter,
+  amLocalization.Environment,
   amLocalization.Provider.Microsoft.Version3;
 
 const
   FolderOrder: array[Ord(Low(TTranslationManagerFolder))..Ord(High(TTranslationManagerFolder))] of TTranslationManagerFolder =
-    (tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck, tmFolderTMX);
-
-{ TFormSettings }
+    (tmFolderAppData, tmFolderDocuments, tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
 
 // -----------------------------------------------------------------------------
 
@@ -621,7 +627,7 @@ begin
   ** Advanced section
   *)
   CheckBoxSingleInstance.Checked := TranslationManagerSettings.System.SingleInstance;
-
+  CheckBoxPortable.Checked := TranslationManagerSettings.System.Portable;
 end;
 
 procedure TFormSettings.ApplySettings;
@@ -693,6 +699,27 @@ begin
   ** Advanced section
   *)
   TranslationManagerSettings.System.SingleInstance := CheckBoxSingleInstance.Checked;
+
+  if (TranslationManagerSettings.System.Portable <> CheckBoxPortable.Checked) then
+  begin
+    // Try to create or delete the portable token file
+    try
+
+      if (TranslationManagerSettings.System.Portable) then
+      begin
+        if (TFile.Exists(TranslationManagerSettings.FolderInstall+'portable')) then
+          TFile.Delete(TranslationManagerSettings.FolderInstall+'portable');
+      end else
+      begin
+        TFile.WriteAllText(TranslationManagerSettings.FolderInstall+'portable', 'If this file is present then the application will run as a portable application');
+      end;
+
+      TranslationManagerSettings.System.Portable := CheckBoxPortable.Checked;
+    except
+      on E: Exception do
+        ShowMessageFmt('Unable to change the portable setting: %s', [E.Message]);
+    end;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -808,6 +835,8 @@ begin
 
   if (Filename <> '') then
   begin
+    Filename := EnvironmentVars.ExpandString(Filename);
+
     // Look for exact filename and name match
     for i := 0 to FSkinList.Count-1 do
       if (AnsiSameText(Filename, FSkinList[i].Filename)) and (AnsiSameText(Name, FSkinList[i].Name)) then
@@ -1066,7 +1095,7 @@ procedure TFormSettings.GridFoldersTableViewColumnPathGetCellHint(Sender: TcxCus
   ACellViewInfo: TcxGridTableDataCellViewInfo; const AMousePos: TPoint; var AHintText: TCaption; var AIsHintMultiLine: Boolean;
   var AHintTextRect: TRect);
 begin
-  AHintText := VarToStr(ARecord.Values[Sender.Index]);
+  AHintText := EnvironmentVars.ExpandString(VarToStr(ARecord.Values[Sender.Index]));
 end;
 
 procedure TFormSettings.GridFoldersTableViewColumnPathGetDisplayText(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
@@ -1159,7 +1188,7 @@ var
 resourcestring
   sCreateFileLocationPath = 'The specified folder does not exist.'+#13#13+'Would you like to create the folder now?';
 begin
-  Folder := VarToStr(GridFoldersTableView.Controller.FocusedRecord.Values[1]);
+  Folder := EnvironmentVars.ExpandString(VarToStr(GridFoldersTableView.Controller.FocusedRecord.Values[1]));
 
   if (Folder = '') then
     Exit;
@@ -1194,7 +1223,7 @@ var
   FileOpenDialog: TFileOpenDialog;
 begin
   Title := VarToStr(GridFoldersTableView.Controller.FocusedRecord.Values[0]);
-  Path := VarToStr(GridFoldersTableView.Controller.FocusedRecord.Values[1]);
+  Path := EnvironmentVars.ExpandString(VarToStr(GridFoldersTableView.Controller.FocusedRecord.Values[1]));
 
 (*
   if (CheckWin32Version(6, 0)) then
@@ -1221,7 +1250,7 @@ begin
   end;
 *)
 
-  GridFoldersTableView.Controller.FocusedRecord.Values[1] := Path;
+  GridFoldersTableView.Controller.FocusedRecord.Values[1] := EnvironmentVars.TokenizeString(Path);
 end;
 
 procedure TFormSettings.ActionFoldersModifyUpdate(Sender: TObject);
@@ -1388,6 +1417,11 @@ begin
   end;
 end;
 
+procedure TFormSettings.CheckBoxPortableClick(Sender: TObject);
+begin
+  RequireRestart;
+end;
+
 procedure TFormSettings.CheckBoxProofingAutoCorrectPropertiesChange(Sender: TObject);
 begin
   LayoutGroupProofingAutoCorrect.Enabled := TcxCheckBox(Sender).Checked;
@@ -1482,7 +1516,7 @@ const
         begin
           LoadSkinDetails(Reader.SkinDetails[i], SkinDetails);
 
-          SkinDetails.Filename := Filename;
+          SkinDetails.Filename := EnvironmentVars.TokenizeString(Filename);
           SkinDetails.Index := i;
 
           FSkinList.Add(SkinDetails);
@@ -1499,9 +1533,9 @@ const
   begin
     case Folder of
       SkinFolderUser:
-        Result := TranslationManagerSettings.Folders.FolderUserSkins;
+        Result := IncludeTrailingPathDelimiter(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSkins));
       SkinFolderSystem:
-        Result := TranslationManagerSettings.Folders.FolderSkins;
+        Result := IncludeTrailingPathDelimiter(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderSkins));
     end;
   end;
 
@@ -1702,7 +1736,7 @@ var
 begin
   for i := Low(FolderOrder) to High(FolderOrder) do
     if (not TranslationManagerSettings.Folders.FolderReadOnly[FolderOrder[i]]) then
-      TranslationManagerSettings.Folders.Folder[FolderOrder[i]] := VarToStr(GridFoldersTableView.DataController.Values[i, 1]);
+      TranslationManagerSettings.Folders.Folder[FolderOrder[i]] := EnvironmentVars.TokenizeString(VarToStr(GridFoldersTableView.DataController.Values[i, 1]));
 end;
 
 // -----------------------------------------------------------------------------
