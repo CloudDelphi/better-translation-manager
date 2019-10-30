@@ -4090,7 +4090,7 @@ begin
   if (Value > 0) then
     Result := Value
   else
-    Result := GetUserDefaultUILanguage;
+    Result := GetUserDefaultLCID;
 end;
 
 function TFormMain.GetSourceLanguageID: Word;

@@ -93,7 +93,7 @@ constructor TLocalizationCommandLineTool.Create(ALogger: ICommandLineLogger);
 begin
   inherited Create;
   FLogger := ALogger;
-  FProject := TLocalizerProject.Create('', GetUserDefaultUILanguage);
+  FProject := TLocalizerProject.Create('', GetUserDefaultLCID);
 end;
 
 destructor TLocalizationCommandLineTool.Destroy;
