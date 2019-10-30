@@ -425,7 +425,6 @@ type
     // Language selection
     FSourceLanguage: TLocaleItem;
     FTargetLanguage: TLocaleItem;
-    FTargetRightToLeft: boolean;
     FTranslationLanguage: TTranslationLanguage;
     function GetLanguageID(Value: LCID): LCID;
     function GetSourceLanguageID: Word;
@@ -615,7 +614,6 @@ type
 
     property TargetLanguage: TLocaleItem read FTargetLanguage;
     property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
-    property TargetRightToLeft: boolean read FTargetRightToLeft;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
   end;
 
@@ -805,7 +803,7 @@ begin
     end;
 
     r := CellRect(HitTest.HitNode, HitTest.HitColumn);
-    if (UseRightToLeftReading) or (TFormMain(Owner).TargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+    if (UseRightToLeftReading) or (TFormMain(Owner).TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
       // Top left corner
       r.Right := r.Left + HintCornerSize
     else
@@ -4202,7 +4200,6 @@ begin
     ClearTranslationMemoryPeekResult;
 
     FTargetLanguage := LocaleItem;
-    FTargetRightToLeft := (FTargetLanguage.GetLocaleDataInt(LOCALE_IREADINGLAYOUT) = 1);
 
     BarEditItemTargetLanguage.EditValue := FTargetLanguage.Locale;
 
@@ -5559,7 +5556,7 @@ begin
   if (AViewInfo.Column <> TreeListColumnTarget) then
     Exit;
 
-  if (FTargetRightToLeft <> IsRightToLeft) then
+  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) then
   begin
     // Target language is Right-to-Left but rest of UI isn't - or vice versa
 
@@ -5569,7 +5566,7 @@ begin
     ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
     *)
     Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
-    if (FTargetRightToLeft) then
+    if (TargetLanguage.IsRightToLeft) then
     begin
       // Set RTL
       Flags := Flags or CXTO_RTLREADING;
@@ -5619,7 +5616,7 @@ begin
     ACanvas.Pen.Style := psSolid;
     ACanvas.Pen.Color := $00E39C5B;
 
-    if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+    if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     begin
       // Top left corner
       Triangle[0].X := AViewInfo.BoundsRect.Left+1;
@@ -5854,10 +5851,10 @@ end;
 
 procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
 begin
-  if (AItem = TreeListColumnTarget) and (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+  if (AItem = TreeListColumnTarget) and (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     // Target language is Right-to-Left but rest of UI isn't - or vice versa
-    if (FTargetRightToLeft) then
+    if (TargetLanguage.IsRightToLeft) then
       AEdit.BiDiMode := bdRightToLeft
     else
       AEdit.BiDiMode := bdLeftToRight;
@@ -5888,7 +5885,7 @@ begin
   Node := TreeListItems.HitTest.HitNode;
 
   r := TreeListItems.CellRect(Node, TreeListItems.HitTest.HitColumn);
-  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
   else
@@ -5943,7 +5940,7 @@ begin
     Exit;
 
   r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
-  if (UseRightToLeftReading) or (FTargetRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
   else
@@ -6110,7 +6107,7 @@ begin
 
       HintList := '';
       for s in Translations do
-        HintList := HintList + Format(sTranslationMemoryHintListItem, [UnicodeToRTF(s), sRtlLtr[FTargetRightToLeft], sRtlLtr[IsRightToLeft]]);
+        HintList := HintList + Format(sTranslationMemoryHintListItem, [UnicodeToRTF(s), sRtlLtr[TargetLanguage.IsRightToLeft], sRtlLtr[IsRightToLeft]]);
 
     finally
       Translations.Free;
@@ -6118,7 +6115,7 @@ begin
 
     ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate,
       [GetUserDefaultLCID, TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
-      sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[FTargetRightToLeft]]);
+      sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[TargetLanguage.IsRightToLeft]]);
     p := TreeListItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));
 
     TdxScreenTipStyle(HintStyleController.HintStyle).ShowScreenTip(p.X, p.Y, ScreenTipTranslationMemory);

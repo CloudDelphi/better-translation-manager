@@ -358,6 +358,7 @@ end;
 procedure TFormTranslationMemory.CreateColumns;
 var
   i: integer;
+  LocaleItem: TLocaleItem;
 begin
   GridTMDBTableView.BeginUpdate;
   try
@@ -367,7 +368,11 @@ begin
 
     for i := 0 to GridTMDBTableView.ColumnCount-1 do
     begin
-      FRightToLeft[i] := (TLocaleItem.GetLocaleDataInt(GridTMDBTableView.Columns[i].DataBinding.Field.Tag, LOCALE_IREADINGLAYOUT) = 1);
+      LocaleItem := TLocaleItems.FindLCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag);
+      if (LocaleItem <> nil) then
+        FRightToLeft[i] := LocaleItem.IsRightToLeft
+      else
+        FRightToLeft[i] := IsRightToLeft;
       GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
       GridTMDBTableView.Columns[i].Width := 200;
       GridTMDBTableView.Columns[i].BestFitMaxWidth := 400;

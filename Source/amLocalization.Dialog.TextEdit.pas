@@ -72,7 +72,6 @@ type
     procedure FileSaveAs1Accept(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    FTargetRightToLeft: boolean;
     FTargetLanguage: TLocaleItem;
     FSourceLanguage: TLocaleItem;
     function GetText: string;
@@ -108,9 +107,9 @@ begin
   PanelSource.Visible := ShowSourceValue;
   SplitterEditors.Visible := ShowSourceValue;
 
-  if (FTargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
-    if (FTargetRightToLeft) then
+    if (TargetLanguage.IsRightToLeft) then
       EditText.BiDiMode := bdRightToLeft
     else
       EditText.BiDiMode := bdLeftToRight;
@@ -183,12 +182,8 @@ procedure TFormTextEditor.SetTargetLanguage(Value: TLocaleItem);
 begin
   FTargetLanguage := Value;
 
-  if (FSourceLanguage <> nil) then
-  begin
+  if (FTargetLanguage <> nil) then
     LabelTargetName.Caption := FTargetLanguage.LanguageName;
-    FTargetRightToLeft := (FTargetLanguage.GetLocaleDataInt(LOCALE_IREADINGLAYOUT) = 1);
-  end else
-    FTargetRightToLeft := False;
 
   LabelTargetName.Visible := (FSourceLanguage <> nil) and (FTargetLanguage <> nil);
   LabelSourceName.Visible := LabelTargetName.Visible;

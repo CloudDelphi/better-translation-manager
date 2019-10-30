@@ -1,4 +1,5 @@
 inherited FormTextEditor: TFormTextEditor
+  ActiveControl = EditText
   BorderIcons = [biSystemMenu, biMaximize]
   BorderStyle = bsSizeToolWin
   Caption = 'Edit text'
@@ -81,6 +82,7 @@ inherited FormTextEditor: TFormTextEditor
           object EditSourceText: TcxRichEdit
             Left = 0
             Top = 13
+            TabStop = False
             Align = alClient
             PopupMenu = PopupActionBar1
             Properties.MemoMode = True
@@ -90,9 +92,6 @@ inherited FormTextEditor: TFormTextEditor
             Style.HotTrack = False
             Style.TextColor = clGrayText
             TabOrder = 0
-            ExplicitLeft = -188
-            ExplicitTop = 0
-            ExplicitHeight = 238
             Height = 225
             Width = 277
           end
@@ -120,10 +119,6 @@ inherited FormTextEditor: TFormTextEditor
           ParentColor = True
           ShowCaption = False
           TabOrder = 2
-          ExplicitLeft = 192
-          ExplicitTop = 104
-          ExplicitWidth = 89
-          ExplicitHeight = 93
           object EditText: TcxRichEdit
             Left = 0
             Top = 13
@@ -134,10 +129,6 @@ inherited FormTextEditor: TFormTextEditor
             Properties.ScrollBars = ssVertical
             Style.HotTrack = False
             TabOrder = 0
-            ExplicitLeft = 281
-            ExplicitTop = 0
-            ExplicitWidth = 89
-            ExplicitHeight = 93
             Height = 225
             Width = 288
           end

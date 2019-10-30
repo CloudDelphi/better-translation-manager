@@ -208,7 +208,7 @@ begin
 
       FFormSelectDuplicate.DuplicateAction := FDuplicateAction;
 
-      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Translations, TargetValue)) then
+      if (not FFormSelectDuplicate.SelectDuplicate(Prop, Translations, TargetLanguage.IsRightToLeft, TargetValue)) then
         Abort;
 
       if (not FFormSelectDuplicate.SkipOne) then

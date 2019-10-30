@@ -56,7 +56,7 @@ type
     FSkipOne: boolean;
     function GetApplyToIdentical: boolean;
   public
-    function SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; var Value: string): boolean;
+    function SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; TargetRightToLeft: boolean; var Value: string): boolean;
     property DuplicateAction: TDuplicateAction read FDuplicateAction write FDuplicateAction;
     property SkipOne: boolean read FSkipOne;
     property ApplyToIdentical: boolean read GetApplyToIdentical;
@@ -68,6 +68,7 @@ implementation
 
 uses
   amLocalization.Data.Main,
+  amLocalization.Settings,
   amLocalization.Utils;
 
 const
@@ -124,7 +125,7 @@ begin
     ActionOK.Execute;
 end;
 
-function TFormSelectDuplicate.SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; var Value: string): boolean;
+function TFormSelectDuplicate.SelectDuplicate(Prop: TLocalizerProperty; Duplicates: TStrings; TargetRightToLeft: boolean; var Value: string): boolean;
 var
   s: string;
 begin
@@ -159,6 +160,14 @@ begin
     for s in Duplicates do
       ListViewDuplicates.Items.Add.Caption := s;
     ListViewDuplicates.ItemIndex := 0;
+
+    if (TargetRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+    begin
+      if (TargetRightToLeft) then
+        ListViewDuplicates.BiDiMode := bdRightToLeft
+      else
+        ListViewDuplicates.BiDiMode := bdLeftToRight;
+    end;
 
     Result := (ShowModal <> mrCancel);
   end else
