@@ -37,6 +37,7 @@ type
     FLanguageName: string;
     FLanguageShortName: string;
     FCharSet: integer;
+    FReadingLayout: integer;
     FIgnore: boolean;
   protected
     function GetFlag: TBitmap;
@@ -53,6 +54,9 @@ type
     function GetISO639_1Name: string;
     function GetPrimaryLanguage: Word;
     function GetSubLanguage: Word;
+    function GetReadingLayout: integer;
+    function GetIsLeftToRight: boolean;
+    function GetIsRightToLeft: boolean;
   public
     constructor Create(ALocale: LCID);
     destructor Destroy; override;
@@ -82,6 +86,9 @@ type
     property LanguageShortName: string read GetLanguageShortName;
     property Language: LangID read GetLanguage;
     property CharSet: integer read GetCharSet;
+    property ReadingLayout: integer read GetReadingLayout;
+    property IsLeftToRight: boolean read GetIsLeftToRight;
+    property IsRightToLeft: boolean read GetIsRightToLeft;
     property Ignore: boolean read FIgnore write FIgnore;
   end;
 
@@ -974,6 +981,7 @@ constructor TLocaleItem.Create(ALocale: LCID);
 begin
   FLocale := ALocale;
   FCharSet := -1;
+  FReadingLayout := -1;
 end;
 
 //------------------------------------------------------------------------------
@@ -1122,6 +1130,23 @@ begin
 end;
 
 //------------------------------------------------------------------------------
+
+function TLocaleItem.GetReadingLayout: integer;
+begin
+  if (FReadingLayout = -1) then
+    FReadingLayout := GetLocaleDataInt(LOCALE_IREADINGLAYOUT);
+  Result := FReadingLayout;
+end;
+
+function TLocaleItem.GetIsLeftToRight: boolean;
+begin
+  Result := (ReadingLayout = 0);
+end;
+
+function TLocaleItem.GetIsRightToLeft: boolean;
+begin
+  Result := (ReadingLayout = 1);
+end;
 
 //------------------------------------------------------------------------------
 //
