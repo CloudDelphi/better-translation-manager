@@ -5994,6 +5994,7 @@ procedure TFormMain.TimerHintTimer(Sender: TObject);
   var
     TruncatedValue: string;
     c, LastChar, NextLastChar: Char;
+    ac: AnsiChar;
   begin
     // Truncate to 100 chars
     if (Length(Value) > 100) then
@@ -6005,26 +6006,30 @@ procedure TFormMain.TimerHintTimer(Sender: TObject);
     for c in TruncatedValue do
     begin
       NextLastChar := c;
-      case c of
-        #10, #13:
+      case Ord(c) of
+        10, 13:
           begin
             if (LastChar <> #13) then
               Result := Result + '\line ';
             NextLastChar := #13;
           end;
 
-        #0..#9, #11..#12, #14..#32:
+        0..9, 11..12, 14..32:
           begin
             if (LastChar <> ' ') then
               Result := Result + ' ';
             NextLastChar := ' ';
           end;
 
-        '\', '{', '}':
+        Ord('\'), Ord('{'), Ord('}'):
           Result := Result + '\'+c;
 
-        #128..Char(MaxInt):
-          Result := Result + Format('\u%d?', [Ord(c)]);
+        128..Ord(High(Char)):
+          begin
+            if (LocaleCharsFromUnicode(CP_THREAD_ACP, WC_COMPOSITECHECK, @c, 1, @ac, 1, nil, nil) <> 1) then
+              ac := '?';
+            Result := Result + Format('\u%d%s', [Ord(c), ac]);
+          end;
 
       else
         Result := Result + c;
@@ -6042,9 +6047,50 @@ var
 resourcestring
   sTranslationMemoryHintHeader = 'Translation suggestions:';
 const
-  sTranslationMemoryHintTemplate = '{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}{\f1\fnil\fcharset2 Symbol;}}'+
-    '{\colortbl ;\red76\green76\blue76;\red0\green128\blue255;}\viewkind4\uc1\pard\cf1\lang1030\f0\fs18%s\par\pard%s}';
-  sTranslationMemoryHintListItem = '{\pntext\f1\''B7}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\''B7}}\fi-200\li200\cf2 %s\cf1\par\pard';
+  sTranslationMemoryHintTemplate =
+    '{\rtf1\ansi\ansicpg1252'+
+    '\deff0'+           // Default font is #0
+    // Font table
+    '{\fonttbl'+
+      '{\f0\f%5:s\fcharset0 Segoe UI;}'+        // Font #0: Native UI language, default char set
+      '{\f1\f%6:s\fcharset%1:d Segoe UI;}'+     // Font #1: Target language, target charset
+      '{\f2\ftech\fcharset2 Symbol;}'+          // Font #2: Bullets, symbol charset
+    '}'+
+    // Color table
+    '{\colortbl '+
+      ';'+
+      '\red76\green76\blue76;'+                 // Color #1 (lead text)
+      '\red0\green128\blue255;'+                // Color #2 (bullet text)
+    '}'+
+    '\viewkind4'+       // Normal view
+    '\uc1'+             // 1 byte unicode fallback characters
+    '\pard\cf1\f0\fs18'+// Paragraph, color #1, font #0, font size 9
+    '\lang%0:d'+        // Native language ID (not sure that this is necessary)
+    '\%4:spar'+         // Native LTR/RTL paragraph
+    ' %2:s\par\pard'+   // Lead text
+
+    '{\pntext\f2\''B7}'+ // Plain text bullet point, font #2
+    '{\*\pn'+           // Paragraph numbering
+      '\pnlvlblt'+      // Bulleted paragraph
+      '\pnf2'+          // Font number 2
+      '\pnindent0'+     // Minimum distance from margin to body text.
+      '{\pntxtb\''B7}'+ // Text before: the bullet
+    '}'+
+    '\%4:spar'+         // Native LTR/RTL paragraph
+    '\fi-200'+          // First line indent
+    '\li200'+           // Left indent
+    '\cf2'+             // Foreground color #2
+    '\f1'+              // Font #1
+    '%3:s'+             // Bullet list
+    '}';
+  sTranslationMemoryHintListItem =
+    '\%1:sch'+          // Target LTR/RTL characters
+    ' %0:s'+            // The bullet text
+    '\%2:sch'+          // Native LTR/RTL characters
+    '\par';
+const
+  sRtlLtr: array[boolean] of string = ('ltr', 'rtl');
+  sRtlLtrFont: array[boolean] of string = ('nil', 'bidi');
 begin
   TimerHint.Enabled := False;
 
@@ -6064,14 +6110,15 @@ begin
 
       HintList := '';
       for s in Translations do
-        // TODO : Need handling of BiDi and RTL. Will probably have to abandom RTF for this
-        HintList := HintList + Format(sTranslationMemoryHintListItem, [UnicodeToRTF(s)]);
+        HintList := HintList + Format(sTranslationMemoryHintListItem, [UnicodeToRTF(s), sRtlLtr[FTargetRightToLeft], sRtlLtr[IsRightToLeft]]);
 
     finally
       Translations.Free;
     end;
 
-    ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate, [sTranslationMemoryHintHeader, HintList]);
+    ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate,
+      [GetUserDefaultLCID, TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
+      sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[FTargetRightToLeft]]);
     p := TreeListItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));
 
     TdxScreenTipStyle(HintStyleController.HintStyle).ShowScreenTip(p.X, p.Y, ScreenTipTranslationMemory);
