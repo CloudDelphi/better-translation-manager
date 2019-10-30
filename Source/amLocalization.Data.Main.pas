@@ -134,9 +134,8 @@ begin
   try
 //    TextEditor.SourceText := FocusedProperty.Value;
     TextEditor.Text := TcxButtonEdit(Sender).EditingText;
-    TextEditor.TargetRightToLeft := (TcxButtonEdit(Sender).BiDiMode <> bdLeftToRight);
     if (TcxButtonEdit(Sender).Tag <> 0) then
-      TextEditor.SetTargetName(TLocaleItems.FindLCID(TcxButtonEdit(Sender).Tag).LanguageName);
+      TextEditor.TargetLanguage := TLocaleItems.FindLCID(TcxButtonEdit(Sender).Tag);
 
     if (TextEditor.Execute(False)) then
     begin

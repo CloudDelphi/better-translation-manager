@@ -1542,7 +1542,7 @@ object FormMain: TFormMain
       ImageIndex = 13
       ShortCut = 118
       OnExecute = ActionProofingCheckExecute
-      OnUpdate = ActionHasModulesUpdate
+      OnUpdate = ActionProofingCheckUpdate
     end
     object ActionProjectOpen: TAction
       Category = 'File'
@@ -1559,7 +1559,7 @@ object FormMain: TFormMain
       ImageIndex = 13
       ShortCut = 8310
       OnExecute = ActionProofingCheckSelectedExecute
-      OnUpdate = ActionHasItemFocusedUpdate
+      OnUpdate = ActionProofingCheckSelectedUpdate
     end
     object ActionProjectNew: TAction
       Category = 'File'
@@ -2021,7 +2021,8 @@ object FormMain: TFormMain
       end>
     SpellingFormType = sftWord
     UseThreadedLoad = True
-    OnCheckAsYouTypeStart = SpellCheckerCheckAsYouTypeStart
+    OnAutoCorrectStart = SpellCheckerCheckStart
+    OnCheckAsYouTypeStart = SpellCheckerCheckStart
     OnCheckWord = SpellCheckerCheckWord
     OnSpellingComplete = SpellCheckerSpellingComplete
     Left = 448

@@ -14,9 +14,14 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, ComCtrls, ToolWin, ActnMan, ActnCtrls, ActnList,
   StdActns, PlatformDefaultStyleActnCtrls, ImgList,
-  Menus, ActnPopup, System.Actions, System.ImageList, cxGraphics, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxControls,
+  Menus, ActnPopup, System.Actions, System.ImageList,
+
+  cxGraphics, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, cxControls,
   cxContainer, cxEdit, cxTextEdit, cxMemo, cxRichEdit, cxButtons, cxSplitter, cxImageList,
-  amLocalization.Dialog, dxLayoutControlAdapters, dxLayoutcxEditAdapters, cxLabel, dxLayoutContainer, cxClasses, dxLayoutControl;
+  dxLayoutControlAdapters, dxLayoutcxEditAdapters, cxLabel, dxLayoutContainer, cxClasses, dxLayoutControl,
+
+  amLocale,
+  amLocalization.Dialog;
 
 type
   TEditDelete = class(StdActns.TEditDelete)
@@ -68,17 +73,20 @@ type
     procedure FormCreate(Sender: TObject);
   private
     FTargetRightToLeft: boolean;
+    FTargetLanguage: TLocaleItem;
+    FSourceLanguage: TLocaleItem;
     function GetText: string;
     procedure SetText(const Value: string);
     function GetSourceText: string;
     procedure SetSourceText(const Value: string);
+    procedure SetTargetLanguage(Value: TLocaleItem);
+    procedure SetSourceLanguage(const Value: TLocaleItem);
   public
     function Execute(ShowSourceValue: boolean = True): boolean;
     property Text: string read GetText write SetText;
     property SourceText: string read GetSourceText write SetSourceText;
-    procedure SetSourceName(const Name: string);
-    procedure SetTargetName(const Name: string);
-    property TargetRightToLeft: boolean read FTargetRightToLeft write FTargetRightToLeft;
+    property SourceLanguage: TLocaleItem read FSourceLanguage write SetSourceLanguage;
+    property TargetLanguage: TLocaleItem read FTargetLanguage write SetTargetLanguage;
   end;
 
 implementation
@@ -160,16 +168,30 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TFormTextEditor.SetSourceName(const Name: string);
+procedure TFormTextEditor.SetSourceLanguage(const Value: TLocaleItem);
 begin
-  LabelSourceName.Caption := Name;
-  LabelSourceName.Visible := (Name <> '');
+  FSourceLanguage := Value;
+
+  if (FSourceLanguage <> nil) then
+    LabelSourceName.Caption := FSourceLanguage.LanguageName;
+
+  LabelSourceName.Visible := (FSourceLanguage <> nil) and (FTargetLanguage <> nil);
+  LabelTargetName.Visible := LabelSourceName.Visible;
 end;
 
-procedure TFormTextEditor.SetTargetName(const Name: string);
+procedure TFormTextEditor.SetTargetLanguage(Value: TLocaleItem);
 begin
-  LabelTargetName.Caption := Name;
-  LabelTargetName.Visible := (Name <> '');
+  FTargetLanguage := Value;
+
+  if (FSourceLanguage <> nil) then
+  begin
+    LabelTargetName.Caption := FTargetLanguage.LanguageName;
+    FTargetRightToLeft := (FTargetLanguage.GetLocaleDataInt(LOCALE_IREADINGLAYOUT) = 1);
+  end else
+    FTargetRightToLeft := False;
+
+  LabelTargetName.Visible := (FSourceLanguage <> nil) and (FTargetLanguage <> nil);
+  LabelSourceName.Visible := LabelTargetName.Visible;
 end;
 
 //------------------------------------------------------------------------------

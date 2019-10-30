@@ -345,7 +345,7 @@ type
     procedure ActionImportFileExecute(Sender: TObject);
     procedure ActionGotoNextUntranslatedExecute(Sender: TObject);
     procedure TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
-    procedure SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
+    procedure SpellCheckerCheckStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
     procedure ActionImportFileSourceExecute(Sender: TObject);
     procedure ActionImportFileTargetExecute(Sender: TObject);
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
@@ -407,6 +407,8 @@ type
     procedure TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
     procedure PopupMenuBuildPopup(Sender: TObject);
     procedure ButtonBuildAllClick(Sender: TObject);
+    procedure ActionProofingCheckUpdate(Sender: TObject);
+    procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -435,6 +437,7 @@ type
     procedure UpdateTargetLanguage;
   private
     // Spell check
+    FCanSpellCheck: boolean;
     FSpellCheckProp: TLocalizerProperty;
     FSpellCheckingWord: boolean;
     FSpellCheckingString: boolean;
@@ -4238,6 +4241,8 @@ begin
       AnyFound := AnyFound or Found;
     end;
 
+    FCanSpellCheck := AnyFound or (TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).WordCount > 0);
+
     // Add and load new dictionary
     if (not AnyFound) then
     begin
@@ -4256,6 +4261,8 @@ begin
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
+
+        FCanSpellCheck := True;
       end;
 
       // TODO : Add support for other formats here...
@@ -4936,10 +4943,16 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.SpellCheckerCheckAsYouTypeStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
+procedure TFormMain.SpellCheckerCheckStart(Sender: TdxCustomSpellChecker; AControl: TWinControl; var AAllow: Boolean);
 begin
-  // Only spell check inplace editor and memo in text dialog
-  AAllow := ((AControl.Parent = TreeListItems) and (AControl is TcxCustomButtonEdit)) or (AControl is TcxCustomMemo);
+  // Only spell check:
+  AAllow :=
+    // Translation list in-place editor
+    ((AControl.Parent = TreeListItems) and (AControl is TcxCustomButtonEdit)) or
+    // Translation Memory in-place editor, if language matches
+    ((AControl is TcxCustomButtonEdit) and (AControl.Tag = integer(TargetLanguage.Locale))) or
+    // Text Editor memo, if language matches
+    ((AControl.Owner is TFormTextEditor) and (TFormTextEditor(AControl.Owner).TargetLanguage = TargetLanguage) and (AControl is TcxCustomMemo));
 end;
 
 procedure TFormMain.SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
@@ -5465,9 +5478,8 @@ begin
   try
     TextEditor.SourceText := FocusedProperty.Value;
     TextEditor.Text := TcxButtonEdit(Sender).EditingText;
-    TextEditor.TargetRightToLeft := FTargetRightToLeft;
-    TextEditor.SetSourceName(SourceLanguage.LanguageName);
-    TextEditor.SetTargetName(TargetLanguage.LanguageName);
+    TextEditor.SourceLanguage := SourceLanguage;
+    TextEditor.TargetLanguage := TargetLanguage;
 
     if (TextEditor.Execute) then
     begin
@@ -6315,6 +6327,8 @@ begin
     AStyle := DataModuleMain.StyleNeedTranslation;
 end;
 
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionProofingCheckSelectedExecute(Sender: TObject);
 var
   i: integer;
@@ -6337,6 +6351,18 @@ begin
   end;
 
   SpellChecker.ShowSpellingCompleteMessage;
+end;
+
+procedure TFormMain.ActionProofingCheckSelectedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FocusedItem <> nil) and
+    ((FCanSpellCheck) or (TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).WordCount > 0));
+end;
+
+procedure TFormMain.ActionProofingCheckUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and
+    ((FCanSpellCheck) or (TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).WordCount > 0));
 end;
 
 // -----------------------------------------------------------------------------
