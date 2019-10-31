@@ -1416,7 +1416,7 @@ begin
     Value := MakeAlike(Prop.Value, TargetValue, [EqualizeEnding, EqualizeAccelerators]);
 
     // Exact match - Insert in front
-    if (Translations.Count > 0) then
+    if (Translations.Count > 0) and not((Translations is TStringList) and (TStringList(Translations).Sorted)) then
     begin
       n := Translations.IndexOf(Value);
       if (n = -1) then

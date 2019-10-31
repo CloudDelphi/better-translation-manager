@@ -1668,7 +1668,7 @@ function TLocalizerProperty.GetTranslatedValue(Language: TTranslationLanguage): 
 var
   Translation: TLocalizerTranslation;
 begin
-  if (Translations.TryGetTranslation(Language, Translation)) and (Translation.Status <> tStatusObsolete) then
+  if (Translations.TryGetTranslation(Language, Translation)) and (Translation.IsTranslated) then
     Result := Translation.Value
   else
     Result := Value;
@@ -1680,7 +1680,7 @@ function TLocalizerProperty.HasTranslation(Language: TTranslationLanguage): bool
 var
   Translation: TLocalizerTranslation;
 begin
-  Result := (Translations.TryGetTranslation(Language, Translation)) and (Translation.Status <> tStatusObsolete);
+  Result := (Translations.TryGetTranslation(Language, Translation)) and (Translation.IsTranslated);
 end;
 
 // -----------------------------------------------------------------------------

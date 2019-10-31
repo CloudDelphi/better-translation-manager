@@ -36,7 +36,7 @@ uses
   amLocalization.Provider,
   amLocalization.Dialog.Search,
   amLocalization.TranslationMemory,
-  amLocalization.Filters;
+  amLocalization.Filters, cxMRUEdit;
 
 
 const
@@ -294,6 +294,10 @@ type
     PopupMenuBuild: TdxRibbonPopupMenu;
     ButtonBuildAll: TdxBarButton;
     ButtonSeparatorBuild: TdxBarSeparator;
+    ActionTranslationEditText: TAction;
+    ActionTranslationSuggestionList: TAction;
+    ActionProjectRecover: TAction;
+    dxBarButton1: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -318,7 +322,6 @@ type
     procedure ActionStatusDontTranslateUpdate(Sender: TObject);
     procedure ActionStatusHoldExecute(Sender: TObject);
     procedure ActionStatusHoldUpdate(Sender: TObject);
-    procedure TreeListColumnTargetPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure ActionProofingLiveCheckExecute(Sender: TObject);
     procedure ActionProofingLiveCheckUpdate(Sender: TObject);
     procedure ActionProofingCheckExecute(Sender: TObject);
@@ -409,6 +412,9 @@ type
     procedure ButtonBuildAllClick(Sender: TObject);
     procedure ActionProofingCheckUpdate(Sender: TObject);
     procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
+    procedure ActionTranslationEditTextExecute(Sender: TObject);
+    procedure ActionTranslationSuggestionListExecute(Sender: TObject);
+    procedure ActionProjectRecoverExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -558,6 +564,7 @@ type
     procedure ViewProperty(Prop: TLocalizerProperty);
     procedure TranslationAdded(AProp: TLocalizerProperty);
     function ApplyStopList(const Progress: IProgress = nil): TFilterItemList.TFilterStats;
+    function RecoverUnusedTranslations(OnlyNew: boolean): integer;
   protected
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
     procedure LockUpdates;
@@ -577,7 +584,7 @@ type
   private type
     TCounts = record
       CountModule, CountItem, CountProperty: integer;
-      UnusedModule, UnusedItem, UnusedProperty: integer;
+      UnusedModule, UnusedItem, UnusedProperty, UnusedTranslation: integer;
       Translated: integer;
       ObsoleteTranslation: integer;
     end;
@@ -701,6 +708,17 @@ resourcestring
     'Skipped: %.0n';
 
 resourcestring
+  sRecoverUnusedTranslationsTitle = 'Recover translations';
+  sRecoverUnusedTranslationsUpdate = '%d translations has been marked unused.'#13+
+    'This is likely because components were deleted, moved or renamed since the previous update.'#13#13+
+    'For components that has been moved or renamed their translations can often be recovered and applied to the new components.'#13#13+
+    'Do you want to attempt an automatic recovery of these translations?';
+  sRecoverUnusedTranslationsAction = '%d translations are currently marked unused.'#13+
+    'This is likely because components has been deleted, moved or renamed.'#13#13+
+    'For components that has been moved or renamed their translations can often be recovered and applied to the new components.'#13#13+
+    'Do you want to attempt an automatic recovery of these translations?';
+
+resourcestring
   sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 
 resourcestring
@@ -796,7 +814,8 @@ begin
     HitTest.HitPoint := p;
     HitTest.ReCalculate;
 
-    if (not HitTest.HitAtNode) or (not HitTest.HitAtColumn) or (HitTest.HitTestItem = nil) or (HitTest.HitColumn <> TFormMain(Owner).TreeListColumnTarget) then
+    if (not HitTest.HitAtNode) or (not HitTest.HitAtColumn) or (HitTest.HitTestItem = nil) or
+      (HitTest.HitColumn <> TFormMain(Owner).TreeListColumnTarget) or (HitTest.HitNode.IsEditing) then
     begin
       Inherited;
       Exit;
@@ -2211,6 +2230,42 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.ActionTranslationSuggestionListExecute(Sender: TObject);
+begin
+  // We must drop down combo manually if we're invoked via the shortcut.
+  // The action has a shortcut because we would like to display it in the hint.
+  if (TAction(Sender).ActionComponent = nil) then
+    TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown := not TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown;
+
+  // ActionComponent is only set when we are fired via the dropdown button but it
+  // is never reset, so we do that here.
+  TAction(Sender).ActionComponent := nil;
+end;
+
+procedure TFormMain.ActionTranslationEditTextExecute(Sender: TObject);
+var
+  TextEditor: TFormTextEditor;
+begin
+  TextEditor := TFormTextEditor.Create(nil);
+  try
+    TextEditor.SourceText := FocusedProperty.Value;
+    TextEditor.Text := TcxCustomTextEdit(TreeListItems.InplaceEditor).EditingText;
+    TextEditor.SourceLanguage := SourceLanguage;
+    TextEditor.TargetLanguage := TargetLanguage;
+
+    if (TextEditor.Execute) then
+    begin
+      // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
+      TcxCustomEditCracker(TreeListItems.InplaceEditor).InnerEdit.EditValue := TextEditor.Text;
+      TreeListItems.InplaceEditor.ModifiedAfterEnter := True;
+    end;
+  finally
+    TextEditor.Free;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormMain.ActionEditMarkExecute(Sender: TObject);
 var
   p: TPoint;
@@ -3109,6 +3164,32 @@ begin
   TaskMessageDlg(sLocalizerPurgeStatusTitle, Msg, mtInformation, [mbOK], 0);
 end;
 
+procedure TFormMain.ActionProjectRecoverExecute(Sender: TObject);
+var
+  Count: TCounts;
+  CountRecovered: integer;
+begin
+  Count := CountStuff;
+
+  if (Count.UnusedTranslation = 0) then
+  begin
+    ShowMessage('Nothing to recover.');
+    Exit;
+  end;
+
+  if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsAction, [Count.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+        Exit;
+
+  CountRecovered := RecoverUnusedTranslations(False);
+
+  if (CountRecovered > 0) then
+  begin
+    LoadProject(FProject, False);
+    ShowMessageFmt('%d of %d translations recovered', [CountRecovered, Count.UnusedTranslation]);
+  end else
+    ShowMessage('No translations recovered.');
+end;
+
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
 var
   ProjectFilename, SourceFilename, SymbolFilename: string;
@@ -3179,7 +3260,7 @@ begin
 
     FProjectFilename := ProjectFilename;
 
-    // Makle paths absolute again
+    // Make paths absolute again
     FProject.SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProjectFilename), FProject.SourceFilename);
     FProject.StringSymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
@@ -3206,6 +3287,7 @@ var
   Msg: string;
   SaveModified: boolean;
   WasModified: boolean;
+  CountRecovered: integer;
 begin
   if (not CheckSourceFile) then
     Exit;
@@ -3253,6 +3335,21 @@ begin
       1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
       ]);
     TaskMessageDlg(sProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
+
+    if (CountAfter.UnusedTranslation > CountBefore.UnusedTranslation) then
+    begin
+      if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsUpdate, [CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+        Exit;
+
+      CountRecovered := RecoverUnusedTranslations(True);
+
+      if (CountRecovered > 0) then
+      begin
+        LoadProject(FProject, False);
+        ShowMessageFmt('%d of %d translations recovered :-)', [CountRecovered, CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]);
+      end else
+        ShowMessage('No translations recovered.'#13'Sorry :-(');
+    end;
   end else
     TaskMessageDlg(sProjectUpdatedTitle, sProjectUpdatedNothing, mtInformation, [mbOK], 0);
 end;
@@ -4316,20 +4413,32 @@ begin
             function(Prop: TLocalizerProperty): boolean
             var
               i: integer;
+              HasTranslations: boolean;
             begin
               Inc(Counts.CountProperty);
 
-              if (Prop.IsUnused) then
-                Inc(Counts.UnusedProperty);
-
+              HasTranslations := False;
               for i := 0 to Prop.Translations.Count-1 do
                 case Prop.Translations[i].Status of
                   tStatusProposed,
                   tStatusTranslated:
-                    Inc(Counts.Translated);
+                    begin
+                      HasTranslations := True;
+                      Inc(Counts.Translated);
+                    end;
                   tStatusObsolete:
-                    Inc(Counts.ObsoleteTranslation);
+                    begin
+                      HasTranslations := True;
+                      Inc(Counts.ObsoleteTranslation);
+                    end;
                 end;
+
+              if (Prop.IsUnused) then
+              begin
+                Inc(Counts.UnusedProperty);
+                if (HasTranslations) and (Prop.EffectiveStatus = ItemStatusTranslate) then
+                  Inc(Counts.UnusedTranslation);
+              end;
 
               Result := True;
             end);
@@ -5467,28 +5576,6 @@ begin
   LoadFocusedPropertyNode;
 end;
 
-procedure TFormMain.TreeListColumnTargetPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
-var
-  TextEditor: TFormTextEditor;
-begin
-  TextEditor := TFormTextEditor.Create(nil);
-  try
-    TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := TcxButtonEdit(Sender).EditingText;
-    TextEditor.SourceLanguage := SourceLanguage;
-    TextEditor.TargetLanguage := TargetLanguage;
-
-    if (TextEditor.Execute) then
-    begin
-      // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
-      TcxCustomEditCracker(Sender).InnerEdit.EditValue := TextEditor.Text;
-      TcxCustomEdit(Sender).ModifiedAfterEnter := True;
-    end;
-  finally
-    TextEditor.Free;
-  end;
-end;
-
 procedure TFormMain.TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
 var
   Prop: TLocalizerProperty;
@@ -5591,7 +5678,11 @@ begin
   end;
 
   // Draw indicator if source value is found in Translation Memory
-  if (TTranslationMemoryPeekResult(AViewInfo.Node.Data) <> TTranslationMemoryPeekResult.prFound) or (AViewInfo.Editing) then
+  if (TTranslationMemoryPeekResult(AViewInfo.Node.Data) <> TTranslationMemoryPeekResult.prFound) then
+    Exit;
+
+  // Don't draw indicator if we're editing cell
+  if (AViewInfo.Editing) and (AViewInfo.Focused) then
     Exit;
 
   Prop := TLocalizerProperty(TreeListItems.HandleFromNode(AViewInfo.Node));
@@ -5850,14 +5941,72 @@ begin
 end;
 
 procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
+var
+  SourceValue, SanitizedSourceValue: string;
+  Translations: TStringList;
+  Button: TcxEditButton;
 begin
-  if (AItem = TreeListColumnTarget) and (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+  HideHint;
+
+  if (AItem <> TreeListColumnTarget) then
+    Exit;
+
+  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     // Target language is Right-to-Left but rest of UI isn't - or vice versa
     if (TargetLanguage.IsRightToLeft) then
       AEdit.BiDiMode := bdRightToLeft
     else
       AEdit.BiDiMode := bdLeftToRight;
+  end;
+
+  // Populate lookup list with existing translations of same term - and translations from TM
+  QueueTranslationMemoryPeek(TreeListItems.FocusedNode);
+
+  TcxCustomDropDownEdit(AEdit).Properties.LookupItems.Clear;
+
+  SourceValue := FocusedProperty.Value;
+  SanitizedSourceValue := SanitizeText(SourceValue, False);
+
+  Translations := TStringList.Create;
+  try
+    Translations.CaseSensitive := False;
+    Translations.Duplicates := dupIgnore;
+    Translations.Sorted := True;
+    FProject.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      var
+        s: string;
+      begin
+        if (Prop.HasTranslation(TranslationLanguage)) and ((AnsiSameText(SourceValue, Prop.Value)) or (AnsiSameText(SanitizedSourceValue, SanitizeText(Prop.Value, False)))) then
+        begin
+          s := Prop.TranslatedValue[TranslationLanguage];
+          if (Prop.Value <> SourceValue) then
+            s := MakeAlike(SourceValue, SanitizeText(s, False));
+          Translations.Add(s);
+        end;
+        Result := True;
+      end);
+
+    // Maybe too slow
+    if (TTranslationMemoryPeekResult(TreeListItems.FocusedNode.Data) = TTranslationMemoryPeekResult.prFound) then
+      FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, Translations);
+
+    // Translations.Sorted := False; // Work around for DevExpress TcxMRUEdit bug
+    TcxCustomComboBox(AEdit).Properties.Items.Assign(Translations);
+
+    // Display dropdown button if there are any translations
+    ActionTranslationSuggestionList.Visible := (Translations.Count > 0);
+    TcxCustomComboBox(AEdit).Properties.Buttons[0].Action := ActionTranslationSuggestionList;
+
+    if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
+    begin
+      Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
+      Button.Action := ActionTranslationEditText;
+      Button.Kind := bkEllipsis;
+    end;
+  finally
+    Translations.Free;
   end;
 end;
 
@@ -5914,7 +6063,7 @@ begin
   p := Point(X, Y);
 
   // Hide current hint if we've moved out of the hint rect
-  if (FHintVisible) then
+  if (FHintVisible) or (TreeListItems.IsEditing) then
   begin
     if (FHintRect.Contains(p)) then
       Exit; // We're still inside the hint rect
@@ -5937,6 +6086,9 @@ begin
     Exit;
 
   if (TreeListItems.HitTest.HitColumn <> TreeListColumnTarget) then
+    Exit;
+
+  if (TreeListItems.HitTest.HitNode.IsEditing) then
     Exit;
 
   r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
@@ -6190,6 +6342,50 @@ end;
 procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
 begin
 //
+end;
+
+function TFormMain.RecoverUnusedTranslations(OnlyNew: boolean): integer;
+var
+  CountRecovered: integer;
+begin
+  CountRecovered := 0;
+  FProject.BeginUpdate;
+  try
+    FProject.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        if (Prop.IsUnused) and (Prop.Translations.Count > 0) and (Prop.EffectiveStatus = ItemStatusTranslate) then
+        begin
+          // Look for new property with same name and item type within same module
+          Prop.Item.Module.Traverse(
+            function(InnerProp: TLocalizerProperty): boolean
+            var
+              i: integer;
+            begin
+              Result := True;
+              if (Prop <> InnerProp) and ((not OnlyNew) or (ItemStateNew in InnerProp.State)) and (InnerProp.EffectiveStatus = ItemStatusTranslate) and
+                (InnerProp.Name = Prop.Name) and (InnerProp.Item.TypeName = Prop.Item.TypeName) and
+                (Prop.Value = InnerProp.Value) and (InnerProp.Translations.Count = 0) then
+              begin
+                // Copy translations from unused prop to new prop
+                for i := 0 to Prop.Translations.Count-1 do
+                  if (Prop.Translations[i].Status <> tStatusPending) then
+                  begin
+                    Result := False;
+                    InnerProp.Translations.AddOrUpdateTranslation(Prop.Translations[i].Language, Prop.Translations[i].Value, Prop.Translations[i].Status);
+                  end;
+
+                if (not Result) then
+                  Inc(CountRecovered);
+              end else
+            end);
+        end;
+        Result := True;
+      end);
+  finally
+    FProject.EndUpdate;
+  end;
+  Result := CountRecovered;
 end;
 
 procedure TFormMain.RefreshModuleStats;
