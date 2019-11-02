@@ -236,6 +236,7 @@
         <DCCReference Include="amLocalization.Provider.TranslationMemory.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.pas"/>
         <DCCReference Include="amLocalization.Portable.pas"/>
+        <DCCReference Include="amLocalization.Index.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
@@ -268,6 +269,12 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
+                <DeployFile LocalName="..\Bin\Win32\Debug\amTranslationManager.xlat" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="..\Bin\Win32\Debug\amTranslationManager.xlat" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
@@ -275,6 +282,12 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="..\Bin\Win32\Debug\amTranslationManager.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>amTranslationManager.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\Bin\Win32\Release\amTranslationManager.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>amTranslationManager.exe</RemoteName>
                         <Overwrite>true</Overwrite>

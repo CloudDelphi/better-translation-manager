@@ -36,7 +36,8 @@ uses
   amLocalization.Provider,
   amLocalization.Dialog.Search,
   amLocalization.TranslationMemory,
-  amLocalization.Filters, cxMRUEdit;
+  amLocalization.Filters,
+  amLocalization.Index;
 
 
 const
@@ -421,6 +422,7 @@ type
     FUpdateCount: integer;
     FUpdateLockCount: integer;
     FLocalizerDataSource: TLocalizerDataSource;
+    FProjectIndex: TLocalizerProjectIndex;
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
@@ -645,6 +647,9 @@ uses
   RegularExpressions,
   Menus,
   CommCtrl,
+{$ifdef DEBUG}
+  Diagnostics,
+{$endif DEBUG}
 
   // DevExpress skins
   dxSkinOffice2016Colorful,
@@ -960,6 +965,8 @@ begin
   FLocalizerDataSource := TLocalizerDataSource.Create(nil);
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
+  FProjectIndex := TLocalizerProjectIndex.Create;
+
   DataModuleMain := TDataModuleMain.Create(Self);
   FTranslationMemory := TranslationMemory.PrimaryProvider;
 
@@ -1006,6 +1013,7 @@ begin
   FTranslationCounts.Clear;
   FProject.Clear;
 
+  FProjectIndex.Free;
   FLocalizerDataSource.Free;
   FProject.Free;
   FTranslationCounts.Free;
@@ -2780,6 +2788,8 @@ begin
     ProjectProcessor.Free;
   end;
 
+  FProjectIndex.BuildIndex(FProject);
+
   if (TranslationManagerSettings.System.AutoApplyStopList) then
     ApplyStopList;
 
@@ -2850,6 +2860,8 @@ begin
     finally
       FProject.EndUpdate;
     end;
+
+    FProjectIndex.BuildIndex(FProject);
 
     UpdateProjectModifiedIndicator;
 
@@ -3309,6 +3321,8 @@ begin
   finally
     ProjectProcessor.Free;
   end;
+
+  FProjectIndex.BuildIndex(FProject);
 
   if (TranslationManagerSettings.System.AutoApplyStopList) then
     ApplyStopList;
@@ -5288,7 +5302,7 @@ begin
     end;
 
   if (TranslationLanguage = nil) then
-    Exit; // TODO : Should never happend but an error message would be nice anyway.
+    Exit; // TODO : Should never happen but an error message would be nice anyway.
 
   QueueToast(Format(sLocalizerResourceModuleBuilding, [LocaleItem.LanguageName]));
 
@@ -5356,6 +5370,8 @@ begin
   finally
     FProject.EndLoad;
   end;
+
+  FProjectIndex.BuildIndex(FProject);
 
   ShowMessage(sDone);
 
@@ -5945,6 +5961,12 @@ var
   SourceValue, SanitizedSourceValue: string;
   Translations: TStringList;
   Button: TcxEditButton;
+  PropertyList: TPropertyList;
+  Prop: TLocalizerProperty;
+  s: string;
+{$ifdef DEBUG}
+  StopWatch: TStopWatch;
+{$endif DEBUG}
 begin
   HideHint;
 
@@ -5960,6 +5982,10 @@ begin
       AEdit.BiDiMode := bdLeftToRight;
   end;
 
+{$ifdef DEBUG}
+  StopWatch := TStopWatch.StartNew;
+{$endif DEBUG}
+
   // Populate lookup list with existing translations of same term - and translations from TM
   QueueTranslationMemoryPeek(TreeListItems.FocusedNode);
 
@@ -5973,20 +5999,20 @@ begin
     Translations.CaseSensitive := False;
     Translations.Duplicates := dupIgnore;
     Translations.Sorted := True;
-    FProject.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      var
-        s: string;
-      begin
-        if (Prop.HasTranslation(TranslationLanguage)) and ((AnsiSameText(SourceValue, Prop.Value)) or (AnsiSameText(SanitizedSourceValue, SanitizeText(Prop.Value, False)))) then
+
+    PropertyList := FProjectIndex.Lookup(FocusedProperty);
+
+    if (PropertyList <> nil) then
+    begin
+      for Prop in PropertyList do
+        if (Prop.HasTranslation(TranslationLanguage)) then
         begin
           s := Prop.TranslatedValue[TranslationLanguage];
           if (Prop.Value <> SourceValue) then
             s := MakeAlike(SourceValue, SanitizeText(s, False));
           Translations.Add(s);
         end;
-        Result := True;
-      end);
+    end;
 
     // Maybe too slow
     if (TTranslationMemoryPeekResult(TreeListItems.FocusedNode.Data) = TTranslationMemoryPeekResult.prFound) then
@@ -6008,6 +6034,11 @@ begin
   finally
     Translations.Free;
   end;
+
+{$ifdef DEBUG}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Lookup overhead: %.0n mS', [StopWatch.ElapsedMilliseconds * 1.0])));
+{$endif DEBUG}
 end;
 
 procedure TFormMain.TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);

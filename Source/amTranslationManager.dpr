@@ -59,7 +59,8 @@ uses
   amLocalization.Filters in 'amLocalization.Filters.pas',
   amLocalization.Provider.TranslationMemory in 'amLocalization.Provider.TranslationMemory.pas',
   amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas',
-  amLocalization.Portable in 'amLocalization.Portable.pas';
+  amLocalization.Portable in 'amLocalization.Portable.pas',
+  amLocalization.Index in 'amLocalization.Index.pas';
 
 {$R *.res}
 
