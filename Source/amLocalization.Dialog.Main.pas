@@ -1813,8 +1813,10 @@ end;
 procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
 var
   SourceValue, TranslatedValue: string;
-  SanitizedSourceValue, SanitizedTranslatedValue: string;
+  SanitizedTranslatedValue: string;
   Count: integer;
+  PropertyList: TPropertyList;
+  Prop: TLocalizerProperty;
 begin
   (*
   ** TODO :
@@ -1832,39 +1834,42 @@ begin
     SourceValue := AProp.Value;
     TranslatedValue := AProp.TranslatedValue[TranslationLanguage];
 
+    // Ignore empty source or target
+    if (SourceValue.Trim.IsEmpty) or (TranslatedValue.Trim.IsEmpty) then
+      Exit;
+
     if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
-    begin
-      SanitizedSourceValue := SanitizeText(SourceValue, False);
-      SanitizedTranslatedValue := SanitizeText(TranslatedValue, False);
-    end else
-    begin
-      SanitizedSourceValue := SourceValue;
+      SanitizedTranslatedValue := SanitizeText(TranslatedValue, False)
+    else
       SanitizedTranslatedValue := TranslatedValue;
-    end;
 
     Count := 0;
     SaveCursor(crAppStart);
 
-    FProject.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      begin
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.IsUnused) and (not Prop.HasTranslation(TranslationLanguage)) and
-          ((SourceValue = Prop.Value) or ((TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (AnsiSameText(SanitizedSourceValue, SanitizeText(Prop.Value, False))))) then
+    // Get a list of properties with "similar" source values
+    PropertyList := FProjectIndex.Lookup(AProp);
+
+    if (PropertyList <> nil) then
+    begin
+      for Prop in PropertyList do
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.HasTranslation(TranslationLanguage)) then
         begin
-          if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) and (SourceValue <> Prop.Value) then
+          if (SourceValue = Prop.Value) then
+            Prop.TranslatedValue[TranslationLanguage] := TranslatedValue
+          else
+          if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
             Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, SanitizedTranslatedValue)
           else
-            Prop.TranslatedValue[TranslationLanguage] := TranslatedValue;
+            continue;
 
           ReloadProperty(Prop);
 
           Inc(Count);
         end;
-        Result := True;
-      end);
+    end;
+    if (Count > 0) then
+      QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
   end;
-  if (Count > 0) then
-    QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
@@ -6005,7 +6010,7 @@ begin
     if (PropertyList <> nil) then
     begin
       for Prop in PropertyList do
-        if (Prop.HasTranslation(TranslationLanguage)) then
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
         begin
           s := Prop.TranslatedValue[TranslationLanguage];
           if (Prop.Value <> SourceValue) then

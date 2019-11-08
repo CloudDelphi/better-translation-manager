@@ -92,13 +92,13 @@ begin
   FProject.Traverse(
     function(Module: TLocalizerModule): boolean
     begin
-      if (FTaskTerminated) or (Module.IsUnused) or (Module.Status <> ItemStatusTranslate) then
+      if (FTaskTerminated) or (Module.IsUnused) then
         Exit(not FTaskTerminated);
 
       Module.Traverse(
         function(Item: TLocalizerItem): boolean
         begin
-          if (FTaskTerminated) or (Item.IsUnused) or (Item.Status <> ItemStatusTranslate) then
+          if (FTaskTerminated) or (Item.IsUnused) then
             Exit(not FTaskTerminated);
 
           Item.Traverse(
