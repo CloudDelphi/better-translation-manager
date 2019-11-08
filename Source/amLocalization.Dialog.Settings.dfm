@@ -115,7 +115,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetSystem
+        Properties.ActivePage = TabSheetTranslationServices
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -973,7 +973,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxTMLoadOnDemand: TcxCheckBox
               Left = 12
-              Top = 23
+              Top = 50
               Hint = 
                 'Silently load Translation Memory from disk the first time it is ' +
                 'needed.'
@@ -983,12 +983,12 @@ inherited FormSettings: TFormSettings
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 1
+              TabOrder = 2
               Transparent = True
             end
             object LabelTransalatorMS: TcxLabel
               Left = 0
-              Top = 243
+              Top = 270
               AutoSize = False
               Caption = 'Microsoft Translation Service'
               Style.HotTrack = False
@@ -1001,7 +1001,7 @@ inherited FormSettings: TFormSettings
             end
             object EditTranslatorMSAPIKey: TcxButtonEdit
               Left = 152
-              Top = 266
+              Top = 293
               Properties.Buttons = <
                 item
                   ImageIndex = 0
@@ -1013,12 +1013,12 @@ inherited FormSettings: TFormSettings
               Properties.OnButtonClick = TextEditTranslatorMSAPIKeyPropertiesButtonClick
               Properties.OnChange = TextEditTranslatorMSAPIKeyPropertiesChange
               Style.HotTrack = False
-              TabOrder = 10
+              TabOrder = 11
               Width = 261
             end
             object CheckBoxTMBackgroundQuery: TcxCheckBox
               Left = 12
-              Top = 73
+              Top = 100
               Hint = 
                 'Search the Translation Memory for matching translations while yo' +
                 'u work and indicate if matches are found.'
@@ -1028,12 +1028,12 @@ inherited FormSettings: TFormSettings
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 3
+              TabOrder = 4
               Transparent = True
             end
             object CheckBoxTMPromptToSave: TcxCheckBox
               Left = 12
-              Top = 48
+              Top = 75
               Hint = 'Ask before the Translation Memory is saved'
               Caption = 'Prompt to save'
               ParentBackground = False
@@ -1041,12 +1041,12 @@ inherited FormSettings: TFormSettings
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 2
+              TabOrder = 3
               Transparent = True
             end
             object SpinEditTranslatorTerminologyMaxResult: TcxSpinEdit
               Left = 152
-              Top = 208
+              Top = 235
               Hint = 'Maximum number of translations to return per term'
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 20.000000000000000000
@@ -1054,13 +1054,13 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 8
+              TabOrder = 9
               Value = 1
               Width = 61
             end
             object cxLabel1: TcxLabel
               Left = 0
-              Top = 185
+              Top = 212
               AutoSize = False
               Caption = 'Microsoft Terminology Service'
               Style.HotTrack = False
@@ -1073,31 +1073,17 @@ inherited FormSettings: TFormSettings
             end
             object cxCheckBox1: TcxCheckBox
               Left = 12
-              Top = 98
+              Top = 125
               Caption = 'Automatically add new translations:'
               ParentBackground = False
               ParentColor = False
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 4
+              TabOrder = 5
               Transparent = True
             end
             object cxSpinEdit1: TcxSpinEdit
-              Left = 152
-              Top = 123
-              Hint = 'Maximum number of translations to return per term'
-              Properties.Alignment.Horz = taRightJustify
-              Properties.MaxValue = 20.000000000000000000
-              Properties.MinValue = 1.000000000000000000
-              Properties.UseLeftAlignmentOnEditing = False
-              Properties.ValidationOptions = [evoShowErrorIcon]
-              Style.HotTrack = False
-              TabOrder = 5
-              Value = 2
-              Width = 61
-            end
-            object cxSpinEdit2: TcxSpinEdit
               Left = 152
               Top = 150
               Hint = 'Maximum number of translations to return per term'
@@ -1108,8 +1094,35 @@ inherited FormSettings: TFormSettings
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
               TabOrder = 6
+              Value = 2
+              Width = 61
+            end
+            object cxSpinEdit2: TcxSpinEdit
+              Left = 152
+              Top = 177
+              Hint = 'Maximum number of translations to return per term'
+              Properties.Alignment.Horz = taRightJustify
+              Properties.MaxValue = 20.000000000000000000
+              Properties.MinValue = 1.000000000000000000
+              Properties.UseLeftAlignmentOnEditing = False
+              Properties.ValidationOptions = [evoShowErrorIcon]
+              Style.HotTrack = False
+              TabOrder = 7
               Value = 3
               Width = 61
+            end
+            object EditProviderTMFilename: TcxButtonEdit
+              Left = 152
+              Top = 23
+              Properties.Buttons = <
+                item
+                  Action = ActionProviderTMFilename
+                  Default = True
+                  Kind = bkEllipsis
+                end>
+              Style.HotTrack = False
+              TabOrder = 1
+              Width = 261
             end
             object LayoutControlTranslatorsGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
@@ -1144,14 +1157,13 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 100
               ControlOptions.ShowBorder = False
-              Index = 0
+              Index = 1
             end
             object dxLayoutGroup2: TdxLayoutGroup
               Parent = LayoutGroupTranslatorTM
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               ButtonOptions.Buttons = <>
-              ItemIndex = 3
               ShowBorder = False
               Index = 1
             end
@@ -1197,7 +1209,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 100
               ControlOptions.ShowBorder = False
-              Index = 2
+              Index = 3
             end
             object dxLayoutItem44: TdxLayoutItem
               Parent = dxLayoutGroup2
@@ -1206,7 +1218,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalHeight = 19
               ControlOptions.OriginalWidth = 94
               ControlOptions.ShowBorder = False
-              Index = 1
+              Index = 2
             end
             object dxLayoutItem46: TdxLayoutItem
               Parent = dxLayoutGroup17
@@ -1313,7 +1325,16 @@ inherited FormSettings: TFormSettings
               Visible = False
               ButtonOptions.Buttons = <>
               ShowBorder = False
-              Index = 3
+              Index = 4
+            end
+            object dxLayoutItem64: TdxLayoutItem
+              Parent = dxLayoutGroup2
+              CaptionOptions.Text = 'Filename:'
+              Control = EditProviderTMFilename
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Index = 0
             end
           end
         end
@@ -2939,6 +2960,11 @@ inherited FormSettings: TFormSettings
       Hint = 'Provide mouse over hints on status glyphs'
       OnExecute = ActionDummyExecute
       OnUpdate = ActionEditStatusHintUpdate
+    end
+    object ActionProviderTMFilename: TAction
+      Category = 'Providers'
+      Hint = 'Browse for file'
+      OnExecute = ActionProviderTMFilenameExecute
     end
   end
   object ImageListColorSchemesGlyphsLarge: TcxImageList

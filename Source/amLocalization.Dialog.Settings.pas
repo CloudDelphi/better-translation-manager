@@ -326,6 +326,9 @@ type
     ComboBoxModuleNameScheme: TcxImageComboBox;
     dxLayoutItem63: TdxLayoutItem;
     CheckBoxPortable: TcxCheckBox;
+    EditProviderTMFilename: TcxButtonEdit;
+    dxLayoutItem64: TdxLayoutItem;
+    ActionProviderTMFilename: TAction;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -377,6 +380,7 @@ type
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionEditStatusHintUpdate(Sender: TObject);
     procedure CheckBoxPortableClick(Sender: TObject);
+    procedure ActionProviderTMFilenameExecute(Sender: TObject);
   private
     type
       TSkinDetails = record
@@ -457,8 +461,8 @@ uses
   dxColorGallery,
   dxCoreGraphics,
 
-
   amShell,
+  amPath,
   amCursorService,
   amLocalization.Model,
   amLocalization.Settings,
@@ -602,6 +606,7 @@ begin
   (*
   ** Translators section
   *)
+  EditProviderTMFilename.Text := TranslationManagerSettings.Providers.TranslationMemory.Filename;
   CheckBoxTMLoadOnDemand.Checked := TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand;
   CheckBoxTMPromptToSave.Checked := TranslationManagerSettings.Providers.TranslationMemory.PromptToSave;
   CheckBoxTMBackgroundQuery.Checked := TranslationManagerSettings.Providers.TranslationMemory.BackgroundQuery;
@@ -674,6 +679,7 @@ begin
   (*
   ** Translators section
   *)
+  TranslationManagerSettings.Providers.TranslationMemory.Filename := EditProviderTMFilename.Text;
   TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand := CheckBoxTMLoadOnDemand.Checked;
   TranslationManagerSettings.Providers.TranslationMemory.PromptToSave := CheckBoxTMPromptToSave.Checked;
   TranslationManagerSettings.Providers.TranslationMemory.BackgroundQuery := CheckBoxTMBackgroundQuery.Checked;
@@ -1378,6 +1384,27 @@ var
 begin
   Replacement := FSpellCheckerAutoCorrectOptions.Replacements.FindReplacement(EditProofingAutoCorrectReplacementFrom.Text);
   TAction(Sender).Enabled := (EditProofingAutoCorrectReplacementFrom.Text <> '') and (Replacement <> nil) and (not AnsiSameText(Replacement.Replacement, EditProofingAutoCorrectReplacementTo.Text));
+end;
+
+procedure TFormSettings.ActionProviderTMFilenameExecute(Sender: TObject);
+var
+  Filename, Path: string;
+begin
+  Filename := EnvironmentVars.ExpandString(EditProviderTMFilename.Text);
+  Filename := PathUtil.PathCombinePath(TranslationManagerSettings.Folders.FolderAppData, Filename);
+
+  if (Filename <> '') then
+  begin
+    Path := TPath.GetDirectoryName(Filename);
+    Filename := TPath.GetFileName(Filename);
+  end else
+    Path := TranslationManagerSettings.Folders.FolderAppData;
+
+  if (not PromptForFileName(Filename, '', '', '', Path)) then
+    Exit;
+
+  Filename := EnvironmentVars.TokenizeString(Filename);
+  EditProviderTMFilename.Text := Filename;
 end;
 
 procedure TFormSettings.ListViewProofingAutoCorrectReplacementsClick(Sender: TObject);
