@@ -678,15 +678,14 @@ function TDataModuleTranslationMemory.AddTerm(SourceField: TField; const SourceV
 
   function Truncate(const Value: string): string;
   begin
-    Result := cxGetStringAdjustedToWidth(0, 0, Value, 250, mstEndEllipsis);
-    Result := Result.Replace(#13, ' ',  [rfReplaceAll]).Replace(#10, ' ',  [rfReplaceAll]);
+    Result := Value.Replace(#13, ' ',  [rfReplaceAll]).Replace(#10, ' ',  [rfReplaceAll]);
+    Result := cxGetStringAdjustedToWidth(0, 0, Result, 250, mstEndEllipsis);
   end;
 
 var
   DuplicateTerms: TDuplicateTerms;
   DuplicateValues: TDuplicateValues;
   Duplicate: TDuplicate;
-  AllEmpty: boolean;
   i: integer;
   s: string;
   Res: Word;
@@ -694,13 +693,17 @@ var
   DuplicateTermPair: TPair<TField, TDuplicateTerms>;
   SourceLanguage, TargetLanguage: TLocaleItem;
   SourceLanguageName, TargetLanguageName: string;
-  DuplicateCount: integer;
+  ActualDuplicateCount, DuplicateCount: integer;
+const
+  MaxDuplicateCount = 5;
 resourcestring
   sTranslationMemoryAddDuplicateTitle = 'Duplicates found';
-  sTranslationMemoryAddDuplicate = 'You are adding a term that already has %d translation(s) in the dictionary.'#13#13+
-    'Do you want to add the translation anyway?'+#13#13+
-    '%s: "%s"'+#13#13+
-    '%s: %s';
+  sTranslationMemoryAddDuplicate = 'You are adding a term that already has %d translation(s) in the dictionary:'+#13#13+
+    '  %s: "%s"'+#13+
+    '  %s: "%s"'+#13#13+
+    'New translation: "%s"'+#13#13+
+    'Do you want to add the translation anyway?';
+  sTranslationMemoryAddDuplicateMore = '   ...and %d more.';
 begin
   Assert(SourceField <> TargetField);
   Assert(SourceField <> nil);
@@ -720,7 +723,7 @@ begin
   if (not Duplicates.TryGetValue(TargetField, DuplicateTerms)) or (not DuplicateTerms.TryGetValue(SanitizedSourceValue, DuplicateValues)) then
     DuplicateValues := nil;
 
-  AllEmpty := True;
+  ActualDuplicateCount := 0;
   if (DuplicateValues <> nil) then
     for i := 0 to DuplicateValues.Count-1 do
     begin
@@ -730,11 +733,11 @@ begin
         Exit;
       end;
       if (not DuplicateValues[i].Value.IsEmpty) then
-        AllEmpty := False;
+        Inc(ActualDuplicateCount);
     end;
 
   // Do not prompt for duplicate with only empty target values - just merge it
-  if (DuplicateValues <> nil) and (DuplicateValues.Count > 0) and (not AllEmpty) then
+  if (ActualDuplicateCount > 0) then
   begin
     if (DuplicateAction = tmDupActionPrompt) then
     begin
@@ -746,11 +749,17 @@ begin
         if (DuplicateValues[i].Value.IsEmpty) then
           continue;
         if (DuplicateCount = 1) then
-          s := #13 + '- ' + s;
+          s := #13 + '   - ' + s;
         if (DuplicateCount >= 1) then
-          s := s + #13 + '- ';
+          s := s + #13 + '   - ';
         s := s + '"'+Truncate(DuplicateValues[i].Value)+'"';
         Inc(DuplicateCount);
+        // If there's room for one more but potentially two or more to add, then we display "and then some" message instead
+        if (ActualDuplicateCount > MaxDuplicateCount) and (DuplicateCount = MaxDuplicateCount-1) then
+        begin
+          s := s + #13 + Format(sTranslationMemoryAddDuplicateMore, [ActualDuplicateCount-DuplicateCount]);
+          break;
+        end;
       end;
       Assert(DuplicateCount > 0);
 
@@ -766,7 +775,7 @@ begin
         TargetLanguageName := TargetField.FieldName;
 
       Res := TaskMessageDlg(sTranslationMemoryAddDuplicateTitle,
-        Format(sTranslationMemoryAddDuplicate, [DuplicateCount, SourceLanguageName, Truncate(SourceValue), TargetLanguageName, s]),
+        Format(sTranslationMemoryAddDuplicate, [ActualDuplicateCount, SourceLanguageName, Truncate(SourceValue), TargetLanguageName, s, Truncate(TargetValue)]),
         mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbAbort], 0, mbNo);
 
       case Res of
