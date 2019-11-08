@@ -20,14 +20,13 @@ implementation
 
 uses
   SysUtils,
-  IOUtils,
-  amLocalization.Settings;
+  IOUtils;
 
 const
   sApplicationFolder = 'TranslationManager\';
 
 initialization
-  EnvironmentVars.SetValue('INSTALL', TranslationManagerSettings.FolderInstall, egStatic);
+  EnvironmentVars.SetValue('INSTALL', IncludeTrailingPathDelimiter(TPath.GetDirectoryName(ParamStr(0))), egStatic);
   EnvironmentVars.SetValue('DATA', IncludeTrailingPathDelimiter(TPath.GetCachePath) + sApplicationFolder, egStatic);
   EnvironmentVars.SetValue('DOCUMENTS', IncludeTrailingPathDelimiter(TPath.GetDocumentsPath) + sApplicationFolder, egCustomizable);
 end.

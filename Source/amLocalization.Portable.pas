@@ -64,7 +64,24 @@ begin
 
       // Delete current settings to use default
       if (Res = mrYes) then
+      begin
+        // Save copy of registry tree
+        SafeReplaceFile(TPath.ChangeExtension(Filename, '.settings'),
+          function(const Filename: string): boolean
+          var
+            Stream: TStream;
+          begin
+            Stream := TFileStream.Create(Filename, fmCreate);
+            try
+              Settings.SaveRegistryToStream(Stream);
+            finally
+              Stream.Free;
+            end;
+            Result := True;
+          end, False);
+
         Settings.Registry.EraseSection('');
+      end;
     end;
   end;
 end;
@@ -112,7 +129,9 @@ end;
 // -----------------------------------------------------------------------------
 
 initialization
-  if (FindCmdLineSwitch('portable', True)) or (TFile.Exists(TTranslationManagerSettings.FolderInstall + 'portable')) then
+  Assert(not TranslationManagerSettingsLoaded);
+
+  if (FindCmdLineSwitch('portable', True)) or (TFile.Exists(TPath.GetDirectoryName(ParamStr(0)) + '\portable')) then
   begin
     TTranslationManagerSettings.OnSettingsCreating := OnSettingsCreatingHandler;
     TTranslationManagerSettings.OnSettingsDestroying := OnSettingsDestroyingHandler;

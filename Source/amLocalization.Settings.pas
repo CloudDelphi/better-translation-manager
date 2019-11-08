@@ -475,6 +475,7 @@ type
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
+function TranslationManagerSettingsLoaded: boolean;
 
 
 implementation
@@ -769,6 +770,11 @@ end;
 //------------------------------------------------------------------------------
 var
   FTranslationManagerSettings: TTranslationManagerSettings = nil;
+
+function TranslationManagerSettingsLoaded: boolean;
+begin
+  Result := (FTranslationManagerSettings <> nil);
+end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
 begin
