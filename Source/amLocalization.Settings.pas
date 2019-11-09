@@ -27,7 +27,8 @@ uses
   cxCustomData,
   amRegConfig,
   amLocalization.ResourceWriter,
-  amLocalization.Filters;
+  amLocalization.Filters,
+  amLocalization.Utils;
 
 
 //------------------------------------------------------------------------------
@@ -322,6 +323,9 @@ type
     FEditBiDiMode: boolean;
     FAutoApplyTranslations: boolean;
     FAutoApplyTranslationsSimilar: boolean;
+    FEqualizerRules: TMakeAlikeRules;
+  protected
+    procedure ApplyDefault; override;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
@@ -334,6 +338,7 @@ type
     property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
     property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
     property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
+    property EqualizerRules: TMakeAlikeRules read FEqualizerRules write FEqualizerRules;
   end;
 
   TTranslationManagerFilterGroupSettings = class(TConfigurationStringList)
@@ -1130,6 +1135,16 @@ begin
 end;
 
 { TTranslationManagerEditorSettings }
+
+procedure TTranslationManagerEditorSettings.ApplyDefault;
+var
+  EqualizerRule: TMakeAlikeRule;
+begin
+  inherited;
+
+  for EqualizerRule := Low(TMakeAlikeRule) to High(TMakeAlikeRule) do
+    Include(FEqualizerRules, EqualizerRule);
+end;
 
 constructor TTranslationManagerEditorSettings.Create(AOwner: TConfigurationSection);
 begin

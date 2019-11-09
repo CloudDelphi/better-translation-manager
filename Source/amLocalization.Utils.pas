@@ -72,10 +72,11 @@ function MakeTitleCase(const Value: string): string;
 function MakeSentenceCase(const Value: string): string;
 
 type
-  TMakeAlikeAction = (EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround);
-  TMakeAlikeActions = set of TMakeAlikeAction;
+  TMakeAlikeRule = (EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround);
+  TMakeAlikeRules = set of TMakeAlikeRule;
 
-function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions = [EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround]): string;
+function MakeAlike(const SourceValue, Value: string): string; overload;
+function MakeAlike(const SourceValue, Value: string; Rules: TMakeAlikeRules): string; overload;
 
 
 // -----------------------------------------------------------------------------
@@ -90,7 +91,8 @@ uses
   Menus,
   SyncObjs,
   StrUtils,
-  SysUtils;
+  SysUtils,
+  amLocalization.Settings;
 
 type
   TSurroundPair = record
@@ -106,6 +108,13 @@ const
     (StartSurround: '"'; EndSurround: '"'),
     (StartSurround: ''''; EndSurround: ''''),
     (StartSurround: '<'; EndSurround: '>')
+    );
+
+const
+  TextEndings: array[0..2] of string = (
+    ':',
+    ';',
+    '...'
     );
 
 function StripAccelerator(const Value: string): string;
@@ -236,6 +245,7 @@ function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing
 var
   n: integer;
   SurroundPair: TSurroundPair;
+  s: string;
 begin
   // Handle & accelerator chars
   if (skAccelerator in Kind) then
@@ -315,11 +325,12 @@ begin
 
   if (skEnding in Kind) then
   begin
-    if (Result.EndsWith(':')) then
-      SetLength(Result, Length(Result)-1)
-    else
-    if (Result.EndsWith('...')) then
-      SetLength(Result, Length(Result)-3);
+    for s in TextEndings do
+      if (Result.EndsWith(s)) then
+      begin
+        SetLength(Result, Length(Result)-Length(s));
+        break;
+      end;
   end;
 
   if (not ReduceToNothing) and (Result.Trim.IsEmpty) then
@@ -498,22 +509,32 @@ begin
       InSentence := False;
 end;
 
-function MakeAlike(const SourceValue, Value: string; Kinds: TMakeAlikeActions): string;
+function MakeAlike(const SourceValue, Value: string): string; overload;
+begin
+  Result := MakeAlike(SourceValue, Value, TranslationManagerSettings.Editor.EqualizerRules);
+end;
+
+function MakeAlike(const SourceValue, Value: string; Rules: TMakeAlikeRules): string;
 var
   SourceHasAccelerator: boolean;
   IgnoreAccelerator: boolean;
   Accelerator: string;
   SurroundPair: TSurroundPair;
+  s: string;
 begin
+  Rules := Rules * TranslationManagerSettings.Editor.EqualizerRules;
+  if (Rules = []) then
+    Exit(Value);
+
   if (Value.IsEmpty) then
     Exit(Value);
 
   Result := Value;
 
-  if (Kinds * [EqualizeAccelerators, EqualizeCase] <> []) then
+  if (Rules * [EqualizeAccelerators, EqualizeCase] <> []) then
   begin
     SourceHasAccelerator := HasAccelerator(SourceValue);
-    if (EqualizeAccelerators in Kinds) then
+    if (EqualizeAccelerators in Rules) then
       IgnoreAccelerator := SourceHasAccelerator
     else
       IgnoreAccelerator := HasAccelerator(Result);
@@ -524,7 +545,7 @@ begin
   end;
 
   // Handle accelerator keys
-  if (EqualizeAccelerators in Kinds) then
+  if (EqualizeAccelerators in Rules) then
   begin
     if (SourceHasAccelerator) then
     begin
@@ -542,29 +563,26 @@ begin
     end;
   end;
 
-  // If source ends with a colon or ellipsis the target should also do so
-  if (EqualizeEnding in Kinds) then
+  // If source ends with a colon, semicolon or ellipsis the target should also do so
+  if (EqualizeEnding in Rules) then
   begin
-    if (SourceValue.EndsWith(':')) then
+    for s in TextEndings do
     begin
-      if (not Result.EndsWith(':')) and (Result[Length(Result)].IsLetterOrDigit) then
-        Result := Result + ':';
-    end else
-    begin
-      if (Result.EndsWith(':')) then
-        SetLength(Result, Length(Result)-1)
-      else
-      if (SourceValue.EndsWith('...')) then
+      if (SourceValue.EndsWith(s)) then
       begin
-        if (not Result.EndsWith('...')) and (Result[Length(Result)].IsLetterOrDigit) then
-          Result := Result + '...';
+        if (not Result.EndsWith(s)) and (Result[Length(Result)].IsLetterOrDigit) then
+          Result := Result + s;
+        break;
       end else
-      if (Result.EndsWith('...')) then
-        SetLength(Result, Length(Result)-3);
+      if (Result.EndsWith(s)) then
+      begin
+        SetLength(Result, Length(Result)-Length(s));
+        break;
+      end;
     end;
   end;
 
-  if (EqualizeSurround in Kinds) and (Length(SourceValue) > 2) then
+  if (EqualizeSurround in Rules) and (Length(SourceValue) > 2) then
   begin
     for SurroundPair in SurroundPairs do
       if (SourceValue.StartsWith(SurroundPair.StartSurround)) and (SourceValue.EndsWith(SurroundPair.EndSurround)) then
@@ -575,7 +593,7 @@ begin
       end;
   end;
 
-  if (EqualizeCase in Kinds) then
+  if (EqualizeCase in Rules) then
   begin
     // If source is all UPPERCASE the target should also be so
     if (IsUpperCase(SourceValue)) then

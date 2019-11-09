@@ -1813,7 +1813,6 @@ end;
 procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
 var
   SourceValue, TranslatedValue: string;
-  SanitizedTranslatedValue: string;
   Count: integer;
   PropertyList: TPropertyList;
   Prop: TLocalizerProperty;
@@ -1838,11 +1837,6 @@ begin
     if (SourceValue.Trim.IsEmpty) or (TranslatedValue.Trim.IsEmpty) then
       Exit;
 
-    if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
-      SanitizedTranslatedValue := SanitizeText(TranslatedValue, False)
-    else
-      SanitizedTranslatedValue := TranslatedValue;
-
     Count := 0;
     SaveCursor(crAppStart);
 
@@ -1858,7 +1852,7 @@ begin
             Prop.TranslatedValue[TranslationLanguage] := TranslatedValue
           else
           if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
-            Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, SanitizedTranslatedValue)
+            Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue)
           else
             continue;
 
@@ -6014,7 +6008,7 @@ begin
         begin
           s := Prop.TranslatedValue[TranslationLanguage];
           if (Prop.Value <> SourceValue) then
-            s := MakeAlike(SourceValue, SanitizeText(s, False));
+            s := MakeAlike(SourceValue, s);
           Translations.Add(s);
         end;
     end;

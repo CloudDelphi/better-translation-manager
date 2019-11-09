@@ -1422,7 +1422,7 @@ begin
   if (Prop.Value = SourceValue) then
   begin
     // Don't mess with case on an exact match.
-    Value := MakeAlike(Prop.Value, TargetValue, [EqualizeEnding, EqualizeAccelerators]);
+    Value := MakeAlike(Prop.Value, TargetValue, TranslationManagerSettings.Editor.EqualizerRules-[EqualizeCase]);
 
     // Exact match - Insert in front
     if (Translations.Count > 0) and not((Translations is TStringList) and (TStringList(Translations).Sorted)) then
