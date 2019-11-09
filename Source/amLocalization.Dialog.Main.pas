@@ -299,6 +299,8 @@ type
     ActionTranslationSuggestionList: TAction;
     ActionProjectRecover: TAction;
     dxBarButton1: TdxBarButton;
+    ActionClearBookmarks: TAction;
+    dxBarButton3: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -416,6 +418,9 @@ type
     procedure ActionTranslationEditTextExecute(Sender: TObject);
     procedure ActionTranslationSuggestionListExecute(Sender: TObject);
     procedure ActionProjectRecoverExecute(Sender: TObject);
+    procedure ActionTranslationSuggestionListUpdate(Sender: TObject);
+    procedure ActionTranslationEditTextUpdate(Sender: TObject);
+    procedure ActionClearBookmarksExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -2242,17 +2247,36 @@ begin
   // We must drop down combo manually if we're invoked via the shortcut.
   // The action has a shortcut because we would like to display it in the hint.
   if (TAction(Sender).ActionComponent = nil) then
+  begin
+    if (TreeListItems.InplaceEditor = nil) then
+      TreeListColumnTarget.Editing := True;
+
+    if (TreeListItems.InplaceEditor = nil) then
+      Exit;
+
     TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown := not TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown;
+  end;
 
   // ActionComponent is only set when we are fired via the dropdown button but it
   // is never reset, so we do that here.
   TAction(Sender).ActionComponent := nil;
 end;
 
+procedure TFormMain.ActionTranslationSuggestionListUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (TreeListColumnTarget.Focused);
+end;
+
 procedure TFormMain.ActionTranslationEditTextExecute(Sender: TObject);
 var
   TextEditor: TFormTextEditor;
 begin
+  if (TreeListItems.InplaceEditor = nil) then
+    TreeListColumnTarget.Editing := True;
+
+  if (TreeListItems.InplaceEditor = nil) then
+    Exit;
+
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
@@ -2271,7 +2295,37 @@ begin
   end;
 end;
 
+procedure TFormMain.ActionTranslationEditTextUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (TreeListColumnTarget.Focused);
+end;
+
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionClearBookmarksExecute(Sender: TObject);
+resourcestring
+  sClearBookmarks = 'Clear all bookmarks in project?';
+begin
+  if (MessageDlg(sClearBookmarks, mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  FProject.BeginUpdate;
+  try
+    FProject.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        if (Prop.Flags * [FlagBookmark0..FlagBookmarkF] <> []) then
+        begin
+          Prop.Flags := Prop.Flags - [FlagBookmark0..FlagBookmarkF];
+          ReloadProperty(Prop);
+        end;
+
+        Result := True;
+      end);
+  finally
+    FProject.EndUpdate;
+  end;
+end;
 
 procedure TFormMain.ActionEditMarkExecute(Sender: TObject);
 var

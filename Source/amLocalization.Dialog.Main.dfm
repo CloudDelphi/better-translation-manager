@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -51,6 +50,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -1013,6 +1013,10 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'ButtonItemBookmark'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton3'
         end>
       OneOnRow = False
       Row = 0
@@ -1541,6 +1545,10 @@ object FormMain: TFormMain
       Action = ActionProjectRecover
       Category = 0
     end
+    object dxBarButton3: TdxBarButton
+      Action = ActionClearBookmarks
+      Category = 0
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
@@ -2037,6 +2045,7 @@ object FormMain: TFormMain
       Hint = 'Open text editor'
       ShortCut = 16397
       OnExecute = ActionTranslationEditTextExecute
+      OnUpdate = ActionTranslationEditTextUpdate
     end
     object ActionTranslationSuggestionList: TAction
       Category = 'Edit'
@@ -2044,6 +2053,7 @@ object FormMain: TFormMain
       ImageIndex = 72
       ShortCut = 32808
       OnExecute = ActionTranslationSuggestionListExecute
+      OnUpdate = ActionTranslationSuggestionListUpdate
     end
     object ActionProjectRecover: TAction
       Category = 'Project'
@@ -2051,6 +2061,12 @@ object FormMain: TFormMain
       Hint = 'Recover translations from renamed or moved items'
       ImageIndex = 74
       OnExecute = ActionProjectRecoverExecute
+      OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionClearBookmarks: TAction
+      Category = 'Bookmark'
+      Caption = 'Clear bookmarks...'
+      OnExecute = ActionClearBookmarksExecute
       OnUpdate = ActionHasModulesUpdate
     end
   end
