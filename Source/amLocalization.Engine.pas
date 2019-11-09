@@ -956,7 +956,7 @@ begin
 
       // Don't add modules if we're updating the target values
       if (Action <> liaUpdateTarget) then
-        EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, integer(Project));
+        EnumResourceNames(Instance, RT_RCDATA, @EnumResourceNamesDFMs, IntPtr(Project));
 
       // Make sure we have a resourcestrings module
       StringsModule := Project.AddModule(sModuleNameResourcestrings);
@@ -964,7 +964,7 @@ begin
 
       ResourceGroups := TResourceGroups.Create;
       try
-        EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesStrings, integer(ResourceGroups));
+        EnumResourceNames(Instance, RT_STRING, @EnumResourceNamesStrings, IntPtr(ResourceGroups));
 
         ResourceGroups.Sort;
 
