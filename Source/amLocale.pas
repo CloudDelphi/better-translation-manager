@@ -60,12 +60,16 @@ type
   public
     constructor Create(ALocale: LCID);
     destructor Destroy; override;
+
     function ReleaseFlag: TBitmap;
     procedure DestroyFlag;
+
     class function GetLocaleData(ID: LCID; Flag: DWORD): string; overload;
     class function GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD; overload;
+
     function GetLocaleData(Flag: DWORD): string; overload;
     function GetLocaleDataInt(Flag: DWORD): DWORD; overload;
+
     property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
     property DisplayName: string read GetDisplayName;
     /// <summary>ISO3166Name: The ISO3166-1 alpha-2 two letter country code. E.g. US, GB, DK, DE etc.</summary>
@@ -97,14 +101,18 @@ type
 //      TLocaleItems
 //
 //------------------------------------------------------------------------------
-  TLocaleItems = class
+  TLocaleItems = class abstract
   private
-    class var FLocaleItems: TObjectList<TLocaleItem>;
+    class var
+      FLocaleItems: TList<TLocaleItem>;
+      FCustomSorted: boolean;
   private
-    class function GetLocaleItems: TObjectList<TLocaleItem>; static;
+    class function GetLocaleItems: TList<TLocaleItem>; static;
     class function GetLocaleItem(Index: integer): TLocaleItem; static;
     class function GetCount: integer; static;
-    class property LocaleItems: TObjectList<TLocaleItem> read GetLocaleItems;
+    class property LocaleItems: TList<TLocaleItem> read GetLocaleItems;
+  strict private
+    class destructor Destroy;
   public
     class function IndexOf(AID: LCID): integer; static;
     class function IndexOfCountry(const ISO3166Name: string): integer; static;
@@ -123,7 +131,8 @@ type
     class function FindISO639_1Name(const Value: string): TLocaleItem; static;
     class function FindISO3166Name(const Value: string): TLocaleItem; static;
 
-    class procedure Sort(const AComparer: IComparer<TLocaleItem>);
+    class procedure Sort(const AComparer: IComparer<TLocaleItem>); deprecated 'Custom sort prevents binary LCID search';
+
     class property Items[index: integer]: TLocaleItem read GetLocaleItem;
     class property Count: integer read GetCount;
   end;
@@ -584,7 +593,7 @@ begin
 
   LocaleItem := TLocaleItem.Create(AID);
   try
-    if (LocaleItem.ISO3166Name <> '') and True then
+    if (LocaleItem.ISO3166Name <> '') then
 //      (TLocaleItems.IndexOfCountry(LocaleItem.ISO3166Name) = -1) then
       TLocaleItems.FLocaleItems.Add(LocaleItem)
     else
@@ -593,6 +602,13 @@ begin
     LocaleItem.Free;
     Result := 0;
   end;
+end;
+
+//------------------------------------------------------------------------------
+
+class destructor TLocaleItems.Destroy;
+begin
+  FreeAndNil(FLocaleItems);
 end;
 
 //------------------------------------------------------------------------------
@@ -708,15 +724,13 @@ end;
 
 class function TLocaleItems.FindLCID(Value: LCID): TLocaleItem;
 var
-  i: integer;
+  Index: integer;
 begin
-  Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (FLocaleItems[i].Locale = Value) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
+  Index := IndexOf(Value);
+  if (Index <> -1) then
+    Result := FLocaleItems[Index]
+  else
+    Result := nil;
 end;
 
 class function TLocaleItems.FindLocaleName(const Value: string; Exact: boolean): TLocaleItem;
@@ -734,7 +748,7 @@ begin
 
   i := Pos('-', Value);
   if (i = -1) then
-   exit;
+    exit;
 
   Language := Copy(Value, 1, i-1);
 
@@ -772,7 +786,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.GetLocaleItems: TObjectList<TLocaleItem>;
+class function TLocaleItems.GetLocaleItems: TList<TLocaleItem>;
 begin
   if (FLocaleItems = nil) then
   begin
@@ -780,6 +794,13 @@ begin
 
     // Get list of all locales supported by system
     EnumSystemLocales(@EnumLocalesCallback, LCID_SUPPORTED);
+
+    // Sort list so we can do binary search on it
+    FLocaleItems.Sort(TComparer<TLocaleItem>.Construct(
+      function(const A, B: TLocaleItem): integer
+      begin
+        Result := A.Locale - B.Locale;
+      end));
   end;
 
   Result := FLocaleItems;
@@ -854,19 +875,46 @@ end;
 
 class procedure TLocaleItems.Sort(const AComparer: IComparer<TLocaleItem>);
 begin
+  // We need the original list to be sorted by LCID in order to perform binary search on it.
+  // If it is sorted in any other order then we must fall back to sequential scan.
   LocaleItems.Sort(AComparer);
+  FCustomSorted := True;
 end;
 
 //------------------------------------------------------------------------------
 
 class function TLocaleItems.IndexOf(AID: LCID): integer;
+var
+  Lo, Hi, Mid: Integer;
+  Compare: Integer;
 begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
+  if (not FCustomSorted) then
   begin
-    if (FLocaleItems[Result].Locale = AID) then
-      break;
-    dec(Result);
+    // Binary search
+    Lo := 0;
+    Hi := LocaleItems.Count-1;
+    while (Lo <= Hi) do
+    begin
+      Mid := Lo + (Hi - Lo) shr 1;
+      Compare := FLocaleItems[Mid].Locale - AID;
+      if (Compare = 0) then
+        Exit(Mid);
+      if (Compare < 0) then
+        Lo := Mid + 1
+      else
+        Hi := Mid - 1;
+    end;
+    Result := -1;
+  end else
+  begin
+    // Sequential scan
+    Result := LocaleItems.Count-1;
+    while (Result >= 0) do
+    begin
+      if (FLocaleItems[Result].Locale = AID) then
+        break;
+      dec(Result);
+    end;
   end;
 end;
 
@@ -1263,6 +1311,4 @@ end;
 
 initialization
   ClearLocale;
-finalization
-  TLocaleItems.FLocaleItems.Free;
 end.
