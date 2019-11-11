@@ -70,7 +70,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -89,6 +88,7 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
+      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -1296,25 +1296,16 @@ object FormMain: TFormMain
       Category = 0
     end
     object dxBarButton17: TdxBarButton
-      Caption = 'Save to CSV'
+      Action = ActionExportCSV
       Category = 0
-      Enabled = False
-      Hint = 'Save to CSV'
-      Visible = ivAlways
-      ImageIndex = 63
     end
     object dxBarButton20: TdxBarButton
-      Caption = 'Save to Excel'
+      Action = ActionExportExcel
       Category = 0
-      Enabled = False
-      Hint = 'Save to Excel'
-      Visible = ivAlways
-      ImageIndex = 62
     end
     object dxBarButton21: TdxBarButton
       Action = ActionImportCSV
       Category = 0
-      ImageIndex = 61
     end
     object dxBarButton22: TdxBarButton
       Caption = 'Import from Excel'
@@ -1717,20 +1708,25 @@ object FormMain: TFormMain
     object ActionEditPaste: TAction
       Category = 'Edit'
       Caption = 'Paste'
+      Enabled = False
       Hint = 'Paste from clipboard'
       ImageIndex = 15
+      OnExecute = ActionEditPasteExecute
     end
     object ActionEditCopy: TAction
       Category = 'Edit'
       Caption = 'Copy'
       Hint = 'Copy to clipboard'
       ImageIndex = 17
+      OnExecute = ActionEditCopyExecute
+      OnUpdate = ActionEditCopyUpdate
     end
     object ActionEditCut: TAction
       Category = 'Edit'
       Caption = 'Cut'
       Hint = 'Cut to clipboard'
       ImageIndex = 16
+      Visible = False
     end
     object ActionFindSearch: TAction
       Category = 'Find'
@@ -1977,6 +1973,8 @@ object FormMain: TFormMain
     object ActionImportCSV: TAction
       Category = 'Import'
       Caption = 'Import CSV...'
+      Enabled = False
+      ImageIndex = 61
     end
     object ActionFilters: TAction
       Category = 'Filters'
@@ -2085,6 +2083,20 @@ object FormMain: TFormMain
       ShortCut = 24652
       OnExecute = ActionTranslationMemoryLocateExecute
       OnUpdate = ActionTranslationMemoryLocateUpdate
+    end
+    object ActionExportCSV: TAction
+      Category = 'Import'
+      Caption = 'Save to CSV...'
+      Hint = 'Export the entire project to a Comma Separated Values file'
+      ImageIndex = 63
+      OnExecute = ActionExportCSVExecute
+      OnUpdate = ActionHasProjectUpdate
+    end
+    object ActionExportExcel: TAction
+      Category = 'Import'
+      Caption = 'Save to Excel...'
+      Enabled = False
+      ImageIndex = 62
     end
   end
   object OpenDialogProject: TOpenDialog
