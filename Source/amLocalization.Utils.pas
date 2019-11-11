@@ -37,7 +37,7 @@ procedure DecomposeSkinName(const Value: string; var Name, Filename: string; var
 // -----------------------------------------------------------------------------
 // Removes hotkeys and format specifiers
 type
-  TSanitizeKind = (skAccelerator, skFormat, skEnding, skSurround);
+  TSanitizeKind = (skAccelerator, skFormat, skEnding, skSurround, skTrim);
   TSanitizeKinds = set of TSanitizeKind;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
@@ -238,7 +238,7 @@ end;
 
 function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
 begin
-  Result := SanitizeText(Value, [skAccelerator, skFormat, skEnding, skSurround], ReduceToNothing);
+  Result := SanitizeText(Value, [Low(TSanitizeKind)..High(TSanitizeKind)], ReduceToNothing);
 end;
 
 function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing: boolean): string;
@@ -333,7 +333,10 @@ begin
       end;
   end;
 
-  if (not ReduceToNothing) and (Result.Trim.IsEmpty) then
+  if (skTrim in Kind) then
+    Result := Result.Trim;
+
+  if (not ReduceToNothing) and ((Result.IsEmpty) or ((not(skTrim in Kind)) and (Result.Trim.IsEmpty))) then
     Exit(Value);
 end;
 
