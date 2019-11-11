@@ -15,6 +15,7 @@ uses
   System.SysUtils, System.Classes, Data.DB, Windows,
 
   amLocale,
+  amLocalization.Utils,
   amLocalization.Model,
   amLocalization.Provider;
 
@@ -50,10 +51,20 @@ type
   TDuplicates = TObjectDictionary<TField, TDuplicateTerms>;
 
 type
+  TTranslationMemoryRecordList = TList<integer>;
+  TTranslationMemoryLookupIndex = TObjectDictionary<string, TTranslationMemoryRecordList>;
+
+type
   ITranslationMemoryPeek = interface
     ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
     procedure EnqueueQuery(Prop: TLocalizerProperty);
     procedure Cancel;
+  end;
+
+  ITranslationMemoryLookup = interface
+    ['{92F65B1C-78E2-4784-B795-9C61BB3AF50D}']
+    function Lookup(const Value: string): TTranslationMemoryRecordList;
+    function GetValues: TArray<string>;
   end;
 
   ITranslationMemory = interface
@@ -80,6 +91,8 @@ type
     function CheckLoaded(Force: boolean = False): boolean;
     procedure SetLoaded; // For use when loading TMX as main TM
 
+    function GetLanguages: TArray<TLocaleItem>;
+    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeKinds): ITranslationMemoryLookup;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 

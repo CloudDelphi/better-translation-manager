@@ -301,6 +301,8 @@ type
     dxBarButton1: TdxBarButton;
     ActionClearBookmarks: TAction;
     dxBarButton3: TdxBarButton;
+    ActionTranslationMemoryLocate: TAction;
+    dxBarButton4: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -421,6 +423,8 @@ type
     procedure ActionTranslationSuggestionListUpdate(Sender: TObject);
     procedure ActionTranslationEditTextUpdate(Sender: TObject);
     procedure ActionClearBookmarksExecute(Sender: TObject);
+    procedure ActionTranslationMemoryLocateUpdate(Sender: TObject);
+    procedure ActionTranslationMemoryLocateExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -1546,6 +1550,54 @@ begin
 
   ClearTranslationMemoryPeekResult;
   CreateTranslationMemoryPeeker(True);
+end;
+
+procedure TFormMain.ActionTranslationMemoryLocateExecute(Sender: TObject);
+var
+  FormTranslationMemory: TFormTranslationMemory;
+resourcestring
+  sTMLocateNotFound = 'Source/Target pair not found in TM';
+begin
+  SaveCursor(crHourGlass);
+
+  FormTranslationMemory := TFormTranslationMemory.Create(nil);
+  try
+
+    FormTranslationMemory.Execute(FTranslationMemory,
+      function(FormTranslationMemory: TFormTranslationMemory): boolean
+      var
+        TranslationMemoryFormTools: ITranslationMemoryFormTools;
+        Prop: TLocalizerProperty;
+      begin
+        if (Supports(FormTranslationMemory, ITranslationMemoryFormTools, TranslationMemoryFormTools)) then
+        begin
+          Prop := FocusedProperty;
+          Result := TranslationMemoryFormTools.LocatePair(SourceLanguage, Prop.Value, TargetLanguage, Prop.TranslatedValue[TranslationLanguage]);
+          if (not Result) then
+            ShowMessage(sTMLocateNotFound);
+        end else
+          Result := False;
+
+        if (Result) then
+          // Kill thread. We might delete fields and other nasty stuff which it can't handle.
+          FTranslationMemoryPeek := nil;
+      end);
+
+  finally
+    FormTranslationMemory.Free;
+  end;
+
+  if (FTranslationMemoryPeek = nil) then
+  begin
+    ClearTranslationMemoryPeekResult;
+    CreateTranslationMemoryPeeker(True);
+  end;
+end;
+
+procedure TFormMain.ActionTranslationMemoryLocateUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FocusedProperty <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable) and
+    (FocusedProperty.HasTranslation(TranslationLanguage));
 end;
 
 procedure TFormMain.TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);

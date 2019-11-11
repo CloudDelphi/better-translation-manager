@@ -1137,13 +1137,10 @@ end;
 { TTranslationManagerEditorSettings }
 
 procedure TTranslationManagerEditorSettings.ApplyDefault;
-var
-  EqualizerRule: TMakeAlikeRule;
 begin
   inherited;
 
-  for EqualizerRule := Low(TMakeAlikeRule) to High(TMakeAlikeRule) do
-    Include(FEqualizerRules, EqualizerRule);
+  FEqualizerRules := [Low(TMakeAlikeRule)..High(TMakeAlikeRule)];
 end;
 
 constructor TTranslationManagerEditorSettings.Create(AOwner: TConfigurationSection);

@@ -15,6 +15,7 @@ interface
 uses
   Generics.Collections,
   SyncObjs,
+  Types,
   System.SysUtils, System.Classes, Windows, Data.DB,
 
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
@@ -22,6 +23,7 @@ uses
 
   amLocale,
   amProgress,
+  amLocalization.Utils,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.TranslationMemory;
@@ -40,7 +42,7 @@ type
   private
     FLoaded: boolean;
     FEnabled: boolean;
-    FLookupIndex: TDictionary<string, TList<integer>>;
+    FLookupIndex: ITranslationMemoryLookup;
     FModified: boolean;
     FRefreshEvent: TEvent;
     FProviderHandle: integer;
@@ -51,6 +53,7 @@ type
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
     function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
     procedure AddMatch(Translations: TStrings; Prop: TLocalizerProperty; const SourceValue, TargetValue: string);
+    function CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup; overload;
   protected
     // Threaded lookup
     procedure PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
@@ -80,6 +83,8 @@ type
     function CheckLoaded(Force: boolean = False): boolean;
     procedure SetLoaded; // For use when loading TMX as main TM
 
+    function GetLanguages: TArray<TLocaleItem>;
+    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeKinds): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 
@@ -138,7 +143,6 @@ uses
   amFileUtils,
   amPath,
   amLocalization.Settings,
-  amLocalization.Utils,
   amLocalization.Environment;
 
 const
@@ -150,6 +154,94 @@ const
 type
   TTMStreamTag = (tmDescription, tmLanguages, tmTerms);
 
+// -----------------------------------------------------------------------------
+//
+// TTranslationMemoryLookup
+//
+// -----------------------------------------------------------------------------
+type
+  TTranslationMemoryLookup = class(TInterfacedObject, ITranslationMemoryLookup)
+  private
+    FLookupIndex: TTranslationMemoryLookupIndex;
+  protected
+    // ITranslationMemoryLookup
+    function Lookup(const Value: string): TTranslationMemoryRecordList;
+    function GetValues: TArray<string>;
+  public
+    constructor Create(AField: TField); overload;
+    constructor Create(AField: TField; SanitizeKinds: TSanitizeKinds); overload;
+    destructor Destroy; override;
+  end;
+
+constructor TTranslationMemoryLookup.Create(AField: TField);
+begin
+  Create(AField, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+end;
+
+constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeKinds: TSanitizeKinds);
+var
+  DataSet: TDataSet;
+  Bookmark: TBookmark;
+  Value: string;
+  List: TTranslationMemoryRecordList;
+begin
+  inherited Create;
+
+  FLookupIndex := TTranslationMemoryLookupIndex.Create([doOwnsValues], TTextComparer.Create);
+  if (AField = nil) then
+    Exit;
+
+  DataSet := AField.DataSet;
+
+  DataSet.DisableControls;
+  try
+    Bookmark := DataSet.GetBookmark;
+    try
+
+      DataSet.First;
+
+      while (not DataSet.EOF) do
+      begin
+        if (not AField.IsNull) then
+        begin
+          Value := SanitizeText(AField.AsString, SanitizeKinds, False);
+
+          if (not FLookupIndex.TryGetValue(Value, List)) then
+          begin
+            List := TTranslationMemoryRecordList.Create;
+            FLookupIndex.Add(Value, List);
+          end;
+          List.Add(DataSet.RecNo);
+        end;
+
+        DataSet.Next;
+      end;
+
+    finally
+      DataSet.GotoBookmark(Bookmark);
+    end;
+    DataSet.FreeBookmark(Bookmark);
+  finally
+    DataSet.EnableControls;
+  end;
+end;
+
+destructor TTranslationMemoryLookup.Destroy;
+begin
+  FLookupIndex.Free;
+  inherited;
+end;
+
+function TTranslationMemoryLookup.GetValues: TArray<string>;
+begin
+  Result := FLookupIndex.Keys.ToArray;
+end;
+
+function TTranslationMemoryLookup.Lookup(const Value: string): TTranslationMemoryRecordList;
+begin
+  if (not FLookupIndex.TryGetValue(Value, Result)) then
+    Result := nil;
+end;
 
 // -----------------------------------------------------------------------------
 //
@@ -418,7 +510,7 @@ end;
 
 destructor TDataModuleTranslationMemory.Destroy;
 begin
-  FreeAndNil(FLookupIndex);
+  FLookupIndex := nil;
   TranslationProviderRegistry.UnregisterProvider(FProviderHandle);
 
   FRefreshEvent.Free;
@@ -518,6 +610,32 @@ begin
   end else
     Result := True;
 end;
+
+// -----------------------------------------------------------------------------
+
+function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup;
+begin
+  Result := CreateLookup(Language, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+end;
+
+function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeKinds): ITranslationMemoryLookup;
+var
+  Field: TField;
+begin
+  Assert(Language <> nil);
+
+  if (not CheckLoaded) then
+    Exit(nil);
+
+  Field := FindField(Language);
+
+  if (Field = nil) then
+    Exit(nil);
+
+  Result := TTranslationMemoryLookup.Create(Field, SanitizeKinds);
+end;
+
+// -----------------------------------------------------------------------------
 
 function TDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
 var
@@ -665,6 +783,16 @@ begin
   Result := FLoaded;
 end;
 
+function TDataModuleTranslationMemory.GetLanguages: TArray<TLocaleItem>;
+var
+  i: integer;
+begin
+  SetLength(Result, TableTranslationMemory.FieldCount);
+
+  for i := 0 to TableTranslationMemory.FieldCount-1 do
+    Result[i] := TLocaleItems.FindLCID(TableTranslationMemory.Fields[i].Tag);
+end;
+
 function TDataModuleTranslationMemory.GetModified: boolean;
 begin
   Result := FModified;
@@ -674,7 +802,8 @@ end;
 
 function TDataModuleTranslationMemory.AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string;
   TargetField: TField; const TargetValue: string;
-  Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
+  Duplicates: TDuplicates;
+  var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
 
   function Truncate(const Value: string): string;
   begin
@@ -1381,7 +1510,7 @@ end;
 
 function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean;
 var
-  List: TList<integer>;
+  List: TTranslationMemoryRecordList;
   RecordIndex: integer;
   SourceValue, TargetValue: string;
 begin
@@ -1393,7 +1522,9 @@ begin
   Assert(FLookupIndex <> nil);
 
   SourceValue := SanitizeText(Prop.Value, False);
-  if (not FLookupIndex.TryGetValue(SourceValue, List)) then
+
+  List := FLookupIndex.Lookup(SourceValue);
+  if (List = nil) then
     Exit;
 
   for RecordIndex in List do
@@ -1579,13 +1710,13 @@ function TDataModuleTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage
 var
   SourceField: TField;
   TargetField: TField;
-  SourceValue: string;
-  List: TList<integer>;
 begin
-  FreeAndNil(FLookupIndex);
-  FLookupIndex := TObjectDictionary<string, TList<integer>>.Create([doOwnsValues], TTextComparer.Create);
+  FLookupIndex := nil;
 
   if (not CheckLoaded) then
+    Exit(False);
+
+  if (SourceLanguage = TargetLanguage) then
     Exit(False);
 
   // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
@@ -1595,36 +1726,18 @@ begin
   SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
-  if (SourceField = nil) or (TargetField = nil) or (SourceField = TargetField) then
+  if (SourceField = nil) or (TargetField = nil) then
     // One or both languages doesn't exist in TM
     Exit(False);
 
-  // Create dictionary of source terms
-  TableTranslationMemory.First;
-
-  while (not TableTranslationMemory.EOF) do
-  begin
-    if (not TargetField.IsNull) and (not SourceField.IsNull) then
-    begin
-      SourceValue := SanitizeText(SourceField.AsString, False);
-
-      if (not FLookupIndex.TryGetValue(SourceValue, List)) then
-      begin
-        List := TList<integer>.Create;
-        FLookupIndex.Add(SourceValue, List);
-      end;
-      List.Add(TableTranslationMemory.RecNo);
-    end;
-
-    TableTranslationMemory.Next;
-  end;
+  FLookupIndex := CreateLookup(SourceLanguage);
 
   Result := True;
 end;
 
 procedure TDataModuleTranslationMemory.EndLookup;
 begin
-  FreeAndNil(FLookupIndex);
+  FLookupIndex := nil;
 end;
 
 // -----------------------------------------------------------------------------

@@ -23,13 +23,31 @@ uses
   cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, dxLayoutControlAdapters, dxLayoutContainer,
   cxButtons, dxLayoutControl, cxGridLevel, cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView,
   cxGridDBTableView, cxGrid, cxEditRepositoryItems, dxLayoutcxEditAdapters, cxContainer, cxLabel,
-  dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu,
+  dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu, cxCheckBox, cxCheckComboBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
 
+  amLocale,
+  amLocalization.Utils,
   amLocalization.Dialog,
   amLocalization.TranslationMemory;
 
 type
-  TFormTranslationMemory = class(TFormDialog)
+  ITranslationMemoryFormTools = interface
+    ['{D76E9F2C-9CF9-42CF-9092-625B809708F0}']
+    function Locate(Language: TLocaleItem; const Value: string): boolean;
+    function LocatePair(LanguageA: TLocaleItem; const ValueA: string; LanguageB: TLocaleItem; const ValueB: string): boolean;
+  end;
+
+// -----------------------------------------------------------------------------
+//
+//              TFormTranslationMemory
+//
+// -----------------------------------------------------------------------------
+type
+  TFormTranslationMemory = class;
+
+  TFormTranslationMemoryCallback = reference to function(FormTranslationMemory: TFormTranslationMemory): boolean;
+
+  TFormTranslationMemory = class(TFormDialog, ITranslationMemoryFormTools)
     GridTMDBTableView: TcxGridDBTableView;
     GridTMLevel: TcxGridLevel;
     GridTM: TcxGrid;
@@ -50,6 +68,24 @@ type
     ActionExport: TAction;
     ActionImport: TAction;
     DataSourceTranslationMemory: TDataSource;
+    ActionViewDuplicates: TAction;
+    Findduplicates1: TMenuItem;
+    N1: TMenuItem;
+    dxLayoutItem5: TdxLayoutItem;
+    ComboBoxLanguages: TcxComboBox;
+    dxLayoutItem6: TdxLayoutItem;
+    ComboBoxOptions: TcxCheckComboBox;
+    LayoutGroupDuplicates: TdxLayoutGroup;
+    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
+    StyleRepository: TcxStyleRepository;
+    StyleDuplicate: TcxStyle;
+    PopupMenuGrid: TPopupMenu;
+    Viewduplicates1: TMenuItem;
+    ActionRowInsert: TAction;
+    ActionRowDelete: TAction;
+    N2: TMenuItem;
+    Insertrow1: TMenuItem;
+    Deleterows1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
@@ -59,16 +95,58 @@ type
     procedure ActionExportExecute(Sender: TObject);
     procedure ActionImportExecute(Sender: TObject);
     procedure GridTMDBTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
+    procedure ActionViewDuplicatesExecute(Sender: TObject);
+    procedure ComboBoxLanguagesPropertiesChange(Sender: TObject);
+    procedure ComboBoxOptionsPropertiesChange(Sender: TObject);
+    procedure LayoutGroupDuplicatesButton0Click(Sender: TObject);
+    procedure GridTMDBTableViewDataControllerFilterRecord(ADataController: TcxCustomDataController; ARecordIndex: Integer;
+      var Accept: Boolean);
+    procedure ActionImportUpdate(Sender: TObject);
+    procedure ActionExportUpdate(Sender: TObject);
+    procedure ActionViewDuplicatesUpdate(Sender: TObject);
+    procedure ActionRowInsertExecute(Sender: TObject);
+    procedure ActionRowInsertUpdate(Sender: TObject);
+    procedure ActionRowDeleteExecute(Sender: TObject);
+    procedure ActionRowDeleteUpdate(Sender: TObject);
+    procedure GridTMDBTableViewColumnPosChanged(Sender: TcxGridTableView; AColumn: TcxGridColumn);
   private
     FTranslationMemory: ITranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
     FRightToLeft: array of boolean;
+  private type
+    TTranslationMemoryUpdate = (tmCreateColumns, tmUpdateRightToLeft, tmUpdateDuplicates);
+    TTranslationMemoryUpdates = set of TTranslationMemoryUpdate;
+  private
+    FUpdateCount: integer;
+    FUpdates: TTranslationMemoryUpdates;
   protected
-    procedure CreateColumns;
+    procedure BeginUpdate;
+    procedure EndUpdate;
+    procedure NeedUpdate(Update: TTranslationMemoryUpdate);
+  private
+    FViewDuplicates: boolean;
+    FDuplicateColumn: TcxGridDBColumn;
+    FDuplicates: TTranslationMemoryRecordList;
+    FDuplicateLocaleItem: TLocaleItem;
+    FDuplicateSourceColumn: TcxGridColumn;
+    FSanitizeKinds: TSanitizeKinds;
+    FLookupIndex: ITranslationMemoryLookup;
+  protected
+    procedure GridTMDBTableViewColumnDuplicateGetDataText(Sender: TcxCustomGridTableItem; ARecordIndex: Integer; var AText: string);
+    procedure DoUpdateDuplicates;
+    procedure DoCreateColumns;
+    procedure DoUpdateRightToLeft;
+  protected
     procedure SaveLayout;
     procedure RestoreLayout;
+  protected
+    // ITranslationMemoryFormTools
+    function Locate(Language: TLocaleItem; const Value: string): boolean;
+    function LocatePair(LanguageA: TLocaleItem; const ValueA: string; LanguageB: TLocaleItem; const ValueB: string): boolean;
   public
-    function Execute(ATranslationMemory: ITranslationMemory): boolean;
+    destructor Destroy; override;
+
+    function Execute(ATranslationMemory: ITranslationMemory; CallBack: TFormTranslationMemoryCallback = nil): boolean;
   end;
 
 resourcestring
@@ -82,6 +160,10 @@ resourcestring
   sTranslationMemoryOpenCompleteTitle = 'Translation Memory opened';
   sTranslationMemoryOpenComplete = 'Values read: %.0n';
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 implementation
 
 {$R *.dfm}
@@ -89,10 +171,9 @@ implementation
 uses
   IOUtils,
   UITypes,
-  cxTextEdit,
   cxDrawTextUtils,
+  dxCore,
   amCursorService,
-  amLocale,
   amProgress,
   amLocalization.Settings,
   amLocalization.Data.Main,
@@ -100,6 +181,61 @@ uses
   amLocalization.TranslationMemory.Data,
   amLocalization.TranslationMemory.FileFormats,
   amLocalization.TranslationMemory.FileFormats.TMX;
+
+// -----------------------------------------------------------------------------
+//
+//              TFormTranslationMemory
+//
+// -----------------------------------------------------------------------------
+destructor TFormTranslationMemory.Destroy;
+begin
+  FDuplicates.Free;
+
+  inherited;
+end;
+
+procedure TFormTranslationMemory.FormCreate(Sender: TObject);
+begin
+  OpenDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcLoad) + OpenDialogTMX.Filter;
+  SaveDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcSave) + SaveDialogTMX.Filter;
+  GridTMDBTableView.DataController.CreateAllItems(True);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+  if (FUpdateCount = 1) then
+    GridTMDBTableView.BeginUpdate;
+end;
+
+procedure TFormTranslationMemory.EndUpdate;
+begin
+  if (FUpdateCount = 1) then
+  begin
+    if (tmUpdateDuplicates in FUpdates) then
+      DoUpdateDuplicates;
+
+    if (tmCreateColumns in FUpdates) then
+      DoCreateColumns; // Must be before check for tmUpdateRightToLeft
+
+    if (tmUpdateRightToLeft in FUpdates) then
+      DoUpdateRightToLeft;
+
+    GridTMDBTableView.EndUpdate;
+  end;
+  Dec(FUpdateCount);
+end;
+
+procedure TFormTranslationMemory.NeedUpdate(Update: TTranslationMemoryUpdate);
+begin
+  BeginUpdate;
+  Include(FUpdates, Update);
+  ENdUpdate;
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormTranslationMemory.RestoreLayout;
 begin
@@ -113,7 +249,9 @@ begin
   TranslationManagerSettings.Layout.TranslationMemory.Valid := True;
 end;
 
-function TFormTranslationMemory.Execute(ATranslationMemory: ITranslationMemory): boolean;
+// -----------------------------------------------------------------------------
+
+function TFormTranslationMemory.Execute(ATranslationMemory: ITranslationMemory; CallBack: TFormTranslationMemoryCallback): boolean;
 begin
   FTranslationMemory := ATranslationMemory;
 
@@ -130,24 +268,39 @@ begin
     end;
   end;
 
-  GridTMDBTableView.BeginUpdate;
+  BeginUpdate;
   try
-
     DataSourceTranslationMemory.DataSet := FTranslationMemory.TranslationMemoryDataSet;
-    CreateColumns;
 
+    NeedUpdate(tmCreateColumns);
   finally
-    GridTMDBTableView.EndUpdate;
+    EndUpdate;
   end;
 
-  RestoreLayout;
+  BeginUpdate;
+  try
+    // Column order can change when we restore the layout so we need to rebuild the RTL array
+    RestoreLayout;
+
+    NeedUpdate(tmUpdateRightToLeft);
+  finally
+    EndUpdate;
+  end;
+
+  if (Assigned(CallBack)) and (not CallBack(Self)) then
+    Exit(False);
 
   ShowModal;
+
+  // Make sure duplicate column doesn't affect saved layout
+  FDuplicateColumn.Free;
 
   SaveLayout;
 
   Result := True;
 end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormTranslationMemory.ActionDeleteLanguageExecute(Sender: TObject);
 var
@@ -164,7 +317,7 @@ begin
   if (MessageDlg(Format(sDeleteLanguage, [LocaleItem.LanguageName]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
 
-  GridTMDBTableView.BeginUpdate;
+  BeginUpdate;
   try
     // Start by removing the column
     FPoupMenuColumn.Free;
@@ -181,13 +334,20 @@ begin
     end else
       Field.Free;
   finally
-    GridTMDBTableView.EndUpdate;
+    EndUpdate;
   end;
 end;
 
 procedure TFormTranslationMemory.ActionDeleteLanguageUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FPoupMenuColumn <> nil);
+  TAction(Sender).Enabled := (not FViewDuplicates) and (FPoupMenuColumn <> nil);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.ActionExportUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FViewDuplicates);
 end;
 
 procedure TFormTranslationMemory.ActionExportExecute(Sender: TObject);
@@ -215,6 +375,159 @@ begin
   finally
     TranslationMemoryFileFormat.Free;
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.ActionViewDuplicatesUpdate(Sender: TObject);
+begin
+  TAction(Sender).Checked := FViewDuplicates;
+end;
+
+procedure TFormTranslationMemory.ActionViewDuplicatesExecute(Sender: TObject);
+var
+  Languages: TArray<TLocaleItem>;
+  LocaleItem: TLocaleItem;
+const
+  SanitizeKinds: TSanitizeKinds = [Low(TSanitizeKind)..High(TSanitizeKind)];
+resourcestring
+  sDuplicate = 'Duplicate';
+begin
+  FViewDuplicates := not FViewDuplicates;
+  LayoutGroupDuplicates.Visible := FViewDuplicates;
+
+  BeginUpdate;
+  try
+    if (not FViewDuplicates) then
+    begin
+      if (FDuplicateColumn <> nil) then
+      begin
+        FDuplicateColumn.SortOrder := soNone;
+        FDuplicateColumn.Visible := False;
+        FDuplicates.Clear;
+      end;
+      Exit;
+    end;
+
+    SaveCursor(crHourGlass);
+
+    if (FDuplicateColumn = nil) then
+    begin
+      FDuplicateColumn := GridTMDBTableView.CreateColumn;
+      FDuplicateColumn.DataBinding.ValueTypeClass := TcxStringValueType;
+      FDuplicateColumn.VisibleForCustomization := False;
+      FDuplicateColumn.Options.Editing := False;
+      FDuplicateColumn.Options.Focusing := False;
+      FDuplicateColumn.Caption := sDuplicate;
+      FDuplicateColumn.Width := 150;
+      FDuplicateColumn.BestFitMaxWidth := 300;
+      FDuplicateColumn.Styles.Content := StyleDuplicate;
+      FDuplicateColumn.OnGetDataText := GridTMDBTableViewColumnDuplicateGetDataText;
+
+      // Column added. We must update the RTL array.
+      NeedUpdate(tmUpdateRightToLeft);
+
+      Languages := FTranslationMemory.GetLanguages;
+      for LocaleItem in Languages do
+        ComboBoxLanguages.Properties.Items.AddObject(LocaleItem.LanguageName, LocaleItem);
+
+      FDuplicates := TTranslationMemoryRecordList.Create;
+    end;
+    FDuplicateColumn.Index := 0;
+
+    ComboBoxLanguages.ItemIndex := 0;
+    ComboBoxOptions.EditValue := Byte(SanitizeKinds);
+
+    FDuplicateColumn.SortOrder := soAscending;
+    FDuplicateColumn.SortIndex := 0;
+
+    FDuplicateColumn.Visible := True;
+
+    // Get data for duplicate filter
+    NeedUpdate(tmUpdateDuplicates);
+  finally
+    EndUpdate;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.DoUpdateDuplicates;
+var
+  Values: TArray<string>;
+  Value: string;
+  RecNo: integer;
+  List: TTranslationMemoryRecordList;
+begin
+  FLookupIndex := nil;
+  if (not FViewDuplicates) then
+    Exit;
+
+  // Create an index of sanited values
+  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeKinds);
+
+  // Get the values
+  Values := FLookupIndex.GetValues;
+
+  // For each value get the record list (the duplicates)
+  FDuplicates.Clear;
+  for Value in Values do
+  begin
+    List := FLookupIndex.Lookup(Value);
+    // Ignore values that does not have duplicates (i.e. less than two records per value)
+    if (List = nil) or (List.Count <= 1) then
+      continue;
+
+    // Add records to duplicate list
+    for RecNo in List do
+      FDuplicates.Add(RecNo-1);
+  end;
+
+  // Sort list so we can use binary search on it
+  FDuplicates.Sort;
+
+  GridTMDBTableView.DataController.RefreshExternalData;
+
+  Exclude(FUpdates, tmUpdateDuplicates);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.ActionRowDeleteExecute(Sender: TObject);
+begin
+  if (MessageDlg('Delete selected row(s)?', mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
+  BeginUpdate;
+  try
+    GridTMDBTableView.DataController.DeleteSelection;
+
+    NeedUpdate(tmUpdateDuplicates);
+  finally
+    EndUpdate;
+  end;
+end;
+
+procedure TFormTranslationMemory.ActionRowDeleteUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (GridTMDBTableView.Controller.SelectedRecordCount > 0) and (not GridTMDBTableView.DataController.IsEditing);
+end;
+
+procedure TFormTranslationMemory.ActionRowInsertExecute(Sender: TObject);
+begin
+  GridTMDBTableView.DataController.Insert;
+end;
+
+procedure TFormTranslationMemory.ActionRowInsertUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FViewDuplicates) and (not GridTMDBTableView.DataController.IsEditing);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.ActionImportUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (not FViewDuplicates);
 end;
 
 procedure TFormTranslationMemory.ActionImportExecute(Sender: TObject);
@@ -262,7 +575,7 @@ begin
 
   SaveLayout;
 
-  GridTMDBTableView.BeginUpdate;
+  BeginUpdate;
   try
     Stats := Default(TTranslationMemoryMergeStats);
     DuplicateAction := tmDupActionPrompt;
@@ -332,10 +645,10 @@ begin
     if (Progress <> nil) then
       Progress.Progress(psEnd, 1, 1);
 
-    CreateColumns;
+    NeedUpdate(tmCreateColumns);
 
   finally
-    GridTMDBTableView.EndUpdate;
+    EndUpdate;
   end;
 
   Progress := nil;
@@ -355,41 +668,97 @@ begin
   end;
 end;
 
-procedure TFormTranslationMemory.CreateColumns;
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.ComboBoxLanguagesPropertiesChange(Sender: TObject);
 var
   i: integer;
-  LocaleItem: TLocaleItem;
 begin
-  GridTMDBTableView.BeginUpdate;
+  BeginUpdate;
+  try
+    FDuplicateLocaleItem := TLocaleItem(ComboBoxLanguages.ItemObject);
+
+    FDuplicateSourceColumn := nil;
+    for i := 0 to GridTMDBTableView.ColumnCount-1 do
+      if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and
+        (LCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = FDuplicateLocaleItem.Locale) then
+      begin
+        FDuplicateSourceColumn := GridTMDBTableView.Columns[i];
+        break;
+      end;
+
+    NeedUpdate(tmUpdateDuplicates);
+  finally
+    EndUpdate;
+  end;
+end;
+
+procedure TFormTranslationMemory.ComboBoxOptionsPropertiesChange(Sender: TObject);
+begin
+  BeginUpdate;
+  try
+    FSanitizeKinds := TSanitizeKinds(Byte(ComboBoxOptions.EditValue));
+
+    NeedUpdate(tmUpdateDuplicates);
+  finally
+    EndUpdate;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.DoCreateColumns;
+var
+  i: integer;
+begin
+  BeginUpdate;
   try
     GridTMDBTableView.ClearItems;
     GridTMDBTableView.DataController.CreateAllItems;
-    SetLength(FRightToLeft, GridTMDBTableView.ColumnCount);
 
     for i := 0 to GridTMDBTableView.ColumnCount-1 do
     begin
-      LocaleItem := TLocaleItems.FindLCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag);
-      if (LocaleItem <> nil) then
-        FRightToLeft[i] := LocaleItem.IsRightToLeft
-      else
-        FRightToLeft[i] := IsRightToLeft;
       GridTMDBTableView.Columns[i].RepositoryItem := DataModuleMain.EditRepositoryTextItem;
       GridTMDBTableView.Columns[i].Width := 200;
       GridTMDBTableView.Columns[i].BestFitMaxWidth := 400;
     end;
 
-    // GridTMDBTableView.ApplyBestFit;
+    Exclude(FUpdates, tmCreateColumns);
+    NeedUpdate(tmUpdateRightToLeft);
   finally
-    GridTMDBTableView.EndUpdate;
+    EndUpdate;
   end;
 end;
 
-procedure TFormTranslationMemory.FormCreate(Sender: TObject);
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.DoUpdateRightToLeft;
+var
+  i: integer;
+  Column: TcxGridDBColumn;
+  LocaleItem: TLocaleItem;
 begin
-  OpenDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcLoad) + OpenDialogTMX.Filter;
-  SaveDialogTMX.Filter := TTranslationMemoryFileFormat.FileFormatFileFilters(ffcSave) + SaveDialogTMX.Filter;
-  GridTMDBTableView.DataController.CreateAllItems(True);
+  SetLength(FRightToLeft, GridTMDBTableView.ColumnCount);
+
+  for i := 0 to GridTMDBTableView.ColumnCount-1 do
+  begin
+    Column := GridTMDBTableView.Columns[i];
+
+    if (Column.DataBinding.Field <> nil) then
+      LocaleItem := TLocaleItems.FindLCID(Column.DataBinding.Field.Tag)
+    else
+      LocaleItem := FDuplicateLocaleItem;
+
+    if (LocaleItem <> nil) then
+      FRightToLeft[i] := LocaleItem.IsRightToLeft
+    else
+      FRightToLeft[i] := IsRightToLeft;
+  end;
+
+  Exclude(FUpdates, tmUpdateRightToLeft);
 end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormTranslationMemory.GridPopupMenuPopupMenus0Popup(ASenderMenu: TComponent; AHitTest: TcxCustomGridHitTest; X,
   Y: Integer);
@@ -407,6 +776,30 @@ begin
   end else
     FPoupMenuColumn := nil;
 end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.GridTMDBTableViewColumnDuplicateGetDataText(Sender: TcxCustomGridTableItem; ARecordIndex: Integer; var AText: string);
+var
+  Value: string;
+begin
+  // Duplicate column is unbound. We supply data for it here.
+
+  Assert(FDuplicateSourceColumn <> nil);
+
+  Value := VarToStr(GridTMDBTableView.DataController.Values[ARecordIndex, FDuplicateSourceColumn.Index]);
+  AText := AnsiLowerCase(SanitizeText(Value, FSanitizeKinds, False));
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.GridTMDBTableViewColumnPosChanged(Sender: TcxGridTableView; AColumn: TcxGridColumn);
+begin
+  // Column has moved - need to update RTL array
+  NeedUpdate(tmUpdateRightToLeft);
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormTranslationMemory.GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
   AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
@@ -446,6 +839,20 @@ begin
   end;
 end;
 
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.GridTMDBTableViewDataControllerFilterRecord(ADataController: TcxCustomDataController;
+  ARecordIndex: Integer; var Accept: Boolean);
+var
+  Dummy: integer;
+begin
+  if (FViewDuplicates) then
+    // Only display row if record is in duplicate list
+    Accept := FDuplicates.BinarySearch(ARecordIndex, Dummy);
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormTranslationMemory.GridTMDBTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem;
   AEdit: TcxCustomEdit);
 begin
@@ -463,5 +870,162 @@ begin
   // See: TDataModuleMain.EditRepositoryTextItemPropertiesButtonClick
   AEdit.Tag := TcxGridDBColumn(AItem).DataBinding.Field.Tag;
 end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.LayoutGroupDuplicatesButton0Click(Sender: TObject);
+begin
+  ActionViewDuplicates.Execute;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TFormTranslationMemory.Locate(Language: TLocaleItem; const Value: string): boolean;
+begin
+  Result := False; // Maybe later...
+end;
+
+type
+  TLocateMatch = (lmNone, lmEqualized, lmSanitized, lmSameSourceAndTarget, lmExactSourceOrTarget, lmExactSourceAndTarget);
+
+function TFormTranslationMemory.LocatePair(LanguageA: TLocaleItem; const ValueA: string;
+  LanguageB: TLocaleItem; const ValueB: string): boolean;
+
+  function FindField(Locale: LCID): TField;
+  var
+    i: integer;
+  begin
+    for i := 0 to GridTMDBTableView.ColumnCount-1 do
+      if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and (LCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = Locale) then
+        Exit(GridTMDBTableView.Columns[i].DataBinding.Field);
+    Result := nil;
+  end;
+
+var
+  FieldA, FieldB: TField;
+  SanitizedValueA, SanitizedValueB: string;
+  Lookup: ITranslationMemoryLookup;
+  List: TTranslationMemoryRecordList;
+  RecNo: integer;
+  DataSet: TDataSet;
+  Value, FieldAValue, FieldBValue: string;
+  PrevRecNo, MatchRecNo: integer;
+  Matchness, LastMatchNess: TLocateMatch;
+begin
+  Result := False;
+
+  FieldA := FindField(LanguageA.Locale);
+  FieldB := FindField(LanguageB.Locale);
+  if (FieldA = nil) or (FieldB = nil) then
+    Exit;
+
+  SanitizedValueA := SanitizeText(ValueA, False);
+  SanitizedValueB := SanitizeText(ValueB, False);
+
+  Lookup := FTranslationMemory.CreateLookup(LanguageA, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+  List := Lookup.Lookup(SanitizedValueA);
+
+  if (List = nil) or (List.Count = 0) then
+    Exit;
+
+  DataSet := GridTMDBTableView.DataController.DataSet;
+  DataSet.DisableControls;
+  try
+    Matchness := lmNone;
+    MatchRecNo := -1;
+    LastMatchNess := lmNone;
+    PrevRecNo := -1;
+    for RecNo in List do
+    begin
+      if (Matchness > LastMatchNess) then
+        MatchRecNo := PrevRecNo;
+      PrevRecNo := RecNo;
+      LastMatchNess := Matchness;
+
+      DataSet.RecNo := RecNo;
+      FieldAValue := FieldA.AsString;
+      FieldBValue := FieldB.AsString;
+
+      // TODO : The algorithm below doesn't give priority to exact match on the A value
+
+      if (FieldBValue = ValueB) then
+      // Exact match on B
+      begin
+        if (FieldAValue = ValueA) then
+        begin
+          // Exact match on both values
+          Matchness := lmExactSourceAndTarget;
+          break;
+        end;
+        if (Matchness >= lmExactSourceOrTarget) then
+          continue;
+        if (AnsiSameText(FieldAValue, ValueA)) then
+          // Exact match on B, same on A
+          Matchness := lmExactSourceOrTarget
+        else
+        if (Matchness >= lmSameSourceAndTarget) then
+          continue
+        else
+        if (AnsiSameText(FieldAValue, ValueA)) then
+          // Exact match on B, same on A
+          Matchness := lmSameSourceAndTarget
+        else
+          // Sanitized match on A and B
+          Matchness := lmSanitized;
+      end else
+      if (Matchness >= lmExactSourceOrTarget) then
+        continue
+      else
+      if (FieldAValue = ValueA) then
+      // Exact match on A
+      begin
+        if (AnsiSameText(FieldBValue, ValueB)) then
+          // Exact match on A, same on B
+          Matchness := lmExactSourceOrTarget;
+      end else
+      if (Matchness >= lmSameSourceAndTarget) then
+        continue
+      else
+      if (AnsiSameText(FieldAValue, ValueA)) and (AnsiSameText(FieldBValue, ValueB)) then
+        // Same match on A and B
+        Matchness := lmSameSourceAndTarget;
+
+      // Don't look for sanitized match if we already have one
+      if (Matchness >= lmSanitized) then
+        continue;
+
+      // Test for sanitized match
+      Value := SanitizeText(FieldBValue, False);
+      if (AnsiSameText(Value, SanitizedValueB)) then
+      begin
+        // Sanitized match on A and B
+        Matchness := lmSanitized;
+        continue;
+      end;
+
+      // Test for equalized match
+      Value := MakeAlike(ValueA, FieldBValue);
+      if (AnsiSameText(Value, ValueB)) then
+        // Sanitized match on A, equalized on B
+        Matchness := lmEqualized;
+    end;
+
+    if (Matchness > LastMatchNess) then
+      MatchRecNo := PrevRecNo;
+
+    if (Matchness > lmNone) then
+    begin
+      DataSet.RecNo := MatchRecNo;
+      Result := True;
+    end;
+  finally
+    DataSet.EnableControls;
+  end;
+
+  if (Result) then
+    GridTMDBTableView.DataController.ChangeRowSelection(GridTMDBTableView.DataController.FocusedRowIndex, True);
+end;
+
+// -----------------------------------------------------------------------------
 
 end.

@@ -50,7 +50,6 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
-      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -71,6 +70,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -770,7 +770,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 367
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -969,6 +969,10 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'BarButtonTMLookup'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton4'
         end>
       OneOnRow = False
       Row = 0
@@ -1549,6 +1553,10 @@ object FormMain: TFormMain
       Action = ActionClearBookmarks
       Category = 0
     end
+    object dxBarButton4: TdxBarButton
+      Action = ActionTranslationMemoryLocate
+      Category = 0
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
@@ -2068,6 +2076,15 @@ object FormMain: TFormMain
       Caption = 'Clear bookmarks...'
       OnExecute = ActionClearBookmarksExecute
       OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionTranslationMemoryLocate: TAction
+      Category = 'Automation'
+      Caption = 'Locate in TM'
+      Hint = 'Locate the focused source/target pair in the Translation Memory'
+      ImageIndex = 75
+      ShortCut = 24652
+      OnExecute = ActionTranslationMemoryLocateExecute
+      OnUpdate = ActionTranslationMemoryLocateUpdate
     end
   end
   object OpenDialogProject: TOpenDialog
