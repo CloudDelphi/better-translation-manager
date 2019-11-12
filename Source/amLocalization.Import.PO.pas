@@ -258,7 +258,7 @@ begin
 end;
 
 type
-  TMatchness = (MatchNone, MatchEqualized, MatchSanitized, MatchSame, MatchExact);
+  TMatchness = (MatchNone, MatchSanitized, MatchSame, MatchExact);
 
 
 procedure TLocalizerPOImport.ProcessTerm;
@@ -270,6 +270,7 @@ begin
     Exit;
 
   // Try to locate term in project
+
   (*
   if (teTermContext in FTermElements) then
   begin
@@ -279,6 +280,8 @@ begin
       end);
   end;
   *)
+
+  // TODO : Use project lookup index
 
   // No point in searching for the property if we have no value
   if (teTermValue in FTermElements) and (FTermValue <> '') and (FTermID <> '') then
@@ -290,6 +293,9 @@ begin
       var
         NewMatchness: TMatchness;
       begin
+        if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) then
+          Exit(True);
+
         if (Prop.Value = FTermID) then
           NewMatchness := MatchExact
         else
@@ -305,12 +311,6 @@ begin
         if (AnsiSameText(SanitizeText(Prop.Value), SanitizeText(FTermID))) then
           NewMatchness := MatchSanitized
         else
-        if (Matchness >= MatchEqualized) then
-          Exit(True)
-        else
-        if (AnsiSameText(MakeAlike(FTermID, Prop.Value), Prop.Value)) then
-          NewMatchness := MatchEqualized
-        else
           Exit(True);
         if (NewMatchness > Matchness) then
         begin
@@ -322,12 +322,13 @@ begin
 
     if (MatchProp <> nil) then
     begin
+      Inc(FCountImported);
       if (Matchness = MatchExact) then
         Inc(FCountExact)
       else
         Inc(FCountFuzzy);
 
-      if (Matchness <= MatchSanitized) then
+      if (Matchness = MatchSanitized) then
         FTermValue := MakeAlike(MatchProp.Value, FTermValue);
 
       MatchProp.TranslatedValue[FLanguage] := FTermValue;
