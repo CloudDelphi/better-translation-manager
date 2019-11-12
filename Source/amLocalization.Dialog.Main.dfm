@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -89,6 +88,7 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
+      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -745,6 +745,10 @@ object FormMain: TFormMain
         end
         item
           Visible = True
+          ItemName = 'dxBarButton5'
+        end
+        item
+          Visible = True
           ItemName = 'dxBarButton21'
         end
         item
@@ -982,7 +986,7 @@ object FormMain: TFormMain
     object BarManagerBarExport: TdxBar
       Caption = 'Export'
       CaptionButtons = <>
-      DockedLeft = 216
+      DockedLeft = 319
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1549,6 +1553,10 @@ object FormMain: TFormMain
       Action = ActionTranslationMemoryLocate
       Category = 0
     end
+    object dxBarButton5: TdxBarButton
+      Action = ActionImportPO
+      Category = 0
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
@@ -1634,7 +1642,7 @@ object FormMain: TFormMain
     end
     object ActionImportXLIFF: TAction
       Category = 'Import'
-      Caption = 'Import XLIFF'
+      Caption = 'Import XLIFF...'
       Hint = 
         'Import translation from XLIFF file (used by Delphi amonst others' +
         ')'
@@ -2098,6 +2106,13 @@ object FormMain: TFormMain
       Caption = 'Save to Excel...'
       Enabled = False
       ImageIndex = 62
+    end
+    object ActionImportPO: TAction
+      Category = 'Import'
+      Caption = 'Import PO...'
+      Hint = 'Import translations from GNU gettext (or dxGetText)'
+      OnExecute = ActionImportPOExecute
+      OnUpdate = ActionImportFileTargetUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

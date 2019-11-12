@@ -305,6 +305,8 @@ type
     dxBarButton4: TdxBarButton;
     ActionExportCSV: TAction;
     ActionExportExcel: TAction;
+    ActionImportPO: TAction;
+    dxBarButton5: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -431,6 +433,7 @@ type
     procedure ActionEditCopyExecute(Sender: TObject);
     procedure ActionEditPasteExecute(Sender: TObject);
     procedure ActionExportCSVExecute(Sender: TObject);
+    procedure ActionImportPOExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -698,6 +701,7 @@ uses
   amLocalization.Settings,
   amLocalization.Environment,
   amLocalization.Export.CSV,
+  amLocalization.Import.PO,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -1927,7 +1931,7 @@ begin
         end;
     end;
     if (Count > 0) then
-      QueueToast(Format('Applied translation to %.0n properties', [Count*1.0]));
+      QueueToast(Format('Applied translation to %.0n properties', [Count*1.0])); // TODO : Localization
   end;
 end;
 
@@ -2298,6 +2302,75 @@ end;
 procedure TFormMain.ActionImportFileTargetUpdate(Sender: TObject);
 begin
   TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (SourceLanguage <> TargetLanguage);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionImportPOExecute(Sender: TObject);
+var
+  Stream: TStream;
+  ProgressStream: TStream;
+  Progress: IProgress;
+  POImport: TLocalizerPOImport;
+  Filename, Folder: string;
+resourcestring
+  sPOImportProgress = 'Importing GNU GetText translations';
+  sPOImportCompleteTitle = 'Import completed';
+  sPOImportComplete = '%.0n translations were applied to the current project.'#13#13+
+    'Exact matches: %.0n'#13+
+    'Fuzzy matches: %.0n'#13+
+    'Not found: %.0n'#13+
+    'Skipped values: %.0n';
+begin
+  Filename := TPath.ChangeExtension(FProject.SourceFilename, '.po');
+  Folder := TPath.GetDirectoryName(Filename);
+  Filename := TPath.GetFileName(Filename);
+
+  if (not PromptForFileName(Filename, sFileFilterPO, 'po', '', Folder)) then
+    Exit;
+
+  POImport := TLocalizerPOImport.Create(FProject);
+  try
+    FProject.BeginUpdate;
+    try
+
+      Stream := TFileStream.Create(Filename, fmOpenRead);
+      try
+        Progress := ShowProgress(sPOImportProgress);
+        Progress.EnableAbort := True;
+        Progress.RaiseOnAbort := True;
+
+        ProgressStream := TProgressStream.Create(Stream, Progress);
+        try
+          try
+
+            POImport.ImportFromStream(ProgressStream, TranslationLanguage);
+
+          except
+            on E: EAbort do
+              ; // Ignore
+          end;
+        finally
+          ProgressStream.Free;
+        end;
+
+        Progress.Hide;
+        Progress := nil;
+      finally
+        Stream.Free;
+      end;
+
+    finally
+      FProject.EndUpdate;
+    end;
+
+    TaskMessageDlg(sPOImportCompleteTitle,
+      Format(sPOImportComplete, [POImport.CountImported * 1.0, POImport.CountExact * 1.0, POImport.CountFuzzy * 1.0, POImport.CountNotFound * 1.0, POImport.CountSkipped * 1.0]),
+      mtInformation, [mbOK], 0);
+
+  finally
+    POImport.Free;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

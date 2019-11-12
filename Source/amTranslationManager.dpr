@@ -61,7 +61,8 @@ uses
   amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas',
   amLocalization.Portable in 'amLocalization.Portable.pas',
   amLocalization.Index in 'amLocalization.Index.pas',
-  amLocalization.Export.CSV in 'amLocalization.Export.CSV.pas';
+  amLocalization.Export.CSV in 'amLocalization.Export.CSV.pas',
+  amLocalization.Import.PO in 'amLocalization.Import.PO.pas';
 
 {$R *.res}
 
