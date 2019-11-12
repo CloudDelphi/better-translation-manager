@@ -59,7 +59,7 @@ end;
 
 function TLocalizerProjectIndex.Lookup(const Prop: TLocalizerProperty): TPropertyList;
 begin
-  Result := Lookup(SanitizeText(Prop.Value, False));
+  Result := Lookup(SanitizeText(Prop.Value));
 end;
 
 function TLocalizerProjectIndex.Lookup(const Value: string): TPropertyList;
@@ -114,7 +114,7 @@ begin
               if (FTaskTerminated) or (Prop.IsUnused) then
                 Exit(not FTaskTerminated);
 
-              s := SanitizeText(Prop.Value, False);
+              s := SanitizeText(Prop.Value);
 
               if (not FDictionary.TryGetValue(s, PropertyList)) then
               begin

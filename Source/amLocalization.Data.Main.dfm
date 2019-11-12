@@ -143,6 +143,31 @@ object DataModuleMain: TDataModuleMain
       Properties.KeyFieldNames = 'LocaleID'
       Properties.ListFieldItem = GridTableViewFilteredTargetLanguagesLanguage
     end
+    object EditRepositoryCheckComboBoxNormalization: TcxEditRepositoryCheckComboBox
+      Properties.Delimiter = ','
+      Properties.EmptySelectionText = 'None'
+      Properties.Items = <
+        item
+          Description = 'Remove Format() specifiers: %...'
+          ShortDescription = 'Format'
+        end
+        item
+          Description = 'Remove and unescape accelerator characters: &'
+          ShortDescription = 'Hotkey'
+        end
+        item
+          Description = 'Remove common line endings: colon, semicolon, ellipsis'
+          ShortDescription = 'Ending'
+        end
+        item
+          Description = 'Remove common surround pairs: ( ), [ ], { }, < >, " ", '#39' '#39
+          ShortDescription = 'Surround'
+        end
+        item
+          Description = 'Remove leading and trailing spaces'
+          ShortDescription = 'Trim'
+        end>
+    end
   end
   object ImageListTree: TcxImageList
     SourceDPI = 96

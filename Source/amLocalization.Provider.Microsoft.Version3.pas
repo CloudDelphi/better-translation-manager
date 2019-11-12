@@ -139,7 +139,7 @@ var
   SourceValue: string;
   TargetValue: string;
 begin
-  SourceValue := SanitizeText(Prop.Value, False);
+  SourceValue := SanitizeText(Prop.Value);
 
   RESTRequestTranslate.Params[0].Value := SourceLanguage.LocaleName;
   RESTRequestTranslate.Params[1].Value := TargetLanguage.LocaleName;

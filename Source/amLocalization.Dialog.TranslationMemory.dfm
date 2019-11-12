@@ -15,18 +15,22 @@ inherited FormTranslationMemory: TFormTranslationMemory
     ExplicitTop = 388
     ExplicitWidth = 702
     inherited ButtonOK: TcxButton
-      Left = 535
+      Left = 536
+      Top = 10
       TabOrder = 3
-      ExplicitLeft = 535
+      ExplicitLeft = 536
+      ExplicitTop = 10
     end
     inherited ButtonCancel: TcxButton
-      Left = 616
+      Left = 617
+      Top = 10
       TabOrder = 4
-      ExplicitLeft = 616
+      ExplicitLeft = 617
+      ExplicitTop = 10
     end
     object ButtonClose: TcxButton [2]
-      Left = 454
-      Top = 11
+      Left = 455
+      Top = 10
       Width = 75
       Height = 25
       Cancel = True
@@ -35,16 +39,16 @@ inherited FormTranslationMemory: TFormTranslationMemory
       TabOrder = 2
     end
     object ButtonSaveAs: TcxButton [3]
-      Left = 92
-      Top = 11
+      Left = 91
+      Top = 10
       Width = 75
       Height = 25
       Action = ActionExport
       TabOrder = 1
     end
     object ButtonLoad: TcxButton [4]
-      Left = 11
-      Top = 11
+      Left = 10
+      Top = 10
       Width = 75
       Height = 25
       Action = ActionImport
@@ -97,8 +101,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Visible = False
     ExplicitWidth = 702
     inherited LabelHeader: TcxLabel
-      ExplicitWidth = 680
-      Width = 680
+      ExplicitWidth = 682
+      Width = 682
     end
   end
   inherited PanelMain: TPanel
@@ -114,10 +118,10 @@ inherited FormTranslationMemory: TFormTranslationMemory
       ExplicitWidth = 686
       ExplicitHeight = 337
       object GridTM: TcxGrid [0]
-        Left = 6
-        Top = 76
-        Width = 674
-        Height = 255
+        Left = 10
+        Top = 69
+        Width = 666
+        Height = 258
         TabOrder = 2
         object GridTMDBTableView: TcxGridDBTableView
           Navigator.Buttons.CustomButtons = <>
@@ -156,8 +160,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
         end
       end
       object ComboBoxLanguages: TcxComboBox [1]
-        Left = 71
-        Top = 37
+        Left = 78
+        Top = 30
         Properties.DropDownListStyle = lsFixedList
         Properties.OnChange = ComboBoxLanguagesPropertiesChange
         Style.HotTrack = False
@@ -165,31 +169,10 @@ inherited FormTranslationMemory: TFormTranslationMemory
         Width = 162
       end
       object ComboBoxOptions: TcxCheckComboBox [2]
-        Left = 301
-        Top = 37
-        Properties.Delimiter = ','
-        Properties.EmptySelectionText = 'None'
-        Properties.Items = <
-          item
-            Description = 'Remove accelerator characters'
-            ShortDescription = 'Accelerator'
-          end
-          item
-            Description = 'Remove Format() specifiers'
-            ShortDescription = 'Format'
-          end
-          item
-            Description = 'Remove common line endings'
-            ShortDescription = 'Ending'
-          end
-          item
-            Description = 'Remove common surround characters'
-            ShortDescription = 'Surround'
-          end
-          item
-            Description = 'Remove leading and trailing spaces'
-            ShortDescription = 'Trim'
-          end>
+        Left = 308
+        Top = 30
+        RepositoryItem = DataModuleMain.EditRepositoryCheckComboBoxNormalization
+        Properties.Items = <>
         Properties.OnChange = ComboBoxOptionsPropertiesChange
         Style.HotTrack = False
         TabOrder = 1

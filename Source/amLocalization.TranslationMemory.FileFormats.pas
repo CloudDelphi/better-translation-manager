@@ -318,7 +318,7 @@ begin
 
     // For each source language term...
     SourceValue := SourceField.AsString;
-    SanitizedSourceValue := SanitizeText(SourceValue, False);
+    SanitizedSourceValue := SanitizeText(SourceValue);
 
     // Empty source value should not occur but we have to handle it (because it does)
     if (not SanitizedSourceValue.Trim.IsEmpty) then
@@ -494,7 +494,7 @@ begin
                 continue;
 
               SourceValue := Translations[i][SourceIndex].Value;
-              SanitizedSourceValue := SanitizeText(SourceValue, False);
+              SanitizedSourceValue := SanitizeText(SourceValue);
 
               for j := 0 to Translations[i].Count-1 do
               begin

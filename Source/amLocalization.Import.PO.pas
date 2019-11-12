@@ -302,7 +302,7 @@ begin
         if (Matchness >= MatchSanitized) then
           Exit(True)
         else
-        if (AnsiSameText(SanitizeText(Prop.Value, False), SanitizeText(FTermID, False))) then
+        if (AnsiSameText(SanitizeText(Prop.Value), SanitizeText(FTermID))) then
           NewMatchness := MatchSanitized
         else
         if (Matchness >= MatchEqualized) then

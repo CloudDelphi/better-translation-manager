@@ -1735,7 +1735,7 @@ begin
           Item.Traverse(
             function(Prop: TLocalizerProperty): boolean
             var
-              Value, SourceValue, TranslatedValue: string;
+              Value: string;
             begin
               if (Prop.Value.Trim.IsEmpty) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
                 Exit(True);
@@ -1745,13 +1745,7 @@ begin
 
               Inc(Counts.Count);
 
-              SourceValue := Prop.Value;
-              if (Prop.HasTranslation(TranslationLanguage)) then
-                TranslatedValue := SanitizeText(Prop.TranslatedValue[TranslationLanguage])
-              else
-                TranslatedValue := SourceValue;
-
-              Progress.Progress(psProgress, Counts.Count, Counts.ElegibleCount, SourceValue);
+              Progress.Progress(psProgress, Counts.Count, Counts.ElegibleCount, Prop.Value);
               if (Progress.Aborted) then
                 Exit(False);
 
@@ -5362,7 +5356,7 @@ begin
   if (FSpellCheckingString) then
     SanitizedWord := AWord
   else
-    SanitizedWord := SanitizeText(AWord);
+    SanitizedWord := SanitizeSpellCheckText(AWord);
 
   FSpellCheckingWord := True;
   try
@@ -5426,7 +5420,7 @@ begin
 
   Text := Translation.Value;
 
-  CheckedText := SanitizeText(Text);
+  CheckedText := SanitizeSpellCheckText(Text);
 
   // Remove file filters
   if (Pos('|', CheckedText) > 0) then
@@ -6233,7 +6227,7 @@ end;
 
 procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
 var
-  SourceValue, SanitizedSourceValue: string;
+  SourceValue: string;
   Translations: TStringList;
   Button: TcxEditButton;
   PropertyList: TPropertyList;
@@ -6267,7 +6261,6 @@ begin
   TcxCustomDropDownEdit(AEdit).Properties.LookupItems.Clear;
 
   SourceValue := FocusedProperty.Value;
-  SanitizedSourceValue := SanitizeText(SourceValue, False);
 
   Translations := TStringList.Create;
   try

@@ -84,7 +84,7 @@ type
     procedure SetLoaded; // For use when loading TMX as main TM
 
     function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeKinds): ITranslationMemoryLookup; overload;
+    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 
@@ -169,16 +169,16 @@ type
     function GetValues: TArray<string>;
   public
     constructor Create(AField: TField); overload;
-    constructor Create(AField: TField; SanitizeKinds: TSanitizeKinds); overload;
+    constructor Create(AField: TField; SanitizeRules: TSanitizeRules); overload;
     destructor Destroy; override;
   end;
 
 constructor TTranslationMemoryLookup.Create(AField: TField);
 begin
-  Create(AField, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+  Create(AField, TranslationManagerSettings.Editor.SanitizeRules);
 end;
 
-constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeKinds: TSanitizeKinds);
+constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeRules: TSanitizeRules);
 var
   DataSet: TDataSet;
   Bookmark: TBookmark;
@@ -204,7 +204,7 @@ begin
       begin
         if (not AField.IsNull) then
         begin
-          Value := SanitizeText(AField.AsString, SanitizeKinds, False);
+          Value := SanitizeText(AField.AsString, SanitizeRules);
 
           if (not FLookupIndex.TryGetValue(Value, List)) then
           begin
@@ -393,7 +393,7 @@ begin
       // Perform lookup
       System.TMonitor.Enter(FDictionary);
       try
-        if (FDictionary.IndexOf(SanitizeText(Prop.Value, False)) = -1) then
+        if (FDictionary.IndexOf(SanitizeText(Prop.Value)) = -1) then
           continue;
       finally
         System.TMonitor.Exit(FDictionary);
@@ -615,10 +615,10 @@ end;
 
 function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup;
 begin
-  Result := CreateLookup(Language, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+  Result := CreateLookup(Language, [Low(TSanitizeRule)..High(TSanitizeRule)]);
 end;
 
-function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeKinds): ITranslationMemoryLookup;
+function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules): ITranslationMemoryLookup;
 var
   Field: TField;
 begin
@@ -1057,7 +1057,7 @@ begin
     if (not TableTranslationMemory.Active) then
       TableTranslationMemory.Open;
 
-    SanitizedSourceValue := SanitizeText(SourceValue, False);
+    SanitizedSourceValue := SanitizeText(SourceValue);
 
     DuplicateTerms := nil;
     DuplicateValues := nil;
@@ -1068,7 +1068,7 @@ begin
       TableTranslationMemory.First;
       while (not TableTranslationMemory.EOF) do
       begin
-        if (SourceField.IsNull) or (not AnsiSameText(SanitizedSourceValue, SanitizeText(SourceField.AsString, False))) then
+        if (SourceField.IsNull) or (not AnsiSameText(SanitizedSourceValue, SanitizeText(SourceField.AsString))) then
         begin
           TableTranslationMemory.Next;
           continue;
@@ -1521,7 +1521,7 @@ begin
 
   Assert(FLookupIndex <> nil);
 
-  SourceValue := SanitizeText(Prop.Value, False);
+  SourceValue := SanitizeText(Prop.Value);
 
   List := FLookupIndex.Lookup(SourceValue);
   if (List = nil) then
@@ -1597,7 +1597,7 @@ begin
     // One or both languages doesn't exist in TM
     Exit(False);
 
-  SourceValue := SanitizeText(Prop.Value, False);
+  SourceValue := SanitizeText(Prop.Value);
   Result := False;
 
   // Create list of matching target terms
@@ -1607,7 +1607,7 @@ begin
   begin
     if (not TargetField.IsNull) and (not SourceField.IsNull) then
     begin
-      if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString, False))) then
+      if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString))) then
       begin
         TargetValue := TargetField.AsString;
 
@@ -1685,7 +1685,7 @@ begin
       begin
         if (not TargetField.IsNull) and (not SourceField.IsNull) then
         begin
-          SourceValue := SanitizeText(SourceField.AsString, False);
+          SourceValue := SanitizeText(SourceField.AsString);
 
           if (Dictionary.IndexOf(SourceValue) = -1) then
             Dictionary.Add(SourceValue);

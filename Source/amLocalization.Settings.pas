@@ -324,6 +324,7 @@ type
     FAutoApplyTranslations: boolean;
     FAutoApplyTranslationsSimilar: boolean;
     FEqualizerRules: TMakeAlikeRules;
+    FSanitizeRules: TSanitizeRules;
   protected
     procedure ApplyDefault; override;
   public
@@ -339,6 +340,7 @@ type
     property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
     property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
     property EqualizerRules: TMakeAlikeRules read FEqualizerRules write FEqualizerRules;
+    property SanitizeRules: TSanitizeRules read FSanitizeRules write FSanitizeRules;
   end;
 
   TTranslationManagerFilterGroupSettings = class(TConfigurationStringList)
@@ -1141,6 +1143,7 @@ begin
   inherited;
 
   FEqualizerRules := [Low(TMakeAlikeRule)..High(TMakeAlikeRule)];
+  FSanitizeRules := [Low(TSanitizeRule)..High(TSanitizeRule)]-[skFormat];
 end;
 
 constructor TTranslationManagerEditorSettings.Create(AOwner: TConfigurationSection);

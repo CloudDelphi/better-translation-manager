@@ -331,6 +331,8 @@ type
     ActionProviderTMFilename: TAction;
     ComboBoxEqualization: TcxCheckComboBox;
     dxLayoutItem65: TdxLayoutItem;
+    dxLayoutItem66: TdxLayoutItem;
+    ComboBoxNormalization: TcxCheckComboBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -590,6 +592,7 @@ begin
   CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.Editor.AutoApplyTranslations;
   CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
+  ComboBoxNormalization.EditValue := Byte(TranslationManagerSettings.Editor.SanitizeRules);
   ComboBoxEqualization.EditValue := Byte(TranslationManagerSettings.Editor.EqualizerRules);
 
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
@@ -664,6 +667,7 @@ begin
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
   TranslationManagerSettings.Editor.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
+  TranslationManagerSettings.Editor.SanitizeRules := TSanitizeRules(Byte(ComboBoxNormalization.EditValue));
   TranslationManagerSettings.Editor.EqualizerRules := TMakeAlikeRules(Byte(ComboBoxEqualization.EditValue));
 
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;

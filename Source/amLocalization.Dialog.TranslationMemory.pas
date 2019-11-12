@@ -129,7 +129,7 @@ type
     FDuplicates: TTranslationMemoryRecordList;
     FDuplicateLocaleItem: TLocaleItem;
     FDuplicateSourceColumn: TcxGridColumn;
-    FSanitizeKinds: TSanitizeKinds;
+    FSanitizeRules: TSanitizeRules;
     FLookupIndex: ITranslationMemoryLookup;
   protected
     procedure GridTMDBTableViewColumnDuplicateGetDataText(Sender: TcxCustomGridTableItem; ARecordIndex: Integer; var AText: string);
@@ -389,7 +389,7 @@ var
   Languages: TArray<TLocaleItem>;
   LocaleItem: TLocaleItem;
 const
-  SanitizeKinds: TSanitizeKinds = [Low(TSanitizeKind)..High(TSanitizeKind)];
+  SanitizeKinds: TSanitizeRules = [Low(TSanitizeRule)..High(TSanitizeRule)];
 resourcestring
   sDuplicate = 'Duplicate';
 begin
@@ -464,7 +464,7 @@ begin
     Exit;
 
   // Create an index of sanited values
-  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeKinds);
+  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeRules);
 
   // Get the values
   Values := FLookupIndex.GetValues;
@@ -697,7 +697,7 @@ procedure TFormTranslationMemory.ComboBoxOptionsPropertiesChange(Sender: TObject
 begin
   BeginUpdate;
   try
-    FSanitizeKinds := TSanitizeKinds(Byte(ComboBoxOptions.EditValue));
+    FSanitizeRules := TSanitizeRules(Byte(ComboBoxOptions.EditValue));
 
     NeedUpdate(tmUpdateDuplicates);
   finally
@@ -788,7 +788,7 @@ begin
   Assert(FDuplicateSourceColumn <> nil);
 
   Value := VarToStr(GridTMDBTableView.DataController.Values[ARecordIndex, FDuplicateSourceColumn.Index]);
-  AText := AnsiLowerCase(SanitizeText(Value, FSanitizeKinds, False));
+  AText := AnsiLowerCase(SanitizeText(Value, FSanitizeRules));
 end;
 
 // -----------------------------------------------------------------------------
@@ -919,10 +919,10 @@ begin
   if (FieldA = nil) or (FieldB = nil) then
     Exit;
 
-  SanitizedValueA := SanitizeText(ValueA, False);
-  SanitizedValueB := SanitizeText(ValueB, False);
+  SanitizedValueA := SanitizeText(ValueA);
+  SanitizedValueB := SanitizeText(ValueB);
 
-  Lookup := FTranslationMemory.CreateLookup(LanguageA, [Low(TSanitizeKind)..High(TSanitizeKind)]);
+  Lookup := FTranslationMemory.CreateLookup(LanguageA, TranslationManagerSettings.Editor.SanitizeRules);
   List := Lookup.Lookup(SanitizedValueA);
 
   if (List = nil) or (List.Count = 0) then
@@ -995,7 +995,7 @@ begin
         continue;
 
       // Test for sanitized match
-      Value := SanitizeText(FieldBValue, False);
+      Value := SanitizeText(FieldBValue);
       if (AnsiSameText(Value, SanitizedValueB)) then
       begin
         // Sanitized match on A and B

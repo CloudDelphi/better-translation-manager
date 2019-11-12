@@ -37,11 +37,13 @@ procedure DecomposeSkinName(const Value: string; var Name, Filename: string; var
 // -----------------------------------------------------------------------------
 // Removes hotkeys and format specifiers
 type
-  TSanitizeKind = (skAccelerator, skFormat, skEnding, skSurround, skTrim);
-  TSanitizeKinds = set of TSanitizeKind;
+  TSanitizeRule = (skFormat, skAccelerator, skEnding, skSurround, skTrim);
+  TSanitizeRules = set of TSanitizeRule;
 
-function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
-function SanitizeText(const Value: string; Kind: TSanitizeKinds;  ReduceToNothing: boolean = True): string; overload;
+function SanitizeText(const Value: string; ReduceToNothing: boolean = False): string; overload;
+function SanitizeText(const Value: string; Kind: TSanitizeRules;  ReduceToNothing: boolean = False): string; overload;
+// Special normalization for use by spell checker. Removes everything that the spell checker can't handle.
+function SanitizeSpellCheckText(const Value: string): string;
 
 // Replacement for menus.StripHotKey
 // Does not allow multiple hotkeys. E.g.: "&This && &that"
@@ -72,7 +74,7 @@ function MakeTitleCase(const Value: string): string;
 function MakeSentenceCase(const Value: string): string;
 
 type
-  TMakeAlikeRule = (EqualizeCase, EqualizeEnding, EqualizeAccelerators, EqualizeSurround);
+  TMakeAlikeRule = (EqualizeCase, EqualizeAccelerators, EqualizeEnding, EqualizeSurround);
   TMakeAlikeRules = set of TMakeAlikeRule;
 
 function MakeAlike(const SourceValue, Value: string): string; overload;
@@ -236,12 +238,17 @@ begin
   Result := (c <= #$FF);
 end;
 
-function SanitizeText(const Value: string; ReduceToNothing: boolean = True): string; overload;
+function SanitizeSpellCheckText(const Value: string): string;
 begin
-  Result := SanitizeText(Value, [Low(TSanitizeKind)..High(TSanitizeKind)], ReduceToNothing);
+  Result := SanitizeText(Value, [skAccelerator, skFormat], True);
 end;
 
-function SanitizeText(const Value: string; Kind: TSanitizeKinds; ReduceToNothing: boolean): string;
+function SanitizeText(const Value: string; ReduceToNothing: boolean): string; overload;
+begin
+  Result := SanitizeText(Value, TranslationManagerSettings.Editor.SanitizeRules, ReduceToNothing);
+end;
+
+function SanitizeText(const Value: string; Kind: TSanitizeRules; ReduceToNothing: boolean): string;
 var
   n: integer;
   SurroundPair: TSurroundPair;
