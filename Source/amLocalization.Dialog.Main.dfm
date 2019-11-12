@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -88,7 +89,6 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
-      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -141,8 +141,6 @@ object FormMain: TFormMain
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
-    ExplicitTop = 125
-    ExplicitHeight = 495
   end
   object PanelModules: TPanel
     Left = 0
@@ -854,7 +852,7 @@ object FormMain: TFormMain
           Hint = 'Settings'
           OnClick = BarManagerBarProofingCaptionButtons0Click
         end>
-      DockedLeft = 286
+      DockedLeft = 242
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -895,6 +893,7 @@ object FormMain: TFormMain
       FloatClientHeight = 0
       ItemLinks = <
         item
+          ViewLevels = [ivlLargeControlOnly, ivlSmallIconWithText, ivlSmallIcon, ivlControlOnly]
           Visible = True
           ItemName = 'dxBarLargeButton5'
         end
@@ -915,7 +914,7 @@ object FormMain: TFormMain
     object BarManagerBarFind: TdxBar
       Caption = 'Find'
       CaptionButtons = <>
-      DockedLeft = 110
+      DockedLeft = 66
       DockedTop = 0
       FloatLeft = 824
       FloatTop = 8
@@ -1007,7 +1006,7 @@ object FormMain: TFormMain
     object BarManagerBarMark: TdxBar
       Caption = 'Mark'
       CaptionButtons = <>
-      DockedLeft = 567
+      DockedLeft = 523
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1086,7 +1085,7 @@ object FormMain: TFormMain
     object BarManagerBarFilters: TdxBar
       Caption = 'Filters'
       CaptionButtons = <>
-      DockedLeft = 693
+      DockedLeft = 649
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1219,6 +1218,8 @@ object FormMain: TFormMain
       Action = ActionEditPaste
       Category = 0
       LargeImageIndex = 7
+      SyncImageIndex = False
+      ImageIndex = 15
     end
     object dxBarButton11: TdxBarButton
       Action = ActionEditCopy

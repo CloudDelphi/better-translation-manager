@@ -595,12 +595,6 @@ type
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile: boolean;
   private
-    // CSV export
-    procedure WriteCSVHeader(Writer: TTextWriter; Project: TLocalizerProject);
-    procedure WriteCSV(Writer: TTextWriter; Project: TLocalizerProject); overload;
-    procedure WriteCSV(Writer: TTextWriter; Module: TLocalizerModule); overload;
-    procedure WriteCSV(Writer: TTextWriter; Prop: TLocalizerProperty); overload;
-  private
     // Machine Translation
     procedure TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);
     procedure OnTranslationProviderHandler(Sender: TObject);
@@ -703,6 +697,7 @@ uses
   amLocalization.Shell,
   amLocalization.Settings,
   amLocalization.Environment,
+  amLocalization.Export.CSV,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -1042,88 +1037,6 @@ begin
 
   FreeAndNil(FPendingFileOpen);
   FreeAndNil(FPendingFileOpenLock);
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TFormMain.WriteCSVHeader(Writer: TTextWriter; Project: TLocalizerProject);
-var
-  i: integer;
-  LocaleItem: TLocaleItem;
-begin
-  Writer.Write('Module');
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write('Item');
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write('ItemType');
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write('Property');
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write(SourceLanguage.LocaleName);
-  for i := 0 to Project.TranslationLanguages.Count-1 do
-  begin
-    Writer.Write(FormatSettings.ListSeparator);
-    LocaleItem := TLocaleItems.FindLCID(Project.TranslationLanguages[i].LanguageID);
-    if (LocaleItem <> nil) then
-      Writer.Write(LocaleItem.LocaleName)
-    else
-      Writer.Write(Format('%.4H', [Project.TranslationLanguages[i].LanguageID]));
-  end;
-  Writer.WriteLine;
-end;
-
-procedure TFormMain.WriteCSV(Writer: TTextWriter; Prop: TLocalizerProperty);
-
-  function CSVEscape(const Value: string): string;
-  var
-    NeedQuotes: boolean;
-  begin
-    // Note: The CSV format we write aims to be IETF RFC4180 compliant
-    Result := Value;
-    NeedQuotes := (Result.IndexOfAny(['"', ' ', #13, FormatSettings.ListSeparator]) <> -1) or (Result.StartsWith(' ')) or (Result.EndsWith(' '));
-    Result := Result.Replace('"', '""', [rfReplaceAll]);
-    if (NeedQuotes) then
-      Result := '"' + Result + '"';
-  end;
-
-var
-  i: integer;
-begin
-  Writer.Write(Prop.Item.Module.Name);
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write(Prop.Item.Name);
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write(Prop.Item.TypeName);
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write(Prop.Name);
-  Writer.Write(FormatSettings.ListSeparator);
-  Writer.Write(CSVEscape(Prop.Value));
-  for i := 0 to Prop.Item.Module.Project.TranslationLanguages.Count-1 do
-  begin
-    Writer.Write(FormatSettings.ListSeparator);
-    Writer.Write(CSVEscape(Prop.TranslatedValue[Prop.Item.Module.Project.TranslationLanguages[i]]));
-  end;
-  Writer.WriteLine;
-end;
-
-procedure TFormMain.WriteCSV(Writer: TTextWriter; Module: TLocalizerModule);
-begin
-  Module.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    begin
-      WriteCSV(Writer, Prop);
-      Result := True;
-    end, True); // Must sort or output will be confusing for the user
-end;
-
-procedure TFormMain.WriteCSV(Writer: TTextWriter; Project: TLocalizerProject);
-begin
-  Project.Traverse(
-    function(Module: TLocalizerModule): boolean
-    begin
-      WriteCSV(Writer, Module);
-      Result := True;
-    end, True); // Must sort or output will be confusing for the user
 end;
 
 // -----------------------------------------------------------------------------
@@ -2451,33 +2364,30 @@ end;
 
 procedure TFormMain.ActionExportCSVExecute(Sender: TObject);
 var
-  Filename, Folder: string;
+  Filename: string;
   Writer: TTextWriter;
+  CsvWriter: TLocalizerCsvWriter;
 begin
   if (FProjectFilename <> '') then
     Filename := FProjectFilename
   else
     Filename := FProject.SourceFilename;
-  Filename := TPath.ChangeExtension(Filename, '.csv');
 
-  // Make sure we have the absolute paths before the base path is changed
-  if (FProjectFilename <> '') then
-    Filename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProjectFilename), Filename);
+  Filename := TPath.ChangeExtension(TPath.GetFileName(Filename), '.csv');
 
-  if (Filename <> '') then
-    Folder := TPath.GetDirectoryName(Filename)
-  else
-    Folder := '';
-  FileName := TPath.GetFileName(Filename);
-
-  if (not PromptForFileName(Filename, 'CSV files (*.csv)|*.csv', 'csv', '', Folder, True)) then // TODO : localization
+  if (not PromptForFileName(Filename, sFileFilterCSV, 'csv', '', TranslationManagerSettings.Folders.FolderDocuments, True)) then
     Exit;
 
   Writer := TStreamWriter.Create(Filename, False, TEncoding.UTF8);
   try
-    WriteCSVHeader(Writer, FProject);
+    CsvWriter := TLocalizerCsvWriter.Create(Writer, True);
+    try
 
-    WriteCSV(Writer, FProject);
+      CsvWriter.Write(FProject);
+
+    finally
+      CsvWriter.Free;
+    end;
   finally
     Writer.Free;
   end;
@@ -2486,28 +2396,38 @@ end;
 procedure TFormMain.ActionEditCopyExecute(Sender: TObject);
 var
   Writer: TTextWriter;
+  CsvWriter: TLocalizerCsvWriter;
   i: integer;
   Module: TLocalizerModule;
   Prop: TLocalizerProperty;
 begin
   Writer := TStringWriter.Create;
   try
-    WriteCSVHeader(Writer, FProject);
-    if (TreeListModules.Focused) then
-    begin
-      for i := 0 to TreeListModules.SelectionCount-1 do
+    CsvWriter := TLocalizerCsvWriter.Create(Writer, True, TranslationLanguage);
+    try
+      // Use [Tab] as delimiter for the clipboard so Excel can understand the format
+      // without the user having to go through the Text Import sttings.
+      CsvWriter.Delimiter := #9;
+
+      if (TreeListModules.Focused) then
       begin
-        Module := TLocalizerModule(NodeToItem(TreeListModules.Selections[i]));
-        WriteCSV(Writer, Module);
-      end;
-    end else
-    if (TreeListItems.Focused) then
-    begin
-      for i := 0 to TreeListItems.SelectionCount-1 do
+        for i := 0 to TreeListModules.SelectionCount-1 do
+        begin
+          Module := TLocalizerModule(NodeToItem(TreeListModules.Selections[i]));
+          CsvWriter.Write(Module);
+        end;
+      end else
+      if (TreeListItems.Focused) then
       begin
-        Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
-        WriteCSV(Writer, Prop);
+        for i := 0 to TreeListItems.SelectionCount-1 do
+        begin
+          Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+          CsvWriter.Write(Prop);
+        end;
       end;
+
+    finally
+      CsvWriter.Free;
     end;
 
     Clipboard.AsText := Writer.ToString;
@@ -2525,7 +2445,7 @@ procedure TFormMain.ActionEditPasteExecute(Sender: TObject);
 begin
   // TODO
   // Paste translations from clipboard
-  // Format is assumed to match export format
+  // Format is assumed to match Copy format
   // Module/Item/Prop is located using names. Translated value is imported.
 end;
 
