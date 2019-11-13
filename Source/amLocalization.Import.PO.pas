@@ -52,6 +52,8 @@ type
     FCountExact: integer;
     FCountImported: integer;
     FCountSkipped: integer;
+    FCountIgnored: integer;
+    FUpdateExisting: boolean;
   protected
     procedure ProcessLine(const Line: string);
     procedure ProcessTerm;
@@ -65,11 +67,14 @@ type
     procedure ImportFromStream(AStream: TStream; Language: TTranslationLanguage); overload;
     procedure ImportFromStream(AStream: TStream; AEncoding: TEncoding; Language: TTranslationLanguage); overload;
 
-    property CountImported: integer read FCountImported write FCountImported;
-    property CountExact: integer read FCountExact write FCountExact;
-    property CountFuzzy: integer read FCountFuzzy write FCountFuzzy;
-    property CountNotFound: integer read FCountNotFound write FCountNotFound;
-    property CountSkipped: integer read FCountSkipped write FCountSkipped;
+    property UpdateExisting: boolean read FUpdateExisting write FUpdateExisting;
+
+    property CountImported: integer read FCountImported;
+    property CountExact: integer read FCountExact;
+    property CountFuzzy: integer read FCountFuzzy;
+    property CountNotFound: integer read FCountNotFound;
+    property CountSkipped: integer read FCountSkipped;
+    property CountIgnored: integer read FCountIgnored;
   end;
 
 resourcestring
@@ -270,6 +275,7 @@ type
 
 procedure TLocalizerPOImport.ProcessTerm;
 var
+  SaveTermElements: TTermElements;
   MatchProp: TLocalizerProperty;
   Matchness: TMatchness;
   NewMatchness: TMatchness;
@@ -279,77 +285,77 @@ begin
   if (not (teTermID in FTermElements)) then
     Exit;
 
-  // Try to locate term in project
+  SaveTermElements := FTermElements;
 
-  (*
-  if (teTermContext in FTermElements) then
-  begin
-    FProject.Traverse(
-      function(Item: TLocalizerModule): boolean
-      begin
-      end);
-  end;
-  *)
-
-  // No point in searching for the property if we have no value
-  if (teTermValue in FTermElements) and (FTermValue <> '') and (FTermID <> '') then
-  begin
-    MatchProp := nil;
-    Matchness := MatchNone;
-
-    List := FProjectPropertyLookup.Lookup(SanitizeText(FTermID));
-
-    if (List <> nil) and (List.Count > 0) then
-      for Prop in List do
-      begin
-        if (Prop.EffectiveStatus <> ItemStatusTranslate) then
-          continue;
-
-        if (Prop.HasTranslation(FLanguage)) then
-          continue;
-
-        if (Prop.Value = FTermID) then
-          NewMatchness := MatchExact
-        else
-        if (Matchness >= MatchSame) then
-          continue
-        else
-        if (AnsiSameText(Prop.Value, FTermID)) then
-          NewMatchness := MatchSame
-        else
-        if (Matchness >= MatchSanitized) then
-          continue
-        else
-          NewMatchness := MatchSanitized;
-
-        if (NewMatchness > Matchness) then
-        begin
-          MatchProp := Prop;
-          Matchness := NewMatchness;
-        end;
-        if (Matchness = MatchExact) then
-          break;
-      end;
-
-    if (MatchProp <> nil) then
-    begin
-      Inc(FCountImported);
-      if (Matchness = MatchExact) then
-        Inc(FCountExact)
-      else
-        Inc(FCountFuzzy);
-
-      if (Matchness = MatchSanitized) then
-        FTermValue := MakeAlike(MatchProp.Value, FTermValue);
-
-      MatchProp.TranslatedValue[FLanguage] := FTermValue;
-    end else
-      Inc(FCountNotFound);
-  end else
-    Inc(FCountSkipped);
-
+  // Reset
   FTermElements := [];
   FCurrentTermElement := teNone;
+
+  // No point in searching for the property if we have no value
+  if (not(teTermValue in SaveTermElements)) or (FTermValue = '') or (FTermID = '') then
+  begin
+    Inc(FCountIgnored);
+    Exit;
+  end;
+
+  // Try to locate term in project
+  MatchProp := nil;
+  Matchness := MatchNone;
+
+  List := FProjectPropertyLookup.Lookup(SanitizeText(FTermID));
+
+  if (List <> nil) and (List.Count > 0) then
+    for Prop in List do
+    begin
+      if (Prop.EffectiveStatus <> ItemStatusTranslate) then
+        continue;
+
+      if (Prop.Value = FTermID) then
+        NewMatchness := MatchExact
+      else
+      if (Matchness >= MatchSame) then
+        continue
+      else
+      if (AnsiSameText(Prop.Value, FTermID)) then
+        NewMatchness := MatchSame
+      else
+      if (Matchness >= MatchSanitized) then
+        continue
+      else
+        NewMatchness := MatchSanitized;
+
+      if (NewMatchness > Matchness) then
+      begin
+        MatchProp := Prop;
+        Matchness := NewMatchness;
+      end;
+      if (Matchness = MatchExact) then
+        break;
+    end;
+
+  if (MatchProp = nil) then
+  begin
+    Inc(FCountNotFound);
+    Exit;
+  end;
+
+  if (Matchness = MatchExact) then
+    Inc(FCountExact)
+  else
+    Inc(FCountFuzzy);
+
+  // Wait until we have found the property before we test for translation.
+  // Otherwise we will give priority to props without translation.
+  if (FUpdateExisting) or (not MatchProp.HasTranslation(FLanguage)) then
+  begin
+    Inc(FCountImported);
+
+    if (Matchness = MatchSanitized) then
+      FTermValue := MakeAlike(MatchProp.Value, FTermValue);
+
+    MatchProp.TranslatedValue[FLanguage] := FTermValue;
+  end else
+    Inc(FCountSkipped);
 end;
 
 // -----------------------------------------------------------------------------

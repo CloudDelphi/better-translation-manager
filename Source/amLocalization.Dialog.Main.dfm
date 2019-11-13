@@ -2349,4 +2349,27 @@ object FormMain: TFormMain
     Top = 386
     PixelsPerInch = 96
   end
+  object TaskDialogImportUpdate: TTaskDialog
+    Buttons = <
+      item
+        Caption = 'Keep'
+        Default = True
+        CommandLinkHint = 'Do not replace existing translations. Only add new ones.'
+        ModalResult = 100
+      end
+      item
+        Caption = 'Update'
+        CommandLinkHint = 'Existing translations are updated. New ones are added.'
+        ModalResult = 101
+      end>
+    Caption = 'PO file import'
+    Flags = [tfAllowDialogCancellation, tfUseCommandLinks]
+    RadioButtons = <>
+    Text = 
+      'The project already contains %.0n %s translations. How would you' +
+      ' like these existing translations to be handled?'
+    Title = 'Replace existing translations?'
+    Left = 716
+    Top = 220
+  end
 end

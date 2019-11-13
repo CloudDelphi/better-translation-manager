@@ -307,6 +307,7 @@ type
     ActionExportExcel: TAction;
     ActionImportPO: TAction;
     dxBarButton5: TdxBarButton;
+    TaskDialogImportUpdate: TTaskDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -459,7 +460,7 @@ type
     procedure SetTargetLanguageID(const Value: Word);
     function GetTranslationLanguage: TTranslationLanguage;
     procedure ClearTargetLanguage;
-    procedure UpdateTargetLanguage;
+    procedure UpdateTargetLanguage(Clear: boolean = False);
   private
     // Spell check
     FCanSpellCheck: boolean;
@@ -2305,14 +2306,17 @@ var
   Progress: IProgress;
   POImport: TLocalizerPOImport;
   Filename, Folder: string;
+  s: string;
+  UpdateExisting: boolean;
 resourcestring
   sPOImportProgress = 'Importing GNU GetText translations';
   sPOImportCompleteTitle = 'Import completed';
   sPOImportComplete = '%.0n translations were applied to the current project.'#13#13+
     'Exact matches: %.0n'#13+
     'Fuzzy matches: %.0n'#13+
+    'Skipped values: %.0n'#13+
     'Not found: %.0n'#13+
-    'Skipped values: %.0n';
+    'Invalid values: %.0n';
 begin
   Filename := TPath.ChangeExtension(FProject.SourceFilename, '.po');
   Folder := TPath.GetDirectoryName(Filename);
@@ -2321,8 +2325,24 @@ begin
   if (not PromptForFileName(Filename, sFileFilterPO, 'po', '', Folder)) then
     Exit;
 
+  if (TranslationLanguage.TranslatedCount > 0) then
+  begin
+    s := TaskDialogImportUpdate.Text;
+    try
+      TaskDialogImportUpdate.Text := Format(s, [TranslationLanguage.TranslatedCount*1.0, TargetLanguage.LanguageName]);
+
+      if (not TaskDialogImportUpdate.Execute) then
+        Exit;
+    finally
+      TaskDialogImportUpdate.Text := s;
+    end;
+    UpdateExisting := (TaskDialogImportUpdate.ModalResult = 101);
+  end else
+    UpdateExisting := True;
+
   POImport := TLocalizerPOImport.Create(FProject);
   try
+    POImport.UpdateExisting := UpdateExisting;
     FProject.BeginUpdate;
     try
 
@@ -2357,7 +2377,8 @@ begin
     end;
 
     TaskMessageDlg(sPOImportCompleteTitle,
-      Format(sPOImportComplete, [POImport.CountImported * 1.0, POImport.CountExact * 1.0, POImport.CountFuzzy * 1.0, POImport.CountNotFound * 1.0, POImport.CountSkipped * 1.0]),
+      Format(sPOImportComplete, [POImport.CountImported * 1.0, POImport.CountExact * 1.0, POImport.CountFuzzy * 1.0,
+        POImport.CountSkipped * 1.0, POImport.CountNotFound * 1.0, POImport.CountIgnored * 1.0]),
       mtInformation, [mbOK], 0);
 
   finally
@@ -3046,6 +3067,7 @@ begin
   // Initial scan
   SaveCursor(crHourGlass);
 
+  ClearTargetLanguage;
   FProjectIndex := nil;
   FProject.Clear;
 
@@ -3057,6 +3079,8 @@ begin
   finally
     ProjectProcessor.Free;
   end;
+
+  UpdateTargetLanguage(True);
 
   FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 
@@ -4509,12 +4533,7 @@ end;
 function TFormMain.GetTranslationLanguage: TTranslationLanguage;
 begin
   if (FTranslationLanguage = nil) then
-  begin
-    if (TargetLanguageID <> 0) then
-      FTranslationLanguage := FProject.TranslationLanguages.Add(TargetLanguageID)
-    else
-      FTranslationLanguage := FProject.TranslationLanguages.Add(SourceLanguageID);
-  end;
+    FTranslationLanguage := FProject.TranslationLanguages.Add(TargetLanguageID);
 
   Result := FTranslationLanguage;
 end;
@@ -4522,12 +4541,6 @@ end;
 function TFormMain.GetTargetLanguageID: Word;
 begin
   Result := FTargetLanguage.Locale;
-(*
-  if (VarIsOrdinal(BarEditItemTargetLanguage.EditValue)) then
-    Result := BarEditItemTargetLanguage.EditValue
-  else
-    Result := 0;
-*)
 end;
 
 procedure TFormMain.SetTargetLanguageID(const Value: Word);
@@ -4651,7 +4664,7 @@ begin
     SpellChecker.LoadDictionaries;
 
     // Reload project
-    UpdateTargetLanguage;
+    UpdateTargetLanguage(True);
 
   finally
     EndUpdate;
@@ -4664,8 +4677,10 @@ begin
   FLocalizerDataSource.TranslationLanguage := nil;
 end;
 
-procedure TFormMain.UpdateTargetLanguage;
+procedure TFormMain.UpdateTargetLanguage(Clear: boolean);
 begin
+  if (Clear) then
+    FTranslationLanguage := nil;
   FLocalizerDataSource.TranslationLanguage := GetTranslationLanguage; // Must use getter
   TreeListModules.FullRefresh;
   RefreshModuleStats;
