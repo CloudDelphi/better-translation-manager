@@ -68,8 +68,7 @@ implementation
 
 uses
   amLocalization.Data.Main,
-  amLocalization.Settings,
-  amLocalization.Utils;
+  amLocalization.Settings;
 
 const
   ActionMap: array[boolean, 0..2] of TDuplicateAction =

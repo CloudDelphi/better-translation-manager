@@ -23,7 +23,7 @@ uses
 
   amLocale,
   amProgress,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.TranslationMemory;

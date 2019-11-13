@@ -692,12 +692,14 @@ uses
   amSplash,
   amFileUtils,
 
+  amLocalization.System.Restart,
   amLocalization.Engine,
   amLocalization.ResourceWriter,
   amLocalization.Persistence,
   amLocalization.Import.XLIFF,
   amLocalization.Data.Main,
-  amLocalization.Utils,
+  amLocalization.Skin,
+  amLocalization.Normalization,
   amLocalization.Shell,
   amLocalization.Settings,
   amLocalization.Environment,
@@ -3215,7 +3217,7 @@ begin
   TranslationManagerSettings.System.EndBoot;
 
   // Release semaphore once SingleInstance handling has been set up and the boot marker has been cleared
-  ReleaseRestartSemaphore;
+  RestartSemaphore.Release;
 
   if (not TranslationManagerSettings.Providers.TranslationMemory.LoadOnDemand) and (not TranslationManagerSettings.System.SafeMode) then
   begin
@@ -3250,7 +3252,7 @@ begin
       begin
         Param := ParamStr(i);
         // Ignore parameters
-        if (Param <> '') and (not (AnsiChar(Param[1]) in SwitchChars)) then
+        if (Param <> '') and (IsAnsi(Param[1])) and (not (AnsiChar(Param[1]) in SwitchChars)) then
         begin
           if (FPendingFileOpen = nil) then
             FPendingFileOpen := TStringList.Create;
@@ -5760,7 +5762,7 @@ begin
 
     // Grab restart semaphore.
     // Nobody should be holding the semaphore at this point, so no need to wait very long.
-    while (not AcquireRestartSemaphore(5000)) do
+    while (not RestartSemaphore.Acquire(5000)) do
     begin
       if (TaskMessageDlg('Failed to prepare for restart', 'A previous instance of the application might have failed to terminate.'+#13#13+
         'You can use Task Manager to terminate it.', mtWarning, [mbAbort, mbRetry], 0, mbRetry) <> mrRetry) then
@@ -5769,7 +5771,7 @@ begin
 
     // Launch new instance of application
     if (not Shell.Execute(Application.ExeName, FProjectFilename, Self)) then
-      ReleaseRestartSemaphore;
+      RestartSemaphore.Release;
 
     // Force close of all projects (we have already prompted to save them) to avoid user being prompted again.
     FProject.Modified := False;

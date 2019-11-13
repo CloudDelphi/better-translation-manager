@@ -67,7 +67,7 @@ uses
   System.json.Types,
   System.json.Writers,
   Dialogs,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Settings;
 
 

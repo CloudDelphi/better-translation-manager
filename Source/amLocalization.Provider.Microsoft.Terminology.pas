@@ -44,7 +44,7 @@ implementation
 
 uses
   Dialogs,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Settings;
 
 

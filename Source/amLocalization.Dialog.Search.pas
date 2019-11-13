@@ -171,7 +171,7 @@ uses
 {$endif MADEXCEPT}
   amCursorService,
   amShell,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Data.Main;
 
 resourcestring

@@ -115,7 +115,6 @@ uses
   SysUtils,
   StrUtils,
   System.Character,
-  amLocalization.Utils,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
 
 type

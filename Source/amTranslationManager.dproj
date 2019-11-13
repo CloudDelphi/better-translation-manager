@@ -240,6 +240,10 @@
         <DCCReference Include="amLocalization.Index.pas"/>
         <DCCReference Include="amLocalization.Export.CSV.pas"/>
         <DCCReference Include="amLocalization.Import.PO.pas"/>
+        <DCCReference Include="amLocalization.System.Restart.pas"/>
+        <DCCReference Include="amLocalization.Normalization.pas"/>
+        <DCCReference Include="amLocalization.Skin.pas"/>
+        <DCCReference Include="amLocalization.Environment.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

@@ -26,7 +26,7 @@ uses
   dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu, cxCheckBox, cxCheckComboBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
 
   amLocale,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Dialog,
   amLocalization.TranslationMemory;
 

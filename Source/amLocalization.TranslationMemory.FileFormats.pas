@@ -111,7 +111,7 @@ uses
   amVersionInfo,
   amFileUtils,
   amLocalization.Settings,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.TranslationMemory.Data;
 
 // -----------------------------------------------------------------------------

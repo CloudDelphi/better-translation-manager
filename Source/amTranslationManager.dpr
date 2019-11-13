@@ -62,7 +62,11 @@ uses
   amLocalization.Portable in 'amLocalization.Portable.pas',
   amLocalization.Index in 'amLocalization.Index.pas',
   amLocalization.Export.CSV in 'amLocalization.Export.CSV.pas',
-  amLocalization.Import.PO in 'amLocalization.Import.PO.pas';
+  amLocalization.Import.PO in 'amLocalization.Import.PO.pas',
+  amLocalization.System.Restart in 'amLocalization.System.Restart.pas',
+  amLocalization.Normalization in 'amLocalization.Normalization.pas',
+  amLocalization.Skin in 'amLocalization.Skin.pas',
+  amLocalization.Environment in 'amLocalization.Environment.pas';
 
 {$R *.res}
 
@@ -198,7 +202,7 @@ procedure DoAcquireRestartSemaphore;
 var
   Res: TModalResult;
 begin
-  while (not AcquireRestartSemaphore) do
+  while (not RestartSemaphore.Acquire) do
   begin
     Res := mrAbort;
     try

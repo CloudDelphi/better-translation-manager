@@ -85,7 +85,7 @@ implementation
 uses
   Character,
   StrUtils,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Settings;
 
 // -----------------------------------------------------------------------------
@@ -404,7 +404,7 @@ begin
         begin
           v := 0;
           i := 3; // Up to three digits
-          while (i > 0) and (n <= Length(Result)) and (AnsiChar(Result[n]) in ['0'..'9']) do
+          while (i > 0) and (n <= Length(Result)) and (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['0'..'9']) do
           begin
             v := v * 8 + Ord(Result[n])-Ord('0');
             Dec(i);
@@ -419,7 +419,7 @@ begin
           Inc(n);
           v := 0;
           i := 4; // Do not support more than 4 hex digits
-          while (i > 0) and (n <= Length(Result)) and (AnsiChar(Result[n].ToUpper) in ['0'..'9', 'A'..'F']) do
+          while (i > 0) and (n <= Length(Result)) and (IsAnsi(Result[n])) and (AnsiChar(Result[n].ToUpper) in ['0'..'9', 'A'..'F']) do
           begin
             if (AnsiChar(Result[n]) in ['0'..'9']) then
               v := v * 16 + Ord(Result[n])-Ord('0')

@@ -14,7 +14,7 @@ uses
   Generics.Collections,
   Generics.Defaults,
   Winapi.Windows, System.Classes,
-  amLocalization.Utils;
+  amLocalization.Normalization;
 
 const
   sModuleNameResourcestrings = 'resourcestrings';

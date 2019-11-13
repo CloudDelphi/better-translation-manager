@@ -28,7 +28,7 @@ uses
   amRegConfig,
   amLocalization.ResourceWriter,
   amLocalization.Filters,
-  amLocalization.Utils;
+  amLocalization.Normalization;
 
 
 //------------------------------------------------------------------------------

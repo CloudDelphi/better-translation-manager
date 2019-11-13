@@ -13,7 +13,7 @@ interface
 uses
   System.Threading,
   Generics.Collections,
-  amLocalization.Utils,
+  amLocalization.Normalization,
   amLocalization.Model;
 
 // -----------------------------------------------------------------------------

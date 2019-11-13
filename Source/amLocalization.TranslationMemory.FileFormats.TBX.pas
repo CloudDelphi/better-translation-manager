@@ -55,7 +55,6 @@ uses
   amCursorService,
   amLocale,
   amVersionInfo,
-  amLocalization.Utils,
   amLocalization.TranslationMemory;
 
 // -----------------------------------------------------------------------------
