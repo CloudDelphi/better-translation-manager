@@ -440,7 +440,7 @@ type
     FUpdateCount: integer;
     FUpdateLockCount: integer;
     FLocalizerDataSource: TLocalizerDataSource;
-    FProjectIndex: TLocalizerProjectIndex;
+    FProjectIndex: ILocalizerProjectPropertyLookup;
     FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
@@ -986,8 +986,6 @@ begin
   FLocalizerDataSource := TLocalizerDataSource.Create(nil);
   TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
 
-  FProjectIndex := TLocalizerProjectIndex.Create;
-
   DataModuleMain := TDataModuleMain.Create(Self);
   FTranslationMemory := TranslationMemory.PrimaryProvider;
 
@@ -1032,9 +1030,9 @@ begin
   FProject.BeginUpdate;
 
   FTranslationCounts.Clear;
+  FProjectIndex := nil;
   FProject.Clear;
 
-  FProjectIndex.Free;
   FLocalizerDataSource.Free;
   FProject.Free;
   FTranslationCounts.Free;
@@ -1877,7 +1875,7 @@ procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
 var
   SourceValue, TranslatedValue: string;
   Count: integer;
-  PropertyList: TPropertyList;
+  PropertyList: TLocalizerPropertyList;
   Prop: TLocalizerProperty;
 begin
   (*
@@ -3048,6 +3046,9 @@ begin
   // Initial scan
   SaveCursor(crHourGlass);
 
+  FProjectIndex := nil;
+  FProject.Clear;
+
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
@@ -3057,7 +3058,7 @@ begin
     ProjectProcessor.Free;
   end;
 
-  FProjectIndex.BuildIndex(FProject);
+  FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 
   if (TranslationManagerSettings.System.AutoApplyStopList) then
     ApplyStopList;
@@ -3130,7 +3131,7 @@ begin
       FProject.EndUpdate;
     end;
 
-    FProjectIndex.BuildIndex(FProject);
+    FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 
     UpdateProjectModifiedIndicator;
 
@@ -3582,6 +3583,8 @@ begin
   SaveModified := FProject.Modified;
   FProject.Modified := False;
 
+  FProjectIndex := nil;
+
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
 
@@ -3591,7 +3594,7 @@ begin
     ProjectProcessor.Free;
   end;
 
-  FProjectIndex.BuildIndex(FProject);
+  FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 
   if (TranslationManagerSettings.System.AutoApplyStopList) then
     ApplyStopList;
@@ -4739,6 +4742,7 @@ end;
 
 procedure TFormMain.ClearDependents;
 begin
+  FProjectIndex := nil;
   if (FSearchProvider <> nil) then
     FSearchProvider.Clear;
 end;
@@ -5624,6 +5628,8 @@ begin
 
   SaveCursor(crHourGlass);
 
+  FProjectIndex := nil;
+
   FProject.BeginLoad;
   try
 
@@ -5640,7 +5646,7 @@ begin
     FProject.EndLoad;
   end;
 
-  FProjectIndex.BuildIndex(FProject);
+  FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 
   ShowMessage(sDone);
 
@@ -6230,7 +6236,7 @@ var
   SourceValue: string;
   Translations: TStringList;
   Button: TcxEditButton;
-  PropertyList: TPropertyList;
+  PropertyList: TLocalizerPropertyList;
   Prop: TLocalizerProperty;
   s: string;
 {$ifdef DEBUG}

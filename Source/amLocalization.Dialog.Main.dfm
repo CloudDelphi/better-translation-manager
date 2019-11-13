@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -88,7 +89,6 @@ object FormMain: TFormMain
       Index = 2
     end
     object RibbonTabTools: TdxRibbonTab
-      Active = True
       Caption = 'Tools'
       Groups = <
         item
@@ -141,6 +141,8 @@ object FormMain: TFormMain
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
     ResizeUpdate = True
+    ExplicitTop = 125
+    ExplicitHeight = 495
   end
   object PanelModules: TPanel
     Left = 0
@@ -772,7 +774,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 367
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -1646,7 +1648,7 @@ object FormMain: TFormMain
       Hint = 
         'Import translation from XLIFF file (used by Delphi amonst others' +
         ')'
-      ImageIndex = 5
+      ImageIndex = 77
       OnExecute = ActionImportXLIFFExecute
       OnUpdate = ActionHasProjectUpdate
     end
@@ -2111,6 +2113,7 @@ object FormMain: TFormMain
       Category = 'Import'
       Caption = 'Import PO...'
       Hint = 'Import translations from GNU gettext (or dxGetText)'
+      ImageIndex = 76
       OnExecute = ActionImportPOExecute
       OnUpdate = ActionImportFileTargetUpdate
     end

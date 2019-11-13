@@ -37,6 +37,7 @@ type
     TTermElements = set of TTermElement;
   private
     FProject: TLocalizerProject;
+    FProjectPropertyLookup: ILocalizerProjectPropertyLookup;
     FLanguage: TTranslationLanguage;
     FCurrentTermElement: TTermElement;
     FTermElements: TTermElements;
@@ -79,7 +80,8 @@ implementation
 uses
   Character,
   StrUtils,
-  amLocalization.Utils;
+  amLocalization.Utils,
+  amLocalization.Settings;
 
 // -----------------------------------------------------------------------------
 //
@@ -90,11 +92,12 @@ constructor TLocalizerPOImport.Create(AProject: TLocalizerProject);
 begin
   inherited Create;
   FProject := AProject;
+  FProjectPropertyLookup := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
 end;
 
 destructor TLocalizerPOImport.Destroy;
 begin
-
+  FProjectPropertyLookup := nil;
   inherited;
 end;
 
@@ -148,6 +151,9 @@ var
   Value: string;
 begin
   Value := Line.Trim;
+
+  if (Value.IsEmpty) then
+    Exit;
 
   if (Value.StartsWith('#')) then
   begin
@@ -210,7 +216,7 @@ begin
   begin
     ProcessTerm;
 
-    Delete(Value, 1, Length('msgid'));
+    Delete(Value, 1, Length('msgctxt'));
     Value := Value.TrimLeft;
 
     FTermContext := Unescape(Value);
@@ -252,6 +258,7 @@ begin
     Value := Value.TrimLeft;
 
     FTermValue := Unescape(Value);
+    FCurrentTermElement := teTermValue;
     Include(FTermElements, teTermValue);
     Exit;
   end;
@@ -265,6 +272,9 @@ procedure TLocalizerPOImport.ProcessTerm;
 var
   MatchProp: TLocalizerProperty;
   Matchness: TMatchness;
+  NewMatchness: TMatchness;
+  List: TLocalizerPropertyList;
+  Prop: TLocalizerProperty;
 begin
   if (not (teTermID in FTermElements)) then
     Exit;
@@ -281,44 +291,45 @@ begin
   end;
   *)
 
-  // TODO : Use project lookup index
-
   // No point in searching for the property if we have no value
   if (teTermValue in FTermElements) and (FTermValue <> '') and (FTermID <> '') then
   begin
     MatchProp := nil;
     Matchness := MatchNone;
-    FProject.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      var
-        NewMatchness: TMatchness;
+
+    List := FProjectPropertyLookup.Lookup(SanitizeText(FTermID));
+
+    if (List <> nil) and (List.Count > 0) then
+      for Prop in List do
       begin
-        if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) then
-          Exit(True);
+        if (Prop.EffectiveStatus <> ItemStatusTranslate) then
+          continue;
+
+        if (Prop.HasTranslation(FLanguage)) then
+          continue;
 
         if (Prop.Value = FTermID) then
           NewMatchness := MatchExact
         else
         if (Matchness >= MatchSame) then
-          Exit(True)
+          continue
         else
         if (AnsiSameText(Prop.Value, FTermID)) then
           NewMatchness := MatchSame
         else
         if (Matchness >= MatchSanitized) then
-          Exit(True)
+          continue
         else
-        if (AnsiSameText(SanitizeText(Prop.Value), SanitizeText(FTermID))) then
-          NewMatchness := MatchSanitized
-        else
-          Exit(True);
+          NewMatchness := MatchSanitized;
+
         if (NewMatchness > Matchness) then
         begin
           MatchProp := Prop;
           Matchness := NewMatchness;
         end;
-        Result := (Matchness <> MatchExact);
-      end);
+        if (Matchness = MatchExact) then
+          break;
+      end;
 
     if (MatchProp <> nil) then
     begin

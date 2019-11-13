@@ -13,7 +13,8 @@ interface
 uses
   Generics.Collections,
   Generics.Defaults,
-  Winapi.Windows, System.Classes;
+  Winapi.Windows, System.Classes,
+  amLocalization.Utils;
 
 const
   sModuleNameResourcestrings = 'resourcestrings';
@@ -135,6 +136,13 @@ type
   TLocalizerModuleEvent = procedure(Module: TLocalizerModule) of object;
   TLocalizerTranslationEvent = procedure(Translation: TLocalizerTranslation) of object;
 
+  TLocalizerPropertyList = TList<TLocalizerProperty>;
+
+  ILocalizerProjectPropertyLookup = interface
+    ['{4C3E4018-8F6B-469D-B417-A08484B926C6}']
+    function Lookup(const Value: string): TLocalizerPropertyList; overload; // Lookup of sanitized value
+    function Lookup(const Prop: TLocalizerProperty): TLocalizerPropertyList; overload;
+  end;
 
   TLocalizerProject = class(TBaseLocalizerItem)
   strict private
@@ -178,6 +186,8 @@ type
     function Traverse(Delegate: TLocalizerItemDelegate; Sorted: boolean = False): boolean; reintroduce; overload;
     function Traverse(Delegate: TLocalizerPropertyDelegate; Sorted: boolean = False): boolean; reintroduce; overload; override;
     function Traverse(Delegate: TLocalizerPropertyDelegate; Kinds: TLocalizerModuleKinds; Sorted: boolean = False): boolean; reintroduce; overload;
+
+    function CreatePropertyLookup(SanitizeRules: TSanitizeRules): ILocalizerProjectPropertyLookup;
 
     property State: TLocalizerProjectStates read FState;
 
@@ -522,8 +532,7 @@ uses
   TypInfo,
   XMLDoc, XMLIntf,
   amLocale,
-  amLocalization.Utils;
-
+  amLocalization.Index;
 
 // -----------------------------------------------------------------------------
 //
@@ -930,6 +939,13 @@ begin
   FModules.Free;
   FTranslationLanguages.Free;
   inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TLocalizerProject.CreatePropertyLookup(SanitizeRules: TSanitizeRules): ILocalizerProjectPropertyLookup;
+begin
+  Result := TLocalizerProjectPropertyLookup.Create(Self, SanitizeRules);
 end;
 
 // -----------------------------------------------------------------------------

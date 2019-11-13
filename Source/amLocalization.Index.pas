@@ -1,5 +1,13 @@
 ﻿unit amLocalization.Index;
 
+(*
+ * Copyright © 2019 Anders Melander
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *)
+
 interface
 
 uses
@@ -8,26 +16,35 @@ uses
   amLocalization.Utils,
   amLocalization.Model;
 
+// -----------------------------------------------------------------------------
+//
+// TLocalizerProjectPropertyLookup
+//
+// -----------------------------------------------------------------------------
+// Implements ILocalizerProjectPropertyLookup
+// -----------------------------------------------------------------------------
 type
-  TPropertyList = TList<TLocalizerProperty>;
-
-  TLocalizerProjectIndex = class
+  TLocalizerProjectPropertyLookup = class(TInterfacedObject, ILocalizerProjectPropertyLookup)
   private
     FProject: TLocalizerProject;
-    FDictionary: TObjectDictionary<string, TPropertyList>;
+    FSanitizeRules: TSanitizeRules;
+    FDictionary: TObjectDictionary<string, TLocalizerPropertyList>;
     FTask: ITask;
     FTaskTerminated: boolean;
   protected
     procedure PopulateIndex;
+
+    // ILocalizerProjectPropertyLookup
+    function Lookup(const Value: string): TLocalizerPropertyList; overload; // Lookup of sanitized value
+    function Lookup(const Prop: TLocalizerProperty): TLocalizerPropertyList; overload;
   public
-    constructor Create;
+    constructor Create(AProject: TLocalizerProject; ASanitizeRules: TSanitizeRules);
     destructor Destroy; override;
-
-    procedure BuildIndex(AProject: TLocalizerProject);
-
-    function Lookup(const Value: string): TPropertyList; overload; // Lookup of sanitized value
-    function Lookup(const Prop: TLocalizerProperty): TPropertyList; overload;
   end;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 implementation
 
@@ -39,14 +56,20 @@ uses
 {$endif DEBUG}
   Classes;
 
-{ TProjectIndexer }
-
-constructor TLocalizerProjectIndex.Create;
+// -----------------------------------------------------------------------------
+//
+// TLocalizerProjectPropertyLookup
+//
+// -----------------------------------------------------------------------------
+constructor TLocalizerProjectPropertyLookup.Create(AProject: TLocalizerProject; ASanitizeRules: TSanitizeRules);
 begin
-  FDictionary := TObjectDictionary<string, TPropertyList>.Create([doOwnsValues], TTextComparer.Create);
+  FDictionary := TObjectDictionary<string, TLocalizerPropertyList>.Create([doOwnsValues], TTextComparer.Create);
+  FProject := AProject;
+  FSanitizeRules := ASanitizeRules;
+  FTask := TTask.Run(PopulateIndex);
 end;
 
-destructor TLocalizerProjectIndex.Destroy;
+destructor TLocalizerProjectPropertyLookup.Destroy;
 begin
   if (FTask <> nil) then
   begin
@@ -57,12 +80,14 @@ begin
   inherited;
 end;
 
-function TLocalizerProjectIndex.Lookup(const Prop: TLocalizerProperty): TPropertyList;
+// -----------------------------------------------------------------------------
+
+function TLocalizerProjectPropertyLookup.Lookup(const Prop: TLocalizerProperty): TLocalizerPropertyList;
 begin
   Result := Lookup(SanitizeText(Prop.Value));
 end;
 
-function TLocalizerProjectIndex.Lookup(const Value: string): TPropertyList;
+function TLocalizerProjectPropertyLookup.Lookup(const Value: string): TLocalizerPropertyList;
 begin
   if (FTask <> nil) then
   begin
@@ -74,7 +99,9 @@ begin
     Result := nil;
 end;
 
-procedure TLocalizerProjectIndex.PopulateIndex;
+// -----------------------------------------------------------------------------
+
+procedure TLocalizerProjectPropertyLookup.PopulateIndex;
 {$ifdef DEBUG}
 var
   StopWatch: TStopWatch;
@@ -105,7 +132,7 @@ begin
             function(Prop: TLocalizerProperty): boolean
             var
               s: string;
-              PropertyList: TPropertyList;
+              PropertyList: TLocalizerPropertyList;
             begin
 {$ifdef DEBUG}
               Inc(Count);
@@ -114,11 +141,11 @@ begin
               if (FTaskTerminated) or (Prop.IsUnused) then
                 Exit(not FTaskTerminated);
 
-              s := SanitizeText(Prop.Value);
+              s := SanitizeText(Prop.Value, FSanitizeRules);
 
               if (not FDictionary.TryGetValue(s, PropertyList)) then
               begin
-                PropertyList := TPropertyList.Create;
+                PropertyList := TLocalizerPropertyList.Create;
                 FDictionary.Add(s, PropertyList);
               end;
               PropertyList.Add(Prop);
@@ -138,19 +165,6 @@ begin
 {$endif DEBUG}
 end;
 
-procedure TLocalizerProjectIndex.BuildIndex(AProject: TLocalizerProject);
-begin
-  if (FTask <> nil) then
-  begin
-    FTaskTerminated := True;
-    FTask.Wait;
-    FTaskTerminated := False;
-  end;
-
-  FDictionary.Clear;
-  FProject := AProject;
-
-  FTask := TTask.Run(PopulateIndex);
-end;
+// -----------------------------------------------------------------------------
 
 end.
