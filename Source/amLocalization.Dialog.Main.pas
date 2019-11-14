@@ -4254,16 +4254,6 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
   Warning: TTranslationWarning;
-const
-  // TODO : Localization
-  sTranslationValidationWarnings: array[TTranslationWarning] of string = (
-    'Source or translation is empty and the other is not',
-    'Accelerator count mismatch',
-    'Format specifier count mismatch',
-    'Linebreak count mismatch',
-    'Leading space count mismatch',
-    'Trailing space count mismatch',
-    'Translation is terminated differently than source');
 resourcestring
   sValidationWarning = 'Translation has validation warnings:%s';
 begin
@@ -4279,7 +4269,7 @@ begin
     Result := '';
 
     for Warning in Translation.Warnings do
-      Result := Result + #13 + '- ' + sTranslationValidationWarnings[Warning];
+      Result := Result + #13 + '- ' + LoadResString(sTranslationValidationWarnings[Warning]);
 
     Result := Format(sValidationWarning, [Result]);
   end;
@@ -4759,7 +4749,6 @@ end;
 
 procedure TFormMain.ClearDependents;
 begin
-  FProjectIndex := nil;
   if (FSearchProvider <> nil) then
     FSearchProvider.Clear;
 end;
@@ -5891,16 +5880,6 @@ var
   Warning: TTranslationWarning;
   s: string;
   Bitmap: TBitmap;
-const
-  // TODO : Localization
-  sTranslationValidationWarnings: array[TTranslationWarning] of string = (
-    'Source or translation is empty and the other is not',
-    'Accelerator count mismatch',
-    'Format specifier count mismatch',
-    'Linebreak count mismatch',
-    'Leading space count mismatch',
-    'Trailing space count mismatch',
-    'Translation is terminated differently than source');
 resourcestring
   sValidationWarning = 'Translation has validation warnings:%s';
 begin
@@ -5916,7 +5895,7 @@ begin
     s := '';
 
     for Warning in Translation.Warnings do
-      s := s + #13 + '- ' + sTranslationValidationWarnings[Warning];
+      s := s + #13 + '- ' + LoadResString(sTranslationValidationWarnings[Warning]);
 
     AData.ErrorText := Format(sValidationWarning, [s]);
 

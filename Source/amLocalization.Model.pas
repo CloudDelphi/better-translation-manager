@@ -373,7 +373,9 @@ type
     tWarningLineBreak,          // Linebreak count mismatch
     tWarningLeadSpace,          // Leading space count mismatch
     tWarningTrailSpace,         // Trailing space count mismatch
-    tWarningTerminator          // Translation is terminated differently than source
+    tWarningTerminator,         // Translation is terminated differently than source
+    tWarningPipe,               // Pipe character count mismatch
+    tWarningSurround            // Surround character mismatch
   );
   TTranslationWarnings = set of TTranslationWarning;
 
@@ -516,6 +518,37 @@ type
     function GetHashCode(const Value: String): Integer; override;
     function Equals(const Left, Right: string): Boolean; override;
   end;
+
+
+// -----------------------------------------------------------------------------
+//
+// Strings
+//
+// -----------------------------------------------------------------------------
+resourcestring
+  sTranslationValidationWarningEmptyness        = 'Source or translation is empty and the other is not';
+  sTranslationValidationWarningAccelerator      = 'Accelerator count mismatch';
+  sTranslationValidationWarningFormatSpecifier  = 'Format specifier count mismatch';
+  sTranslationValidationWarningLineBreak        = 'Linebreak count mismatch';
+  sTranslationValidationWarningLeadSpace        = 'Leading space count mismatch';
+  sTranslationValidationWarningTrailSpace       = 'Trailing space count mismatch';
+  sTranslationValidationWarningTerminator       = 'Translation is terminated differently than source';
+  sTranslationValidationWarningPipe             = 'Pipe character count mismatch';
+  sTranslationValidationWarningSurround         = 'Surround character mismatch';
+
+const
+  // Note: Must use PResStringRec or values will be of the language active at the time System._InitResStrings was called,
+  // which means that the user language selection will not affect the values as it should.
+  sTranslationValidationWarnings: array[TTranslationWarning] of PResStringRec = (
+    @sTranslationValidationWarningEmptyness,
+    @sTranslationValidationWarningAccelerator,
+    @sTranslationValidationWarningFormatSpecifier,
+    @sTranslationValidationWarningLineBreak,
+    @sTranslationValidationWarningLeadSpace,
+    @sTranslationValidationWarningTrailSpace,
+    @sTranslationValidationWarningTerminator,
+    @sTranslationValidationWarningPipe,
+    @sTranslationValidationWarningSurround);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -1925,7 +1958,7 @@ type
 
 procedure TLocalizerTranslation.UpdateWarnings;
 
-  procedure Count(const Value: string; var CountAccelerator, CountFormat, CountLineBreak, CountLeadSpace, CountTrailSpace: integer);
+  procedure Count(const Value: string; var CountAccelerator, CountFormat, CountLineBreak, CountLeadSpace, CountTrailSpace, CountPipe: integer);
   var
     i: integer;
     c, LastChar: Char;
@@ -1939,6 +1972,7 @@ procedure TLocalizerTranslation.UpdateWarnings;
     CountLineBreak := 0;
     CountLeadSpace := 0;
     CountTrailSpace := 0;
+    CountPipe := 0;
 
     LastChar := #0;
     SkipAccelerator := False;
@@ -1977,7 +2011,9 @@ procedure TLocalizerTranslation.UpdateWarnings;
           if (LastChar <> #13) then
             Inc(CountLineBreak);
           SkipAccelerator := True;
-        end;
+        end else
+        if (c = '|') then
+          Inc(CountPipe);
       end;
 
       if (not SkipAccelerator) then
@@ -2119,6 +2155,7 @@ var
   SourceCountLineBreak, TargetCountLineBreak: integer;
   SourceCountLeadSpace, TargetCountLeadSpace: integer;
   SourceCountTrailSpace, TargetCountTrailSpace: integer;
+  SourceCountPipe, TargetCountPipe: integer;
 begin
   OldWarnings := FWarnings;
   FWarnings := [];
@@ -2133,8 +2170,8 @@ begin
     Exit;
   end;
 
-  Count(Value, TargetCountAccelerator, TargetCountFormat, TargetCountLineBreak, TargetCountLeadSpace, TargetCountTrailSpace);
-  Count(Owner.Value, SourceCountAccelerator, SourceCountFormat, SourceCountLineBreak, SourceCountLeadSpace, SourceCountTrailSpace);
+  Count(Value, TargetCountAccelerator, TargetCountFormat, TargetCountLineBreak, TargetCountLeadSpace, TargetCountTrailSpace, TargetCountPipe);
+  Count(Owner.Value, SourceCountAccelerator, SourceCountFormat, SourceCountLineBreak, SourceCountLeadSpace, SourceCountTrailSpace, SourceCountPipe);
 
   // Only consider target accelerators if source has them.
   // If source doesn't have them then any & in the target probably isn't accelerators.
@@ -2153,8 +2190,14 @@ begin
   if (SourceCountTrailSpace <> TargetCountTrailSpace) then
     Include(FWarnings, tWarningTrailSpace);
 
-  if (Value[Value.Length].IsPunctuation <> Owner.Value[Owner.Value.Length].IsPunctuation) then
+  if (GetTextEnding(Value) <> GetTextEnding(Owner.Value)) or (Value[Value.Length].IsPunctuation <> Owner.Value[Owner.Value.Length].IsPunctuation) then
     Include(FWarnings, tWarningTerminator);
+
+  if (SourceCountPipe <> TargetCountPipe) then
+    Include(FWarnings, tWarningPipe);
+
+  if (GetTextSurroundIndex(Value) <> GetTextSurroundIndex(Owner.Value)) then
+    Include(FWarnings, tWarningSurround);
 
   if ((FWarnings = []) <> (OldWarnings = [])) then
     NotifyWarnings;

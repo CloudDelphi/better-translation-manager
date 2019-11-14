@@ -148,24 +148,24 @@ object DataModuleMain: TDataModuleMain
       Properties.EmptySelectionText = 'None'
       Properties.Items = <
         item
-          Description = 'Remove Format() specifiers: %...'
+          Description = 'Ignore Format() specifiers: %...'
           ShortDescription = 'Format'
         end
         item
-          Description = 'Remove and unescape accelerator characters: &'
+          Description = 'Ignore and unescape accelerator characters: &'
           ShortDescription = 'Hotkey'
         end
         item
-          Description = 'Remove common line endings: colon, semicolon, ellipsis'
+          Description = 'Ignore common line endings: colon, semicolon, ellipsis, etc.'
           ShortDescription = 'Ending'
         end
         item
-          Description = 'Remove common surround pairs: ( ), [ ], { }, < >, " ", '#39' '#39
+          Description = 'Ignore common surround pairs: ( ), [ ], { }, < >, " ", '#39' '#39
           ShortDescription = 'Surround'
         end
         item
-          Description = 'Remove leading and trailing spaces'
-          ShortDescription = 'Trim'
+          Description = 'Ignore leading and trailing spaces'
+          ShortDescription = 'Space'
         end>
     end
   end

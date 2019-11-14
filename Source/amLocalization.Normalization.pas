@@ -92,6 +92,9 @@ function MakeSentenceCase(const Value: string): string;
 //
 // -----------------------------------------------------------------------------
 function IsAnsi(c: char): boolean; Inline;
+function GetTextEnding(const Value: string): string;
+function GetTextSurroundIndex(const Value: string): integer;
+
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -124,11 +127,51 @@ const
     );
 
 const
-  TextEndings: array[0..2] of string = (
+  // We don't want stuff that can change the meaning of a phrase (like "?" and "!") in the Normalization list.
+  // For example a sentence phrased like a question can rarely be reused as
+  // a statement by just removing the "?".
+  // I have also opted not to include ".".
+  NormalizationEndings: array[0..2] of string = (
     ':',
     ';',
     '...'
     );
+
+  ValidationEndings: array[0..4] of string = (
+    ':',
+    ';',
+    '...',
+    '.', // Must be after ellipsis
+    '?'
+    );
+
+// -----------------------------------------------------------------------------
+
+function IsAnsi(c: char): boolean; Inline;
+begin
+  Result := (c <= #$FF);
+end;
+
+function GetTextEnding(const Value: string): string;
+var
+  s: string;
+begin
+  for s in ValidationEndings do
+    if (Value.EndsWith(s)) then
+      Exit(s);
+  Result := '';
+end;
+
+function GetTextSurroundIndex(const Value: string): integer;
+begin
+  Result := High(SurroundPairs);
+  while (Result >= 0) do
+  begin
+    if (Value.StartsWith(SurroundPairs[Result].StartSurround)) and (Value.EndsWith(SurroundPairs[Result].EndSurround)) then
+      break;
+    Dec(Result);
+  end;
+end;
 
 // -----------------------------------------------------------------------------
 
@@ -246,13 +289,6 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function IsAnsi(c: char): boolean; Inline;
-begin
-  Result := (c <= #$FF);
-end;
-
-// -----------------------------------------------------------------------------
-
 function SanitizeSpellCheckText(const Value: string): string;
 begin
   Result := SanitizeText(Value, [skAccelerator, skFormat], True);
@@ -347,7 +383,7 @@ begin
 
   if (skEnding in Kind) then
   begin
-    for s in TextEndings do
+    for s in NormalizationEndings do
       if (Result.EndsWith(s)) then
       begin
         SetLength(Result, Length(Result)-Length(s));
@@ -595,7 +631,7 @@ begin
   // If source ends with a colon, semicolon or ellipsis the target should also do so
   if (EqualizeEnding in Rules) then
   begin
-    for s in TextEndings do
+    for s in NormalizationEndings do
     begin
       if (SourceValue.EndsWith(s)) then
       begin
