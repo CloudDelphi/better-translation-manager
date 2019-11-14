@@ -28,7 +28,7 @@ uses
   cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit,
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
-  dxGallery, dxRibbonGallery,
+  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar,
 
   amLocale,
   amProgress,
@@ -308,6 +308,11 @@ type
     ActionImportPO: TAction;
     dxBarButton5: TdxBarButton;
     TaskDialogImportUpdate: TTaskDialog;
+    RibbonMiniToolbarValidationWarning: TdxRibbonMiniToolbar;
+    ActionValidationWarningDismiss: TAction;
+    dxBarButton6: TdxBarButton;
+    ActionValidationWarningResolve: TAction;
+    dxBarButton8: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
@@ -369,7 +374,6 @@ type
     procedure ActionFindNextUpdate(Sender: TObject);
     procedure ActionTranslationMemoryExecute(Sender: TObject);
     procedure TreeListGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
-    procedure TreeListItemsClick(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionGotoNextWarningExecute(Sender: TObject);
     procedure TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListIndicatorCellViewInfo; var ADone: Boolean);
@@ -435,6 +439,10 @@ type
     procedure ActionEditPasteExecute(Sender: TObject);
     procedure ActionExportCSVExecute(Sender: TObject);
     procedure ActionImportPOExecute(Sender: TObject);
+    procedure ActionValidationWarningResolveExecute(Sender: TObject);
+    procedure ActionValidationWarningDismissExecute(Sender: TObject);
+    procedure ActionValidationWarningDismissUpdate(Sender: TObject);
+    procedure ActionValidationWarningResolveUpdate(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -3893,6 +3901,110 @@ begin
     MessageDlg(Format(sLocalizerWarnings, [WarningCount*1.0, NewWarningCount*1.0]), mtWarning, [mbOK], 0);
 end;
 
+procedure TFormMain.ActionValidationWarningDismissExecute(Sender: TObject);
+begin
+  FocusedProperty.Translations[TranslationLanguage].Warnings := [];
+  ReloadNode(FocusedNode);
+end;
+
+procedure TFormMain.ActionValidationWarningResolveExecute(Sender: TObject);
+var
+  Warnings: TTranslationWarnings;
+  RemainingWarnings: TTranslationWarnings;
+  Warning: TTranslationWarning;
+  EqualizeRules: TMakeAlikeRules;
+  Translation: TLocalizerTranslation;
+  SourceValue, Value: string;
+  i, CountSource, CountTarget: integer;
+begin
+  Translation := FocusedProperty.Translations[TranslationLanguage];
+  Warnings := Translation.Warnings;
+
+  EqualizeRules := [];
+  RemainingWarnings := [];
+  for Warning in Warnings do
+    case Warning of
+      tWarningAccelerator:
+        Include(EqualizeRules, EqualizeAccelerators);
+      tWarningTerminator:
+        Include(EqualizeRules, EqualizeEnding);
+      tWarningSurround:
+        Include(EqualizeRules, EqualizeSurround);
+    else
+      Include(RemainingWarnings, Warning);
+    end;
+
+  Value := Translation.Value;
+  SourceValue := FocusedProperty.Value;
+
+  if (EqualizeRules <> []) then
+    Value := MakeAlike(SourceValue, Value, EqualizeRules);
+
+  if (tWarningLeadSpace in RemainingWarnings) then
+  begin
+    i := 1;
+    CountSource := 0;
+    CountTarget := 0;
+    while ((i <= Length(SourceValue)) and (SourceValue[i] = ' ')) or ((i <= Length(Value)) and (Value[i] = ' ')) do
+    begin
+      if ((i <= Length(SourceValue)) and (SourceValue[i] = ' ')) then
+        Inc(CountSource);
+      if ((i <= Length(Value)) and (Value[i] = ' ')) then
+        Inc(CountTarget);
+      Inc(i);
+    end;
+    if (CountSource > CountTarget) then
+      Value := StringOfChar(' ', CountSource-CountTarget) + Value
+    else
+    if (CountSource < CountTarget) then
+      Delete(Value, 1, CountTarget-CountSource);
+  end;
+  if (tWarningTrailSpace in RemainingWarnings) then
+  begin
+    i := 0;
+    CountSource := 0;
+    CountTarget := 0;
+    while ((i < Length(SourceValue)) and (SourceValue[Length(SourceValue)-i] = ' ')) or ((i < Length(Value)) and (Value[Length(Value)-i] = ' ')) do
+    begin
+      if ((i < Length(SourceValue)) and (SourceValue[Length(SourceValue)-i] = ' ')) then
+        Inc(CountSource);
+      if ((i < Length(Value)) and (Value[Length(Value)-i] = ' ')) then
+        Inc(CountTarget);
+      Inc(i);
+    end;
+    if (CountSource > CountTarget) then
+      Value := Value + StringOfChar(' ', CountSource-CountTarget)
+    else
+    if (CountSource < CountTarget) then
+      SetLength(Value, Length(Value)-(CountTarget-CountSource));
+  end;
+
+  Translation.Value := Value;
+  ReloadNode(FocusedNode);
+end;
+
+procedure TFormMain.ActionValidationWarningResolveUpdate(Sender: TObject);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+const
+  ResolvableWarnings: TTranslationWarnings = [tWarningAccelerator,tWarningLeadSpace,tWarningTrailSpace,tWarningTerminator,tWarningSurround];
+begin
+  Prop := FocusedProperty;
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
+    (Translation.Warnings * ResolvableWarnings <> []);
+end;
+
+procedure TFormMain.ActionValidationWarningDismissUpdate(Sender: TObject);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+begin
+  Prop := FocusedProperty;
+  TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
+    (Translation.Warnings <> []);
+end;
+
 // -----------------------------------------------------------------------------
 
 procedure TFormMain.ActionTranslationStateUpdate(Sender: TObject);
@@ -5909,18 +6021,6 @@ begin
   end;
 end;
 
-procedure TFormMain.TreeListItemsClick(Sender: TObject);
-var
-  Msg: string;
-begin
-  if (not TreeListItems.HitTest.HitAtStateImage) then
-    Exit;
-
-  Msg := GetNodeValidationMessage(TreeListItems.HitTest.HitNode);
-  if (Msg <> '') then
-    MessageDlg(Msg, mtWarning, [mbOK], 0);
-end;
-
 procedure TFormMain.TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
 var
   Prop: TLocalizerProperty;
@@ -6311,9 +6411,13 @@ begin
 {$endif DEBUG}
 end;
 
+type
+  TcxEditViewInfoCracker = class(TcxCustomEditViewInfo);
+  TcxEditCellViewInfoCracker = class(TcxEditCellViewInfo);
+
 procedure TFormMain.TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
-  p: TPoint;
+  p, RelativePos: TPoint;
   r: TRect;
   Node: TcxTreeListNode;
   Prop: TLocalizerProperty;
@@ -6325,6 +6429,7 @@ begin
   TreeListItems.HitTest.HitPoint := p;
   TreeListItems.HitTest.ReCalculate;
 
+  // Require click in target cell
   if (not TreeListItems.HitTest.HitAtNode) or (not TreeListItems.HitTest.HitAtColumn) or (TreeListItems.HitTest.HitTestItem = nil) then
     Exit;
 
@@ -6333,8 +6438,22 @@ begin
 
   // Cache node value because hittest is cleared when we display the modal dialog
   Node := TreeListItems.HitTest.HitNode;
-
   r := TreeListItems.CellRect(Node, TreeListItems.HitTest.HitColumn);
+
+  (*
+  ** Display mini toolbar if user clicks warning indicator
+  *)
+  RelativePos := TreeListItems.HitTest.HitPoint - r.TopLeft;
+  if (TcxEditViewInfoCracker(TreeListItems.HitTest.EditCellViewinfo.EditViewinfo).GetPart(RelativePos) = ecpErrorIcon) then
+  begin
+    RibbonMiniToolbarValidationWarning.Popup;
+    Node.Focused := False; // Prevent click from starting edit mode
+    Exit;
+  end;
+
+  (*
+  ** Translate if user clicks TM indicator
+  *)
   if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
@@ -6382,7 +6501,6 @@ begin
   TreeListItems.HitTest.HitPoint := p;
   TreeListItems.HitTest.ReCalculate;
 
-//  if (not TreeListItems.HitTest.HitAtNode) or (not TreeListItems.HitTest.HitAtColumn) or (TreeListItems.HitTest.HitTestItem = nil) or (TreeListItems.ViewInfo.GetEditCell(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn).Editing) then
   if (not TreeListItems.HitTest.HitAtNode) or (not TreeListItems.HitTest.HitAtColumn) or (TreeListItems.HitTest.HitTestItem = nil) then
     Exit;
 
@@ -6393,6 +6511,10 @@ begin
     Exit;
 
   r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
+
+  (*
+  ** Display TM lookup hint if mouse moves over TM indicator
+  *)
   if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
     // Top left corner
     r.Right := r.Left + HintCornerSize
@@ -6404,7 +6526,7 @@ begin
   if (not r.Contains(p)) then
     Exit;
 
-  // Draw indicator if source value is found in Translation Memory
+  // Check if node has been marked by the Translation Memory peeker
   if (TTranslationMemoryPeekResult(TreeListItems.HitTest.HitNode.Data) <> TTranslationMemoryPeekResult.prFound) then
     Exit;
 

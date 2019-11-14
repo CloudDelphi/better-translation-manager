@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -51,6 +50,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -410,7 +410,6 @@ object FormMain: TFormMain
     Styles.Indicator = DataModuleMain.StyleDefault
     Styles.UseOddEvenStyles = bFalse
     TabOrder = 4
-    OnClick = TreeListItemsClick
     OnCustomDrawDataCell = TreeListItemsCustomDrawDataCell
     OnCustomDrawIndicatorCell = TreeListItemsCustomDrawIndicatorCell
     OnDblClick = TreeListDblClick
@@ -881,6 +880,14 @@ object FormMain: TFormMain
           BeginGroup = True
           Visible = True
           ItemName = 'dxBarButton26'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton8'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton6'
         end>
       OneOnRow = False
       Row = 0
@@ -1012,7 +1019,7 @@ object FormMain: TFormMain
     object BarManagerBarMark: TdxBar
       Caption = 'Mark'
       CaptionButtons = <>
-      DockedLeft = 523
+      DockedLeft = 529
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1091,7 +1098,7 @@ object FormMain: TFormMain
     object BarManagerBarFilters: TdxBar
       Caption = 'Filters'
       CaptionButtons = <>
-      DockedLeft = 649
+      DockedLeft = 655
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1540,7 +1547,7 @@ object FormMain: TFormMain
     end
     object ButtonSeparatorBuild: TdxBarSeparator
       Category = 0
-      Visible = ivAlways
+      Visible = ivNotInCustomizing
       ShowCaption = False
     end
     object dxBarButton1: TdxBarButton
@@ -1557,6 +1564,14 @@ object FormMain: TFormMain
     end
     object dxBarButton5: TdxBarButton
       Action = ActionImportPO
+      Category = 0
+    end
+    object dxBarButton6: TdxBarButton
+      Action = ActionValidationWarningDismiss
+      Category = 0
+    end
+    object dxBarButton8: TdxBarButton
+      Action = ActionValidationWarningResolve
       Category = 0
     end
   end
@@ -2117,6 +2132,26 @@ object FormMain: TFormMain
       OnExecute = ActionImportPOExecute
       OnUpdate = ActionImportFileTargetUpdate
     end
+    object ActionValidationWarningDismiss: TAction
+      Category = 'Validation'
+      Caption = 'Dismiss warning'
+      Hint = 
+        'Hide the validation warning until the project is validated again' +
+        ' or the value is changed'
+      ImageIndex = 78
+      OnExecute = ActionValidationWarningDismissExecute
+      OnUpdate = ActionValidationWarningDismissUpdate
+    end
+    object ActionValidationWarningResolve: TAction
+      Category = 'Validation'
+      Caption = 'Resolve problem'
+      Hint = 
+        'Attempt to resolve the validation problem by applying the approp' +
+        'riate equalization rules to the value'
+      ImageIndex = 79
+      OnExecute = ActionValidationWarningResolveExecute
+      OnUpdate = ActionValidationWarningResolveUpdate
+    end
   end
   object OpenDialogProject: TOpenDialog
     Filter = 'Translation projects (*.xlat)|*.xlat|All files (*.*)|*.*'
@@ -2371,5 +2406,20 @@ object FormMain: TFormMain
     Title = 'Replace existing translations?'
     Left = 716
     Top = 220
+  end
+  object RibbonMiniToolbarValidationWarning: TdxRibbonMiniToolbar
+    ItemLinks = <
+      item
+        Visible = True
+        ItemName = 'dxBarButton8'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton6'
+      end>
+    Ribbon = RibbonMain
+    Left = 708
+    Top = 340
+    PixelsPerInch = 96
   end
 end
