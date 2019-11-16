@@ -623,7 +623,14 @@ begin
         if (not FileFormat.Prepare(Filename)) then
           break;
 
-        OneStats := FileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
+        try
+
+          OneStats := FileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
+
+        except
+          on E: EAbort do
+            break; // Do not propagate - just don't continue
+        end;
 
         MergeFile := True; // Additional files will be merged regardless of choice
 

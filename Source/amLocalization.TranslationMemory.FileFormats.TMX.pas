@@ -51,8 +51,9 @@ uses
   Variants,
   SysUtils,
   DB,
+  Dialogs,
   msxmldom,
-  XMLDoc, XMLIntf,
+  XMLDoc, XMLIntf, XMLDom,
   amCursorService,
   amLocale,
   amVersionInfo,
@@ -116,14 +117,22 @@ begin
   else
     ProgressStream := Stream;
   try
-    if (DetailedProgress) then
-      Progress.UpdateMessage(sTranslationMemoryLoad);
+    try
+      if (DetailedProgress) then
+        Progress.UpdateMessage(sTranslationMemoryLoad);
 
-    XML.LoadFromStream(ProgressStream);
+      XML.LoadFromStream(ProgressStream);
 
-  finally
-    if (DetailedProgress) then
-      ProgressStream.Free;
+    finally
+      if (DetailedProgress) then
+        ProgressStream.Free;
+    end;
+  except
+    on E: EDOMParseError do
+    begin
+      MessageDlg(E.Message, mtWarning, [mbOK], 0);
+      Exit(False);
+    end;
   end;
 
   if (XML.DocumentElement.NodeName <> 'tmx') then

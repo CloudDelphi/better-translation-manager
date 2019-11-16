@@ -373,8 +373,11 @@ begin
 
   DetailedProgress := (Progress = nil);
   if (DetailedProgress) then
-    LocalProgress := ShowProgress(sTranslationMemoryLoading)
-  else
+  begin
+    LocalProgress := ShowProgress(sTranslationMemoryLoading);
+    LocalProgress.EnableAbort := True;
+    LocalProgress.RaiseOnAbort := True;
+  end else
     LocalProgress := Progress;
 
   if (not DetailedProgress) then
