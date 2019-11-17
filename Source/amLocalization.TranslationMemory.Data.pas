@@ -56,7 +56,10 @@ type
     function CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup; overload;
   protected
     // Threaded lookup
-    procedure PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
+    type TPopulateDictionaryCallback = reference to procedure(var Continue: boolean);
+  protected
+    // Threaded lookup
+    procedure PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList; Callback: TPopulateDictionaryCallback);
     // Protect against TM modifications. It is assumed that the TM table properties (data, fields, etc) are stable outside the lock.
     procedure Lock;
     procedure Unlock;
@@ -288,6 +291,8 @@ begin
   FQueueEvent := TEvent.Create(nil, False, False, '');
   FDictionary := TStringList.Create;
   FDictionary.CaseSensitive := False;
+  FDictionary.Sorted := True;
+  FDictionary.Duplicates := dupIgnore;
 end;
 
 destructor TPeekDictionaryThread.Destroy;
@@ -420,11 +425,16 @@ begin
   System.TMonitor.Enter(FDictionary);
   try
 
-    FDictionary.Sorted := False;
+    FDictionary.Clear;
+    //FDictionary.Sorted := False;
 
-    FTranslationMemory.PopulateDictionary(FSourceField, FTargetField, FDictionary);
+    FTranslationMemory.PopulateDictionary(FSourceField, FTargetField, FDictionary,
+      procedure(var Continue: boolean)
+      begin
+        Continue := not Terminated;
+      end);
 
-    FDictionary.Sorted := True;
+    //FDictionary.Sorted := True;
 
   finally
     System.TMonitor.Exit(FDictionary);
@@ -1276,6 +1286,7 @@ var
   StopWatch: TStopWatch;
 {$endif TM_BENCHMARK}
 begin
+  SaveCursor(crHourGlass);
 {$ifdef TM_BENCHMARK}
   StopWatch := TStopWatch.StartNew;
 {$endif TM_BENCHMARK}
@@ -1655,10 +1666,12 @@ begin
   System.TMonitor.Exit(Self);
 end;
 
-procedure TDataModuleTranslationMemory.PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList);
+procedure TDataModuleTranslationMemory.PopulateDictionary(SourceField, TargetField: TField; Dictionary: TStringList;
+  Callback: TPopulateDictionaryCallback);
 var
   Clone: TFDMemTable;
   SourceValue: string;
+  Continue: boolean;
 begin
   // It is the responsibility of the caller to lock Dictionary
   Dictionary.Clear;
@@ -1681,17 +1694,19 @@ begin
       // Create dictionary of source terms that has translations
       Clone.First;
 
-      while (not Clone.EOF) do
+      Continue := True;
+      while (not Clone.EOF) and (Continue) do
       begin
         if (not TargetField.IsNull) and (not SourceField.IsNull) then
         begin
           SourceValue := SanitizeText(SourceField.AsString);
 
-          if (Dictionary.IndexOf(SourceValue) = -1) then
-            Dictionary.Add(SourceValue);
+          // if (Dictionary.IndexOf(SourceValue) = -1) then
+          Dictionary.Add(SourceValue);
         end;
 
         Clone.Next;
+        Callback(Continue);
       end;
 
     finally

@@ -1715,6 +1715,8 @@ begin
 
   TranslateTranslated := not(tfVerificationFlagChecked in TaskDialogTranslate.Flags);
 
+  SaveCursor(crAppStart);
+
   if (not TranslationService.BeginLookup(SourceLanguage, TargetLanguage)) then
     Exit;
 
@@ -1730,7 +1732,6 @@ begin
       Counts.UpdatedCount := 0;
       Counts.Count := 0;
 
-      SaveCursor(crHourGlass);
       Progress := ShowProgress(Format(sTranslateAutoProgress, [TranslationProvider.ProviderName]));
       Progress.EnableAbort := True;
 
