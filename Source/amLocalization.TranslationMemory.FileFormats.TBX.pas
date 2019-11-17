@@ -52,7 +52,6 @@ uses
   DB,
   Dialogs,
   msxmldom,
-  XMLDoc, XMLIntf,
   XMLDoc, XMLIntf, XMLDom,
   amCursorService,
   amLocale,

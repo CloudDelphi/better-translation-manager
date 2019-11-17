@@ -59,7 +59,24 @@ begin
   end;
 
   // Save file
-  Result := SaveFileDelegate(TempFilename);
+  try
+
+    Result := SaveFileDelegate(TempFilename);
+
+  except
+    on E: EAbort do
+    begin
+      // Try to clean up
+      if (TFile.Exists(TempFilename)) then
+      begin
+        try
+          TFile.Delete(TempFilename);
+        except
+        end;
+      end;
+      Exit(False);
+    end;
+  end;
 
   if (not Result) then
     Exit;

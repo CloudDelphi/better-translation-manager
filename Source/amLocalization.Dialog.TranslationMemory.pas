@@ -253,6 +253,8 @@ end;
 
 function TFormTranslationMemory.Execute(ATranslationMemory: ITranslationMemory; CallBack: TFormTranslationMemoryCallback): boolean;
 begin
+  SaveCursor(crAppStart);
+
   FTranslationMemory := ATranslationMemory;
 
   try
@@ -497,6 +499,8 @@ procedure TFormTranslationMemory.ActionRowDeleteExecute(Sender: TObject);
 begin
   if (MessageDlg('Delete selected row(s)?', mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
+
+  SaveCursor(crAppStart);
 
   BeginUpdate;
   try

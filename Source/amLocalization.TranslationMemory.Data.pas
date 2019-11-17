@@ -22,7 +22,6 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
   amLocale,
-  amProgress,
   amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider,
@@ -142,6 +141,7 @@ uses
   Diagnostics,
   cxGraphics,
   amCursorService,
+  amProgress,
   amVersionInfo,
   amFileUtils,
   amPath,
@@ -614,7 +614,14 @@ begin
     Filename := EnvironmentVars.ExpandString(TranslationManagerSettings.Providers.TranslationMemory.Filename);
     Filename := PathUtil.PathCombinePath(TranslationManagerSettings.Folders.FolderAppData, Filename);
 
-    SaveToFile(Filename);
+    try
+
+      SaveToFile(Filename);
+
+    except
+      on E: EAbort do
+        Exit(False);
+    end;
 
     Result := (not Modified);
   end else
@@ -1281,79 +1288,100 @@ var
   Reader: TReader;
   VersionMajor, VersionMinor: integer;
   n: integer;
+  Progress: IProgress;
+  ProgressStream: TStream;
 {$ifdef TM_BENCHMARK}
 var
   StopWatch: TStopWatch;
 {$endif TM_BENCHMARK}
+const
+  cMinProgressSize = 4*1024*1024;
 begin
   SaveCursor(crHourGlass);
+
+  ProgressStream := nil;
+  try
+    if (Stream.Size > cMinProgressSize) then
+    begin
+      Progress := ShowProgress('Loading Translation Memory');
+      Progress.EnableAbort := True;
+      Progress.RaiseOnAbort := True;
+      ProgressStream := TProgressStream.Create(Stream, Progress);
+      Stream := ProgressStream;
+    end else
+      Progress := nil;
+
 {$ifdef TM_BENCHMARK}
   StopWatch := TStopWatch.StartNew;
 {$endif TM_BENCHMARK}
 
-  (*
-  ** Signature
-  *)
-  SetLength(Signature, Length(sTMFileSignature));
-  if (Stream.Read(Signature[1], Length(sTMFileSignature)) <> Length(sTMFileSignature)) or (Signature <> sTMFileSignature) then
-    raise ETranslationMemory.Create('Invalid TM file signature');
-
-  TableTranslationMemory.Close;
-  TableTranslationMemory.Fields.Clear;
-  TableTranslationMemory.FieldDefs.Clear;
-
-  Reader := TReader.Create(Stream, 8192);
-  try
     (*
-    ** Stream format version
+    ** Signature
     *)
-    VersionMajor := Reader.ReadInteger;
-    VersionMinor := Reader.ReadInteger;
+    SetLength(Signature, Length(sTMFileSignature));
+    if (Stream.Read(Signature[1], Length(sTMFileSignature)) <> Length(sTMFileSignature)) or (Signature <> sTMFileSignature) then
+      raise ETranslationMemory.Create('Invalid TM file signature');
 
-    if (VersionMajor <> TMFileVersionMajor) then
-      raise ETranslationMemory.CreateFmt('Unsupported TM file format version: %d.%d', [VersionMajor, VersionMinor]);
+    TableTranslationMemory.Close;
+    TableTranslationMemory.Fields.Clear;
+    TableTranslationMemory.FieldDefs.Clear;
 
-    Reader.ReadListBegin;
-    begin
-      while (not Reader.EndOfList) do
+    Reader := TReader.Create(Stream, 8192);
+    try
+      (*
+      ** Stream format version
+      *)
+      VersionMajor := Reader.ReadInteger;
+      VersionMinor := Reader.ReadInteger;
+
+      if (VersionMajor <> TMFileVersionMajor) then
+        raise ETranslationMemory.CreateFmt('Unsupported TM file format version: %d.%d', [VersionMajor, VersionMinor]);
+
+      Reader.ReadListBegin;
       begin
-        // Read tag
-        n := Reader.ReadInteger;
-        if (n < Ord(Low(TTMStreamTag))) or (n > Ord(High(TTMStreamTag))) then
+        while (not Reader.EndOfList) do
         begin
-          // Unknown tag - skip block
-          Reader.SkipValue;
-          continue;
-        end;
-
-        Reader.ReadListBegin;
-        begin
-          case TTMStreamTag(n) of
-            tmDescription:
-              Reader.ReadString;
-
-            tmLanguages:
-              LoadLanguages(Reader);
-
-            tmTerms:
-              LoadTerms(Reader);
-
-          else
+          // Read tag
+          n := Reader.ReadInteger;
+          if (n < Ord(Low(TTMStreamTag))) or (n > Ord(High(TTMStreamTag))) then
+          begin
+            // Unknown tag - skip block
             Reader.SkipValue;
+            continue;
           end;
+
+          Reader.ReadListBegin;
+          begin
+            case TTMStreamTag(n) of
+              tmDescription:
+                Reader.ReadString;
+
+              tmLanguages:
+                LoadLanguages(Reader);
+
+              tmTerms:
+                LoadTerms(Reader);
+
+            else
+              Reader.SkipValue;
+            end;
+          end;
+          Reader.ReadListEnd;
         end;
-        Reader.ReadListEnd;
       end;
+      Reader.ReadListEnd;
+    finally
+      Reader.Free;
     end;
-    Reader.ReadListEnd;
-  finally
-    Reader.Free;
-  end;
 
 {$ifdef TM_BENCHMARK}
-  StopWatch.Stop;
-  OutputDebugString(PChar(Format('Read TM via TReader: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
+    StopWatch.Stop;
+    OutputDebugString(PChar(Format('Read TM via TReader: %.2nmS (%d rows/mS)', [StopWatch.ElapsedMilliseconds*1.0, TableTranslationMemory.RecordCount div StopWatch.ElapsedMilliseconds])));
 {$endif TM_BENCHMARK}
+
+  finally
+    ProgressStream.Free;
+  end;
 
   FModified := False;
   FLoaded := True;
@@ -1361,7 +1389,7 @@ end;
 
 procedure TDataModuleTranslationMemory.SaveToFile(const Filename: string);
 begin
-  SafeReplaceFile(Filename,
+  if (not SafeReplaceFile(Filename,
     function(const Filename: string): boolean
     var
       Stream: TStream;
@@ -1373,10 +1401,13 @@ begin
         Stream.Free;
       end;
       Result := True;
-    end, TranslationManagerSettings.Backup.SaveBackups);
+    end, TranslationManagerSettings.Backup.SaveBackups)) then
+    Abort;
 end;
 
 procedure TDataModuleTranslationMemory.SaveToStream(Stream: TStream);
+var
+  Progress: IProgress;
 
   procedure WriteLanguages(Writer: TWriter);
   var
@@ -1413,6 +1444,9 @@ procedure TDataModuleTranslationMemory.SaveToStream(Stream: TStream);
           TableTranslationMemory.First;
           while (not TableTranslationMemory.Eof) do
           begin
+            if (Progress <> nil) then
+              Progress.AdvanceProgress;
+
             Writer.WriteListBegin;
             begin
               for i := 0 to TableTranslationMemory.Fields.Count-1 do
@@ -1441,7 +1475,20 @@ var
 var
   StopWatch: TStopWatch;
 {$endif TM_BENCHMARK}
+const
+  cMinProgressCount = 100*1024;
 begin
+  SaveCursor(crHourGlass);
+
+  if (TableTranslationMemory.RecordCount > cMinProgressCount) then
+  begin
+    Progress := ShowProgress('Saving Translation Memory');
+    Progress.EnableAbort := True;
+    Progress.RaiseOnAbort := True;
+    Progress.Progress(psBegin, 0, TableTranslationMemory.RecordCount);
+  end else
+    Progress := nil;
+
 {$ifdef TM_BENCHMARK}
   StopWatch := TStopWatch.StartNew;
 {$endif TM_BENCHMARK}
