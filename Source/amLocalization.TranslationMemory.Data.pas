@@ -184,7 +184,7 @@ end;
 constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeRules: TSanitizeRules; const Progress: IProgress);
 var
   DataSet: TDataSet;
-  Bookmark: TBookmark;
+  Clone: TFDMemTable;
   Value: string;
   List: TTranslationMemoryRecordList;
 begin
@@ -199,39 +199,34 @@ begin
   if (Progress <> nil) then
     Progress.Progress(psBegin, 0, DataSet.RecordCount);
 
-  DataSet.DisableControls;
+  Clone := TFDMemTable.Create(nil);
   try
-    Bookmark := DataSet.GetBookmark;
-    try
+    Clone.CloneCursor(DataSet as TFDDataSet);
 
-      DataSet.First;
+    Clone.First;
 
-      while (not DataSet.EOF) do
+    while (not Clone.EOF) do
+    begin
+      if (Progress <> nil) then
+        Progress.AdvanceProgress;
+
+      if (not AField.IsNull) then
       begin
-        if (Progress <> nil) then
-          Progress.AdvanceProgress;
+        Value := SanitizeText(AField.AsString, SanitizeRules);
 
-        if (not AField.IsNull) then
+        if (not FLookupIndex.TryGetValue(Value, List)) then
         begin
-          Value := SanitizeText(AField.AsString, SanitizeRules);
-
-          if (not FLookupIndex.TryGetValue(Value, List)) then
-          begin
-            List := TTranslationMemoryRecordList.Create;
-            FLookupIndex.Add(Value, List);
-          end;
-          List.Add(DataSet.RecNo);
+          List := TTranslationMemoryRecordList.Create;
+          FLookupIndex.Add(Value, List);
         end;
-
-        DataSet.Next;
+        List.Add(Clone.RecNo);
       end;
 
-    finally
-      DataSet.GotoBookmark(Bookmark);
+      Clone.Next;
     end;
-    DataSet.FreeBookmark(Bookmark);
+
   finally
-    DataSet.EnableControls;
+    Clone.Free;
   end;
 
   if (Progress <> nil) then
