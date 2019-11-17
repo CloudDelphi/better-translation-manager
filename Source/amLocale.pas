@@ -36,6 +36,7 @@ type
     FDisplayName: string;
     FLanguageName: string;
     FLanguageShortName: string;
+    FLocaleName: string;
     FCharSet: integer;
     FReadingLayout: integer;
     FIgnore: boolean;
@@ -746,11 +747,9 @@ begin
   if (Exact) then
     exit;
 
-  i := Pos('-', Value);
-  if (i = -1) then
-    exit;
-
-  Language := Copy(Value, 1, i-1);
+  Language := Value;
+  i := Pos('-', Language);
+  Delete(Language, 1, i);
 
   Result := FindISO639_1Name(Language);
 end;
@@ -993,7 +992,9 @@ begin
   The tag is based on the language tagging conventions of RFC 4646.
   *)
   // en-us, da-dk, etc. = Format('%s-%s', [ISO639_1Name, ISO3166Name]);
-  Result := GetLocaleData(LOCALE_SNAME);
+  if (FLocaleName = '') then
+    FLocaleName := GetLocaleData(LOCALE_SNAME);
+  Result := FLocaleName;
 end;
 
 function TLocaleItem.LocaleSName: string;
