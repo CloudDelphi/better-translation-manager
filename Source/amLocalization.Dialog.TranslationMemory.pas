@@ -225,6 +225,8 @@ begin
     if (tmUpdateRightToLeft in FUpdates) then
       DoUpdateRightToLeft;
 
+    if (DataSourceTranslationMemory.DataSet.RecordCount > 100*1024) then
+      SaveCursor(crHourGlass, True);
     GridTMDBTableView.EndUpdate; // This takes ages if the dataset is very large (hence the SaveCursor above)
   end;
   Dec(FUpdateCount);
@@ -476,39 +478,44 @@ begin
   Progress := ShowProgress('Finding duplicates');
   Progress.UpdateMessage('Loading values...');
 
-  DataSourceTranslationMemory.DataSet.DisableControls; // Used to avoid having the EnableControls in CreateLookup take time
+  // Create an index of sanitized values
+  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeRules, Progress);
+
+  Progress.UpdateMessage('Finding duplicates...');
+  Progress.Marquee := True;
+
+  // Get the values
+  Values := FLookupIndex.GetValues;
+
+  // For each value get the record list (the duplicates)
+  FDuplicates.Clear;
+  for Value in Values do
+  begin
+    Progress.AdvanceProgress;
+    List := FLookupIndex.Lookup(Value);
+    // Ignore values that does not have duplicates (i.e. less than two records per value)
+    if (List = nil) or (List.Count <= 1) then
+      continue;
+
+    // Add records to duplicate list
+    for RecNo in List do
+      FDuplicates.Add(RecNo-1);
+  end;
+
+  // Sort list so we can use binary search on it
+  FDuplicates.Sort;
+
+  Progress.UpdateMessage('Loading data...');
+
+  // Must do this or the outer GridTMDBTableView.EndUpdate will take *forever*
+//  DataSourceTranslationMemory.DataSet.DisableControls;
+// turns out it doesn't make any difference. Something else is rotten...
   try
-    // Create an index of sanited values
-    FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeRules, Progress);
 
-    Progress.UpdateMessage('Finding duplicates...');
-    Progress.Marquee := True;
-
-    // Get the values
-    Values := FLookupIndex.GetValues;
-
-    // For each value get the record list (the duplicates)
-    FDuplicates.Clear;
-    for Value in Values do
-    begin
-      Progress.AdvanceProgress;
-      List := FLookupIndex.Lookup(Value);
-      // Ignore values that does not have duplicates (i.e. less than two records per value)
-      if (List = nil) or (List.Count <= 1) then
-        continue;
-
-      // Add records to duplicate list
-      for RecNo in List do
-        FDuplicates.Add(RecNo-1);
-    end;
-
-    // Sort list so we can use binary search on it
-    FDuplicates.Sort;
-
-    Progress.UpdateMessage('Loading data...');
     GridTMDBTableView.DataController.RefreshExternalData;
+
   finally
-    DataSourceTranslationMemory.DataSet.EnableControls;
+//    DataSourceTranslationMemory.DataSet.EnableControls;
   end;
 
   Exclude(FUpdates, tmUpdateDuplicates);
