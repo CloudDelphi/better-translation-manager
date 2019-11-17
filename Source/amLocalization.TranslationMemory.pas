@@ -15,6 +15,7 @@ uses
   System.SysUtils, System.Classes, Data.DB, Windows,
 
   amLocale,
+  amProgress,
   amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider;
@@ -92,7 +93,7 @@ type
     procedure SetLoaded; // For use when loading TMX as main TM
 
     function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules): ITranslationMemoryLookup;
+    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 

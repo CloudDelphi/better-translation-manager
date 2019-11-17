@@ -22,6 +22,7 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
   amLocale,
+  amProgress,
   amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider,
@@ -86,7 +87,7 @@ type
     procedure SetLoaded; // For use when loading TMX as main TM
 
     function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules): ITranslationMemoryLookup; overload;
+    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
 
@@ -141,7 +142,6 @@ uses
   Diagnostics,
   cxGraphics,
   amCursorService,
-  amProgress,
   amVersionInfo,
   amFileUtils,
   amPath,
@@ -171,17 +171,17 @@ type
     function Lookup(const Value: string): TTranslationMemoryRecordList;
     function GetValues: TArray<string>;
   public
-    constructor Create(AField: TField); overload;
-    constructor Create(AField: TField; SanitizeRules: TSanitizeRules); overload;
+    constructor Create(AField: TField; const Progress: IProgress = nil); overload;
+    constructor Create(AField: TField; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil); overload;
     destructor Destroy; override;
   end;
 
-constructor TTranslationMemoryLookup.Create(AField: TField);
+constructor TTranslationMemoryLookup.Create(AField: TField; const Progress: IProgress);
 begin
-  Create(AField, TranslationManagerSettings.Editor.SanitizeRules);
+  Create(AField, TranslationManagerSettings.Editor.SanitizeRules, Progress);
 end;
 
-constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeRules: TSanitizeRules);
+constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeRules: TSanitizeRules; const Progress: IProgress);
 var
   DataSet: TDataSet;
   Bookmark: TBookmark;
@@ -196,6 +196,9 @@ begin
 
   DataSet := AField.DataSet;
 
+  if (Progress <> nil) then
+    Progress.Progress(psBegin, 0, DataSet.RecordCount);
+
   DataSet.DisableControls;
   try
     Bookmark := DataSet.GetBookmark;
@@ -205,6 +208,9 @@ begin
 
       while (not DataSet.EOF) do
       begin
+        if (Progress <> nil) then
+          Progress.AdvanceProgress;
+
         if (not AField.IsNull) then
         begin
           Value := SanitizeText(AField.AsString, SanitizeRules);
@@ -227,6 +233,9 @@ begin
   finally
     DataSet.EnableControls;
   end;
+
+  if (Progress <> nil) then
+    Progress.Progress(psEnd, 1, 1);
 end;
 
 destructor TTranslationMemoryLookup.Destroy;
@@ -635,7 +644,7 @@ begin
   Result := CreateLookup(Language, [Low(TSanitizeRule)..High(TSanitizeRule)]);
 end;
 
-function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules): ITranslationMemoryLookup;
+function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress): ITranslationMemoryLookup;
 var
   Field: TField;
 begin
@@ -649,7 +658,7 @@ begin
   if (Field = nil) then
     Exit(nil);
 
-  Result := TTranslationMemoryLookup.Create(Field, SanitizeKinds);
+  Result := TTranslationMemoryLookup.Create(Field, SanitizeKinds, Progress);
 end;
 
 // -----------------------------------------------------------------------------
