@@ -50,7 +50,6 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
-      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -71,6 +70,7 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
+      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -773,7 +773,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 367
+      DockedLeft = 0
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -2361,7 +2361,7 @@ object FormMain: TFormMain
   end
   object TimerToast: TTimer
     Enabled = False
-    Interval = 2000
+    Interval = 3000
     OnTimer = TimerToastTimer
     Left = 296
     Top = 200

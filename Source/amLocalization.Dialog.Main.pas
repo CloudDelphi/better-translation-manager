@@ -1028,6 +1028,7 @@ end;
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
   FTranslationMemoryPeek := nil;
+  FTranslationMemory := nil;
 
   SaveSettings;
 

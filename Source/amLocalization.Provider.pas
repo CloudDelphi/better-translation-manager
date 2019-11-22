@@ -99,6 +99,30 @@ type
 
 // -----------------------------------------------------------------------------
 //
+// TTranslationProviderDataModule
+//
+// -----------------------------------------------------------------------------
+// Abstract reference counted ITranslationProvider base class data module
+// -----------------------------------------------------------------------------
+type
+  TTranslationProviderDataModule = class abstract(TDataModule, IUnknown, ITranslationProvider)
+  private
+    FRefCount: integer;
+  protected
+    // IInterface
+    function QueryInterface(const IID: TGUID; out Obj): HResult; override; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+
+    // ITranslationProvider
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; virtual;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; virtual; abstract;
+    procedure EndLookup; virtual;
+    function GetProviderName: string; virtual; abstract;
+  end;
+
+// -----------------------------------------------------------------------------
+//
 // CreateTranslationService
 //
 // -----------------------------------------------------------------------------
@@ -114,6 +138,7 @@ implementation
 uses
   SysUtils,
   StrUtils,
+  SyncObjs,
   System.Character,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
 
@@ -310,6 +335,40 @@ begin
   ProviderRecord.NextFreeHandle := FFirstFreeHandle;
   FRegistry[ProviderHandle] := ProviderRecord;
   FFirstFreeHandle := ProviderHandle;
+end;
+
+// -----------------------------------------------------------------------------
+//
+// TTranslationProviderDataModule
+//
+// -----------------------------------------------------------------------------
+function TTranslationProviderDataModule.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+begin
+  Result := True;
+end;
+
+procedure TTranslationProviderDataModule.EndLookup;
+begin
+end;
+
+function TTranslationProviderDataModule.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TTranslationProviderDataModule._AddRef: Integer;
+begin
+  Result := TInterlocked.Increment(FRefCount);
+end;
+
+function TTranslationProviderDataModule._Release: Integer;
+begin
+  Result := TInterlocked.Decrement(FRefCount);
+  if (Result = 0) then
+    Free;
 end;
 
 // -----------------------------------------------------------------------------

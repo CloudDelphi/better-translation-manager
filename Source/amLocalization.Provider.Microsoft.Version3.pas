@@ -30,25 +30,21 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TTranslationProviderMicrosoftV3 = class(TDataModule, IUnknown, ITranslationProvider, ITranslationProviderMicrosoftV3)
+  TDataModule = TTranslationProviderDataModule;
+
+type
+  TTranslationProviderMicrosoftV3 = class(TDataModule, ITranslationProviderMicrosoftV3)
     RESTRequestTranslate: TRESTRequest;
     RESTResponseResult: TRESTResponse;
     RESTClient: TRESTClient;
     RESTRequestLanguages: TRESTRequest;
     RESTRequestValidateAPIKey: TRESTRequest;
   private
-    FRefCount: integer;
   protected
-    // IInterface
-    function QueryInterface(const IID: TGUID; out Obj): HResult; override; stdcall;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
-
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
-    procedure EndLookup;
-    function GetProviderName: string;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; override;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; override;
+    function GetProviderName: string; override;
 
     // ITranslationProviderMicrosoftV3
     function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
@@ -83,28 +79,6 @@ resourcestring
 // TTranslationProviderMicrosoftV3
 //
 // -----------------------------------------------------------------------------
-function TTranslationProviderMicrosoftV3._AddRef: Integer;
-begin
-  Result := TInterlocked.Increment(FRefCount);
-end;
-
-function TTranslationProviderMicrosoftV3._Release: Integer;
-begin
-  Result := TInterlocked.Decrement(FRefCount);
-  if (Result = 0) then
-    Free;
-end;
-
-function TTranslationProviderMicrosoftV3.QueryInterface(const IID: TGUID; out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then
-    Result := S_OK
-  else
-    Result := E_NOINTERFACE;
-end;
-
-// -----------------------------------------------------------------------------
-
 function TTranslationProviderMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
 resourcestring
   sPrompMicrosoftV3APIKey = 'You must register an API key before the Microsoft Translator v3 service can be used.';
@@ -117,11 +91,6 @@ begin
     RESTClient.Params[0].Value := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey;
 
   Result := True;
-end;
-
-procedure TTranslationProviderMicrosoftV3.EndLookup;
-begin
-//
 end;
 
 function TTranslationProviderMicrosoftV3.GetProviderName: string;

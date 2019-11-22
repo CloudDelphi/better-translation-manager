@@ -117,6 +117,7 @@ type
     class var FPrimaryProvider: ITranslationMemory;
   private
     class constructor Create;
+    class destructor Destroy;
   public
     class property PrimaryProvider: ITranslationMemory read FPrimaryProvider;
   end;
@@ -143,6 +144,11 @@ uses
 class constructor TranslationMemory.Create;
 begin
   FPrimaryProvider := TDataModuleTranslationMemory.Create(nil);
+end;
+
+class destructor TranslationMemory.Destroy;
+begin
+  FPrimaryProvider := nil;
 end;
 
 end.

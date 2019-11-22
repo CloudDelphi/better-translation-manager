@@ -35,7 +35,10 @@ uses
 //
 // -----------------------------------------------------------------------------
 type
-  TDataModuleTranslationMemory = class(TDataModule, ITranslationProvider, ITranslationMemory)
+  TDataModule = TTranslationProviderDataModule;
+
+type
+  TDataModuleTranslationMemory = class(TDataModule, ITranslationMemory)
     DataSourceTranslationMemory: TDataSource;
     TableTranslationMemory: TFDMemTable;
     procedure TableTranslationMemoryAfterModify(DataSet: TDataSet);
@@ -47,7 +50,8 @@ type
     FRefreshEvent: TEvent;
     FProviderHandle: integer;
   private
-    function FindField(LocaleItem: TLocaleItem): TField;
+    function FindField(LocaleItem: TLocaleItem): TField; overload;
+    class function FindField(DataSet: TDataSet; LocaleItem: TLocaleItem): TField; overload;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
@@ -105,10 +109,10 @@ type
     property Enabled: boolean read GetEnabled write SetEnabled;
   protected
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
-    procedure EndLookup;
-    function GetProviderName: string;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; override;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; override;
+    procedure EndLookup; override;
+    function GetProviderName: string; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -171,19 +175,19 @@ type
     function Lookup(const Value: string): TTranslationMemoryRecordList;
     function GetValues: TArray<string>;
   public
-    constructor Create(AField: TField; const Progress: IProgress = nil); overload;
-    constructor Create(AField: TField; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil); overload;
+    constructor Create(DataSet: TDataSet; Language: TLocaleItem; const Progress: IProgress = nil); overload;
+    constructor Create(DataSet: TDataSet; Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil); overload;
     destructor Destroy; override;
   end;
 
-constructor TTranslationMemoryLookup.Create(AField: TField; const Progress: IProgress);
+constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLocaleItem; const Progress: IProgress);
 begin
-  Create(AField, TranslationManagerSettings.Editor.SanitizeRules, Progress);
+  Create(DataSet, Language, TranslationManagerSettings.Editor.SanitizeRules, Progress);
 end;
 
-constructor TTranslationMemoryLookup.Create(AField: TField; SanitizeRules: TSanitizeRules; const Progress: IProgress);
+constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress);
 var
-  DataSet: TDataSet;
+  Field: TField;
   Clone: TFDMemTable;
   Value: string;
   List: TTranslationMemoryRecordList;
@@ -191,10 +195,6 @@ begin
   inherited Create;
 
   FLookupIndex := TTranslationMemoryLookupIndex.Create([doOwnsValues], TTextComparer.Create);
-  if (AField = nil) then
-    Exit;
-
-  DataSet := AField.DataSet;
 
   if (Progress <> nil) then
     Progress.Progress(psBegin, 0, DataSet.RecordCount);
@@ -203,6 +203,10 @@ begin
   try
     Clone.CloneCursor(DataSet as TFDDataSet);
 
+    Field := TDataModuleTranslationMemory.FindField(Clone, Language);
+    if (Field = nil) then
+      Exit;
+
     Clone.First;
 
     while (not Clone.EOF) do
@@ -210,9 +214,9 @@ begin
       if (Progress <> nil) then
         Progress.AdvanceProgress;
 
-      if (not AField.IsNull) then
+      if (not Field.IsNull) then
       begin
-        Value := SanitizeText(AField.AsString, SanitizeRules);
+        Value := SanitizeText(Field.AsString, SanitizeRules);
 
         if (not FLookupIndex.TryGetValue(Value, List)) then
         begin
@@ -653,7 +657,7 @@ begin
   if (Field = nil) then
     Exit(nil);
 
-  Result := TTranslationMemoryLookup.Create(Field, SanitizeKinds, Progress);
+  Result := TTranslationMemoryLookup.Create(TableTranslationMemory, Language, SanitizeKinds, Progress);
 end;
 
 // -----------------------------------------------------------------------------
@@ -768,12 +772,17 @@ end;
 // -----------------------------------------------------------------------------
 
 function TDataModuleTranslationMemory.FindField(LocaleItem: TLocaleItem): TField;
+begin
+  Result := FindField(TableTranslationMemory, LocaleItem);
+end;
+
+class function TDataModuleTranslationMemory.FindField(DataSet: TDataSet; LocaleItem: TLocaleItem): TField;
 var
   i: integer;
 begin
-  for i := 0 to TableTranslationMemory.FieldCount-1 do
-    if (AnsiSameText(LocaleItem.LocaleName, TableTranslationMemory.Fields[i].FieldName)) then
-      Exit(TableTranslationMemory.Fields[i]);
+  for i := 0 to DataSet.FieldCount-1 do
+    if (AnsiSameText(LocaleItem.LocaleName, DataSet.Fields[i].FieldName)) then
+      Exit(DataSet.Fields[i]);
   Result := nil;
 end;
 
