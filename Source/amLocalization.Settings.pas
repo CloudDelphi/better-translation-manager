@@ -1142,7 +1142,7 @@ procedure TTranslationManagerEditorSettings.ApplyDefault;
 begin
   inherited;
 
-  FEqualizerRules := [Low(TMakeAlikeRule)..High(TMakeAlikeRule)];
+  FEqualizerRules := [Low(TMakeAlikeRule)..High(TMakeAlikeRule)]-[EqualizeSpace];
   FSanitizeRules := [Low(TSanitizeRule)..High(TSanitizeRule)]-[skFormat];
 end;
 

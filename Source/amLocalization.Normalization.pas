@@ -62,12 +62,16 @@ type
     EqualizeCase,               // Equalize text case
     EqualizeAccelerators,       // Add or remove accelerators, escape & if accelerators are used
     EqualizeEnding,             // Equalize line endings
-    EqualizeSurround            // Equalize surround pairs
+    EqualizeSurround,           // Equalize surround pairs
+    EqualizeSpace               // Equalize leading and trailing space (never auto applied)
   );
   TMakeAlikeRules = set of TMakeAlikeRule;
 
 function MakeAlike(const SourceValue, Value: string): string; overload;
 function MakeAlike(const SourceValue, Value: string; Rules: TMakeAlikeRules): string; overload;
+
+function EqualizeLeadingSpace(const Source, Target: string): string;
+function EqualizeTrailingSpace(const Source, Target: string): string;
 
 
 // -----------------------------------------------------------------------------
@@ -574,6 +578,54 @@ end;
 
 // -----------------------------------------------------------------------------
 
+function EqualizeLeadingSpace(const Source, Target: string): string;
+var
+  i, CountSource, CountTarget: integer;
+begin
+  Result := Target;
+  i := 1;
+  CountSource := 0;
+  CountTarget := 0;
+  while ((i <= Length(Source)) and (Source[i] = ' ')) or ((i <= Length(Result)) and (Result[i] = ' ')) do
+  begin
+    if ((i <= Length(Source)) and (Source[i] = ' ')) then
+      Inc(CountSource);
+    if ((i <= Length(Result)) and (Result[i] = ' ')) then
+      Inc(CountTarget);
+    Inc(i);
+  end;
+  if (CountSource > CountTarget) then
+    Result := StringOfChar(' ', CountSource-CountTarget) + Result
+  else
+  if (CountSource < CountTarget) then
+    Delete(Result, 1, CountTarget-CountSource);
+end;
+
+function EqualizeTrailingSpace(const Source, Target: string): string;
+var
+  i, CountSource, CountTarget: integer;
+begin
+  Result := Target;
+  i := 0;
+  CountSource := 0;
+  CountTarget := 0;
+  while ((i < Length(Source)) and (Source[Length(Source)-i] = ' ')) or ((i < Length(Result)) and (Result[Length(Result)-i] = ' ')) do
+  begin
+    if ((i < Length(Source)) and (Source[Length(Source)-i] = ' ')) then
+      Inc(CountSource);
+    if ((i < Length(Result)) and (Result[Length(Result)-i] = ' ')) then
+      Inc(CountTarget);
+    Inc(i);
+  end;
+  if (CountSource > CountTarget) then
+    Result := Result + StringOfChar(' ', CountSource-CountTarget)
+  else
+  if (CountSource < CountTarget) then
+    SetLength(Result, Length(Result)-(CountTarget-CountSource));
+end;
+
+// -----------------------------------------------------------------------------
+
 function MakeAlike(const SourceValue, Value: string): string; overload;
 begin
   Result := MakeAlike(SourceValue, Value, TranslationManagerSettings.Editor.EqualizerRules);
@@ -656,6 +708,12 @@ begin
           Result := SurroundPair.StartSurround + Result + SurroundPair.EndSurround;
         break;
       end;
+  end;
+
+  if (EqualizeSpace in Rules) then
+  begin
+    Result := EqualizeLeadingSpace(SourceValue, Result);
+    Result := EqualizeTrailingSpace(SourceValue, Result);
   end;
 
   if (EqualizeCase in Rules) then
