@@ -1494,7 +1494,7 @@ begin
       begin
         if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
         begin
-          DuplicateAction := FTranslationMemory.Add(SourceLanguageID, Prop.Value, TargetLanguageID, Prop.TranslatedValue[TranslationLanguage], OneStats, DuplicateAction);
+          DuplicateAction := FTranslationMemory.Add(SourceLanguage, Prop.Value, TargetLanguage, Prop.TranslatedValue[TranslationLanguage], OneStats, DuplicateAction);
 
           Inc(Stats.Added, OneStats.Added);
           Inc(Stats.Merged, OneStats.Merged);
@@ -3917,7 +3917,6 @@ var
   EqualizeRules: TMakeAlikeRules;
   Translation: TLocalizerTranslation;
   SourceValue, Value: string;
-  i, CountSource, CountTarget: integer;
 begin
   Translation := FocusedProperty.Translations[TranslationLanguage];
   Warnings := Translation.Warnings;
@@ -3943,43 +3942,10 @@ begin
     Value := MakeAlike(SourceValue, Value, EqualizeRules);
 
   if (tWarningLeadSpace in RemainingWarnings) then
-  begin
-    i := 1;
-    CountSource := 0;
-    CountTarget := 0;
-    while ((i <= Length(SourceValue)) and (SourceValue[i] = ' ')) or ((i <= Length(Value)) and (Value[i] = ' ')) do
-    begin
-      if ((i <= Length(SourceValue)) and (SourceValue[i] = ' ')) then
-        Inc(CountSource);
-      if ((i <= Length(Value)) and (Value[i] = ' ')) then
-        Inc(CountTarget);
-      Inc(i);
-    end;
-    if (CountSource > CountTarget) then
-      Value := StringOfChar(' ', CountSource-CountTarget) + Value
-    else
-    if (CountSource < CountTarget) then
-      Delete(Value, 1, CountTarget-CountSource);
-  end;
+    Value := EqualizeLeadingSpace(SourceValue, Value);
+
   if (tWarningTrailSpace in RemainingWarnings) then
-  begin
-    i := 0;
-    CountSource := 0;
-    CountTarget := 0;
-    while ((i < Length(SourceValue)) and (SourceValue[Length(SourceValue)-i] = ' ')) or ((i < Length(Value)) and (Value[Length(Value)-i] = ' ')) do
-    begin
-      if ((i < Length(SourceValue)) and (SourceValue[Length(SourceValue)-i] = ' ')) then
-        Inc(CountSource);
-      if ((i < Length(Value)) and (Value[Length(Value)-i] = ' ')) then
-        Inc(CountTarget);
-      Inc(i);
-    end;
-    if (CountSource > CountTarget) then
-      Value := Value + StringOfChar(' ', CountSource-CountTarget)
-    else
-    if (CountSource < CountTarget) then
-      SetLength(Value, Length(Value)-(CountTarget-CountSource));
-  end;
+    Value := EqualizeTrailingSpace(SourceValue, Value);
 
   Translation.Value := Value;
   ReloadNode(FocusedNode);
@@ -6332,11 +6298,10 @@ end;
 procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
 var
   SourceValue: string;
-  Translations: TStringList;
   Button: TcxEditButton;
   PropertyList: TLocalizerPropertyList;
   Prop: TLocalizerProperty;
-  s: string;
+  LookupResult: TTranslationLookupResult;
 {$ifdef DEBUG}
   StopWatch: TStopWatch;
 {$endif DEBUG}
@@ -6366,45 +6331,41 @@ begin
 
   SourceValue := FocusedProperty.Value;
 
-  Translations := TStringList.Create;
+  LookupResult := TTranslationLookupResult.Create;
   try
-    Translations.CaseSensitive := False;
-    Translations.Duplicates := dupIgnore;
-    Translations.Sorted := True;
 
     PropertyList := FProjectIndex.Lookup(FocusedProperty);
 
+    // Add existing translations
     if (PropertyList <> nil) then
     begin
       for Prop in PropertyList do
         if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
-        begin
-          s := Prop.TranslatedValue[TranslationLanguage];
-          if (Prop.Value <> SourceValue) then
-            s := MakeAlike(SourceValue, s);
-          Translations.Add(s);
-        end;
+          LookupResult.Add(Prop.Value, Prop.TranslatedValue[TranslationLanguage]);
     end;
 
-    // Maybe too slow
+    // Add translations from TM
     if (TTranslationMemoryPeekResult(TreeListItems.FocusedNode.Data) = TTranslationMemoryPeekResult.prFound) then
-      FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, Translations);
+      FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, LookupResult);
 
-    // Translations.Sorted := False; // Work around for DevExpress TcxMRUEdit bug
-    TcxCustomComboBox(AEdit).Properties.Items.Assign(Translations);
+    // Rank by source value similarity
+    LookupResult.RankTranslations(FocusedProperty.Value);
 
-    // Display dropdown button if there are any translations
-    ActionTranslationSuggestionList.Visible := (Translations.Count > 0);
-    TcxCustomComboBox(AEdit).Properties.Buttons[0].Action := ActionTranslationSuggestionList;
+    LookupResult.AddToStrings(TcxCustomComboBox(AEdit).Properties.Items);
 
-    if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
-    begin
-      Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
-      Button.Action := ActionTranslationEditText;
-      Button.Kind := bkEllipsis;
-    end;
   finally
-    Translations.Free;
+    LookupResult.Free;
+  end;
+
+  // Display dropdown button if there are any translations
+  ActionTranslationSuggestionList.Visible := (TcxCustomComboBox(AEdit).Properties.Items.Count > 0);
+  TcxCustomComboBox(AEdit).Properties.Buttons[0].Action := ActionTranslationSuggestionList;
+
+  if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
+  begin
+    Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
+    Button.Action := ActionTranslationEditText;
+    Button.Kind := bkEllipsis;
   end;
 
 {$ifdef DEBUG}

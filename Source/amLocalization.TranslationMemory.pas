@@ -85,8 +85,7 @@ type
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(const Filename: string);
 
-    function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
-    function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    function Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
@@ -96,6 +95,7 @@ type
     function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
     function GetEnabled: boolean;
     procedure SetEnabled(const Value: boolean);

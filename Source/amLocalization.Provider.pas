@@ -121,10 +121,41 @@ type
     function GetProviderName: string; virtual; abstract;
   end;
 
+
+// -----------------------------------------------------------------------------
+//
+// TTranslationLookupResult
+//
+// -----------------------------------------------------------------------------
+// Translation lookup result container.
+// -----------------------------------------------------------------------------
+type
+  TTranslationLookupResult = class
+  strict private type
+    TTranslation = record
+      SourceValue: string;
+      TargetValue: string;
+    end;
+  strict private
+    FItems: TList<TTranslation>;
+  public
+    constructor Create(ACapacity: integer = 0);
+    destructor Destroy; override;
+
+    procedure Add(const SourceValue, TargetValue: string);
+
+    procedure RankTranslations(const SourceValue: string);
+
+    procedure AddToStrings(Strings: TStrings);
+  end;
+
+
 // -----------------------------------------------------------------------------
 //
 // CreateTranslationService
 //
+// -----------------------------------------------------------------------------
+// Translation provider factory.
 // -----------------------------------------------------------------------------
 function CreateTranslationService(const ATranslationProvider: ITranslationProvider): ITranslationService;
 
@@ -140,6 +171,8 @@ uses
   StrUtils,
   SyncObjs,
   System.Character,
+  amLocalization.Settings,
+  amLocalization.Normalization,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
 
 type
@@ -369,6 +402,147 @@ begin
   Result := TInterlocked.Decrement(FRefCount);
   if (Result = 0) then
     Free;
+end;
+
+
+// -----------------------------------------------------------------------------
+//
+// TTranslationLookupResult
+//
+// -----------------------------------------------------------------------------
+constructor TTranslationLookupResult.Create(ACapacity: integer);
+begin
+  inherited Create;
+
+  FItems := TList<TTranslation>.Create;
+  FItems.Capacity := ACapacity;
+end;
+
+destructor TTranslationLookupResult.Destroy;
+begin
+  FItems.Free;
+  inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TTranslationLookupResult.Add(const SourceValue, TargetValue: string);
+var
+  Translation: TTranslation;
+begin
+  Translation.SourceValue := SourceValue;
+  Translation.TargetValue := TargetValue;
+  FItems.Add(Translation);
+end;
+
+procedure TTranslationLookupResult.AddToStrings(Strings: TStrings);
+var
+  i: integer;
+begin
+  for i := 0 to FItems.Count-1 do
+    Strings.Add(FItems[i].TargetValue);
+end;
+
+procedure TTranslationLookupResult.RankTranslations(const SourceValue: string);
+var
+  i, j: integer;
+  DoneCount: integer;
+  Translation: TTranslation;
+begin
+  DoneCount := 0;
+  // Exact match
+  i := FItems.Count-1;
+  while (i >= DoneCount) do
+  begin
+    if (FItems[i].SourceValue = SourceValue) then
+    begin
+      FItems.Move(i, DoneCount);
+      Inc(DoneCount);
+    end else
+      Dec(i);
+  end;
+  // Just case mismatch
+  i := FItems.Count-1;
+  while (i >= DoneCount) do
+  begin
+    if (AnsiSameText(FItems[i].SourceValue, SourceValue)) then
+    begin
+      if (EqualizeCase in TranslationManagerSettings.Editor.EqualizerRules) then
+      begin
+        Translation := FItems[i];
+        Translation.TargetValue := MakeAlike(SourceValue, Translation.TargetValue, [EqualizeCase]);
+        FItems[i] := Translation;
+      end;
+
+      FItems.Move(i, DoneCount);
+      Inc(DoneCount);
+    end else
+      Dec(i);
+  end;
+  // Just case and/or space mismatch
+  i := FItems.Count-1;
+  while (i >= DoneCount) do
+  begin
+    if (AnsiSameText(FItems[i].SourceValue.Trim, SourceValue.Trim)) then
+    begin
+      if (EqualizeCase in TranslationManagerSettings.Editor.EqualizerRules) then
+      begin
+        Translation := FItems[i];
+        Translation.TargetValue := MakeAlike(SourceValue, Translation.TargetValue, [EqualizeCase, EqualizeSpace]);
+        FItems[i] := Translation;
+      end;
+
+      FItems.Move(i, DoneCount);
+      Inc(DoneCount);
+    end else
+      Dec(i);
+  end;
+  // Both have Format() specifiers
+  i := FItems.Count-1;
+  while (i >= DoneCount) do
+  begin
+    if (SanitizeText(FItems[i].SourceValue, [skFormat]) <> FItems[i].SourceValue) and (SanitizeText(SourceValue, [skFormat]) <> SourceValue) then
+    begin
+      Translation := FItems[i];
+      Translation.TargetValue := MakeAlike(SourceValue, Translation.TargetValue);
+      FItems[i] := Translation;
+
+      FItems.Move(i, DoneCount);
+      Inc(DoneCount);
+    end else
+      Dec(i);
+  end;
+  // Both have accelerators
+  i := FItems.Count-1;
+  while (i >= DoneCount) do
+  begin
+    if (HasAccelerator(FItems[i].SourceValue)) and (HasAccelerator(SourceValue)) then
+    begin
+      Translation := FItems[i];
+      Translation.TargetValue := MakeAlike(SourceValue, Translation.TargetValue);
+      FItems[i] := Translation;
+
+      FItems.Move(i, DoneCount);
+      Inc(DoneCount);
+    end else
+      Dec(i);
+  end;
+  // Just equalize the rest
+  for i := FItems.Count-1 downto DoneCount do
+  begin
+    Translation := FItems[i];
+    Translation.TargetValue := MakeAlike(SourceValue, Translation.TargetValue);
+    FItems[i] := Translation;
+  end;
+
+  // Eliminate duplicate target values
+  for i := FItems.Count-1 downto 0 do
+    for j := i-1 downto 0 do
+      if (FItems[i].TargetValue = FItems[j].TargetValue) then
+      begin
+        FItems.Delete(i);
+        break;
+      end;
 end;
 
 // -----------------------------------------------------------------------------

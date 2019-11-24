@@ -46,6 +46,7 @@ type
     FLoaded: boolean;
     FEnabled: boolean;
     FLookupIndex: ITranslationMemoryLookup;
+    FLookupLanguage: TLocaleItem;
     FModified: boolean;
     FRefreshEvent: TEvent;
     FProviderHandle: integer;
@@ -55,9 +56,8 @@ type
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
-    function FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean; overload;
-    procedure AddMatch(Translations: TStrings; Prop: TLocalizerProperty; const SourceValue, TargetValue: string);
     function CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup; overload;
+    function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
   protected
     // Threaded lookup
     type TPopulateDictionaryCallback = reference to procedure(var Continue: boolean);
@@ -83,8 +83,7 @@ type
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(const Filename: string);
 
-    function Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
-    function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    function Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
 
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
@@ -94,6 +93,7 @@ type
     function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
     function GetEnabled: boolean;
     procedure SetEnabled(const Value: boolean);
@@ -529,6 +529,8 @@ end;
 destructor TDataModuleTranslationMemory.Destroy;
 begin
   FLookupIndex := nil;
+  FLookupLanguage := nil;
+
   TranslationProviderRegistry.UnregisterProvider(FProviderHandle);
 
   FRefreshEvent.Free;
@@ -1142,9 +1144,8 @@ begin
   end;
 end;
 
-function TDataModuleTranslationMemory.Add(SourceLanguage: Word; const SourceValue: string; TargetLanguage: Word; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction;
+function TDataModuleTranslationMemory.Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction;
 var
-  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
   SourceField: TField;
   TargetField: TField;
   Clone: TFDMemTable;
@@ -1155,38 +1156,38 @@ begin
   if (SourceLanguage = TargetLanguage) then
     Exit;
 
+  Assert(SourceLanguage <> nil);
+  Assert(TargetLanguage <> nil);
+
   if (not CheckLoaded) then
     Exit;
 
-  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguage);
-  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguage);
-  Assert(SourceLocaleItem <> nil);
-  Assert(TargetLocaleItem <> nil);
-
-  SourceField := FindField(SourceLocaleItem);
-  TargetField := FindField(TargetLocaleItem);
+  SourceField := FindField(SourceLanguage);
+  TargetField := FindField(TargetLanguage);
 
   TableTranslationMemory.DisableControls;
   try
     // If either the source- or target languages doesn't exist in the dataset then we
     // will need to add them.
-    // We save a copy of the dataset, close the original dataset, add the field(s) and
-    // the restore the dataset from the copy.
     if (SourceField = nil) or (TargetField = nil) then
     begin
       Clone := TFDMemTable.Create(nil);
       try
         Lock;
         try
+          (*
+          ** Save a copy of the dataset, close the original dataset, add the field(s) and
+          ** then restore the dataset from the copy.
+          *)
           if (TableTranslationMemory.Fields.Count > 0) then
             Clone.CopyDataSet(TableTranslationMemory, [coStructure, coRestart, coAppend]);
 
           TableTranslationMemory.Close;
 
           if (SourceField = nil) then
-            SourceField := CreateField(SourceLocaleItem);
+            SourceField := CreateField(SourceLanguage);
           if (TargetField = nil) then
-            TargetField := CreateField(TargetLocaleItem);
+            TargetField := CreateField(TargetLanguage);
 
           TableTranslationMemory.Open;
 
@@ -1579,80 +1580,11 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; TargetField: TField; Translations: TStrings): boolean;
-var
-  List: TTranslationMemoryRecordList;
-  RecordIndex: integer;
-  SourceValue, TargetValue: string;
-begin
-  Result := False;
-
-  if (not HasData) then
-    Exit;
-
-  Assert(FLookupIndex <> nil);
-
-  SourceValue := SanitizeText(Prop.Value);
-
-  List := FLookupIndex.Lookup(SourceValue);
-  if (List = nil) then
-    Exit;
-
-  for RecordIndex in List do
-  begin
-    TableTranslationMemory.RecNo := RecordIndex;
-
-    TargetValue := TargetField.AsString;
-
-    if (TargetValue.IsEmpty) then
-      continue;
-
-    AddMatch(Translations, Prop, SourceValue, TargetValue);
-    Result := True;
-  end;
-end;
-
-procedure TDataModuleTranslationMemory.AddMatch(Translations: TStrings; Prop: TLocalizerProperty; const SourceValue, TargetValue: string);
-var
-  Value: string;
-  n: integer;
-begin
-  // We can't really assume anything with regards to fidelity on a TM but the hope is
-  // that at least the case is correct.
-  // To make sure we add an extra match where we have made sure the case is correct.
-
-  if (Prop.Value = SourceValue) then
-  begin
-    // Don't mess with case on an exact match.
-    Value := MakeAlike(Prop.Value, TargetValue, TranslationManagerSettings.Editor.EqualizerRules-[EqualizeCase]);
-
-    // Exact match - Insert in front
-    if (Translations.Count > 0) and not((Translations is TStringList) and (TStringList(Translations).Sorted)) then
-    begin
-      n := Translations.IndexOf(Value);
-      if (n = -1) then
-        Translations.Insert(0, Value)
-      else
-        Translations.Move(n, 0);
-    end else
-      Translations.Add(Value);
-
-    // Fix case. This is safe since we will ignore duplicates below.
-    Value := MakeAlike(Prop.Value, Value, [EqualizeCase]);
-  end else
-    Value := MakeAlike(Prop.Value, TargetValue);
-
-  // Inefficient due to sequential scan, but we need to maintain returned order
-  if (Translations.IndexOf(Value) = -1) then
-    Translations.Add(Value);
-end;
-
-function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean;
 var
   SourceField: TField;
   TargetField: TField;
   SourceValue: string;
-  TargetValue: string;
 begin
   if (not CheckLoaded) then
     Exit(False);
@@ -1671,7 +1603,7 @@ begin
   SourceValue := SanitizeText(Prop.Value);
   Result := False;
 
-  // Create list of matching target terms
+  // Populate list of matching target terms
   TableTranslationMemory.First;
 
   while (not TableTranslationMemory.EOF) do
@@ -1680,10 +1612,8 @@ begin
     begin
       if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString))) then
       begin
-        TargetValue := TargetField.AsString;
-
         // Match found
-        AddMatch(Translations, Prop, SourceValue, TargetValue);
+        LookupResult.Add(SourceField.AsString, TargetField.AsString);
         Result := True;
       end;
     end;
@@ -1692,11 +1622,44 @@ begin
   end;
 end;
 
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+var
+  LookupResult: TTranslationLookupResult;
+begin
+  if (not CheckLoaded) then
+    Exit(False);
+
+  // Do nothing if there is no data but pretend everything is OK so the user gets normal feedback
+  if (not HasData) then
+    Exit(True);
+
+  LookupResult := TTranslationLookupResult.Create;
+  try
+
+    Result := FindTranslations(Prop, SourceLanguage, TargetLanguage, LookupResult);
+
+    if (not Result) then
+      Exit;
+
+    // Rank by source value similarity
+    LookupResult.RankTranslations(Prop.Value);
+
+    LookupResult.AddToStrings(Translations);
+
+  finally
+    LookupResult.Free;
+  end;
+end;
+
 // -----------------------------------------------------------------------------
 
 function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
 var
-  TargetField: TField;
+  SourceField, TargetField: TField;
+  List: TTranslationMemoryRecordList;
+  RecordIndex: integer;
+  SourceValue, TargetValue: string;
+  LookupResult: TTranslationLookupResult;
 begin
   Result := False;
 
@@ -1706,12 +1669,47 @@ begin
   if (not HasData) then
     Exit;
 
+  SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
-  if (TargetField = nil) then
+  if (SourceField = nil) or (TargetField = nil) then
     Exit;
 
-  Result := FindTranslations(Prop, TargetField, Translations);
+  Assert(FLookupIndex <> nil);
+  Assert(FLookupLanguage = SourceLanguage);
+
+  SourceValue := SanitizeText(Prop.Value);
+
+  List := FLookupIndex.Lookup(SourceValue);
+  if (List = nil) then
+    Exit;
+
+  LookupResult := TTranslationLookupResult.Create(List.Count);
+  try
+
+    for RecordIndex in List do
+    begin
+      TableTranslationMemory.RecNo := RecordIndex;
+
+      TargetValue := TargetField.AsString;
+      if (TargetValue.IsEmpty) then
+        continue;
+
+      SourceValue := SourceField.AsString;
+
+      LookupResult.Add(SourceValue, TargetValue);
+
+      Result := True;
+    end;
+
+    // Rank by source value similarity
+    LookupResult.RankTranslations(Prop.Value);
+
+    LookupResult.AddToStrings(Translations);
+
+  finally
+    LookupResult.Free;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1787,6 +1785,7 @@ var
   TargetField: TField;
 begin
   FLookupIndex := nil;
+  FLookupLanguage := nil;
 
   if (not CheckLoaded) then
     Exit(False);
@@ -1806,6 +1805,7 @@ begin
     Exit(False);
 
   FLookupIndex := CreateLookup(SourceLanguage);
+  FLookupLanguage := SourceLanguage;
 
   Result := True;
 end;
@@ -1813,6 +1813,7 @@ end;
 procedure TDataModuleTranslationMemory.EndLookup;
 begin
   FLookupIndex := nil;
+  FLookupLanguage := nil;
 end;
 
 // -----------------------------------------------------------------------------
