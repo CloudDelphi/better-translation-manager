@@ -150,7 +150,8 @@ uses
   amFileUtils,
   amPath,
   amLocalization.Settings,
-  amLocalization.Environment;
+  amLocalization.Environment,
+  amLocalization.Provider.TranslationMemory;
 
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
@@ -542,7 +543,7 @@ end;
 
 function TDataModuleTranslationMemory.GetProviderName: string;
 begin
-  Result := '';
+  Result := sProviderNameTM;
 end;
 
 // -----------------------------------------------------------------------------

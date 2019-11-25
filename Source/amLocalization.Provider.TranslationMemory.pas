@@ -39,6 +39,8 @@ type
     destructor Destroy; override;
   end;
 
+resourcestring
+  sProviderNameTM = 'Translation Memory';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -46,9 +48,6 @@ type
 
 
 implementation
-
-resourcestring
-  sProviderNameTM = 'Translation Memory';
 
 // -----------------------------------------------------------------------------
 //
