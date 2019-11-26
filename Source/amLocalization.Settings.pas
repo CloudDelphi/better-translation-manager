@@ -10,6 +10,8 @@
 
 interface
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 // -----------------------------------------------------------------------------
 //
 // This unit contains settings related stuff.
@@ -26,6 +28,7 @@ uses
   dxSpellChecker,
   cxCustomData,
   amRegConfig,
+  amFileUtils,
   amLocalization.ResourceWriter,
   amLocalization.Filters,
   amLocalization.Normalization;
@@ -124,11 +127,22 @@ type
       True,
       False
       );
+    sSkinFolder = 'Skins\';
+    sSpellCheckFolder = 'Dictionaries\';
+    sFolderDefault: array[TTranslationManagerFolder] of string = (
+      '%DATA%\',
+      '%DOCUMENTS%\',
+      '%INSTALL%\' + sSkinFolder,
+      '%DATA%\' + sSkinFolder,
+      '%INSTALL%\' + sSpellCheckFolder,
+      '%DATA%\' + sSpellCheckFolder
+      );
   private
     function GetFolder(Index: TTranslationManagerFolder): string;
     procedure SetFolder(Index: TTranslationManagerFolder; const Value: string);
     function GetFolderName(Index: TTranslationManagerFolder): string;
     function GetFolderReadOnly(Index: TTranslationManagerFolder): boolean;
+    function GetFolderDefault(Index: TTranslationManagerFolder): string;
   protected
     procedure ApplyDefault; override;
     procedure ReadSection(const Key: string); override;
@@ -139,9 +153,12 @@ type
 
     procedure ResetSettings;
 
-    property Folder[Index: TTranslationManagerFolder]: string read GetFolder write SetFolder;
+    function ValidateFolders: boolean;
+
+    property Folder[Index: TTranslationManagerFolder]: string read GetFolder write SetFolder; default;
     property FolderName[Index: TTranslationManagerFolder]: string read GetFolderName;
     property FolderReadOnly[Index: TTranslationManagerFolder]: boolean read GetFolderReadOnly;
+    property FolderDefault[Index: TTranslationManagerFolder]: string read GetFolderDefault;
   published
     property Valid: boolean read FValid write FValid default False;
 
@@ -494,6 +511,7 @@ uses
   Types,
   cxPropertiesStore,
   amVersionInfo,
+  amLocalization.Environment,
   amLocalization.TranslationMemory.Data;
 
 //------------------------------------------------------------------------------
@@ -610,19 +628,13 @@ end;
 //
 //------------------------------------------------------------------------------
 procedure TTranslationManagerFolderSettings.ApplyDefault;
-const
-  sSkinFolder = 'Skins\';
-  sSpellCheckFolder = 'Dictionaries\';
+var
+  Folder: TTranslationManagerFolder;
 begin
   inherited;
 
-  FolderDocuments := '%DOCUMENTS%\';
-  FolderAppData := '%DATA%\';
-
-  FolderSkins := '%INSTALL%\' + sSkinFolder;
-  FolderUserSkins := FolderAppData + sSkinFolder;
-  FolderSpellCheck := '%INSTALL%\' + sSpellCheckFolder;
-  FolderUserSpellCheck := FolderAppData + sSpellCheckFolder;
+  for Folder := Low(TTranslationManagerFolder) to High(TTranslationManagerFolder) do
+    FFolders[Folder] := FolderDefault[Folder];
 end;
 
 constructor TTranslationManagerFolderSettings.Create(AOwner: TConfigurationSection);
@@ -685,6 +697,34 @@ procedure TTranslationManagerFolderSettings.SetFolder(Index: TTranslationManager
 begin
   FFolders[Index] := Value;
 end;
+
+function TTranslationManagerFolderSettings.GetFolderDefault(Index: TTranslationManagerFolder): string;
+begin
+  Result := sFolderDefault[Index];
+end;
+
+function TTranslationManagerFolderSettings.ValidateFolders: boolean;
+var
+  Folder: TTranslationManagerFolder;
+  Path: string;
+begin
+  Result := True;
+
+  for Folder := Low(TTranslationManagerFolder) to High(TTranslationManagerFolder) do
+  begin
+    Path := FFolders[Folder];
+
+    if (CheckDirectory(FolderName[Folder], FolderDefault[Folder], Path, not FolderReadOnly[Folder],
+      function(const Filename: string): string
+      begin
+        Result := EnvironmentVars.ExpandString(Filename);
+      end)) then
+      FFolders[Folder] := Path
+    else
+      Exit(False);
+  end;
+end;
+
 
 //------------------------------------------------------------------------------
 //

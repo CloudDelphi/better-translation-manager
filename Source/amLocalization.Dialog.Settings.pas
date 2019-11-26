@@ -1179,12 +1179,12 @@ var
   i: integer;
 begin
   for i := Low(FolderOrder) to High(FolderOrder) do
-    GridFoldersTableView.DataController.Values[i, 1] := TranslationManagerSettings.Folders.Folder[FolderOrder[i]];
+    GridFoldersTableView.DataController.Values[i, 1] := TranslationManagerSettings.Folders.FolderDefault[FolderOrder[i]];
 end;
 
 procedure TFormSettings.ActionFolderResetExecute(Sender: TObject);
 begin
-  GridFoldersTableView.Controller.FocusedRecord.Values[1] := TranslationManagerSettings.Folders.Folder[FolderOrder[GridFoldersTableView.Controller.FocusedRecord.Index]];
+  GridFoldersTableView.Controller.FocusedRecord.Values[1] := TranslationManagerSettings.Folders.FolderDefault[FolderOrder[GridFoldersTableView.Controller.FocusedRecord.Index]];
 end;
 
 procedure TFormSettings.ActionFolderResetUpdate(Sender: TObject);

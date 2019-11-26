@@ -916,6 +916,7 @@ begin
   ** by TdxCustomRibbonForm.AdjustLayout (called from DoCreate).
   *)
   TranslationManagerSettings.Forms.Main.ApplySettings(Self);
+
   if (TranslationManagerSettings.Forms.Main.Maximized) then
     PostMessage(Handle, MSG_FORM_MAXIMIZE, 0, 0);
 end;
@@ -1017,7 +1018,15 @@ begin
   if (TranslationManagerSettings.System.SafeMode) then
     Caption := Caption + ' [SAFE MODE]';
 
+  // Make sure folders exist and are writable
+  if (not TranslationManagerSettings.Folders.ValidateFolders) then
+  begin
+    Application.Terminate;
+    Exit;
+  end;
+
   ApplySettings;
+  ApplyCustomSettings;
 
   // Load ribbon banner
   LoadBanner;
@@ -1032,7 +1041,6 @@ begin
 
   SaveSettings;
 
-  TDirectory.CreateDirectory(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck));
   SpellChecker.Dictionaries[0].Unload;
 
   Application.OnHint := nil;
@@ -1140,8 +1148,6 @@ begin
   ActionFeedback.Visible := False;
   BarButtonFeedback.Visible := ivNever;
 {$endif MADEXCEPT}
-
-  ApplyCustomSettings;
 end;
 
 procedure TFormMain.ApplyCustomSettings;
@@ -3717,6 +3723,10 @@ begin
 
     ApplyCustomSettings;
 
+
+    // Make sure folders exist and are writable
+    TranslationManagerSettings.Folders.ValidateFolders;
+
     if (FormSettings.RestartRequired) then
     begin
       if (not QueueRestart(True)) then
@@ -4685,11 +4695,9 @@ begin
     // Unload old custom dictionary
     Assert(SpellChecker.Dictionaries[0] is TdxUserSpellCheckerDictionary);
     SpellChecker.Dictionaries[0].Enabled := False;
-    // Make sure folder exist before we save
-    TDirectory.CreateDirectory(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck));
-    SpellChecker.Dictionaries[0].Unload;
+    SpellChecker.Dictionaries[0].Unload; // This saves the custom dictionary
     // Load new custom dictionary
-    TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck)+Format('user-%s.dic', [FTargetLanguage.LanguageShortName]);
+    TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := Format('%suser-%s.dic', [EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck), FTargetLanguage.LanguageShortName]);
     SpellChecker.Dictionaries[0].Enabled := True;
     SpellChecker.Dictionaries[0].Language := FTargetLanguage.Locale;
 
