@@ -691,8 +691,18 @@ begin
     FAbort := True;
     Action := caHide;
   end else
-    // Safe to destroy
-    Action := caFree;
+  begin
+    if (Application.ModalLevel = 0) then
+      // Safe to destroy
+      Action := caFree
+    else
+    begin
+      // Modal dialog is visible - if we close now we will dismiss that dialog (for some strange reason)
+      TimerSplash.Enabled := True;
+      FAbort := True;
+      Action := caHide;
+    end;
+  end;
 end;
 
 //------------------------------------------------------------------------------
