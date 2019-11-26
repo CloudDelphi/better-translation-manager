@@ -33,6 +33,7 @@ WizardSmallImageFile=.\Resources\logo 55x55.bmp
 WizardImageStretch=False
 SolidCompression=True
 VersionInfoVersion={#MyAppVersion}
+AlwaysShowDirOnReadyPage=True
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -42,16 +43,16 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#MyAppSourceFolder}\amTranslationManager.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#MyAppSourceFolder}\amResourceModuleBuilder.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAppSourceFolder}\amResourceModuleBuilder.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: buildtool
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: ".\Files\Dictionaries\*.*"; DestDir: "{app}\Dictionaries"; Components: SpellCheckDictionaries
-Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite; Components: TranslationMemory
-Source: ".\Files\Examples\*.*"; DestDir: "{userdocs}\Translation Examples\"; Flags: recursesubdirs createallsubdirs; Components: Examples
+Source: ".\Files\Dictionaries\*.*"; DestDir: "{app}\Dictionaries"; Components: spellcheck
+Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite; Components: tm
+Source: ".\Files\Examples\*.*"; DestDir: "{userdocs}\Translation Examples\"; Flags: recursesubdirs createallsubdirs; Components: examples
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{group}\Translation Examples"; Filename: "{userdocs}\Translation Examples"; Components: Examples
+Name: "{group}\Translation Examples"; Filename: "{userdocs}\Translation Examples"; Components: examples
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
@@ -60,9 +61,10 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 UseRelativePaths=True
 
 [Components]
-Name: "Examples"; Description: "Examples"; Types: full custom
-Name: "SpellCheckDictionaries"; Description: "Spell Check dictionaries"; Types: full custom
-Name: "TranslationMemory"; Description: "Sample Translation Memory"; Types: full custom
+Name: "examples"; Description: "Examples"; Types: full custom
+Name: "spellcheck"; Description: "Spell Check dictionaries"; Types: full custom
+Name: "tm"; Description: "Sample Translation Memory"; Types: full custom
+Name: "buildtool"; Description: "Command line tool"
 
 [Registry]
 Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: dword; ValueName: "Installed"; ValueData: "1"; Flags: createvalueifdoesntexist uninsdeletevalue
