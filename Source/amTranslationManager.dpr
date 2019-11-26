@@ -370,9 +370,11 @@ begin
   CursorRecall := SaveCursorScoped(crAppStart, True);
 
   Application.CreateForm(TFormMain, FormMain);
+
   // Make sure main form does not activate when it is shown as this would cause the
   // splash to hide itself.
-  ShowWindow(FormMain.Handle, SW_SHOWNA);
+  if (Application.ShowMainForm) then
+    ShowWindow(FormMain.Handle, SW_SHOWNA);
 
   CursorRecall := nil;
 

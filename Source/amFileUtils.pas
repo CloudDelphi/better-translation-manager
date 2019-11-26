@@ -334,7 +334,7 @@ var
   Error: string;
 resourcestring
   sCreateFolderError = 'Unable to create the %s folder:'#13'%s'#13#13'Error: %s';
-  sAccessFolderError = 'Unable to write to the %s folder:'#13'%s'#13#13'Error: %s';
+  sAccessFolderError = 'You do not have write access to the %s folder:'#13'%s'#13#13'Error: %s';
   sAccessFolderReadOnly = 'Folder is read-only';
   sAccessFolderDenied = 'Access Denied';
   sFolderRevert = #13#13'Do you want to revert to the default location?';
@@ -359,7 +359,12 @@ begin
         if (not ForceDirectories(Path)) then
           // We allow system folders to not exist since we don't need to write to them.
           if (TestWritable) then
-            RaiseLastOSError;
+          begin
+            // If the directory exist but we do not have access rights to it, then TDirectory.Exists will
+            // return False and CreateDir will fail with the error ERROR_ALREADY_EXISTS.
+            if (GetLastError <> ERROR_ALREADY_EXISTS) then
+              RaiseLastOSError;
+          end;
 
         break;
 

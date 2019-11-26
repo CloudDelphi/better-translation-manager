@@ -315,6 +315,7 @@ type
     dxBarButton8: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
     procedure TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
     procedure TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
@@ -398,7 +399,6 @@ type
     procedure ActionImportFileTargetUpdate(Sender: TObject);
     procedure BarEditItemTargetLanguageEnter(Sender: TObject);
     procedure BarEditItemTargetLanguageExit(Sender: TObject);
-    procedure FormShow(Sender: TObject);
     procedure ActionFeedbackHideExecute(Sender: TObject);
     procedure ActionFeedbackPositiveExecute(Sender: TObject);
     procedure ActionFeedbackNegativeExecute(Sender: TObject);
@@ -1021,6 +1021,7 @@ begin
   // Make sure folders exist and are writable
   if (not TranslationManagerSettings.Folders.ValidateFolders) then
   begin
+    Application.ShowMainForm := False; // Prevent flash as form is shown and then immediately destroyed
     Application.Terminate;
     Exit;
   end;
