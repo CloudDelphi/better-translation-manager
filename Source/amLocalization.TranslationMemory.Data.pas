@@ -90,7 +90,7 @@ type
     procedure SetLoaded; // For use when loading TMX as main TM
 
     function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
+    function CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
@@ -643,10 +643,10 @@ end;
 
 function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup;
 begin
-  Result := CreateLookup(Language, [Low(TSanitizeRule)..High(TSanitizeRule)]);
+  Result := CreateLookup(Language, TranslationManagerSettings.Editor.SanitizeRules);
 end;
 
-function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress): ITranslationMemoryLookup;
+function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress): ITranslationMemoryLookup;
 var
   Field: TField;
 begin
@@ -660,7 +660,7 @@ begin
   if (Field = nil) then
     Exit(nil);
 
-  Result := TTranslationMemoryLookup.Create(TableTranslationMemory, Language, SanitizeKinds, Progress);
+  Result := TTranslationMemoryLookup.Create(TableTranslationMemory, Language, SanitizeRules, Progress);
 end;
 
 // -----------------------------------------------------------------------------
