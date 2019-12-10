@@ -20,6 +20,11 @@ uses
   cxDBExtLookupComboBox, cxImageList, cxExtEditRepositoryItems, cxCheckBox,
   amLocalization.Model;
 
+// -----------------------------------------------------------------------------
+//
+// TDataModuleMain
+//
+// -----------------------------------------------------------------------------
 type
   TDataModuleMain = class(TDataModule)
     ClientDataSetLanguages: TClientDataSet;
@@ -71,10 +76,62 @@ type
   public
     property FilterTargetLanguages: boolean read FFilterTargetLanguages write FFilterTargetLanguages;
     property Project: TLocalizerProject read FProject write FProject;
+
+    function GetImageIndex(Prop: TLocalizerProperty; TranslationLanguage: TTranslationLanguage): integer;
+    function GetImageHint(ImageIndex: integer): string;
+
+    procedure GetContentStyle(Active, Focused, Selected, Editing: boolean; TranslationLanguage: TTranslationLanguage; Prop: TLocalizerProperty; var AStyle: TcxStyle);
   end;
 
 var
   DataModuleMain: TDataModuleMain;
+
+// -----------------------------------------------------------------------------
+//
+// Image List Indices
+//
+// -----------------------------------------------------------------------------
+const
+  ImageIndexAbout               = 57;
+  ImageIndexInfo                = 58;
+  ImageIndexBookmark0           = 27;
+  ImageIndexBookmarkA           = 37;
+  ImageIndexModified            = 44;
+  ImageIndexNotModified         = -1;
+
+const
+  NodeImageIndexStateWarning    = 0;
+
+const
+  NodeImageIndexNew             = 0;
+  NodeImageIndexUnused          = 1;
+  NodeImageIndexDontTranslate   = 2;
+  NodeImageIndexProposed        = 3;
+  NodeImageIndexTranslated      = 4;
+  NodeImageIndexHold            = 5;
+  NodeImageIndexNotTranslated   = 6;
+  NodeImageIndexObsolete        = 7;
+  NodeImageIndexComplete25      = 8;
+  NodeImageIndexComplete50      = 9;
+  NodeImageIndexComplete75      = 10;
+
+// And hints corresponding to the above images
+resourcestring
+  sNodeImageHintNew = 'Not translated. Added by last refresh';
+  sNodeImageHintUnused = 'No longer in use';
+  sNodeImageHintDontTranslate = 'Should not be translated';
+  sNodeImageHintProposed = 'Translation has been proposed';
+  sNodeImageHintTranslated = 'Has been translated';
+  sNodeImageHintHold = 'Placed on hold';
+  sNodeImageHintNotTranslated = 'Not translated';
+  sNodeImageHintObsolete = 'Source value has changed since translation';
+  sNodeImageHintComplete25 = 'Approximately 25% has been translated';
+  sNodeImageHintComplete50 = 'Approximately 50% has been translated';
+  sNodeImageHintComplete75 = 'Approximately 75% has been translated';
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 implementation
 
@@ -85,6 +142,7 @@ implementation
 uses
   cxButtonEdit,
   amLocale,
+  amLocalization.Settings,
   amLocalization.Dialog.TextEdit;
 
 type
@@ -148,6 +206,112 @@ begin
   finally
     TextEditor.Free;
   end;
+end;
+
+procedure TDataModuleMain.GetContentStyle(Active, Focused, Selected, Editing: boolean; TranslationLanguage: TTranslationLanguage; Prop: TLocalizerProperty; var AStyle: TcxStyle);
+var
+  Translation: TLocalizerTranslation;
+begin
+  if (Selected) and (not Active) then
+  begin
+    AStyle := StyleInactive;
+    Exit;
+  end else
+  if (Selected) and (not Focused) then
+  begin
+    AStyle := StyleSelected;
+    Exit;
+  end else
+  if (Active) and (Focused) and (not Editing) then
+  begin
+    AStyle := StyleFocused;
+    Exit;
+  end;
+
+  if (Prop.IsUnused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
+  begin
+    AStyle := StyleDontTranslate;
+    Exit;
+  end;
+
+  if (Prop.EffectiveStatus = ItemStatusHold) then
+  begin
+    AStyle := StyleHold;
+    Exit;
+  end;
+
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+    Translation := nil;
+
+  if (Translation <> nil) and (Translation.IsTranslated) then
+  begin
+    if (Translation.Status = TTranslationStatus.tStatusProposed) then
+      AStyle := StyleProposed
+    else
+      AStyle := StyleComplete;
+  end else
+    AStyle := StyleNeedTranslation;
+end;
+
+function TDataModuleMain.GetImageHint(ImageIndex: integer): string;
+begin
+  case ImageIndex of
+    NodeImageIndexNew:          Result := sNodeImageHintNew;
+    NodeImageIndexUnused:       Result := sNodeImageHintUnused;
+    NodeImageIndexDontTranslate:Result := sNodeImageHintDontTranslate;
+    NodeImageIndexProposed:     Result := sNodeImageHintProposed;
+    NodeImageIndexTranslated:   Result := sNodeImageHintTranslated;
+    NodeImageIndexHold:         Result := sNodeImageHintHold;
+    NodeImageIndexNotTranslated:Result := sNodeImageHintNotTranslated;
+    NodeImageIndexObsolete:     Result := sNodeImageHintObsolete;
+    NodeImageIndexComplete25:   Result := sNodeImageHintComplete25;
+    NodeImageIndexComplete50:   Result := sNodeImageHintComplete50;
+    NodeImageIndexComplete75:   Result := sNodeImageHintComplete75;
+  else
+    Result := '';
+  end;
+end;
+
+function TDataModuleMain.GetImageIndex(Prop: TLocalizerProperty; TranslationLanguage: TTranslationLanguage): integer;
+var
+  Translation: TLocalizerTranslation;
+begin
+  Result := -1;
+
+  if (Prop = nil) or (not TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
+    Exit;
+
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+    Translation := nil;
+
+  // Note: Image indicates effective status
+
+  if (Prop.IsUnused) then
+    Result := NodeImageIndexUnused
+  else
+  if (ItemStateNew in Prop.State) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Translation = nil) then
+    Result := NodeImageIndexNew
+  else
+  if (Prop.EffectiveStatus = ItemStatusDontTranslate) then
+    Result := NodeImageIndexDontTranslate
+  else
+  if (Prop.EffectiveStatus = ItemStatusHold) then
+    Result := NodeImageIndexHold
+  else
+  if (Translation <> nil) and (Translation.Status <> tStatusPending) then
+  begin
+    if (Translation.Status = tStatusProposed) then
+      Result := NodeImageIndexProposed
+    else
+    if (Translation.Status = tStatusTranslated) then
+      Result := NodeImageIndexTranslated
+    else
+    if (Translation.Status = tStatusObsolete) then
+      Result := NodeImageIndexObsolete
+    else
+      Result := -1; // Should never happen
+  end else
+    Result := NodeImageIndexNotTranslated;
 end;
 
 procedure TDataModuleMain.GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;

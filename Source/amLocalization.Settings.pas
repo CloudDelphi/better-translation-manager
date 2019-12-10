@@ -233,16 +233,6 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
-  TTranslationManagerLayoutTreeSettings = class(TConfigurationSection)
-  private
-    FValid: boolean;
-  public
-    procedure WriteFilter(Filter: TcxDataFilterCriteria);
-    procedure ReadFilter(Filter: TcxDataFilterCriteria);
-  published
-    property Valid: boolean read FValid write FValid;
-  end;
-
   TTranslationManagerLayoutGridSettings = class(TConfigurationSection)
   private
     FValid: boolean;
@@ -251,10 +241,18 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
+  TTranslationManagerLayoutTreeSettings = class(TTranslationManagerLayoutGridSettings)
+  private
+  public
+    procedure WriteFilter(Filter: TcxDataFilterCriteria);
+    procedure ReadFilter(Filter: TcxDataFilterCriteria);
+  published
+  end;
+
   TTranslationManagerLayoutSettings = class(TConfigurationSection)
   private
-    FItemTree: TTranslationManagerLayoutTreeSettings;
     FModuleTree: TTranslationManagerLayoutTreeSettings;
+    FItemGrid: TTranslationManagerLayoutGridSettings;
     FTranslationMemory: TTranslationManagerLayoutGridSettings;
     FBlackList: TTranslationManagerLayoutGridSettings;
   public
@@ -262,7 +260,7 @@ type
     destructor Destroy; override;
   published
     property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
-    property ItemTree: TTranslationManagerLayoutTreeSettings read FItemTree;
+    property ItemGrid: TTranslationManagerLayoutGridSettings read FItemGrid;
     property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
     property BlackList: TTranslationManagerLayoutGridSettings read FBlackList;
   end;
@@ -968,16 +966,16 @@ constructor TTranslationManagerLayoutSettings.Create(AOwner: TConfigurationSecti
 begin
   inherited;
 
-  FItemTree := TTranslationManagerLayoutTreeSettings.Create(Self);
   FModuleTree := TTranslationManagerLayoutTreeSettings.Create(Self);
+  FItemGrid := TTranslationManagerLayoutGridSettings.Create(Self);
   FTranslationMemory := TTranslationManagerLayoutGridSettings.Create(Self);
   FBlackList := TTranslationManagerLayoutGridSettings.Create(Self);
 end;
 
 destructor TTranslationManagerLayoutSettings.Destroy;
 begin
-  FItemTree.Free;
   FModuleTree.Free;
+  FItemGrid.Free;
   FTranslationMemory.Free;
   BlackList.Free;
 
