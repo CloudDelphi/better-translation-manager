@@ -134,6 +134,9 @@ end;
 
 //------------------------------------------------------------------------------
 
+type
+  TcxSplitterCracker = class(TcxSplitter);
+
 procedure TFormTextEditor.FormCreate(Sender: TObject);
 resourcestring
   sFileTextFilter = 'Text files (*.txt)|*.txt';
@@ -143,6 +146,9 @@ begin
   FileSaveAs1.Dialog.Filter := sFileTextFilter + '|' + SDefaultFilter;
   FileSaveAs1.Dialog.FilterIndex := 0;
   SplitterEditors.CloseSplitter;
+
+  // Only way to avoid skinning splitter
+  TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
 end;
 
 //------------------------------------------------------------------------------

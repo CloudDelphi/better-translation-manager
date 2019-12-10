@@ -140,7 +140,11 @@ object FormMain: TFormMain
     Width = 4
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
+    PositionAfterOpen = 120
+    AutoSnap = True
+    MinSize = 80
     ResizeUpdate = True
+    Control = PanelModules
     ExplicitTop = 125
     ExplicitHeight = 495
   end

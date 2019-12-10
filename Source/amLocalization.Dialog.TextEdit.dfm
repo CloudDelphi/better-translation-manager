@@ -67,6 +67,10 @@ inherited FormTextEditor: TFormTextEditor
           Width = 4
           Height = 238
           HotZoneClassName = 'TcxSimpleStyle'
+          PositionAfterOpen = 80
+          AutoSnap = True
+          MinSize = 50
+          Control = PanelSource
         end
         object PanelSource: TPanel
           Left = 0

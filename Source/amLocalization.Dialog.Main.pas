@@ -885,11 +885,17 @@ end;
 // TFormMain
 //
 // -----------------------------------------------------------------------------
+type
+  TcxSplitterCracker = class(TcxSplitter);
+
 constructor TFormMain.Create(AOwner: TComponent);
 begin
   SaveCursor(crAppStart, True);
 
   inherited;
+
+  // Only way to avoid skinning splitter
+  TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
 end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);
