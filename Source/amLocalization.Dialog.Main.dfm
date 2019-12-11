@@ -377,18 +377,20 @@ object FormMain: TFormMain
       Left = 0
       Top = 0
       Width = 720
-      Height = 462
+      Height = 356
       Align = alClient
       TabOrder = 0
-      ExplicitHeight = 295
+      ExplicitHeight = 389
       object GridItemsTableView: TcxGridTableView
         PopupMenu = PopupMenuTree
         OnMouseDown = GridItemsTableViewMouseDown
         OnMouseMove = GridItemsTableViewMouseMove
         Navigator.Buttons.CustomButtons = <>
         FilterBox.Visible = fvNever
+        OnCanFocusRecord = GridItemsTableViewCanFocusRecord
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
+        OnFocusedRecordChanged = GridItemsTableViewFocusedRecordChanged
         OnInitEdit = GridItemsTableViewInitEdit
         DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
         DataController.Summary.DefaultGroupSummaryItems = <>
@@ -408,12 +410,13 @@ object FormMain: TFormMain
         OptionsData.Inserting = False
         OptionsSelection.MultiSelect = True
         OptionsView.CellEndEllipsis = True
+        OptionsView.NoDataToDisplayInfoText = ' '
         OptionsView.GridLineColor = 16050401
         OptionsView.GridLines = glHorizontal
         OptionsView.GroupByBox = False
         OptionsView.Indicator = True
         OptionsView.IndicatorWidth = 50
-        Styles.Background = DataModuleMain.StyleDefault
+        Styles.Content = DataModuleMain.StyleDefault
         Styles.UseOddEvenStyles = bFalse
         Styles.OnGetContentStyle = GridItemsTableViewStylesGetContentStyle
         Styles.Inactive = DataModuleMain.StyleInactive
@@ -574,6 +577,193 @@ object FormMain: TFormMain
       object GridItemsLevel: TcxGridLevel
         GridView = GridItemsTableView
       end
+    end
+    object PanelEditors: TPanel
+      Left = 0
+      Top = 360
+      Width = 720
+      Height = 102
+      Align = alBottom
+      BevelOuter = bvNone
+      Color = 16053234
+      FullRepaint = False
+      ParentBackground = False
+      ShowCaption = False
+      TabOrder = 1
+      ExplicitTop = 393
+      object SplitterEditors: TcxSplitter
+        Left = 277
+        Top = 0
+        Width = 4
+        Height = 102
+        HotZoneClassName = 'TcxSimpleStyle'
+        PositionAfterOpen = 100
+        AutoSnap = True
+        MinSize = 50
+        ResizeUpdate = True
+      end
+      object PanelSource: TPanel
+        Left = 0
+        Top = 0
+        Width = 277
+        Height = 102
+        Align = alLeft
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentColor = True
+        ShowCaption = False
+        TabOrder = 1
+        object EditSourceText: TcxRichEdit
+          Left = 0
+          Top = 13
+          TabStop = False
+          Align = alClient
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          Style.TextColor = clGrayText
+          TabOrder = 0
+          Height = 89
+          Width = 277
+        end
+        object LabelSourceName: TcxLabel
+          Left = 0
+          Top = 0
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          AnchorX = 139
+        end
+      end
+      object PanelText: TPanel
+        Left = 281
+        Top = 0
+        Width = 417
+        Height = 102
+        Align = alClient
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentColor = True
+        ShowCaption = False
+        TabOrder = 2
+        ExplicitWidth = 439
+        object EditTargetText: TcxRichEdit
+          Left = 0
+          Top = 13
+          Align = alClient
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Properties.OnEditValueChanged = EditTargetTextPropertiesEditValueChanged
+          Style.HotTrack = False
+          TabOrder = 0
+          OnEnter = EditTargetTextEnter
+          OnExit = EditTargetTextExit
+          Height = 89
+          Width = 417
+        end
+        object LabelTargetName: TcxLabel
+          Left = 0
+          Top = 0
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          AnchorX = 209
+        end
+      end
+      object PanelTextEditButtons: TPanel
+        Left = 698
+        Top = 0
+        Width = 22
+        Height = 102
+        Align = alRight
+        BevelOuter = bvNone
+        FullRepaint = False
+        TabOrder = 3
+        ExplicitLeft = 683
+        object ButtonTextEditApply: TcxButton
+          Left = 0
+          Top = 0
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditApply
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 0
+        end
+        object ButtonTextEditCancel: TcxButton
+          Left = 0
+          Top = 22
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditCancel
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 1
+          ExplicitTop = 44
+        end
+        object ButtonTextEditPrev: TcxButton
+          Left = 0
+          Top = 44
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditPrevious
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 2
+          ExplicitTop = 74
+        end
+        object ButtonTextEditNext: TcxButton
+          Left = 0
+          Top = 66
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditNext
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 3
+          ExplicitTop = 84
+        end
+      end
+    end
+    object SplitterMainEditors: TcxSplitter
+      Left = 0
+      Top = 356
+      Width = 720
+      Height = 4
+      HotZoneClassName = 'TcxSimpleStyle'
+      AlignSplitter = salBottom
+      PositionAfterOpen = 100
+      AutoSnap = True
+      MinSize = 40
+      ResizeUpdate = True
+      Control = PanelEditors
+      ExplicitTop = 385
     end
   end
   object BarManager: TdxBarManager
@@ -1970,7 +2160,7 @@ object FormMain: TFormMain
       Caption = 'Element:'
       ShortCut = 24626
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddType: TAction
       Tag = 2
@@ -1978,7 +2168,7 @@ object FormMain: TFormMain
       Caption = 'Type:'
       ShortCut = 24627
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddName: TAction
       Tag = 3
@@ -1986,7 +2176,7 @@ object FormMain: TFormMain
       Caption = 'Name:'
       ShortCut = 24628
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddTypeAndName: TAction
       Tag = 4
@@ -1994,7 +2184,7 @@ object FormMain: TFormMain
       Caption = 'Type and Name:'
       ShortCut = 24629
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddValue: TAction
       Tag = 5
@@ -2002,14 +2192,14 @@ object FormMain: TFormMain
       Caption = 'Value:'
       ShortCut = 24630
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionTranslationEditText: TAction
+    object ActionEditTranslationText: TAction
       Category = 'Edit'
       Hint = 'Open text editor'
       ShortCut = 16397
-      OnExecute = ActionTranslationEditTextExecute
-      OnUpdate = ActionTranslationEditTextUpdate
+      OnExecute = ActionEditTranslationTextExecute
+      OnUpdate = ActionEditTranslationTextUpdate
     end
     object ActionTranslationSuggestionList: TAction
       Category = 'Edit'
@@ -2083,6 +2273,38 @@ object FormMain: TFormMain
       ImageIndex = 79
       OnExecute = ActionValidationWarningResolveExecute
       OnUpdate = ActionValidationWarningResolveUpdate
+    end
+    object ActionTextEditApply: TAction
+      Category = 'Edit'
+      Hint = 'Apply'
+      ImageIndex = 80
+      ShortCut = 16397
+      OnExecute = ActionEditTranslationTextExecute
+      OnUpdate = ActionTextEditFocusedUpdate
+    end
+    object ActionTextEditCancel: TAction
+      Category = 'Edit'
+      Hint = 'Cancel'
+      ImageIndex = 81
+      ShortCut = 27
+      OnExecute = ActionTextEditCancelExecute
+      OnUpdate = ActionTextEditFocusedUpdate
+    end
+    object ActionTextEditPrevious: TAction
+      Category = 'Edit'
+      Hint = 'Move to previous'
+      ImageIndex = 82
+      ShortCut = 16422
+      OnExecute = ActionTextEditPreviousExecute
+      OnUpdate = ActionTextEditPreviousUpdate
+    end
+    object ActionTextEditNext: TAction
+      Category = 'Edit'
+      Hint = 'Move to next'
+      ImageIndex = 83
+      ShortCut = 16424
+      OnExecute = ActionTextEditNextExecute
+      OnUpdate = ActionTextEditNextUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

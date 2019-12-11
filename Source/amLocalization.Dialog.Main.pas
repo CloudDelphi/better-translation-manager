@@ -16,7 +16,7 @@ uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
-  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB, Vcl.Menus,
   SyncObjs,
 
   dxRibbonForm,
@@ -28,7 +28,7 @@ uses
   cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit,
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
-  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar,
+  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons,
 
   amLocale,
   amProgress,
@@ -316,7 +316,7 @@ type
     PopupMenuBuild: TdxRibbonPopupMenu;
     ButtonBuildAll: TdxBarButton;
     ButtonSeparatorBuild: TdxBarSeparator;
-    ActionTranslationEditText: TAction;
+    ActionEditTranslationText: TAction;
     ActionTranslationSuggestionList: TAction;
     ActionProjectRecover: TAction;
     dxBarButton1: TdxBarButton;
@@ -347,6 +347,24 @@ type
     GridItemsTableViewColumnSource: TcxGridColumn;
     GridItemsTableViewColumnTarget: TcxGridColumn;
     PanelMain: TPanel;
+    PanelEditors: TPanel;
+    SplitterEditors: TcxSplitter;
+    PanelSource: TPanel;
+    EditSourceText: TcxRichEdit;
+    LabelSourceName: TcxLabel;
+    PanelText: TPanel;
+    EditTargetText: TcxRichEdit;
+    LabelTargetName: TcxLabel;
+    SplitterMainEditors: TcxSplitter;
+    PanelTextEditButtons: TPanel;
+    ButtonTextEditApply: TcxButton;
+    ButtonTextEditCancel: TcxButton;
+    ButtonTextEditPrev: TcxButton;
+    ButtonTextEditNext: TcxButton;
+    ActionTextEditApply: TAction;
+    ActionTextEditCancel: TAction;
+    ActionTextEditPrevious: TAction;
+    ActionTextEditNext: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -411,7 +429,7 @@ type
     procedure StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionValidateExecute(Sender: TObject);
     procedure ActionTranslationMemoryAddExecute(Sender: TObject);
-    procedure ActionHasPropertyFocusedUpdate(Sender: TObject);
+    procedure ActionHasActivePropertyUpdate(Sender: TObject);
     procedure ActionTranslationMemoryTranslateExecute(Sender: TObject);
     procedure ActionGotoNextStatusExecute(Sender: TObject);
     procedure ActionGotoNextStateExecute(Sender: TObject);
@@ -443,11 +461,11 @@ type
     procedure ButtonBuildAllClick(Sender: TObject);
     procedure ActionProofingCheckUpdate(Sender: TObject);
     procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
-    procedure ActionTranslationEditTextExecute(Sender: TObject);
+    procedure ActionEditTranslationTextExecute(Sender: TObject);
     procedure ActionTranslationSuggestionListExecute(Sender: TObject);
     procedure ActionProjectRecoverExecute(Sender: TObject);
     procedure ActionTranslationSuggestionListUpdate(Sender: TObject);
-    procedure ActionTranslationEditTextUpdate(Sender: TObject);
+    procedure ActionEditTranslationTextUpdate(Sender: TObject);
     procedure ActionClearBookmarksExecute(Sender: TObject);
     procedure ActionTranslationMemoryLocateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryLocateExecute(Sender: TObject);
@@ -478,6 +496,18 @@ type
       const AValue: Variant; AData: TcxEditValidateInfo);
     procedure GridItemsTableViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure GridItemsTableViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
+      AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
+    procedure EditTargetTextExit(Sender: TObject);
+    procedure EditTargetTextEnter(Sender: TObject);
+    procedure ActionTextEditFocusedUpdate(Sender: TObject);
+    procedure ActionTextEditCancelExecute(Sender: TObject);
+    procedure ActionTextEditPreviousExecute(Sender: TObject);
+    procedure ActionTextEditNextExecute(Sender: TObject);
+    procedure ActionTextEditPreviousUpdate(Sender: TObject);
+    procedure ActionTextEditNextUpdate(Sender: TObject);
+    procedure GridItemsTableViewCanFocusRecord(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; var AAllow: Boolean);
+    procedure EditTargetTextPropertiesEditValueChanged(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -594,12 +624,26 @@ type
   protected
     function GetProject: TLocalizerProject;
     function GetFocusedItem: TCustomLocalizerItem;
+    function GetIsModuleActive: boolean;
     function GetFocusedModule: TLocalizerModule;
+    function GetActiveModule: TLocalizerModule;
+    function GetIsPropertyActive: boolean;
     function GetFocusedProperty: TLocalizerProperty;
+    function GetActiveProperty: TLocalizerProperty;
 
     property FocusedItem: TCustomLocalizerItem read GetFocusedItem;
+
+    // IsModuleActive=True if module grid has focus. Otherwise False.
+    property IsModuleActive: boolean read GetIsModuleActive;
     property FocusedModule: TLocalizerModule read GetFocusedModule;
+    // ActiveModule = FocusedModule if IsModuleActive=True. Otherwise nil.
+    property ActiveModule: TLocalizerModule read GetActiveModule;
+
+    // IsPropertyActive=True if property grid has focus. Otherwise False.
+    property IsPropertyActive: boolean read GetIsPropertyActive;
     property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
+    // ActiveProperty = FocusedProperty if IsPropertyActive=True. Otherwise nil.
+    property ActiveProperty: TLocalizerProperty read GetActiveProperty;
   protected
     function GetSelectionCount: integer;
     function GetSelection(Index: integer): TCustomLocalizerItem;
@@ -638,6 +682,12 @@ type
     procedure UpdateProjectModifiedIndicator;
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile: boolean;
+  protected
+    FTextEditProperty: TLocalizerProperty; // Property being edited
+    FTextEditing: boolean; // True if text editor has focus
+    FTextEditModified: boolean;
+    procedure PostTranslationTextEdit;
+    procedure ApplyTranslationTextEdit(EndEdit: boolean);
   private
     // Machine Translation
     procedure TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);
@@ -704,7 +754,6 @@ uses
   Generics.Defaults,
   System.Character,
   RegularExpressions,
-  Menus,
   CommCtrl,
   ClipBrd,
 {$ifdef DEBUG}
@@ -963,6 +1012,7 @@ begin
   Application.OnShowHint := DoShowHint;
 
   RibbonTabMain.Active := True;
+  SplitterMainEditors.CloseSplitter;
 
   for i := 0 to StatusBar.Panels.Count-1 do
     StatusBar.Panels[i].Text := '';
@@ -1217,12 +1267,12 @@ begin
   end else
   if (TheShortCut = ShortCut(Ord('A'), [ssCtrl])) then
   begin
-    if (GridItemsTableView.IsControlFocused) then
+    if (IsPropertyActive) then
     begin
       GridItemsTableView.Controller.SelectAll;
       Handled := True;
     end else
-    if (TreeListModules.Focused) then
+    if (IsModuleActive) then
     begin
       TreeListModules.SelectAll;
       Handled := True;
@@ -1375,9 +1425,9 @@ begin
   TAction(Sender).Enabled := (FocusedItem <> nil);
 end;
 
-procedure TFormMain.ActionHasPropertyFocusedUpdate(Sender: TObject);
+procedure TFormMain.ActionHasActivePropertyUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil);
+  TAction(Sender).Enabled := (IsPropertyActive);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1582,7 +1632,7 @@ end;
 
 procedure TFormMain.ActionTranslationMemoryLocateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable) and
+  TAction(Sender).Enabled := (ActiveProperty <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable) and
     (FocusedProperty.HasTranslation(TranslationLanguage));
 end;
 
@@ -2055,7 +2105,7 @@ var
   i: integer;
   DoSet: boolean;
 begin
-  if (FocusedProperty = nil) then
+  if (ActiveProperty = nil) then
     exit;
 
   Flag := TPropertyFlag(TAction(Sender).Tag);
@@ -2408,19 +2458,132 @@ end;
 
 procedure TFormMain.ActionTranslationSuggestionListUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (GridItemsTableView.IsControlFocused);
+  TAction(Sender).Enabled := (IsPropertyActive);
 end;
 
-procedure TFormMain.ActionTranslationEditTextExecute(Sender: TObject);
-var
-  TextEditor: TFormTextEditor;
-begin
-  if (not GridItemsTableViewColumnTarget.Editing) then
-    GridItemsTableViewColumnTarget.Editing := True;
+// -----------------------------------------------------------------------------
 
-  if (GridItemsTableView.Controller.EditingController.Edit = nil) then
+procedure TFormMain.ApplyTranslationTextEdit(EndEdit: boolean);
+begin
+  if (not FTextEditing) then
     Exit;
 
+  FTextEditing := False;
+
+  PostTranslationTextEdit;
+
+  // Moving focus out of edit control will also apply the edit (via the OnExit handler)
+  if (EndEdit) and (EditTargetText.Focused) then
+    TreeListModules.SetFocus;
+end;
+
+procedure TFormMain.PostTranslationTextEdit;
+var
+  RecordIndex: integer;
+begin
+  if (not FTextEditModified) then
+    Exit;
+
+  Assert(FTextEditProperty <> nil);
+
+  // Edit without explicit post - write value directly back to property and refresh row
+
+  FTextEditModified := False;
+
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(FTextEditProperty);
+
+  // If we are posting because the focus has moved to another module, then we will not find
+  // the property in the data source and will have to update it directly.
+  if (RecordIndex <> -1) then
+    GridItemsTableView.DataController.Values[RecordIndex, GridItemsTableViewColumnTarget.Index] := EditTargetText.Text
+  else
+  begin
+    FTextEditProperty.TranslatedValue[TranslationLanguage] := EditTargetText.Text;
+    TranslationAdded(FTextEditProperty);
+  end;
+end;
+
+procedure TFormMain.EditTargetTextEnter(Sender: TObject);
+begin
+  FTextEditProperty := FocusedProperty;
+  FTextEditing := True;
+end;
+
+procedure TFormMain.EditTargetTextExit(Sender: TObject);
+begin
+  FTextEditing := False;
+  PostTranslationTextEdit;
+  FTextEditProperty := nil;
+end;
+
+procedure TFormMain.EditTargetTextPropertiesEditValueChanged(Sender: TObject);
+begin
+  if (FTextEditing) then
+    FTextEditModified := True;
+end;
+
+procedure TFormMain.ActionEditTranslationTextExecute(Sender: TObject);
+(*
+var
+  TextEditor: TFormTextEditor;
+*)
+var
+  SelStart: integer;
+begin
+  // Place caret at end by default
+  SelStart := MaxInt;
+
+  // Open text editor if grid has focus. Otherwise post changes and close text editor.
+  if (IsPropertyActive) then
+  begin
+    if (GridItemsTableViewColumnTarget.Editing) then
+    begin
+      // Get current caret position if in-place editor is active
+      SelStart := TcxTextEdit(GridItemsTableView.Controller.EditingController.Edit).SelStart;
+
+      // Save current edit text and then cancel edit. We will continue the edit in the text editor instead.
+      // The modified state is transferred to the text editor.
+      // This enables the user to cancel the edit even if they invoke the text editor.
+      EditTargetText.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
+      FTextEditModified := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).ModifiedAfterEnter;
+      GridItemsTableView.Controller.EditingController.HideEdit(False);
+    end;
+
+    // Restore caret position
+    EditTargetText.SelStart := SelStart;
+
+    SplitterMainEditors.OpenSplitter;
+    EditTargetText.SetFocus;
+  end else
+  if (EditTargetText.Focused) then
+  begin
+    // Save caret position
+    SelStart := EditTargetText.SelStart;
+
+    // Clear modified flag to avoid OnExit posting value
+    FTextEditModified := False;
+    FTextEditProperty := nil;
+
+    // Move focus to grid and continue edit in in-place editor
+    GridItems.SetFocus;
+    GridItemsTableViewColumnTarget.Editing := True;
+
+    if (GridItemsTableView.Controller.EditingController.Edit = nil) then
+      Exit;
+
+    // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
+    // Note that the following three methods must be called in this exact order.
+    GridItemsTableView.Controller.EditingController.Edit.DoEditing;
+    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Text;
+    GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
+
+    // Restore caret position
+    TcxTextEdit(GridItemsTableView.Controller.EditingController.Edit).SelStart := SelStart;
+
+    SplitterMainEditors.CloseSplitter;
+  end;
+
+(*
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
@@ -2432,18 +2595,60 @@ begin
     begin
       // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
       // Note that the following three metyhods must be called in this exact order.
-      TcxCustomEdit(GridItemsTableView.Controller.EditingController.Edit).DoEditing;
+      GridItemsTableView.Controller.EditingController.Edit.DoEditing;
       TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := TextEditor.Text;
       GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
     end;
   finally
     TextEditor.Free;
   end;
+*)
 end;
 
-procedure TFormMain.ActionTranslationEditTextUpdate(Sender: TObject);
+procedure TFormMain.ActionEditTranslationTextUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (GridItemsTableView.IsControlFocused);
+  TAction(Sender).Enabled := (FTextEditing) or (IsPropertyActive);
+end;
+
+procedure TFormMain.ActionTextEditFocusedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing);
+end;
+
+procedure TFormMain.ActionTextEditCancelExecute(Sender: TObject);
+begin
+  if (FTextEditModified) then
+  begin
+    // Restore original value and clear modified flag
+    EditTargetText.Text := GridItemsTableView.DataController.Values[GridItemsTableView.DataController.FocusedRecordIndex, GridItemsTableViewColumnTarget.Index];
+    FTextEditModified := False;
+  end else
+    // Escape with no modifications closes the editor
+    ActionEditTranslationText.Execute;
+end;
+
+procedure TFormMain.ActionTextEditNextExecute(Sender: TObject);
+begin
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.FocusedRowIndex := GridItemsTableView.Controller.FocusedRowIndex + 1;
+  GridItemsTableView.Controller.FocusedRow.Selected := True;
+end;
+
+procedure TFormMain.ActionTextEditNextUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing) and (GridItemsTableView.Controller.FocusedRowIndex < GridItemsTableView.DataController.RowCount-1);
+end;
+
+procedure TFormMain.ActionTextEditPreviousExecute(Sender: TObject);
+begin
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.FocusedRowIndex := GridItemsTableView.Controller.FocusedRowIndex - 1;
+  GridItemsTableView.Controller.FocusedRow.Selected := True;
+end;
+
+procedure TFormMain.ActionTextEditPreviousUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing) and (GridItemsTableView.Controller.FocusedRowIndex > 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -2592,7 +2797,7 @@ end;
 
 procedure TFormMain.ActionEditMarkUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil);
+  TAction(Sender).Enabled := (ActiveProperty <> nil);
 
   TAction(Sender).Checked := TAction(Sender).Enabled and (FocusedProperty.Flags * [FlagBookmark0..FlagBookmarkF] <> []);
   // We have to manually sync the button because bsChecked always behave like AutoCheck=True (and DevExpress won't admit they've got it wrong)
@@ -2725,7 +2930,6 @@ var
   i: integer;
   FilterField: TFilterField;
   Value: string;
-  Item: TCustomLocalizerItem;
 begin
   for i := 0 to RibbonGalleryItemGroup.Items.Count-1 do
   begin
@@ -2733,13 +2937,11 @@ begin
 
     FilterField := TFilterField(RibbonGalleryItemGroup.Items[i].Action.Tag);
 
-    Item := FocusedItem;
-
-    if (Item is TLocalizerProperty) then
-      Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
+    if (IsPropertyActive) then
+      Value := TFilterItem.ExtractValue(FilterField, FocusedProperty)
     else
     if (FilterField = ffModule) then
-      Value := Item.Name // Module name
+      Value := FocusedModule.Name // Module name
     else
       Value := '-';
 
@@ -3463,8 +3665,10 @@ begin
     Exit;
   end;
 
+  ApplyTranslationTextEdit(False);
+
   if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsAction, [Count.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
-        Exit;
+    Exit;
 
   CountRecovered := RecoverUnusedTranslations(False);
 
@@ -3485,6 +3689,8 @@ resourcestring
   sProgressProjectLoading = 'Loading project...';
   sProgressProjectSaving = 'Saving project...';
 begin
+  ApplyTranslationTextEdit(False);
+
   SaveCursor(crHourGlass);
 
   // Save current paths so we can restore them if anything goes wrong
@@ -3579,6 +3785,8 @@ begin
     Exit;
 
   CheckStringsSymbolFile;
+
+  ApplyTranslationTextEdit(True);
 
   SaveCursor(crHourGlass);
 
@@ -3713,7 +3921,7 @@ begin
     begin
       Item := Selection[i];
 
-      if (Item.Status = ItemStatusDontTranslate) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusDontTranslate) then
         continue;
 
       Item.Status := ItemStatusDontTranslate;
@@ -3751,7 +3959,7 @@ begin
     begin
       Item := Selection[i];
 
-      if (Item.Status = ItemStatusHold) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusHold) then
         continue;
 
       Item.Status := ItemStatusHold;
@@ -3789,7 +3997,7 @@ begin
     begin
       Item := Selection[i];
 
-      if (Item.Status = ItemStatusTranslate) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusTranslate) then
         continue;
 
       Item.Status := ItemStatusTranslate;
@@ -3930,7 +4138,7 @@ var
 const
   ResolvableWarnings: TTranslationWarnings = [tWarningAccelerator,tWarningLeadSpace,tWarningTrailSpace,tWarningTerminator,tWarningSurround];
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
   TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
     (Translation.Warnings * ResolvableWarnings <> []);
 end;
@@ -3940,7 +4148,7 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
   TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
     (Translation.Warnings <> []);
 end;
@@ -3951,7 +4159,7 @@ procedure TFormMain.ActionTranslationStateUpdate(Sender: TObject);
 var
   Prop: TLocalizerProperty;
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
 
   TAction(Sender).Enabled := (Prop <> nil) and (not Prop.IsUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate);
 end;
@@ -4237,6 +4445,9 @@ resourcestring
   sLocalizerSavePromptTitle = 'Project has not been saved';
   sLocalizerSavePrompt = 'Your changes has not been saved.'#13#13'Do you want to save them now?';
 begin
+  // Apply any pending edits
+  ApplyTranslationTextEdit(True);
+
   if (FProject.Modified) then
   begin
     Res := TaskMessageDlg(sLocalizerSavePromptTitle, sLocalizerSavePrompt,
@@ -4271,10 +4482,23 @@ end;
 
 function TFormMain.GetFocusedItem: TCustomLocalizerItem;
 begin
-  Result := FocusedProperty;
-
-  if (Result = nil) then
+  if (IsPropertyActive) then
+    Result := FocusedProperty
+  else
     Result := FocusedModule;
+end;
+
+function TFormMain.GetIsModuleActive: boolean;
+begin
+  Result := (TreeListModules.Focused) and (TreeListModules.FocusedNode <> nil);
+end;
+
+function TFormMain.GetActiveModule: TLocalizerModule;
+begin
+  if (IsModuleActive) then
+    Result := FocusedModule
+  else
+    Result := nil;
 end;
 
 function TFormMain.GetFocusedModule: TLocalizerModule;
@@ -4285,13 +4509,28 @@ begin
     Result := nil;
 end;
 
+function TFormMain.GetIsPropertyActive: boolean;
+begin
+  Result := (GridItemsTableView.IsControlFocused) and (GridItemsTableView.Controller.FocusedRowIndex <> -1);
+end;
+
+function TFormMain.GetActiveProperty: TLocalizerProperty;
+begin
+  if (GetIsPropertyActive) then
+    Result := FocusedProperty
+  else
+    Result := nil;
+end;
+
 function TFormMain.GetFocusedProperty: TLocalizerProperty;
 begin
-  if (GridItemsTableView.IsControlFocused) and (GridItemsTableView.Controller.FocusedRowIndex <> -1) and (GridItemsTableView.Controller.FocusedItem <> nil) then
+  if (GridItemsTableView.Controller.FocusedRowIndex <> -1) then//and (GridItemsTableView.Controller.FocusedItem <> nil) then
     Result := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.FocusedRecord.RecordIndex]
   else
     Result := nil;
 end;
+
+// -----------------------------------------------------------------------------
 
 function TFormMain.HasSelection: boolean;
 begin
@@ -4300,7 +4539,7 @@ end;
 
 function TFormMain.GetSelection(Index: integer): TCustomLocalizerItem;
 begin
-  if (GridItemsTableView.IsControlFocused) then
+  if (IsPropertyActive) then
     Result := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.SelectedRecords[Index].RecordIndex]
   else
     Result := TLocalizerModule(TreeListModules.Selections[Index].Data);
@@ -4308,13 +4547,11 @@ end;
 
 function TFormMain.GetSelectionCount: integer;
 begin
-  if (GridItemsTableView.IsControlFocused) then
+  if (IsPropertyActive) then
     Result := GridItemsTableView.Controller.SelectedRowCount
   else
     Result := TreeListModules.SelectionCount;
 end;
-
-// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 
@@ -4559,6 +4796,7 @@ begin
   BarEditItemSourceLanguage.EditValue := FSourceLanguage.Locale;
   FProject.SourceLanguageID := FSourceLanguage.Locale;
   GridItemsTableViewColumnSource.Caption := FSourceLanguage.LanguageName;
+  LabelSourceName.Caption := FSourceLanguage.LanguageName;
 
   CreateTranslationMemoryPeeker(True);
 end;
@@ -4622,6 +4860,8 @@ begin
   if (LocaleItem = nil) then
     raise Exception.CreateFmt('Invalid target language ID: %.4X', [Value]);
 
+  ApplyTranslationTextEdit(False);
+
   BeginUpdate;
   try
     ClearDependents;
@@ -4637,6 +4877,16 @@ begin
     InvalidateTranslatedCounts;
 
     GridItemsTableViewColumnTarget.Caption := FTargetLanguage.LanguageName;
+    LabelTargetName.Caption := FTargetLanguage.LanguageName;
+    if (FTargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+    begin
+      // Target language is Right-to-Left but rest of UI isn't - or vice versa
+      if (FTargetLanguage.IsRightToLeft) then
+        EditTargetText.BiDiMode := bdRightToLeft
+      else
+        EditTargetText.BiDiMode := bdLeftToRight;
+    end else
+      EditTargetText.BiDiMode := BiDiMode;
 
 
     (*
@@ -5310,6 +5560,12 @@ begin
   end;
 end;
 
+procedure TFormMain.GridItemsTableViewCanFocusRecord(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; var AAllow: Boolean);
+begin
+  // Focused record is changing - Post any text editor changes
+  PostTranslationTextEdit;
+end;
+
 procedure TFormMain.GridItemsTableViewCellDblClick(Sender: TcxCustomGridTableView; ACellViewInfo: TcxGridTableDataCellViewInfo;
   AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
 begin
@@ -5345,7 +5601,7 @@ begin
     AHintText := DataModuleMain.GetImageHint(ImageIndex);
     AHintTextRect := ACellViewInfo.Bounds;
     AHintTextRect.Left := r.Right + 8;
-(*
+(* TODO : I would like to reposition the normal hint a bit so the hint text perfectly aligns with the cell text
   end else
   begin
     AHintTextRect := ACellViewInfo.Bounds;
@@ -5616,6 +5872,7 @@ end;
 procedure TFormMain.GridItemsTableViewDataControllerRecordChanged(ADataController: TcxCustomDataController; ARecordIndex, AItemIndex: Integer);
 var
   Prop: TLocalizerProperty;
+  s: string;
 begin
   if (AItemIndex <> GridItemsTableViewColumnTarget.Index) then
     Exit;
@@ -5626,6 +5883,39 @@ begin
   Prop := FModuleItemsDataSource.Properties[ARecordIndex];
   if (Prop.HasTranslation(TranslationLanguage)) then
     TranslationAdded(Prop);
+
+  // Update text edit in case change was made via in-place edit or Record.Values
+  s := VarToStr(ADataController.Values[ARecordIndex, AItemIndex]);
+  if (EditTargetText.Text <> s) then
+  begin
+    EditTargetText.Text := s;
+    EditTargetText.SelStart := MaxInt;
+    FTextEditModified := False;
+  end;
+end;
+
+procedure TFormMain.GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
+  AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
+begin
+  PostTranslationTextEdit;
+
+  FTextEditProperty := FocusedProperty;
+
+  // Load text edit values
+  if (AFocusedRecord <> nil) and (FTextEditProperty <> nil) then
+  begin
+    EditSourceText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnSource.Index]);
+    EditTargetText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnTarget.Index]);
+    EditTargetText.SelStart := MaxInt;
+    FTextEditModified := False;
+    EditTargetText.Properties.ReadOnly := False;
+  end else
+  begin
+    EditSourceText.Text := '';
+    EditTargetText.Text := '';
+    FTextEditModified := False;
+    EditTargetText.Properties.ReadOnly := True;
+  end;
 end;
 
 procedure TFormMain.GridItemsTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
@@ -5654,7 +5944,8 @@ begin
       AEdit.BiDiMode := bdRightToLeft
     else
       AEdit.BiDiMode := bdLeftToRight;
-  end;
+  end else
+    AEdit.BiDiMode := BiDiMode;
 
 {$ifdef DEBUG}
   StopWatch := TStopWatch.StartNew;
@@ -5702,7 +5993,7 @@ begin
   if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
   begin
     Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
-    Button.Action := ActionTranslationEditText;
+    Button.Action := ActionEditTranslationText;
     Button.Kind := bkEllipsis;
   end;
 
@@ -6146,6 +6437,8 @@ begin
 
   CheckStringsSymbolFile;
 
+  ApplyTranslationTextEdit(False);
+
   SaveCursor(crHourGlass);
 
   FProjectIndex := nil;
@@ -6185,6 +6478,8 @@ begin
     Exit;
 
   CheckStringsSymbolFile;
+
+  ApplyTranslationTextEdit(False);
 
   LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
 
@@ -6321,8 +6616,8 @@ begin
     if (RowIndex <> -1) then
     begin
       GridItemsTableView.Controller.ClearSelection;
-      GridItemsTableView.ViewData.Records[RowIndex].Selected := True;
-      GridItemsTableView.ViewData.Records[RowIndex].Focused := True;
+      GridItemsTableView.ViewData.Rows[RowIndex].Selected := True;
+      GridItemsTableView.ViewData.Rows[RowIndex].Focused := True;
       GridItemsTableView.Control.SetFocus;
     end else
       QueueToast(sNodeItemHidden);
@@ -6359,7 +6654,7 @@ end;
 procedure TFormMain.TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
 begin
   // Module status edited inline
-  TCustomLocalizerItem(TreeListModules.FocusedNode.Data).Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
+  FocusedModule.Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
 
   LoadModuleNode(TreeListModules.FocusedNode, True);
 end;
