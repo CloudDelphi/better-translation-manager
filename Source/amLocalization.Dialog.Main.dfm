@@ -35,6 +35,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -70,7 +71,6 @@ object FormMain: TFormMain
       Index = 1
     end
     object RibbonTabTranslation: TdxRibbonTab
-      Active = True
       Caption = 'Translation'
       Groups = <
         item
@@ -140,6 +140,7 @@ object FormMain: TFormMain
     Width = 4
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
+    HotZone.ArrowHighlightColor = clHighlight
     PositionAfterOpen = 120
     AutoSnap = True
     MinSize = 80
@@ -205,11 +206,6 @@ object FormMain: TFormMain
       Styles.Indicator = DataModuleMain.StyleDefault
       Styles.UseOddEvenStyles = bFalse
       TabOrder = 0
-      OnDblClick = TreeListDblClick
-      OnEnter = TreeListModulesEnter
-      OnExit = TreeListModulesExit
-      OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
-      OnGetCellHint = TreeListGetCellHint
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
       OnSelectionChanged = TreeListModulesSelectionChanged
       ExplicitHeight = 436
@@ -366,286 +362,411 @@ object FormMain: TFormMain
       end
     end
   end
-  object TreeListItems: TcxVirtualTreeList
+  object PanelMain: TPanel
     Left = 244
     Top = 158
     Width = 720
     Height = 462
     Align = alClient
-    Bands = <
-      item
-        Options.OnlyOwnColumns = True
-      end>
-    Images = DataModuleMain.ImageListTree
-    Navigator.Buttons.CustomButtons = <>
-    OptionsBehavior.CellHints = True
-    OptionsBehavior.GoToNextCellOnTab = True
-    OptionsBehavior.ImmediateEditor = False
-    OptionsBehavior.ExpandOnDblClick = False
-    OptionsBehavior.FocusCellOnCycle = True
-    OptionsBehavior.RecordScrollMode = rsmByRecord
-    OptionsBehavior.ShowHourGlass = False
-    OptionsCustomizing.BandCustomizing = False
-    OptionsCustomizing.BandMoving = False
-    OptionsCustomizing.ColumnFiltering = bTrue
-    OptionsCustomizing.ColumnsQuickCustomization = True
-    OptionsCustomizing.ColumnsQuickCustomizationShowCommands = False
-    OptionsCustomizing.ColumnVertSizing = False
-    OptionsCustomizing.StackedColumns = False
-    OptionsData.AnsiSort = True
-    OptionsData.CaseInsensitive = True
-    OptionsData.Deleting = False
-    OptionsData.CheckHasChildren = False
-    OptionsSelection.MultiSelect = True
-    OptionsView.CellEndEllipsis = True
-    OptionsView.Buttons = False
-    OptionsView.FixedSeparatorWidth = 0
-    OptionsView.GridLineColor = 16050401
-    OptionsView.GridLines = tlglHorz
-    OptionsView.Indicator = True
-    OptionsView.IndicatorWidth = 50
-    OptionsView.ShowRoot = False
-    OptionsView.TreeLineStyle = tllsNone
-    PopupMenu = PopupMenuTree
-    Styles.Background = DataModuleMain.StyleDefault
-    Styles.Inactive = DataModuleMain.StyleInactive
-    Styles.Selection = DataModuleMain.StyleSelected
-    Styles.OnGetContentStyle = TreeListItemsStylesGetContentStyle
-    Styles.Indicator = DataModuleMain.StyleDefault
-    Styles.UseOddEvenStyles = bFalse
+    BevelOuter = bvNone
+    FullRepaint = False
+    ShowCaption = False
     TabOrder = 4
-    OnCustomDrawDataCell = TreeListItemsCustomDrawDataCell
-    OnCustomDrawIndicatorCell = TreeListItemsCustomDrawIndicatorCell
-    OnDblClick = TreeListDblClick
-    OnEditing = TreeListItemsEditing
-    OnEditValueChanged = TreeListItemsEditValueChanged
-    OnEnter = TreeListModulesEnter
-    OnExit = TreeListModulesExit
-    OnGetCellHint = TreeListGetCellHint
-    OnGetNodeImageIndex = TreeListItemsGetNodeImageIndex
-    OnInitEdit = TreeListItemsInitEdit
-    OnMouseDown = TreeListItemsMouseDown
-    OnMouseMove = TreeListItemsMouseMove
     ExplicitTop = 125
     ExplicitHeight = 495
-    object TreeListColumnItemName: TcxTreeListColumn
-      BestFitMaxWidth = 300
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Element'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Options.Focusing = False
-      Width = 198
-      Position.ColIndex = 0
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      SortOrder = soAscending
-      SortIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnType: TcxTreeListColumn
-      Visible = False
-      BestFitMaxWidth = 200
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Type'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Focusing = False
-      Width = 100
-      Position.ColIndex = 7
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnValueName: TcxTreeListColumn
-      BestFitMaxWidth = 200
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Name'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Focusing = False
-      Width = 125
-      Position.ColIndex = 1
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      SortOrder = soAscending
-      SortIndex = 1
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnID: TcxTreeListColumn
-      PropertiesClassName = 'TcxLabelProperties'
-      Properties.Alignment.Horz = taRightJustify
-      Properties.ShowAccelChar = False
-      Visible = False
-      Caption.AlignVert = vaTop
-      Caption.Text = 'ID'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Options.Focusing = False
-      Width = 100
-      Position.ColIndex = 8
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnStatus: TcxTreeListColumn
-      PropertiesClassName = 'TcxImageComboBoxProperties'
-      Properties.Items = <
-        item
-          Description = 'Translate'
-          ImageIndex = 0
-          Value = 0
+    object GridItems: TcxGrid
+      Left = 0
+      Top = 0
+      Width = 720
+      Height = 356
+      Align = alClient
+      TabOrder = 0
+      ExplicitHeight = 389
+      object GridItemsTableView: TcxGridTableView
+        PopupMenu = PopupMenuTree
+        OnMouseDown = GridItemsTableViewMouseDown
+        OnMouseMove = GridItemsTableViewMouseMove
+        Navigator.Buttons.CustomButtons = <>
+        FilterBox.Visible = fvNever
+        OnCanFocusRecord = GridItemsTableViewCanFocusRecord
+        OnCellDblClick = GridItemsTableViewCellDblClick
+        OnCustomDrawCell = GridItemsTableViewCustomDrawCell
+        OnFocusedRecordChanged = GridItemsTableViewFocusedRecordChanged
+        OnInitEdit = GridItemsTableViewInitEdit
+        DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
+        DataController.Summary.DefaultGroupSummaryItems = <>
+        DataController.Summary.FooterSummaryItems = <>
+        DataController.Summary.SummaryGroups = <>
+        DataController.OnRecordChanged = GridItemsTableViewDataControllerRecordChanged
+        OptionsBehavior.CellHints = True
+        OptionsBehavior.FocusCellOnTab = True
+        OptionsBehavior.FocusCellOnCycle = True
+        OptionsBehavior.ImmediateEditor = False
+        OptionsBehavior.RecordScrollMode = rsmByRecord
+        OptionsCustomize.ColumnGrouping = False
+        OptionsCustomize.ColumnHiding = True
+        OptionsCustomize.ColumnsQuickCustomization = True
+        OptionsCustomize.ColumnsQuickCustomizationShowCommands = False
+        OptionsData.Deleting = False
+        OptionsData.Inserting = False
+        OptionsSelection.MultiSelect = True
+        OptionsView.CellEndEllipsis = True
+        OptionsView.NoDataToDisplayInfoText = ' '
+        OptionsView.GridLineColor = 16050401
+        OptionsView.GridLines = glHorizontal
+        OptionsView.GroupByBox = False
+        OptionsView.Indicator = True
+        OptionsView.IndicatorWidth = 50
+        Styles.Content = DataModuleMain.StyleDefault
+        Styles.UseOddEvenStyles = bFalse
+        Styles.OnGetContentStyle = GridItemsTableViewStylesGetContentStyle
+        Styles.Inactive = DataModuleMain.StyleInactive
+        Styles.Indicator = DataModuleMain.StyleDefault
+        Styles.Selection = DataModuleMain.StyleSelected
+        OnCustomDrawIndicatorCell = GridItemsTableViewCustomDrawIndicatorCell
+        object GridItemsTableViewColumnItemName: TcxGridColumn
+          Caption = 'Element'
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          Options.FilteringAddValueItems = False
+          SortIndex = 0
+          SortOrder = soAscending
+          VisibleForEditForm = bFalse
+          Width = 198
         end
-        item
-          Description = 'Hold'
-          ImageIndex = 5
-          Value = 1
+        object GridItemsTableViewColumnType: TcxGridColumn
+          Caption = 'Type'
+          Visible = False
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          VisibleForEditForm = bFalse
+          Width = 100
         end
-        item
-          Description = 'Don'#39't translate'
-          ImageIndex = 2
-          Value = 2
-        end>
-      Properties.OnEditValueChanged = TreeListColumnStatusPropertiesEditValueChanged
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Status'
-      DataBinding.ValueType = 'Integer'
-      Width = 70
-      Position.ColIndex = 2
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
+        object GridItemsTableViewColumnValueName: TcxGridColumn
+          Caption = 'Name'
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          Options.FilteringAddValueItems = False
+          SortIndex = 1
+          SortOrder = soAscending
+          VisibleForEditForm = bFalse
+          Width = 125
+        end
+        object GridItemsTableViewColumnID: TcxGridColumn
+          Caption = 'ID'
+          PropertiesClassName = 'TcxLabelProperties'
+          Properties.ShowAccelChar = False
+          Visible = False
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          Options.FilteringAddValueItems = False
+          VisibleForEditForm = bFalse
+          Width = 100
+        end
+        object GridItemsTableViewColumnStatus: TcxGridColumn
+          Caption = 'Status'
+          DataBinding.ValueType = 'Integer'
+          PropertiesClassName = 'TcxImageComboBoxProperties'
+          Properties.ImmediatePost = True
+          Properties.ImmediateUpdateText = True
+          Properties.Items = <
+            item
+              Description = 'Translate'
+              ImageIndex = 0
+              Value = 0
+            end
+            item
+              Description = 'Hold'
+              ImageIndex = 5
+              Value = 1
+            end
+            item
+              Description = 'Don'#39't translate'
+              ImageIndex = 2
+              Value = 2
+            end>
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.FilteringFilteredItemsList = False
+          VisibleForEditForm = bFalse
+          Width = 70
+        end
+        object GridItemsTableViewColumnEffectiveStatus: TcxGridColumn
+          Caption = 'Effetive status'
+          DataBinding.ValueType = 'Integer'
+          PropertiesClassName = 'TcxImageComboBoxProperties'
+          Properties.Items = <
+            item
+              Description = 'Translate'
+              ImageIndex = 0
+              Value = 0
+            end
+            item
+              Description = 'Hold'
+              ImageIndex = 5
+              Value = 1
+            end
+            item
+              Description = 'Don'#39't translate'
+              ImageIndex = 2
+              Value = 2
+            end>
+          Properties.ReadOnly = True
+          Visible = False
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          Options.FilteringFilteredItemsList = False
+          VisibleForEditForm = bFalse
+          Width = 70
+        end
+        object GridItemsTableViewColumnState: TcxGridColumn
+          Caption = 'State'
+          DataBinding.ValueType = 'Integer'
+          PropertiesClassName = 'TcxImageComboBoxProperties'
+          Properties.ImmediatePost = True
+          Properties.ImmediateUpdateText = True
+          Properties.Items = <
+            item
+              Description = 'Obsolete'
+              ImageIndex = 7
+              Value = 0
+            end
+            item
+              Description = 'Pending'
+              ImageIndex = 6
+              Value = 1
+            end
+            item
+              Description = 'Proposed'
+              ImageIndex = 3
+              Value = 2
+            end
+            item
+              Description = 'Translated'
+              ImageIndex = 4
+              Value = 3
+            end>
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.FilteringFilteredItemsList = False
+          VisibleForEditForm = bFalse
+          Width = 70
+        end
+        object GridItemsTableViewColumnSource: TcxGridColumn
+          Caption = 'Source text'
+          PropertiesClassName = 'TcxMemoProperties'
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          Options.Editing = False
+          Options.Focusing = False
+          Options.FilteringAddValueItems = False
+          Width = 120
+        end
+        object GridItemsTableViewColumnTarget: TcxGridColumn
+          Caption = 'Translation'
+          PropertiesClassName = 'TcxComboBoxProperties'
+          Properties.ImmediatePost = True
+          Properties.ValidationOptions = [evoShowErrorIcon]
+          OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          OnValidateDrawValue = GridItemsTableViewColumnTargetValidateDrawValue
+          Options.FilteringAddValueItems = False
+          Width = 120
+        end
+      end
+      object GridItemsLevel: TcxGridLevel
+        GridView = GridItemsTableView
+      end
     end
-    object TreeListColumnEffectiveStatus: TcxTreeListColumn
-      PropertiesClassName = 'TcxImageComboBoxProperties'
-      Properties.Items = <
-        item
-          Description = 'Translate'
-          ImageIndex = 0
-          Value = 0
+    object PanelEditors: TPanel
+      Left = 0
+      Top = 360
+      Width = 720
+      Height = 102
+      Align = alBottom
+      BevelOuter = bvNone
+      Color = 16053234
+      FullRepaint = False
+      ParentBackground = False
+      ShowCaption = False
+      TabOrder = 1
+      ExplicitTop = 393
+      object SplitterEditors: TcxSplitter
+        Left = 277
+        Top = 0
+        Width = 4
+        Height = 102
+        HotZoneClassName = 'TcxSimpleStyle'
+        HotZone.ArrowHighlightColor = clHighlight
+        PositionAfterOpen = 100
+        AutoSnap = True
+        MinSize = 50
+        ResizeUpdate = True
+      end
+      object PanelSource: TPanel
+        Left = 0
+        Top = 0
+        Width = 277
+        Height = 102
+        Align = alLeft
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentColor = True
+        ShowCaption = False
+        TabOrder = 1
+        object EditSourceText: TcxRichEdit
+          Left = 0
+          Top = 13
+          TabStop = False
+          Align = alClient
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          Style.TextColor = clGrayText
+          TabOrder = 0
+          Height = 89
+          Width = 277
         end
-        item
-          Description = 'Hold'
-          ImageIndex = 5
-          Value = 1
+        object LabelSourceName: TcxLabel
+          Left = 0
+          Top = 0
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          AnchorX = 139
         end
-        item
-          Description = 'Don'#39't translate'
-          ImageIndex = 2
-          Value = 2
-        end>
-      Properties.ReadOnly = True
-      Visible = False
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Effective status'
-      DataBinding.ValueType = 'Integer'
-      Options.Focusing = False
-      Width = 90
-      Position.ColIndex = 3
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
+      end
+      object PanelText: TPanel
+        Left = 281
+        Top = 0
+        Width = 417
+        Height = 102
+        Align = alClient
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentColor = True
+        ShowCaption = False
+        TabOrder = 2
+        ExplicitWidth = 439
+        object EditTargetText: TcxRichEdit
+          Left = 0
+          Top = 13
+          Align = alClient
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Properties.OnEditValueChanged = EditTargetTextPropertiesEditValueChanged
+          Style.HotTrack = False
+          TabOrder = 0
+          OnEnter = EditTargetTextEnter
+          OnExit = EditTargetTextExit
+          Height = 89
+          Width = 417
+        end
+        object LabelTargetName: TcxLabel
+          Left = 0
+          Top = 0
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          AnchorX = 209
+        end
+      end
+      object PanelTextEditButtons: TPanel
+        Left = 698
+        Top = 0
+        Width = 22
+        Height = 102
+        Align = alRight
+        BevelOuter = bvNone
+        FullRepaint = False
+        TabOrder = 3
+        ExplicitLeft = 683
+        object ButtonTextEditApply: TcxButton
+          Left = 0
+          Top = 0
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditApply
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 0
+        end
+        object ButtonTextEditCancel: TcxButton
+          Left = 0
+          Top = 22
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditCancel
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 1
+          ExplicitTop = 44
+        end
+        object ButtonTextEditPrev: TcxButton
+          Left = 0
+          Top = 44
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditPrevious
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 2
+          ExplicitTop = 74
+        end
+        object ButtonTextEditNext: TcxButton
+          Left = 0
+          Top = 66
+          Width = 22
+          Height = 22
+          Align = alTop
+          Action = ActionTextEditNext
+          PaintStyle = bpsGlyph
+          SpeedButtonOptions.CanBeFocused = False
+          SpeedButtonOptions.AllowAllUp = True
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 3
+          ExplicitTop = 84
+        end
+      end
     end
-    object TreeListColumnState: TcxTreeListColumn
-      PropertiesClassName = 'TcxImageComboBoxProperties'
-      Properties.Items = <
-        item
-          Description = 'Obsolete'
-          ImageIndex = 7
-          Value = 0
-        end
-        item
-          Description = 'Pending'
-          ImageIndex = 6
-          Value = 1
-        end
-        item
-          Description = 'Proposed'
-          ImageIndex = 3
-          Value = 2
-        end
-        item
-          Description = 'Translated'
-          ImageIndex = 4
-          Value = 3
-        end>
-      Properties.OnEditValueChanged = TreeListColumnStatePropertiesEditValueChanged
-      Caption.AlignVert = vaTop
-      Caption.Text = 'State'
-      DataBinding.ValueType = 'String'
-      Width = 70
-      Position.ColIndex = 5
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnSource: TcxTreeListColumn
-      PropertiesClassName = 'TcxMemoProperties'
-      BestFitMaxWidth = 400
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Source text'
-      DataBinding.ValueType = 'String'
-      Options.Editing = False
-      Options.Filtering = False
-      Options.Focusing = False
-      Width = 120
-      Position.ColIndex = 4
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-    end
-    object TreeListColumnTarget: TcxTreeListColumn
-      PropertiesClassName = 'TcxComboBoxProperties'
-      Properties.ButtonGlyph.SourceDPI = 96
-      Properties.ButtonGlyph.Data = {
-        89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
-        610000001A744558745469746C650053756767657374696F6E3B496465613B4C
-        616D701B5C59110000025F49444154785E85934B4854511CC6BF3B8ECE183DD4
-        02C5DC2559B93162126A510811B68A16B66AD3A64DD426C3E8411845221A2411
-        213D445AB410A274550A61168186086A334EEA8C8EE3D83C6C66EEF3DC734EE7
-        84792B2FF5C1C7F973BFFBFFF13FE770C039978654E4C161B92893ED818699CE
-        83AFC39D8158A8E3406CBAADAEFFC38DDA63000A642EECF4FD0E9061F05EFDD5
-        E8D346AE065F72AA26B82D9C17F5ECA3063E7A736F3B804209F905F0C09132D1
-        1668282E2D6BDD71A809BE9D0170460066C12FEA8AA36750565575E96DF3AE26
-        C0E9F3C291C75F885B5B6BAA3DCC0883E6AA00F0F590E93328A9A9C6B6F9B98B
-        00FA84E9DF00059CD7166EDF0CAE4EC1FEAEC1E3AB8414B3E2E06C16C595FBE0
-        2D60756B67810D004EA918C312B182027F1194220E8083912230F14DF1110162
-        1052D6C7862358944E5B892580507033013BF55E78043096019B415F8C4033D9
-        84A4BA4DC0169246EBA6D1D040F9FE7210E30B1CAD40F19520391E412C63F600
-        20AE80131DA1C1772DD5F7BD5E72614B19C0890129C5EB432E9D47782AF5FC74
-        77E29904B86D810B5B47EE86AF2FCFAB537A7C15DC02B470129AA8E783996063
-        575CDE8026CCDD009868DD2D03339327836ACA00CDADC2CEEA50533A52393204
-        40FFD45C4E21E40AE8C135B9D05EFDECD8AB8AC7F85A3F8CFE3D7DE8326FE3E1
-        F2A93100F69DC57370073862D1B9E9B19595CCFA6DE5B2792C45433F013621FF
-        05F0E1372F16D2E9CC3755D361125B00B2C9C9F1A1A8CC88FD0F00B529CE5FE9
-        E6008C5864E6F293DE81F4C791CFE9F862B8058076FC643397FFFC21E7356E00
-        FB854BA5D76A8F5BDF0F47CC49F47EBE179B0000000049454E44AE426082}
-      Properties.ImmediatePost = True
-      Properties.IncrementalFiltering = True
-      Properties.IncrementalFilteringOptions = [ifoHighlightSearchText]
-      Properties.ValidationOptions = [evoShowErrorIcon]
-      BestFitMaxWidth = 400
-      Caption.AlignVert = vaTop
-      Caption.Text = 'Translation'
-      DataBinding.ValueType = 'String'
-      Options.Filtering = False
-      Width = 120
-      Position.ColIndex = 6
-      Position.RowIndex = 0
-      Position.BandIndex = 0
-      Summary.FooterSummaryItems = <>
-      Summary.GroupFooterSummaryItems = <>
-      OnValidateDrawValue = TreeListColumnTargetValidateDrawValue
+    object SplitterMainEditors: TcxSplitter
+      Left = 0
+      Top = 356
+      Width = 720
+      Height = 4
+      HotZoneClassName = 'TcxSimpleStyle'
+      HotZone.ArrowHighlightColor = clHighlight
+      AlignSplitter = salBottom
+      PositionAfterOpen = 100
+      AutoSnap = True
+      MinSize = 40
+      ResizeUpdate = True
+      Control = PanelEditors
+      ExplicitTop = 385
     end
   end
   object BarManager: TdxBarManager
@@ -777,7 +898,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 0
+      DockedLeft = 367
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -2042,7 +2163,7 @@ object FormMain: TFormMain
       Caption = 'Element:'
       ShortCut = 24626
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddType: TAction
       Tag = 2
@@ -2050,7 +2171,7 @@ object FormMain: TFormMain
       Caption = 'Type:'
       ShortCut = 24627
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddName: TAction
       Tag = 3
@@ -2058,7 +2179,7 @@ object FormMain: TFormMain
       Caption = 'Name:'
       ShortCut = 24628
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddTypeAndName: TAction
       Tag = 4
@@ -2066,7 +2187,7 @@ object FormMain: TFormMain
       Caption = 'Type and Name:'
       ShortCut = 24629
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionFiltersAddValue: TAction
       Tag = 5
@@ -2074,14 +2195,14 @@ object FormMain: TFormMain
       Caption = 'Value:'
       ShortCut = 24630
       OnExecute = ActionFiltersAddExecute
-      OnUpdate = ActionHasPropertyFocusedUpdate
+      OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionTranslationEditText: TAction
+    object ActionEditTranslationText: TAction
       Category = 'Edit'
       Hint = 'Open text editor'
       ShortCut = 16397
-      OnExecute = ActionTranslationEditTextExecute
-      OnUpdate = ActionTranslationEditTextUpdate
+      OnExecute = ActionEditTranslationTextExecute
+      OnUpdate = ActionEditTranslationTextUpdate
     end
     object ActionTranslationSuggestionList: TAction
       Category = 'Edit'
@@ -2155,6 +2276,38 @@ object FormMain: TFormMain
       ImageIndex = 79
       OnExecute = ActionValidationWarningResolveExecute
       OnUpdate = ActionValidationWarningResolveUpdate
+    end
+    object ActionTextEditApply: TAction
+      Category = 'Edit'
+      Hint = 'Apply'
+      ImageIndex = 80
+      ShortCut = 16397
+      OnExecute = ActionEditTranslationTextExecute
+      OnUpdate = ActionTextEditFocusedUpdate
+    end
+    object ActionTextEditCancel: TAction
+      Category = 'Edit'
+      Hint = 'Cancel'
+      ImageIndex = 81
+      ShortCut = 27
+      OnExecute = ActionTextEditCancelExecute
+      OnUpdate = ActionTextEditFocusedUpdate
+    end
+    object ActionTextEditPrevious: TAction
+      Category = 'Edit'
+      Hint = 'Move to previous'
+      ImageIndex = 82
+      ShortCut = 16422
+      OnExecute = ActionTextEditPreviousExecute
+      OnUpdate = ActionTextEditPreviousUpdate
+    end
+    object ActionTextEditNext: TAction
+      Category = 'Edit'
+      Hint = 'Move to next'
+      ImageIndex = 83
+      ShortCut = 16424
+      OnExecute = ActionTextEditNextExecute
+      OnUpdate = ActionTextEditNextUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

@@ -16,7 +16,7 @@ uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
-  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB, Vcl.Menus,
   SyncObjs,
 
   dxRibbonForm,
@@ -28,7 +28,7 @@ uses
   cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit,
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
-  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar,
+  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons,
 
   amLocale,
   amProgress,
@@ -51,45 +51,76 @@ const
 
 // -----------------------------------------------------------------------------
 //
-// TLocalizerDataSource
+// TLocalizerModuleItemsDataSource
 //
 // -----------------------------------------------------------------------------
-// TcxVirtualTreeList data provider for module properties
+// Grid data provider for module properties
 // -----------------------------------------------------------------------------
 type
-  TLocalizerDataSource = class(TcxTreeListCustomDataSource)
-  private
+  TTranslationMemoryPeekResult = (prNone, prQueued, prFound);
+
+  TLocalizerModuleItemsDataSource = class(TcxCustomDataSource)
+  strict private
+    const
+      ItemIndexName             = 0;
+      ItemIndexType             = 1;
+      ItemIndexValueName        = 2;
+      ItemIndexID               = 3;
+      ItemIndexStatus           = 4;
+      ItemIndexEffectiveStatus  = 5;
+      ItemIndexState            = 6;
+      ItemIndexSourceValue      = 7;
+      ItemIndexTargetValue      = 8;
+  strict private
+    type
+      TItem = record
+        Prop: TLocalizerProperty;
+        PeekResult: TTranslationMemoryPeekResult;
+      end;
+  strict private
     FModule: TLocalizerModule;
     FTranslationLanguage: TTranslationLanguage;
+    FItems: array of TItem;
+  private
+    procedure LoadData;
+    function GetPeekResult(Index: integer): TTranslationMemoryPeekResult;
+    procedure SetPeekResult(Index: integer; const Value: TTranslationMemoryPeekResult);
   protected
     procedure SetModule(const Value: TLocalizerModule);
     procedure SetTranslationLanguage(const Value: TTranslationLanguage);
-
-    function GetRootRecordHandle: TcxDataRecordHandle; override;
-    function GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle; override;
+    function GetProperty(Index: integer): TLocalizerProperty;
+  protected
     function GetRecordCount: Integer; override;
-    function GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle; override;
-
     function GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant; override;
+    procedure SetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle; const AValue: Variant); override;
   public
     constructor Create(AModule: TLocalizerModule);
+    destructor Destroy; override;
+
+    function IndexOfProperty(Prop: TLocalizerProperty): integer;
+    procedure Clear;
+    procedure Refresh;
 
     property Module: TLocalizerModule read FModule write SetModule;
     property TranslationLanguage: TTranslationLanguage read FTranslationLanguage write SetTranslationLanguage;
+
+    property Properties[Index: integer]: TLocalizerProperty read GetProperty;
+    property PeekResult[Index: integer]: TTranslationMemoryPeekResult read GetPeekResult write SetPeekResult;
   end;
 
 // -----------------------------------------------------------------------------
 //
-// TcxVirtualTreeList redirect
+// TcxGridTableView redirect
 //
 // -----------------------------------------------------------------------------
-// Modified to display crHandPoint when mouse is over a hint marker
+// Modified to display crHandPoint cursor when mouse is over a hint marker
 // -----------------------------------------------------------------------------
 type
-  TcxVirtualTreeList = class(cxTLData.TcxVirtualTreeList)
+  TcxGridTableView = class(cxGridTableView.TcxGridTableView)
   protected
-    procedure WMSetCursor(var Message: TWMSetCursor); message WM_SETCURSOR;
+    function GetControllerClass: TcxCustomGridControllerClass; override;
   end;
+
 
 
 // -----------------------------------------------------------------------------
@@ -115,15 +146,6 @@ type
     BarManagerBarMigrate: TdxBar;
     dxBarButton2: TdxBarButton;
     RibbonTabTranslation: TdxRibbonTab;
-    TreeListItems: TcxVirtualTreeList;
-    TreeListColumnItemName: TcxTreeListColumn;
-    TreeListColumnValueName: TcxTreeListColumn;
-    TreeListColumnID: TcxTreeListColumn;
-    TreeListColumnSource: TcxTreeListColumn;
-    TreeListColumnTarget: TcxTreeListColumn;
-    TreeListColumnType: TcxTreeListColumn;
-    TreeListColumnStatus: TcxTreeListColumn;
-    TreeListColumnState: TcxTreeListColumn;
     ActionList: TActionList;
     ActionProjectOpen: TAction;
     ActionProjectNew: TAction;
@@ -248,7 +270,6 @@ type
     BarManagerBarQuickAccess: TdxBar;
     ActionSettings: TAction;
     dxBarButton34: TdxBarButton;
-    TreeListColumnEffectiveStatus: TcxTreeListColumn;
     OpenDialogDRC: TOpenDialog;
     SaveDialogProject: TSaveDialog;
     SaveDialogEXE: TOpenDialog;
@@ -295,7 +316,7 @@ type
     PopupMenuBuild: TdxRibbonPopupMenu;
     ButtonBuildAll: TdxBarButton;
     ButtonSeparatorBuild: TdxBarSeparator;
-    ActionTranslationEditText: TAction;
+    ActionEditTranslationText: TAction;
     ActionTranslationSuggestionList: TAction;
     ActionProjectRecover: TAction;
     dxBarButton1: TdxBarButton;
@@ -313,12 +334,40 @@ type
     dxBarButton6: TdxBarButton;
     ActionValidationWarningResolve: TAction;
     dxBarButton8: TdxBarButton;
+    GridItemsLevel: TcxGridLevel;
+    GridItems: TcxGrid;
+    GridItemsTableView: TcxGridTableView;
+    GridItemsTableViewColumnItemName: TcxGridColumn;
+    GridItemsTableViewColumnType: TcxGridColumn;
+    GridItemsTableViewColumnValueName: TcxGridColumn;
+    GridItemsTableViewColumnID: TcxGridColumn;
+    GridItemsTableViewColumnStatus: TcxGridColumn;
+    GridItemsTableViewColumnEffectiveStatus: TcxGridColumn;
+    GridItemsTableViewColumnState: TcxGridColumn;
+    GridItemsTableViewColumnSource: TcxGridColumn;
+    GridItemsTableViewColumnTarget: TcxGridColumn;
+    PanelMain: TPanel;
+    PanelEditors: TPanel;
+    SplitterEditors: TcxSplitter;
+    PanelSource: TPanel;
+    EditSourceText: TcxRichEdit;
+    LabelSourceName: TcxLabel;
+    PanelText: TPanel;
+    EditTargetText: TcxRichEdit;
+    LabelTargetName: TcxLabel;
+    SplitterMainEditors: TcxSplitter;
+    PanelTextEditButtons: TPanel;
+    ButtonTextEditApply: TcxButton;
+    ButtonTextEditCancel: TcxButton;
+    ButtonTextEditPrev: TcxButton;
+    ButtonTextEditNext: TcxButton;
+    ActionTextEditApply: TAction;
+    ActionTextEditCancel: TAction;
+    ActionTextEditPrevious: TAction;
+    ActionTextEditNext: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
-    procedure TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
-    procedure TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
     procedure ActionProjectUpdateExecute(Sender: TObject);
     procedure ActionProjectSaveExecute(Sender: TObject);
     procedure ActionProjectNewExecute(Sender: TObject);
@@ -343,7 +392,6 @@ type
     procedure ActionProofingCheckExecute(Sender: TObject);
     procedure SpellCheckerCheckWord(Sender: TdxCustomSpellChecker; const AWord: WideString; out AValid: Boolean; var AHandled: Boolean);
     procedure SpellCheckerSpellingComplete(Sender: TdxCustomSpellChecker; var AHandled: Boolean);
-    procedure TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
     procedure ActionProofingCheckSelectedExecute(Sender: TObject);
     procedure ActionHasItemFocusedUpdate(Sender: TObject);
     procedure BarManagerBarProofingCaptionButtons0Click(Sender: TObject);
@@ -353,10 +401,6 @@ type
     procedure ActionHasProjectUpdate(Sender: TObject);
     procedure ActionHasModulesUpdate(Sender: TObject);
     procedure TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
-    procedure TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
-    procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
-    procedure TreeListModulesEnter(Sender: TObject);
-    procedure TreeListModulesExit(Sender: TObject);
     procedure BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
     procedure BarEditItemTargetLanguagePropertiesInitPopup(Sender: TObject);
     procedure ActionMainExecute(Sender: TObject);
@@ -370,14 +414,11 @@ type
     procedure TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
     procedure ActionAutomationTranslateExecute(Sender: TObject);
     procedure ActionAutomationTranslateUpdate(Sender: TObject);
-    procedure TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindNextUpdate(Sender: TObject);
     procedure ActionTranslationMemoryExecute(Sender: TObject);
-    procedure TreeListGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionGotoNextWarningExecute(Sender: TObject);
-    procedure TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListIndicatorCellViewInfo; var ADone: Boolean);
     procedure ActionBookmarkExecute(Sender: TObject);
     procedure PopupMenuBookmarkPopup(Sender: TObject);
     procedure ActionGotoBookmarkAnyExecute(Sender: TObject);
@@ -388,7 +429,7 @@ type
     procedure StatusBarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionValidateExecute(Sender: TObject);
     procedure ActionTranslationMemoryAddExecute(Sender: TObject);
-    procedure ActionHasPropertyFocusedUpdate(Sender: TObject);
+    procedure ActionHasActivePropertyUpdate(Sender: TObject);
     procedure ActionTranslationMemoryTranslateExecute(Sender: TObject);
     procedure ActionGotoNextStatusExecute(Sender: TObject);
     procedure ActionGotoNextStateExecute(Sender: TObject);
@@ -402,35 +443,29 @@ type
     procedure ActionFeedbackHideExecute(Sender: TObject);
     procedure ActionFeedbackPositiveExecute(Sender: TObject);
     procedure ActionFeedbackNegativeExecute(Sender: TObject);
-    procedure TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
-    procedure TreeListItemsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure TimerHintTimer(Sender: TObject);
-    procedure TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ActionAboutExecute(Sender: TObject);
-    procedure TreeListDblClick(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
     procedure TreeListModulesSelectionChanged(Sender: TObject);
     procedure StatusBarPanels1Click(Sender: TObject);
     procedure PopupMenuTranslateProvidersPopup(Sender: TObject);
     procedure TimerToastTimer(Sender: TObject);
     procedure StatusBarHint(Sender: TObject);
-    procedure TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
     procedure StatusBarPanels2Click(Sender: TObject);
     procedure ActionFiltersExecute(Sender: TObject);
     procedure ActionFiltersAddExecute(Sender: TObject);
     procedure ActionFiltersApplyExecute(Sender: TObject);
     procedure ActionFiltersApplyUpdate(Sender: TObject);
     procedure RibbonGalleryItemFiltersPopup(Sender: TObject);
-    procedure TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
     procedure PopupMenuBuildPopup(Sender: TObject);
     procedure ButtonBuildAllClick(Sender: TObject);
     procedure ActionProofingCheckUpdate(Sender: TObject);
     procedure ActionProofingCheckSelectedUpdate(Sender: TObject);
-    procedure ActionTranslationEditTextExecute(Sender: TObject);
+    procedure ActionEditTranslationTextExecute(Sender: TObject);
     procedure ActionTranslationSuggestionListExecute(Sender: TObject);
     procedure ActionProjectRecoverExecute(Sender: TObject);
     procedure ActionTranslationSuggestionListUpdate(Sender: TObject);
-    procedure ActionTranslationEditTextUpdate(Sender: TObject);
+    procedure ActionEditTranslationTextUpdate(Sender: TObject);
     procedure ActionClearBookmarksExecute(Sender: TObject);
     procedure ActionTranslationMemoryLocateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryLocateExecute(Sender: TObject);
@@ -443,14 +478,43 @@ type
     procedure ActionValidationWarningDismissExecute(Sender: TObject);
     procedure ActionValidationWarningDismissUpdate(Sender: TObject);
     procedure ActionValidationWarningResolveUpdate(Sender: TObject);
+    procedure GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure GridItemsTableViewCustomDrawIndicatorCell(Sender: TcxGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxCustomGridIndicatorItemViewInfo; var ADone: Boolean);
+    procedure GridItemsTableViewCellDblClick(Sender: TcxCustomGridTableView; ACellViewInfo: TcxGridTableDataCellViewInfo;
+      AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
+    procedure GridItemsTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
+    procedure GridItemsTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord;
+      AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
+    procedure GridItemsTableViewDataControllerRecordChanged(ADataController: TcxCustomDataController; ARecordIndex,
+      AItemIndex: Integer);
+    procedure GridItemsTableViewColumnGetCellHint(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+      ACellViewInfo: TcxGridTableDataCellViewInfo; const AMousePos: TPoint; var AHintText: TCaption; var AIsHintMultiLine: Boolean;
+      var AHintTextRect: TRect);
+    procedure GridItemsTableViewColumnTargetValidateDrawValue(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+      const AValue: Variant; AData: TcxEditValidateInfo);
+    procedure GridItemsTableViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure GridItemsTableViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
+      AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
+    procedure EditTargetTextExit(Sender: TObject);
+    procedure EditTargetTextEnter(Sender: TObject);
+    procedure ActionTextEditFocusedUpdate(Sender: TObject);
+    procedure ActionTextEditCancelExecute(Sender: TObject);
+    procedure ActionTextEditPreviousExecute(Sender: TObject);
+    procedure ActionTextEditNextExecute(Sender: TObject);
+    procedure ActionTextEditPreviousUpdate(Sender: TObject);
+    procedure ActionTextEditNextUpdate(Sender: TObject);
+    procedure GridItemsTableViewCanFocusRecord(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; var AAllow: Boolean);
+    procedure EditTargetTextPropertiesEditValueChanged(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
     FUpdateCount: integer;
     FUpdateLockCount: integer;
-    FLocalizerDataSource: TLocalizerDataSource;
+    FModuleItemsDataSource: TLocalizerModuleItemsDataSource;
     FProjectIndex: ILocalizerProjectPropertyLookup;
-    FActiveTreeList: TcxCustomTreeList;
     FFilterTargetLanguages: boolean;
     FTranslationCounts: TDictionary<TLocalizerModule, integer>;
     FRefreshModuleStatsQueued: boolean;
@@ -477,15 +541,13 @@ type
     FSpellCheckingString: boolean;
     FSpellCheckingStringResult: boolean;
     function PerformSpellCheck(Prop: TLocalizerProperty): boolean;
-  private type
-    // Translation Memory
-    TTranslationMemoryPeekResult = (prNone, prQueued, prFound);
   private
     FTranslationMemory: ITranslationMemory;
     FTranslationMemoryPeek: ITranslationMemoryPeek;
     procedure CreateTranslationMemoryPeeker(Force: boolean);
     procedure TranslationMemoryPeekHandler(Sender: TObject);
-    procedure QueueTranslationMemoryPeek(Node: TcxTreeListNode; Force: boolean = False); overload; // Specified node
+    procedure QueueTranslationMemoryPeek(Prop: TLocalizerProperty; Force: boolean = False); overload; // Specified row
+    procedure QueueTranslationMemoryPeek(RecordIndex: integer; Force: boolean = False); overload; // Specified row
     procedure QueueTranslationMemoryPeek; overload; // All nodes
     procedure ClearTranslationMemoryPeekResult;
   private
@@ -493,8 +555,7 @@ type
     FHintRect: TRect;
     FHintVisible: boolean;
     FShowHint: boolean;
-    FHintNode: TcxTreeListNode;
-    FHintColumn: TcxTreeListColumn;
+    FHintProp: TLocalizerProperty;
     procedure HideHint;
   private
     // Toast messages
@@ -562,18 +623,33 @@ type
     procedure AddRecentFile(const Filename: string);
   protected
     function GetProject: TLocalizerProject;
-    function GetFocusedNode: TcxTreeListNode;
     function GetFocusedItem: TCustomLocalizerItem;
+    function GetIsModuleActive: boolean;
     function GetFocusedModule: TLocalizerModule;
+    function GetActiveModule: TLocalizerModule;
+    function GetIsPropertyActive: boolean;
     function GetFocusedProperty: TLocalizerProperty;
+    function GetActiveProperty: TLocalizerProperty;
 
-    property FocusedNode: TcxTreeListNode read GetFocusedNode;
     property FocusedItem: TCustomLocalizerItem read GetFocusedItem;
-    property FocusedModule: TLocalizerModule read GetFocusedModule;
-    property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
 
-    function NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
-    function GetNodeValidationMessage(Node: TcxTreeListNode): string;
+    // IsModuleActive=True if module grid has focus. Otherwise False.
+    property IsModuleActive: boolean read GetIsModuleActive;
+    property FocusedModule: TLocalizerModule read GetFocusedModule;
+    // ActiveModule = FocusedModule if IsModuleActive=True. Otherwise nil.
+    property ActiveModule: TLocalizerModule read GetActiveModule;
+
+    // IsPropertyActive=True if property grid has focus. Otherwise False.
+    property IsPropertyActive: boolean read GetIsPropertyActive;
+    property FocusedProperty: TLocalizerProperty read GetFocusedProperty;
+    // ActiveProperty = FocusedProperty if IsPropertyActive=True. Otherwise nil.
+    property ActiveProperty: TLocalizerProperty read GetActiveProperty;
+  protected
+    function GetSelectionCount: integer;
+    function GetSelection(Index: integer): TCustomLocalizerItem;
+    property SelectionCount: integer read GetSelectionCount;
+    property Selection[Index: integer]: TCustomLocalizerItem read GetSelection;
+    function HasSelection: boolean;
   protected
     FPendingFileOpen: TStrings;
     FPendingFileOpenLock: TCriticalSection;
@@ -585,7 +661,7 @@ type
     procedure LoadFocusedItem(Recurse: boolean = False);
     procedure LoadModuleNode(Node: TcxTreeListNode; Recurse: boolean); overload;
     procedure LoadModuleNode(Node: TcxTreeListNode; Module: TLocalizerModule; Recurse: boolean); overload;
-    procedure LoadFocusedPropertyNode;
+    procedure LoadFocusedProperty;
     procedure ReloadNode(Node: TcxTreeListNode);
     procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure RefreshModuleStats;
@@ -606,6 +682,12 @@ type
     procedure UpdateProjectModifiedIndicator;
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile: boolean;
+  protected
+    FTextEditProperty: TLocalizerProperty; // Property being edited
+    FTextEditing: boolean; // True if text editor has focus
+    FTextEditModified: boolean;
+    procedure PostTranslationTextEdit;
+    procedure ApplyTranslationTextEdit(EndEdit: boolean);
   private
     // Machine Translation
     procedure TranslateSelected(const TranslationService: ITranslationService; const TranslationProvider: ITranslationProvider);
@@ -672,7 +754,6 @@ uses
   Generics.Defaults,
   System.Character,
   RegularExpressions,
-  Menus,
   CommCtrl,
   ClipBrd,
 {$ifdef DEBUG}
@@ -762,41 +843,6 @@ resourcestring
   sDone = 'Done!';
 
 const
-  ImageIndexAbout               = 57;
-  ImageIndexInfo                = 58;
-  ImageIndexBookmark0           = 27;
-  ImageIndexBookmarkA           = 37;
-  ImageIndexModified            = 44;
-  ImageIndexNotModified         = -1;
-
-const
-  NodeImageIndexStateWarning    = 0;
-  NodeImageIndexNew             = 0;
-  NodeImageIndexUnused          = 1;
-  NodeImageIndexDontTranslate   = 2;
-  NodeImageIndexProposed        = 3;
-  NodeImageIndexTranslated      = 4;
-  NodeImageIndexHold            = 5;
-  NodeImageIndexNotTranslated   = 6;
-  NodeImageIndexObsolete        = 7;
-  NodeImageIndexComplete25      = 8;
-  NodeImageIndexComplete50      = 9;
-  NodeImageIndexComplete75      = 10;
-
-resourcestring
-  sNodeImageHintNew = 'Not translated. Added by last refresh';
-  sNodeImageHintUnused = 'No longer in use';
-  sNodeImageHintDontTranslate = 'Should not be translated';
-  sNodeImageHintProposed = 'Translation has been proposed';
-  sNodeImageHintTranslated = 'Has been translated';
-  sNodeImageHintHold = 'Placed on hold';
-  sNodeImageHintNotTranslated = 'Not translated';
-  sNodeImageHintObsolete = 'Source value has changed since translation';
-  sNodeImageHintComplete25 = 'Approximately 25% has been translated';
-  sNodeImageHintComplete50 = 'Approximately 50% has been translated';
-  sNodeImageHintComplete75 = 'Approximately 75% has been translated';
-
-const
   StatusBarPanelHint = 0;
   StatusBarPanelWarning = 1;
   StatusBarPanelModified = 2;
@@ -837,51 +883,6 @@ end;
 
 // -----------------------------------------------------------------------------
 //
-// TcxVirtualTreeList redirect
-//
-// -----------------------------------------------------------------------------
-procedure TcxVirtualTreeList.WMSetCursor(var Message: TWMSetCursor);
-var
-  p: TPoint;
-  r: TRect;
-begin
-  if (Message.HitTest = HTCLIENT) then
-  begin
-    p := ScreenToClient(Mouse.CursorPos);
-    HitTest.HitPoint := p;
-    HitTest.ReCalculate;
-
-    if (not HitTest.HitAtNode) or (not HitTest.HitAtColumn) or (HitTest.HitTestItem = nil) or
-      (HitTest.HitColumn <> TFormMain(Owner).TreeListColumnTarget) or (HitTest.HitNode.IsEditing) then
-    begin
-      Inherited;
-      Exit;
-    end;
-
-    r := CellRect(HitTest.HitNode, HitTest.HitColumn);
-    if (UseRightToLeftReading) or (TFormMain(Owner).TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
-      // Top left corner
-      r.Right := r.Left + HintCornerSize
-    else
-      // Top right corner
-      r.Left := r.Right - HintCornerSize;
-    r.Bottom := r.Top + HintCornerSize;
-
-    if (not r.Contains(p)) or (TFormMain.TTranslationMemoryPeekResult(HitTest.HitNode.Data) <> TFormMain.TTranslationMemoryPeekResult.prFound) then
-    begin
-      Inherited;
-      Exit;
-    end;
-
-    SetCursor(Screen.Cursors[crHandPoint]);
-    Message.Result := 1;
-  end else
-    inherited;
-end;
-
-
-// -----------------------------------------------------------------------------
-//
 // TFormMain
 //
 // -----------------------------------------------------------------------------
@@ -896,6 +897,8 @@ begin
 
   // Only way to avoid skinning splitter
   TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
+  TcxSplitterCracker(SplitterMainEditors).LookAndFeel.SkinName := '';
+  TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
 end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);
@@ -1001,8 +1004,8 @@ begin
 
   FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
 
-  FLocalizerDataSource := TLocalizerDataSource.Create(nil);
-  TreeListItems.DataController.CustomDataSource := FLocalizerDataSource;
+  FModuleItemsDataSource := TLocalizerModuleItemsDataSource.Create(nil);
+  GridItemsTableView.DataController.CustomDataSource := FModuleItemsDataSource;
 
   DataModuleMain := TDataModuleMain.Create(Self);
   FTranslationMemory := TranslationMemory.PrimaryProvider;
@@ -1011,6 +1014,7 @@ begin
   Application.OnShowHint := DoShowHint;
 
   RibbonTabMain.Active := True;
+  SplitterMainEditors.CloseSplitter;
 
   for i := 0 to StatusBar.Panels.Count-1 do
     StatusBar.Panels[i].Text := '';
@@ -1060,7 +1064,7 @@ begin
   FProjectIndex := nil;
   FProject.Clear;
 
-  FLocalizerDataSource.Free;
+  FModuleItemsDataSource.Free;
   FProject.Free;
   FTranslationCounts.Free;
 
@@ -1140,10 +1144,10 @@ begin
     TranslationManagerSettings.Layout.ModuleTree.ReadFilter(TreeListModules.Filter);
   end;
 
-  if (TranslationManagerSettings.Layout.ItemTree.Valid) then
+  if (TranslationManagerSettings.Layout.ItemGrid.Valid) then
   begin
-    TreeListItems.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.ItemTree.Name);
-    TranslationManagerSettings.Layout.ItemTree.ReadFilter(TreeListItems.Filter);
+    GridItemsTableView.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, [gsoUseFilter], TranslationManagerSettings.Layout.ItemGrid.Name);
+    // TranslationManagerSettings.Layout.ItemGrid.ReadFilter(GridItemsTableView.Filtering);
   end;
 
 {$ifdef MADEXCEPT}
@@ -1174,14 +1178,11 @@ begin
   if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
   begin
     TreeListModules.Images := DataModuleMain.ImageListTree;
-    TreeListItems.Images := DataModuleMain.ImageListTree;
   end else
   begin
     TreeListModules.Images := nil;
-    TreeListItems.Images := nil;
   end;
   // Force redraw
-  TreeListItems.LayoutChanged;
   TreeListModules.LayoutChanged;
 end;
 
@@ -1198,9 +1199,8 @@ begin
   TranslationManagerSettings.Layout.ModuleTree.WriteFilter(TreeListModules.Filter);
   TranslationManagerSettings.Layout.ModuleTree.Valid := True;
 
-  TreeListItems.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.ItemTree.Name);
-  TranslationManagerSettings.Layout.ItemTree.WriteFilter(TreeListItems.Filter);
-  TranslationManagerSettings.Layout.ItemTree.Valid := True;
+  GridItemsTableView.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, [gsoUseFilter], TranslationManagerSettings.Layout.ItemGrid.Name);
+  TranslationManagerSettings.Layout.ItemGrid.Valid := True;
 
   if (not TranslationManagerSettings.System.SafeMode) then // Spell checker setting are not complete in safe mode
     TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
@@ -1269,12 +1269,12 @@ begin
   end else
   if (TheShortCut = ShortCut(Ord('A'), [ssCtrl])) then
   begin
-    if (TreeListItems.Focused) then
+    if (IsPropertyActive) then
     begin
-      TreeListItems.SelectAll;
+      GridItemsTableView.Controller.SelectAll;
       Handled := True;
     end else
-    if (TreeListModules.Focused) then
+    if (IsModuleActive) then
     begin
       TreeListModules.SelectAll;
       Handled := True;
@@ -1369,14 +1369,14 @@ procedure TFormMain.BeginUpdate;
 begin
   Inc(FUpdateCount);
   TreeListModules.BeginUpdate;
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
 end;
 
 procedure TFormMain.EndUpdate;
 begin
   ASSERT(FUpdateCount > 0);
   Dec(FUpdateCount);
-  TreeListItems.EndUpdate;
+  GridItemsTableView.EndUpdate;
   TreeListModules.EndUpdate;
 end;
 
@@ -1427,9 +1427,9 @@ begin
   TAction(Sender).Enabled := (FocusedItem <> nil);
 end;
 
-procedure TFormMain.ActionHasPropertyFocusedUpdate(Sender: TObject);
+procedure TFormMain.ActionHasActivePropertyUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil);
+  TAction(Sender).Enabled := (IsPropertyActive);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1465,10 +1465,13 @@ resourcestring
   sAddToDictionaryEligibleWarning = 'Note: %d of the selected values are not elegible for translation and have been excluded.';
   sProgressAddingTranslationMemory = 'Adding to Translation Memory...';
 begin
+  if (not HasSelection) then
+    Exit;
+
   Count := 0;
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  for i := 0 to SelectionCount-1 do
   begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item := Selection[i];
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
@@ -1499,9 +1502,9 @@ begin
   Progress.EnableAbort := True;
   Progress.Progress(psProgress, 0, ElegibleCount);
 
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  for i := 0 to SelectionCount-1 do
   begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item := Selection[i];
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
@@ -1543,17 +1546,17 @@ var
   i: integer;
   Item: TCustomLocalizerItem;
 begin
-  Enabled := (FocusedNode <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
+  Enabled := (HasSelection) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
 
-  if (Enabled) and (FocusedNode.TreeList.SelectionCount < 100) then
+  if (Enabled) and (SelectionCount < 100) then
   begin
     // Require that at least one property is translated
     // Only check first 100 properties.
     // After that give up and assume one is translated. Execute handler will ignore properties that are not translated.
     Count := 0;
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    for i := 0 to SelectionCount-1 do
     begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      Item := Selection[i];
       Enabled := not Item.Traverse(
         function(Prop: TLocalizerProperty): boolean
         begin
@@ -1631,7 +1634,7 @@ end;
 
 procedure TFormMain.ActionTranslationMemoryLocateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable) and
+  TAction(Sender).Enabled := (ActiveProperty <> nil) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable) and
     (FocusedProperty.HasTranslation(TranslationLanguage));
 end;
 
@@ -1667,9 +1670,9 @@ begin
     Exit;
 
   Counts := Default(TAutoTranslateCounts);
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+  for i := 0 to SelectionCount-1 do
   begin
-    Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+    Item := Selection[i];
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
@@ -1752,9 +1755,9 @@ begin
       FProject.BeginUpdate;
       try
 
-        for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+        for i := 0 to SelectionCount-1 do
         begin
-          Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+          Item := Selection[i];
 
           Item.Traverse(
             function(Prop: TLocalizerProperty): boolean
@@ -1915,51 +1918,58 @@ begin
   **     so it can be reused for future translations."
   **
   *)
-  if (TranslationManagerSettings.Editor.AutoApplyTranslations) then
+  if (not TranslationManagerSettings.Editor.AutoApplyTranslations) or (not AProp.HasTranslation(TranslationLanguage)) then
+    Exit;
+
+  SourceValue := AProp.Value;
+  TranslatedValue := AProp.TranslatedValue[TranslationLanguage];
+
+  // Ignore empty source or target
+  if (SourceValue.Trim.IsEmpty) or (TranslatedValue.Trim.IsEmpty) then
+    Exit;
+
+  Count := 0;
+  SaveCursor(crAppStart);
+
+  // Get a list of properties with "similar" source values
+  PropertyList := FProjectIndex.Lookup(AProp);
+
+  if (PropertyList <> nil) then
   begin
-    SourceValue := AProp.Value;
-    TranslatedValue := AProp.TranslatedValue[TranslationLanguage];
+    for Prop in PropertyList do
+      if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.HasTranslation(TranslationLanguage)) then
+      begin
+        if (SourceValue = Prop.Value) then
+          Prop.TranslatedValue[TranslationLanguage] := TranslatedValue
+        else
+        if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
+          Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue)
+        else
+          continue;
 
-    // Ignore empty source or target
-    if (SourceValue.Trim.IsEmpty) or (TranslatedValue.Trim.IsEmpty) then
-      Exit;
+        ReloadProperty(Prop);
 
-    Count := 0;
-    SaveCursor(crAppStart);
-
-    // Get a list of properties with "similar" source values
-    PropertyList := FProjectIndex.Lookup(AProp);
-
-    if (PropertyList <> nil) then
-    begin
-      for Prop in PropertyList do
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.HasTranslation(TranslationLanguage)) then
-        begin
-          if (SourceValue = Prop.Value) then
-            Prop.TranslatedValue[TranslationLanguage] := TranslatedValue
-          else
-          if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
-            Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue)
-          else
-            continue;
-
-          ReloadProperty(Prop);
-
-          Inc(Count);
-        end;
-    end;
-    if (Count > 0) then
-      QueueToast(Format('Applied translation to %.0n properties', [Count*1.0])); // TODO : Localization
+        Inc(Count);
+      end;
   end;
+
+  if (Count > 0) then
+    QueueToast(Format('Applied translation to %.0n properties', [Count*1.0])); // TODO : Localization
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
 var
-  Node: TcxTreeListNode;
+  RecordIndex, RowIndex: integer;
 begin
-  Node := TreeListItems.NodeFromHandle(Sender);
-  Node.Data := pointer(TTranslationMemoryPeekResult.prFound);
-  Node.Repaint(False);
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(TLocalizerProperty(Sender));
+  if (RecordIndex = -1) then
+    Exit;
+
+  FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prFound;
+
+  RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, False);
+  if (RowIndex <> -1) then
+    GridItemsTableView.ViewData.Rows[RowIndex].Invalidate(GridItemsTableViewColumnTarget);
 end;
 
 procedure TFormMain.QueueTranslationMemoryPeek;
@@ -1970,33 +1980,51 @@ begin
     Exit;
 
   // Reset state of all - queue those that are visible right now
-  for i := 0 to TreeListItems.Count-1 do
-  begin
-    TreeListItems.Items[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
-    TreeListItems.Items[i].Repaint(False);
-  end;
+
+  ClearTranslationMemoryPeekResult;
+
+  for i := 0 to GridItemsTableView.ViewData.RowCount-1 do
+    QueueTranslationMemoryPeek(GridItemsTableView.ViewData.Rows[i].RecordIndex, True);
 end;
 
-procedure TFormMain.QueueTranslationMemoryPeek(Node: TcxTreeListNode; Force: boolean);
+procedure TFormMain.QueueTranslationMemoryPeek(RecordIndex: integer; Force: boolean);
 var
   Prop: TLocalizerProperty;
+  RowIndex: integer;
 begin
   if (FTranslationMemoryPeek = nil) then
     Exit;
 
-  if (not Force) and (TTranslationMemoryPeekResult(Node.Data) <> TTranslationMemoryPeekResult.prNone) then
+  if (not Force) and (FModuleItemsDataSource.PeekResult[RecordIndex] <> TTranslationMemoryPeekResult.prNone) then
     Exit;
 
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
+  Prop := FModuleItemsDataSource.Properties[RecordIndex];
 
   if (Prop = nil) or (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
     Exit;
 
-  if (TTranslationMemoryPeekResult(Node.Data) = TTranslationMemoryPeekResult.prFound) then
-    Node.Repaint(False);
+  if (FModuleItemsDataSource.PeekResult[RecordIndex] = TTranslationMemoryPeekResult.prFound) then
+  begin
+    RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, False);
+    if (RowIndex <> -1) then
+      GridItemsTableView.ViewData.Rows[RowIndex].Invalidate(GridItemsTableViewColumnTarget);
+  end;
 
-  Node.Data := pointer(TTranslationMemoryPeekResult.prQueued);
+  FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prQueued;
   FTranslationMemoryPeek.EnqueueQuery(Prop);
+end;
+
+procedure TFormMain.QueueTranslationMemoryPeek(Prop: TLocalizerProperty; Force: boolean);
+var
+  RecordIndex: integer;
+begin
+  if (FTranslationMemoryPeek = nil) then
+    Exit;
+
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(Prop);
+
+  if (RecordIndex <> -1) then
+    QueueTranslationMemoryPeek(RecordIndex, Force);
 end;
 
 procedure TFormMain.ClearTranslationMemoryPeekResult;
@@ -2004,8 +2032,8 @@ var
   i: integer;
 begin
   // Reset state of all
-  for i := 0 to TreeListItems.Count-1 do
-    TreeListItems.Items[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+  for i := 0 to FModuleItemsDataSource.GetRecordCount-1 do
+    FModuleItemsDataSource.PeekResult[i] := TTranslationMemoryPeekResult.prNone;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2073,14 +2101,13 @@ end;
 
 procedure TFormMain.ActionBookmarkExecute(Sender: TObject);
 var
-  Node: TcxTreeListNode;
   Prop: TLocalizerProperty;
   Flag: TPropertyFlag;
   Props: TArray<TLocalizerProperty>;
   i: integer;
   DoSet: boolean;
 begin
-  if (FocusedProperty = nil) then
+  if (ActiveProperty = nil) then
     exit;
 
   Flag := TPropertyFlag(TAction(Sender).Tag);
@@ -2111,7 +2138,7 @@ begin
       if (Flag in Prop.Flags) then
       begin
         Prop.ClearFlag(Flag);
-        TreeListItems.FocusedNode.Repaint(True);
+        LoadFocusedProperty;
         Exit;
       end;
 
@@ -2124,21 +2151,19 @@ begin
           begin
             Prop.ClearFlag(Flag);
             Result := False;
-            Node := TreeListItems.NodeFromHandle(Prop);
-            if (Node <> nil) then
-              Node.Repaint(True);
+            ReloadProperty(Prop);
           end;
         end);
 
       // ...Then set new (on single item)
       Prop.SetFlag(Flag);
-      TreeListItems.FocusedNode.Repaint(True);
+      LoadFocusedProperty;
     end else
     begin
       // Operate on selected nodes
-      SetLength(Props, TreeListItems.SelectionCount);
-      for i := 0 to TreeListItems.SelectionCount-1 do
-        Props[i] := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.Selections[i]));
+      SetLength(Props, GridItemsTableView.Controller.SelectedRecordCount);
+      for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
+        Props[i] := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.SelectedRecords[i].RecordIndex];
 
       // Clear if ALL already has bookmark, otherwise Set
       DoSet := False;
@@ -2160,8 +2185,8 @@ begin
           Prop.ClearFlag(Flag);
       end;
 
-      for i := 0 to TreeListItems.SelectionCount-1 do
-        TreeListItems.Selections[i].Repaint(True);
+      for i := 0 to GridItemsTableView.Controller.SelectedRowCount -1 do
+        GridItemsTableView.Controller.SelectedRows[i].Invalidate;
     end;
   end;
 end;
@@ -2419,13 +2444,13 @@ begin
   // The action has a shortcut because we would like to display it in the hint.
   if (TAction(Sender).ActionComponent = nil) then
   begin
-    if (TreeListItems.InplaceEditor = nil) then
-      TreeListColumnTarget.Editing := True;
+    if (not GridItemsTableViewColumnTarget.Editing) then
+      GridItemsTableViewColumnTarget.Editing := True;
 
-    if (TreeListItems.InplaceEditor = nil) then
+    if (GridItemsTableView.Controller.EditingController.Edit = nil) then
       Exit;
 
-    TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown := not TcxCustomDropDownEdit(TreeListItems.InplaceEditor).DroppedDown;
+    TcxCustomDropDownEdit(GridItemsTableView.Controller.EditingController.Edit).DroppedDown := not TcxCustomDropDownEdit(GridItemsTableView.Controller.EditingController.Edit).DroppedDown;
   end;
 
   // ActionComponent is only set when we are fired via the dropdown button but it
@@ -2435,40 +2460,197 @@ end;
 
 procedure TFormMain.ActionTranslationSuggestionListUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeListColumnTarget.Focused);
+  TAction(Sender).Enabled := (IsPropertyActive);
 end;
 
-procedure TFormMain.ActionTranslationEditTextExecute(Sender: TObject);
-var
-  TextEditor: TFormTextEditor;
-begin
-  if (TreeListItems.InplaceEditor = nil) then
-    TreeListColumnTarget.Editing := True;
+// -----------------------------------------------------------------------------
 
-  if (TreeListItems.InplaceEditor = nil) then
+procedure TFormMain.ApplyTranslationTextEdit(EndEdit: boolean);
+begin
+  if (not FTextEditing) then
     Exit;
 
+  FTextEditing := False;
+
+  PostTranslationTextEdit;
+
+  // Moving focus out of edit control will also apply the edit (via the OnExit handler)
+  if (EndEdit) and (EditTargetText.Focused) then
+    TreeListModules.SetFocus;
+end;
+
+procedure TFormMain.PostTranslationTextEdit;
+var
+  RecordIndex: integer;
+begin
+  if (not FTextEditModified) then
+    Exit;
+
+  Assert(FTextEditProperty <> nil);
+
+  // Edit without explicit post - write value directly back to property and refresh row
+
+  FTextEditModified := False;
+
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(FTextEditProperty);
+
+  // If we are posting because the focus has moved to another module, then we will not find
+  // the property in the data source and will have to update it directly.
+  if (RecordIndex <> -1) then
+    GridItemsTableView.DataController.Values[RecordIndex, GridItemsTableViewColumnTarget.Index] := EditTargetText.Text
+  else
+  begin
+    FTextEditProperty.TranslatedValue[TranslationLanguage] := EditTargetText.Text;
+    TranslationAdded(FTextEditProperty);
+  end;
+end;
+
+procedure TFormMain.EditTargetTextEnter(Sender: TObject);
+begin
+  FTextEditProperty := FocusedProperty;
+  FTextEditing := True;
+end;
+
+procedure TFormMain.EditTargetTextExit(Sender: TObject);
+begin
+  FTextEditing := False;
+  PostTranslationTextEdit;
+  FTextEditProperty := nil;
+end;
+
+procedure TFormMain.EditTargetTextPropertiesEditValueChanged(Sender: TObject);
+begin
+  if (FTextEditing) then
+    FTextEditModified := True;
+end;
+
+procedure TFormMain.ActionEditTranslationTextExecute(Sender: TObject);
+(*
+var
+  TextEditor: TFormTextEditor;
+*)
+var
+  SelStart: integer;
+begin
+  // Place caret at end by default
+  SelStart := MaxInt;
+
+  // Open text editor if grid has focus. Otherwise post changes and close text editor.
+  if (IsPropertyActive) then
+  begin
+    if (GridItemsTableViewColumnTarget.Editing) then
+    begin
+      // Get current caret position if in-place editor is active
+      SelStart := TcxTextEdit(GridItemsTableView.Controller.EditingController.Edit).SelStart;
+
+      // Save current edit text and then cancel edit. We will continue the edit in the text editor instead.
+      // The modified state is transferred to the text editor.
+      // This enables the user to cancel the edit even if they invoke the text editor.
+      EditTargetText.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
+      FTextEditModified := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).ModifiedAfterEnter;
+      GridItemsTableView.Controller.EditingController.HideEdit(False);
+    end;
+
+    // Restore caret position
+    EditTargetText.SelStart := SelStart;
+
+    SplitterMainEditors.OpenSplitter;
+    EditTargetText.SetFocus;
+  end else
+  if (EditTargetText.Focused) then
+  begin
+    // Save caret position
+    SelStart := EditTargetText.SelStart;
+
+    // Clear modified flag to avoid OnExit posting value
+    FTextEditModified := False;
+    FTextEditProperty := nil;
+
+    // Move focus to grid and continue edit in in-place editor
+    GridItems.SetFocus;
+    GridItemsTableViewColumnTarget.Editing := True;
+
+    if (GridItemsTableView.Controller.EditingController.Edit = nil) then
+      Exit;
+
+    // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
+    // Note that the following three methods must be called in this exact order.
+    GridItemsTableView.Controller.EditingController.Edit.DoEditing;
+    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Text;
+    GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
+
+    // Restore caret position
+    TcxTextEdit(GridItemsTableView.Controller.EditingController.Edit).SelStart := SelStart;
+
+    SplitterMainEditors.CloseSplitter;
+  end;
+
+(*
   TextEditor := TFormTextEditor.Create(nil);
   try
     TextEditor.SourceText := FocusedProperty.Value;
-    TextEditor.Text := TcxCustomTextEdit(TreeListItems.InplaceEditor).EditingText;
+    TextEditor.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
     TextEditor.SourceLanguage := SourceLanguage;
     TextEditor.TargetLanguage := TargetLanguage;
 
     if (TextEditor.Execute) then
     begin
       // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
-      TcxCustomEditCracker(TreeListItems.InplaceEditor).InnerEdit.EditValue := TextEditor.Text;
-      TreeListItems.InplaceEditor.ModifiedAfterEnter := True;
+      // Note that the following three metyhods must be called in this exact order.
+      GridItemsTableView.Controller.EditingController.Edit.DoEditing;
+      TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := TextEditor.Text;
+      GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
     end;
   finally
     TextEditor.Free;
   end;
+*)
 end;
 
-procedure TFormMain.ActionTranslationEditTextUpdate(Sender: TObject);
+procedure TFormMain.ActionEditTranslationTextUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (TreeListColumnTarget.Focused);
+  TAction(Sender).Enabled := (FTextEditing) or (IsPropertyActive);
+end;
+
+procedure TFormMain.ActionTextEditFocusedUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing);
+end;
+
+procedure TFormMain.ActionTextEditCancelExecute(Sender: TObject);
+begin
+  if (FTextEditModified) then
+  begin
+    // Restore original value and clear modified flag
+    EditTargetText.Text := GridItemsTableView.DataController.Values[GridItemsTableView.DataController.FocusedRecordIndex, GridItemsTableViewColumnTarget.Index];
+    FTextEditModified := False;
+  end else
+    // Escape with no modifications closes the editor
+    ActionEditTranslationText.Execute;
+end;
+
+procedure TFormMain.ActionTextEditNextExecute(Sender: TObject);
+begin
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.FocusedRowIndex := GridItemsTableView.Controller.FocusedRowIndex + 1;
+  GridItemsTableView.Controller.FocusedRow.Selected := True;
+end;
+
+procedure TFormMain.ActionTextEditNextUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing) and (GridItemsTableView.Controller.FocusedRowIndex < GridItemsTableView.DataController.RowCount-1);
+end;
+
+procedure TFormMain.ActionTextEditPreviousExecute(Sender: TObject);
+begin
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.FocusedRowIndex := GridItemsTableView.Controller.FocusedRowIndex - 1;
+  GridItemsTableView.Controller.FocusedRow.Selected := True;
+end;
+
+procedure TFormMain.ActionTextEditPreviousUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FTextEditing) and (GridItemsTableView.Controller.FocusedRowIndex > 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -2509,8 +2691,7 @@ var
   Writer: TTextWriter;
   CsvWriter: TLocalizerCsvWriter;
   i: integer;
-  Module: TLocalizerModule;
-  Prop: TLocalizerProperty;
+  Item: TCustomLocalizerItem;
 begin
   Writer := TStringWriter.Create;
   try
@@ -2520,21 +2701,14 @@ begin
       // without the user having to go through the Text Import sttings.
       CsvWriter.Delimiter := #9;
 
-      if (TreeListModules.Focused) then
+      for i := 0 to SelectionCount-1 do
       begin
-        for i := 0 to TreeListModules.SelectionCount-1 do
-        begin
-          Module := TLocalizerModule(NodeToItem(TreeListModules.Selections[i]));
-          CsvWriter.Write(Module);
-        end;
-      end else
-      if (TreeListItems.Focused) then
-      begin
-        for i := 0 to TreeListItems.SelectionCount-1 do
-        begin
-          Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
-          CsvWriter.Write(Prop);
-        end;
+        Item := Selection[i];
+        if (Item is TLocalizerModule) then
+          CsvWriter.Write(TLocalizerModule(Item))
+        else
+        if (Item is TLocalizerProperty) then
+          CsvWriter.Write(TLocalizerProperty(Item));
       end;
 
     finally
@@ -2549,7 +2723,7 @@ end;
 
 procedure TFormMain.ActionEditCopyUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and ((TreeListModules.SelectionCount > 0) or (TreeListItems.SelectionCount > 0));
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (HasSelection);
 end;
 
 procedure TFormMain.ActionEditPasteExecute(Sender: TObject);
@@ -2625,7 +2799,7 @@ end;
 
 procedure TFormMain.ActionEditMarkUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedProperty <> nil);
+  TAction(Sender).Enabled := (ActiveProperty <> nil);
 
   TAction(Sender).Checked := TAction(Sender).Enabled and (FocusedProperty.Flags * [FlagBookmark0..FlagBookmarkF] <> []);
   // We have to manually sync the button because bsChecked always behave like AutoCheck=True (and DevExpress won't admit they've got it wrong)
@@ -2758,7 +2932,6 @@ var
   i: integer;
   FilterField: TFilterField;
   Value: string;
-  Item: TCustomLocalizerItem;
 begin
   for i := 0 to RibbonGalleryItemGroup.Items.Count-1 do
   begin
@@ -2766,13 +2939,11 @@ begin
 
     FilterField := TFilterField(RibbonGalleryItemGroup.Items[i].Action.Tag);
 
-    Item := FocusedItem;
-
-    if (Item is TLocalizerProperty) then
-      Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
+    if (IsPropertyActive) then
+      Value := TFilterItem.ExtractValue(FilterField, FocusedProperty)
     else
     if (FilterField = ffModule) then
-      Value := Item.Name // Module name
+      Value := FocusedModule.Name // Module name
     else
       Value := '-';
 
@@ -2795,9 +2966,9 @@ begin
 
     FormFilters.BeginAddFilter;
 
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    for i := 0 to SelectionCount-1 do
     begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      Item := Selection[i];
 
       if (Item is TLocalizerProperty) then
         Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
@@ -3137,7 +3308,7 @@ begin
   ClearDependents;
   ClearTargetLanguage;
   FTranslationCounts.Clear;
-  TreeListItems.Clear;
+  FModuleItemsDataSource.Clear;
   TreeListModules.Clear;
 
   Progress := ShowProgress(sProgressProjectLoading);
@@ -3371,117 +3542,105 @@ begin
 
   CountBefore := CountStuff;
 
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
   try
-    try
 
-      for LoopModule in FProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
-      begin
-        Module := LoopModule;
-        Module.BeginUpdate;
-        try
-          if (Module.Kind = mkOther) or (Module.IsUnused) then
+    for LoopModule in FProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
+    begin
+      Module := LoopModule;
+      Module.BeginUpdate;
+      try
+        if (Module.Kind = mkOther) or (Module.IsUnused) then
+        begin
+          NeedReload := True;
+          if (Module = CurrentModule) then
           begin
-            NeedReload := True;
-            if (Module = CurrentModule) then
-            begin
-              FLocalizerDataSource.Module := nil;
-              CurrentModule := nil;
-            end;
-            Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
-            Node.Free;
-            RemoveTranslatedCount(Module);
-            FreeAndNil(Module);
-            continue;
+            FModuleItemsDataSource.Module := nil;
+            CurrentModule := nil;
           end;
-
-          for LoopItem in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
-          begin
-            Item := LoopItem;
-            Item.BeginUpdate;
-            try
-              if (Item.IsUnused) then
-              begin
-                NeedReload := True;
-                if (Module = CurrentModule) then
-                begin
-                  FLocalizerDataSource.Module := nil;
-                  CurrentModule := nil;
-                end;
-                FreeAndNil(Item);
-                continue;
-              end;
-
-              // TODO : Purge obsolete translations?
-              for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
-                if (Prop.IsUnused) then
-                begin
-                  NeedReload := True;
-                  if (Module = CurrentModule) then
-                  begin
-                    Node := TreeListItems.NodeFromHandle(Prop);
-                    if (Node <> nil) then
-                      Node.Free
-                    else
-                    begin
-                      FLocalizerDataSource.Module := nil;
-                      CurrentModule := nil;
-                    end;
-                  end;
-                  Prop.Free;
-                end;
-
-              if (Item.Properties.Count = 0) then
-              begin
-                NeedReload := True;
-                if (Module = CurrentModule) then
-                begin
-                  FLocalizerDataSource.Module := nil;
-                  CurrentModule := nil;
-                end;
-                FreeAndNil(Item);
-              end;
-
-            finally
-              if (Item <> nil) then
-                Item.EndUpdate;
-            end;
-          end;
-
-          if (Module.Items.Count = 0) then
-          begin
-            NeedReload := True;
-            if (Module = CurrentModule) then
-            begin
-              FLocalizerDataSource.Module := nil;
-  //            TreeListItems.Clear;
-              CurrentModule := nil;
-            end;
-            Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
-            Node.Free;
-            RemoveTranslatedCount(Module);
-            FreeAndNil(Module);
-          end;
-
-        finally
-          if (Module <> nil) then
-            Module.EndUpdate;
+          Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+          Node.Free;
+          RemoveTranslatedCount(Module);
+          FreeAndNil(Module);
+          continue;
         end;
+
+        for LoopItem in Module.Items.Values.ToArray do // ToArray for stability since we delete from dictionary
+        begin
+          Item := LoopItem;
+          Item.BeginUpdate;
+          try
+            if (Item.IsUnused) then
+            begin
+              NeedReload := True;
+              if (Module = CurrentModule) then
+              begin
+                FModuleItemsDataSource.Module := nil;
+                CurrentModule := nil;
+              end;
+              FreeAndNil(Item);
+              continue;
+            end;
+
+            // TODO : Purge obsolete translations?
+            for Prop in Item.Properties.Values.ToArray do // ToArray for stability since we delete from dictionary
+              if (Prop.IsUnused) then
+              begin
+                NeedReload := True;
+                if (Module = CurrentModule) then
+                begin
+                  FModuleItemsDataSource.Module := nil;
+                  CurrentModule := nil;
+                end;
+                Prop.Free;
+              end;
+
+            if (Item.Properties.Count = 0) then
+            begin
+              NeedReload := True;
+              if (Module = CurrentModule) then
+              begin
+                FModuleItemsDataSource.Module := nil;
+                CurrentModule := nil;
+              end;
+              FreeAndNil(Item);
+            end;
+
+          finally
+            if (Item <> nil) then
+              Item.EndUpdate;
+          end;
+        end;
+
+        if (Module.Items.Count = 0) then
+        begin
+          NeedReload := True;
+          if (Module = CurrentModule) then
+          begin
+            FModuleItemsDataSource.Module := nil;
+            CurrentModule := nil;
+          end;
+          Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
+          Node.Free;
+          RemoveTranslatedCount(Module);
+          FreeAndNil(Module);
+        end;
+
+      finally
+        if (Module <> nil) then
+          Module.EndUpdate;
       end;
-
-      if (NeedReload) then
-      begin
-        FProject.Modified := True;
-
-        LoadProject(FProject, False);
-      end;
-
-    finally
-      if (TreeListItems.CustomDataSource = nil) then
-        TreeListItems.CustomDataSource := FLocalizerDataSource;
     end;
+
+    if (NeedReload) then
+    begin
+      FProject.Modified := True;
+
+      LoadProject(FProject, False);
+    end;
+
   finally
-    TreeListItems.EndUpdate;
+    GridItemsTableView.EndUpdate;
   end;
 
   CountAfter := CountStuff;
@@ -3508,8 +3667,10 @@ begin
     Exit;
   end;
 
+  ApplyTranslationTextEdit(False);
+
   if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsAction, [Count.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
-        Exit;
+    Exit;
 
   CountRecovered := RecoverUnusedTranslations(False);
 
@@ -3530,6 +3691,8 @@ resourcestring
   sProgressProjectLoading = 'Loading project...';
   sProgressProjectSaving = 'Saving project...';
 begin
+  ApplyTranslationTextEdit(False);
+
   SaveCursor(crHourGlass);
 
   // Save current paths so we can restore them if anything goes wrong
@@ -3624,6 +3787,8 @@ begin
     Exit;
 
   CheckStringsSymbolFile;
+
+  ApplyTranslationTextEdit(True);
 
   SaveCursor(crHourGlass);
 
@@ -3752,13 +3917,13 @@ var
   Item: TCustomLocalizerItem;
 begin
   SaveCursor(crAppStart);
-  FocusedNode.TreeList.BeginUpdate;
+  BeginUpdate;
   try
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    for i := 0 to SelectionCount-1 do
     begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      Item := Selection[i];
 
-      if (Item.Status = ItemStatusDontTranslate) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusDontTranslate) then
         continue;
 
       Item.Status := ItemStatusDontTranslate;
@@ -3768,18 +3933,18 @@ begin
         QueueTranslationMemoryPeek
       else
       if (Item is TLocalizerProperty) then
-        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+        QueueTranslationMemoryPeek(TLocalizerProperty(Item), True);
 
       LoadItem(Item, True);
     end;
   finally
-    FocusedNode.TreeList.EndUpdate;
+    EndUpdate;
   end;
 end;
 
 procedure TFormMain.ActionStatusDontTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
+  TAction(Sender).Enabled := (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusDontTranslate);
 end;
@@ -3790,13 +3955,13 @@ var
   Item: TCustomLocalizerItem;
 begin
   SaveCursor(crAppStart);
-  FocusedNode.TreeList.BeginUpdate;
+  BeginUpdate;
   try
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    for i := 0 to SelectionCount-1 do
     begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      Item := Selection[i];
 
-      if (Item.Status = ItemStatusHold) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusHold) then
         continue;
 
       Item.Status := ItemStatusHold;
@@ -3806,18 +3971,18 @@ begin
         QueueTranslationMemoryPeek
       else
       if (Item is TLocalizerProperty) then
-        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+        QueueTranslationMemoryPeek(TLocalizerProperty(Item), True);
 
       LoadItem(Item, True);
     end;
   finally
-    FocusedNode.TreeList.EndUpdate;
+    EndUpdate;
   end;
 end;
 
 procedure TFormMain.ActionStatusHoldUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
+  TAction(Sender).Enabled := (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusHold);
 end;
@@ -3828,13 +3993,13 @@ var
   Item: TCustomLocalizerItem;
 begin
   SaveCursor(crAppStart);
-  FocusedNode.TreeList.BeginUpdate;
+  BeginUpdate;
   try
-    for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
+    for i := 0 to SelectionCount-1 do
     begin
-      Item := NodeToItem(FocusedNode.TreeList.Selections[i]);
+      Item := Selection[i];
 
-      if (Item.Status = ItemStatusTranslate) then
+      if (Item.IsUnused) or (Item.Status = ItemStatusTranslate) then
         continue;
 
       Item.Status := ItemStatusTranslate;
@@ -3844,18 +4009,18 @@ begin
         QueueTranslationMemoryPeek
       else
       if (Item is TLocalizerProperty) then
-        QueueTranslationMemoryPeek(FocusedNode.TreeList.Selections[i], True);
+        QueueTranslationMemoryPeek(TLocalizerProperty(Item), True);
 
       LoadItem(Item, True);
     end;
   finally
-    FocusedNode.TreeList.EndUpdate;
+    EndUpdate;
   end;
 end;
 
 procedure TFormMain.ActionStatusTranslateUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FocusedNode <> nil) and (FocusedItem <> nil) and (not FocusedItem.IsUnused);
+  TAction(Sender).Enabled := (FocusedItem <> nil) and (not FocusedItem.IsUnused);
 
   TAction(Sender).Checked := (TAction(Sender).Enabled) and (FocusedItem.Status = ItemStatusTranslate);
 end;
@@ -3912,7 +4077,7 @@ begin
 
   // Update node state images
   if (NeedRefresh) then
-    TreeListItems.FullRefresh;
+    GridItemsTableView.Invalidate(True);
 
   if (WarningCount = 0) then
     MessageDlg(sLocalizerWarningsNone, mtInformation, [mbOK], 0)
@@ -3923,7 +4088,7 @@ end;
 procedure TFormMain.ActionValidationWarningDismissExecute(Sender: TObject);
 begin
   FocusedProperty.Translations[TranslationLanguage].Warnings := [];
-  ReloadNode(FocusedNode);
+  LoadFocusedProperty;
 end;
 
 procedure TFormMain.ActionValidationWarningResolveExecute(Sender: TObject);
@@ -3965,7 +4130,7 @@ begin
     Value := EqualizeTrailingSpace(SourceValue, Value);
 
   Translation.Value := Value;
-  ReloadNode(FocusedNode);
+  LoadFocusedProperty;
 end;
 
 procedure TFormMain.ActionValidationWarningResolveUpdate(Sender: TObject);
@@ -3975,7 +4140,7 @@ var
 const
   ResolvableWarnings: TTranslationWarnings = [tWarningAccelerator,tWarningLeadSpace,tWarningTrailSpace,tWarningTerminator,tWarningSurround];
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
   TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
     (Translation.Warnings * ResolvableWarnings <> []);
 end;
@@ -3985,7 +4150,7 @@ var
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
   TAction(Sender).Enabled := (Prop <> nil) and (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and
     (Translation.Warnings <> []);
 end;
@@ -3996,7 +4161,7 @@ procedure TFormMain.ActionTranslationStateUpdate(Sender: TObject);
 var
   Prop: TLocalizerProperty;
 begin
-  Prop := FocusedProperty;
+  Prop := ActiveProperty;
 
   TAction(Sender).Enabled := (Prop <> nil) and (not Prop.IsUnused) and (Prop.EffectiveStatus <> ItemStatusDontTranslate);
 end;
@@ -4004,82 +4169,90 @@ end;
 procedure TFormMain.ActionTranslationStateAcceptExecute(Sender: TObject);
 var
   i: integer;
+  RecordIndex: integer;
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
   SaveCursor(crAppStart);
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
   try
-    for i := 0 to TreeListItems.SelectionCount-1 do
+    for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
     begin
-      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+      RecordIndex := GridItemsTableView.Controller.SelectedRecords[i].RecordIndex;
+      Prop := FModuleItemsDataSource.Properties[RecordIndex];
 
       if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
       Translation.Status := tStatusTranslated;
 
-      TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
 
       LoadItem(Prop);
 
       TranslationAdded(Prop);
     end;
   finally
-    TreeListItems.EndUpdate;
+    GridItemsTableView.EndUpdate;
   end;
 end;
 
 procedure TFormMain.ActionTranslationStateProposeExecute(Sender: TObject);
 var
   i: integer;
+  RecordIndex: integer;
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
   SaveCursor(crAppStart);
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
   try
-    for i := 0 to TreeListItems.SelectionCount-1 do
+    for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
     begin
-      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+      RecordIndex := GridItemsTableView.Controller.SelectedRecords[i].RecordIndex;
+      Prop := FModuleItemsDataSource.Properties[RecordIndex];
 
       if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
 
       Translation.Status := tStatusProposed;
 
-      TreeListItems.Selections[i].Data := pointer(TTranslationMemoryPeekResult.prNone);
+      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
 
       LoadItem(Prop);
 
       TranslationAdded(Prop);
     end;
   finally
-    TreeListItems.EndUpdate;
+    GridItemsTableView.EndUpdate;
   end;
 end;
 
 procedure TFormMain.ActionTranslationStateRejectExecute(Sender: TObject);
 var
   i: integer;
+  RecordIndex: integer;
   Prop: TLocalizerProperty;
 begin
   SaveCursor(crAppStart);
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
   try
-    for i := 0 to TreeListItems.SelectionCount-1 do
+    for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
     begin
-      Prop := TLocalizerProperty(NodeToItem(TreeListItems.Selections[i]));
+      RecordIndex := GridItemsTableView.Controller.SelectedRecords[i].RecordIndex;
+      Prop := FModuleItemsDataSource.Properties[RecordIndex];
 
       Prop.Translations.Remove(TranslationLanguage);
+
+      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
 
       LoadItem(Prop);
 
       // Prop is now tranlatable again - check for match in TM
-      QueueTranslationMemoryPeek(TreeListItems.Selections[i], True);
+      QueueTranslationMemoryPeek(Prop, True);
     end;
   finally
-    TreeListItems.EndUpdate;
+    GridItemsTableView.EndUpdate;
   end;
 end;
 
@@ -4152,7 +4325,7 @@ begin
 
     FFilterTargetLanguages := FormLanguages.ApplyFilter;
 
-    TreeListItems.BeginUpdate;
+    GridItemsTableView.BeginUpdate;
     try
       DeleteLanguages := TList<TTranslationLanguage>.Create;
       try
@@ -4244,7 +4417,7 @@ begin
         TargetLanguageID := SourceLanguageID;
 
     finally
-      TreeListItems.EndUpdate;
+      GridItemsTableView.EndUpdate;
     end;
 
   finally
@@ -4274,6 +4447,9 @@ resourcestring
   sLocalizerSavePromptTitle = 'Project has not been saved';
   sLocalizerSavePrompt = 'Your changes has not been saved.'#13#13'Do you want to save them now?';
 begin
+  // Apply any pending edits
+  ApplyTranslationTextEdit(True);
+
   if (FProject.Modified) then
   begin
     Res := TaskMessageDlg(sLocalizerSavePromptTitle, sLocalizerSavePrompt,
@@ -4301,14 +4477,6 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.NodeToItem(Node: TcxTreeListNode): TCustomLocalizerItem;
-begin
-  if (Node.TreeList = TreeListItems) then
-    Result := TLocalizerProperty(TreeListItems.HandleFromNode(Node))
-  else
-    Result := TLocalizerModule(Node.Data);
-end;
-
 function TFormMain.GetProject: TLocalizerProject;
 begin
   Result := FProject;
@@ -4316,10 +4484,23 @@ end;
 
 function TFormMain.GetFocusedItem: TCustomLocalizerItem;
 begin
-  Result := FocusedProperty;
-
-  if (Result = nil) then
+  if (IsPropertyActive) then
+    Result := FocusedProperty
+  else
     Result := FocusedModule;
+end;
+
+function TFormMain.GetIsModuleActive: boolean;
+begin
+  Result := (TreeListModules.Focused) and (TreeListModules.FocusedNode <> nil);
+end;
+
+function TFormMain.GetActiveModule: TLocalizerModule;
+begin
+  if (IsModuleActive) then
+    Result := FocusedModule
+  else
+    Result := nil;
 end;
 
 function TFormMain.GetFocusedModule: TLocalizerModule;
@@ -4330,46 +4511,48 @@ begin
     Result := nil;
 end;
 
-function TFormMain.GetFocusedNode: TcxTreeListNode;
+function TFormMain.GetIsPropertyActive: boolean;
 begin
-  if (FActiveTreeList = TreeListItems) then
-    Result := TreeListItems.FocusedNode
-  else
-    Result := TreeListModules.FocusedNode;
+  Result := (GridItemsTableView.IsControlFocused) and (GridItemsTableView.Controller.FocusedRowIndex <> -1);
 end;
 
-function TFormMain.GetFocusedProperty: TLocalizerProperty;
+function TFormMain.GetActiveProperty: TLocalizerProperty;
 begin
-  if (FActiveTreeList = TreeListItems) and (TreeListItems.FocusedNode <> nil) then
-    Result := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.FocusedNode))
+  if (GetIsPropertyActive) then
+    Result := FocusedProperty
   else
     Result := nil;
 end;
 
-function TFormMain.GetNodeValidationMessage(Node: TcxTreeListNode): string;
-var
-  Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-  Warning: TTranslationWarning;
-resourcestring
-  sValidationWarning = 'Translation has validation warnings:%s';
+function TFormMain.GetFocusedProperty: TLocalizerProperty;
 begin
-  Result := '';
+  if (GridItemsTableView.Controller.FocusedRowIndex <> -1) then//and (GridItemsTableView.Controller.FocusedItem <> nil) then
+    Result := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.FocusedRecord.RecordIndex]
+  else
+    Result := nil;
+end;
 
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
+// -----------------------------------------------------------------------------
 
-  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-    Exit;
+function TFormMain.HasSelection: boolean;
+begin
+  Result := (SelectionCount > 0);
+end;
 
-  if (Translation <> nil) and (Translation.Warnings <> []) then
-  begin
-    Result := '';
+function TFormMain.GetSelection(Index: integer): TCustomLocalizerItem;
+begin
+  if (IsPropertyActive) then
+    Result := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.SelectedRecords[Index].RecordIndex]
+  else
+    Result := TLocalizerModule(TreeListModules.Selections[Index].Data);
+end;
 
-    for Warning in Translation.Warnings do
-      Result := Result + #13 + '- ' + LoadResString(sTranslationValidationWarnings[Warning]);
-
-    Result := Format(sValidationWarning, [Result]);
-  end;
+function TFormMain.GetSelectionCount: integer;
+begin
+  if (IsPropertyActive) then
+    Result := GridItemsTableView.Controller.SelectedRowCount
+  else
+    Result := TreeListModules.SelectionCount;
 end;
 
 // -----------------------------------------------------------------------------
@@ -4614,7 +4797,8 @@ begin
   FSourceLanguage := LocaleItem;
   BarEditItemSourceLanguage.EditValue := FSourceLanguage.Locale;
   FProject.SourceLanguageID := FSourceLanguage.Locale;
-  TreeListColumnSource.Caption.Text := FSourceLanguage.LanguageName;
+  GridItemsTableViewColumnSource.Caption := FSourceLanguage.LanguageName;
+  LabelSourceName.Caption := FSourceLanguage.LanguageName;
 
   CreateTranslationMemoryPeeker(True);
 end;
@@ -4678,6 +4862,8 @@ begin
   if (LocaleItem = nil) then
     raise Exception.CreateFmt('Invalid target language ID: %.4X', [Value]);
 
+  ApplyTranslationTextEdit(False);
+
   BeginUpdate;
   try
     ClearDependents;
@@ -4692,7 +4878,17 @@ begin
 
     InvalidateTranslatedCounts;
 
-    TreeListColumnTarget.Caption.Text := FTargetLanguage.LanguageName;
+    GridItemsTableViewColumnTarget.Caption := FTargetLanguage.LanguageName;
+    LabelTargetName.Caption := FTargetLanguage.LanguageName;
+    if (FTargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+    begin
+      // Target language is Right-to-Left but rest of UI isn't - or vice versa
+      if (FTargetLanguage.IsRightToLeft) then
+        EditTargetText.BiDiMode := bdRightToLeft
+      else
+        EditTargetText.BiDiMode := bdLeftToRight;
+    end else
+      EditTargetText.BiDiMode := BiDiMode;
 
 
     (*
@@ -4761,14 +4957,14 @@ end;
 procedure TFormMain.ClearTargetLanguage;
 begin
   FTranslationLanguage := nil;
-  FLocalizerDataSource.TranslationLanguage := nil;
+  FModuleItemsDataSource.TranslationLanguage := nil;
 end;
 
 procedure TFormMain.UpdateTargetLanguage(Clear: boolean);
 begin
   if (Clear) then
     FTranslationLanguage := nil;
-  FLocalizerDataSource.TranslationLanguage := GetTranslationLanguage; // Must use getter
+  FModuleItemsDataSource.TranslationLanguage := GetTranslationLanguage; // Must use getter
   TreeListModules.FullRefresh;
   RefreshModuleStats;
 end;
@@ -4900,64 +5096,66 @@ begin
 
   LockUpdates;
   try
-    try
-      if (Clear) then
+    if (Clear) then
+    begin
+      GridItemsTableView.Controller.ClearSelection;
+      GridItemsTableView.Controller.FocusedRowIndex := -1;
+      GridItemsTableView.Controller.TopRowIndex := 0;
+      FModuleItemsDataSource.Module := nil;
+    end;
+
+    Modules := Project.Modules.Values.ToArray;
+
+    TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
+      function(const Left, Right: TLocalizerModule): Integer
       begin
-        FLocalizerDataSource.Module := nil;
-        TreeListModules.Clear;
-        TreeListItems.Clear;
+        Result := (Ord(Left.Kind) - Ord(Right.Kind));
+        if (Result = 0) then
+          Result := CompareText(Left.Name, Right.Name);
+      end));
+
+    SelectedModuleFound := False;
+
+    PrimeTranslatedCountCache := (FTranslationCounts.Count = 0);
+
+    for Module in Modules do
+    begin
+      if (Module.Kind = mkOther) then
+        continue;
+
+      // Prime translated count cache to avoid having to grow the cache on demand.
+      // We will still calculate the actual counts on demand.
+      if (PrimeTranslatedCountCache) then
+        FTranslationCounts.Add(Module, -1);
+
+      if (Clear) then
+        ModuleNode := nil
+      else
+      begin
+        if (Module = FModuleItemsDataSource.Module) then
+          SelectedModuleFound := True;
+
+        // Look for existing node
+        ModuleNode := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
       end;
 
-      Modules := Project.Modules.Values.ToArray;
+      if (ModuleNode = nil) then
+        // Create node if it didn't already exist
+        ModuleNode := TreeListModules.Add(nil, Module);
 
-      TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
-        function(const Left, Right: TLocalizerModule): Integer
-        begin
-          Result := (Ord(Left.Kind) - Ord(Right.Kind));
-          if (Result = 0) then
-            Result := CompareText(Left.Name, Right.Name);
-        end));
+      LoadModuleNode(ModuleNode, Module, True);
+    end;
 
-      SelectedModuleFound := False;
-
-      PrimeTranslatedCountCache := (FTranslationCounts.Count = 0);
-
-      for Module in Modules do
-      begin
-        if (Module.Kind = mkOther) then
-          continue;
-
-        // Prime translated count cache to avoid having to grow the cache on demand.
-        // We will still calculate the actual counts on demand.
-        if (PrimeTranslatedCountCache) then
-          FTranslationCounts.Add(Module, -1);
-
-        if (Clear) then
-          ModuleNode := nil
-        else
-        begin
-          if (Module = FLocalizerDataSource.Module) then
-            SelectedModuleFound := True;
-
-          // Look for existing node
-          ModuleNode := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
-        end;
-
-        if (ModuleNode = nil) then
-          // Create node if it didn't already exist
-          ModuleNode := TreeListModules.Add(nil, Module);
-
-        LoadModuleNode(ModuleNode, Module, True);
-      end;
-
-      if (not Clear) and (not SelectedModuleFound) then
-        // Selected module no longer exist
-        FLocalizerDataSource.Module := nil;
-
-    finally
-      if (Clear) then
-        // Reassign TreeListItems.CustomDataSource if it was cleared by TreeListItems.Clear
-        TreeListItems.CustomDataSource := FLocalizerDataSource;
+    if (not Clear) and (not SelectedModuleFound) then
+    begin
+      // Selected module no longer exist
+      FModuleItemsDataSource.Module := nil;
+    end else
+    begin
+      FModuleItemsDataSource.Refresh; // Project has changed - make sure data source reloads
+      GridItemsTableView.Controller.ClearSelection;
+      GridItemsTableView.Controller.TopRowIndex := 0;
+      GridItemsTableView.Controller.FocusedRowIndex := -1;
     end;
   finally
     UnlockUpdates;
@@ -5002,7 +5200,7 @@ begin
     Node.Values[TreeListColumnModuleStatus.ItemIndex] := Ord(Module.EffectiveStatus);
 
     if (Recurse) and (Node.Focused) then
-      TreeListItems.FullRefresh;
+      GridItemsTableView.Invalidate(True);
 
   finally
     UnlockUpdates;
@@ -5018,14 +5216,9 @@ begin
   LoadModuleNode(Node, TLocalizerModule(Node.Data), Recurse);
 end;
 
-procedure TFormMain.LoadFocusedPropertyNode;
-var
-  Node: TcxTreeListNode;
+procedure TFormMain.LoadFocusedProperty;
 begin
-  Node := TreeListItems.FocusedNode;
-  Assert(Node <> nil);
-
-  ReloadNode(Node);
+  ReloadProperty(FocusedProperty);
 end;
 
 // -----------------------------------------------------------------------------
@@ -5248,7 +5441,7 @@ begin
   FTranslationCounts.AddOrSetValue(Module, Result);
 
   // Current module stats has updated - refresh display
-  if (Module = FLocalizerDataSource.Module) then
+  if (Module = FModuleItemsDataSource.Module) then
     RefreshModuleStats;
 end;
 
@@ -5278,7 +5471,7 @@ var
   Module: TLocalizerModule;
   Prop: TLocalizerProperty;
   ModuleNode: TcxTreeListNode;
-  PropNode: TcxTreeListNode;
+  RowIndex, RecordIndex: integer;
 begin
   SaveCursor(crHourGlass);
   DismissToast(sLocalizerFindWrapAround);
@@ -5291,11 +5484,15 @@ begin
     ModuleNode := TreeListModules.FocusedNode;
 
   if (ModuleNode <> nil) then
-    PropNode := TreeListItems.FocusedNode
-  else
+  begin
+    if (GridItemsTableView.Controller.FocusedRecordIndex <> -1) then
+      RowIndex := GridItemsTableView.Controller.FocusedRecord.Index + 1 // Note: Visible index
+    else
+      RowIndex := -1;
+  end else
   begin
     ModuleNode := TreeListModules.Root.GetFirstChildVisible;
-    PropNode := nil;
+    RowIndex := -1;
   end;
 
   while (ModuleNode <> nil) do
@@ -5304,51 +5501,49 @@ begin
 
     if (Module.Status = ItemStatusTranslate) then
     begin
-      if (PropNode <> nil) then
-      begin
-        // Check next prop
-        PropNode := PropNode.GetNextSiblingVisible;
-      end else
+      if (RowIndex = -1) then
       begin
         // Determine if module has any valid properties.
-        // If so we load the property list and find the first node
+        // If so we load the property list and start with the top row
         if (not Module.Traverse(
           function(Prop: TLocalizerProperty): boolean
           begin
             Result := not Predicate(Prop);
           end)) then
         begin
-          // Select module node - this loads the property nodes
+          // Select module node - this loads the property grid
           ModuleNode.MakeVisible;
           ModuleNode.Focused := True;
 
-          // Start with the top item
-          PropNode := TreeListItems.Root.GetFirstChildVisible;
+          // Start with top row
+          RowIndex := 0;
         end;
       end;
 
-      while (PropNode <> nil) do
+      while (RowIndex <> -1) and (RowIndex < GridItemsTableView.ViewData.RowCount) do
       begin
-        Prop := TLocalizerProperty(TreeListItems.HandleFromNode(PropNode));
-
-        if (Predicate(Prop)) then
+        // First verify that item is visible - and get the record index
+        RecordIndex := GridItemsTableView.ViewData.Rows[RowIndex].RecordIndex;
+        if (RecordIndex <> -1) then
         begin
-          // Select property tree node
-          PropNode.MakeVisible;
-          PropNode.Focused := True;
+          Prop := FModuleItemsDataSource.Properties[RecordIndex];
 
-          TreeListItems.SetFocus;
+          if (Predicate(Prop)) then
+          begin
+            ViewProperty(Prop);
+            GridItems.SetFocus;
 
-          Exit(True);
+            Exit(True);
+          end;
         end;
 
-        // Check next prop
-        PropNode := PropNode.GetNextSiblingVisible;
+        // Check next row
+        Inc(RowIndex);
       end;
     end;
 
     ModuleNode := ModuleNode.GetNextSiblingVisible;
-    PropNode := nil;
+    RowIndex := -1;
 
     if (ModuleNode = nil) and (AutoWrap) and (not FromStart) then
     begin
@@ -5365,74 +5560,591 @@ begin
     else
       ShowMessage(sLocalizerFindNoMore);
   end;
+end;
 
-  // The following finds the next untranslated in physical order.
-  // Since this probably differ from the logical order due to the trees being sorted,
-  // it makes the search order appear random to the user.
-(*
-  CurrentModule := FocusedModule;
-  CurrentProp := FocusedProperty;
+procedure TFormMain.GridItemsTableViewCanFocusRecord(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; var AAllow: Boolean);
+begin
+  // Focused record is changing - Post any text editor changes
+  PostTranslationTextEdit;
+end;
 
-  Found := False;
+procedure TFormMain.GridItemsTableViewCellDblClick(Sender: TcxCustomGridTableView; ACellViewInfo: TcxGridTableDataCellViewInfo;
+  AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
+begin
+  // Double click starts edit mode.
+  // This works around DevExpress' unintuitive "very slow double click to edit"
+  if (ACellViewInfo.Item.Options.Editing) then
+  begin
+    Sender.Controller.EditingController.ShowEdit;
+    AHandled := True;
+  end;
+end;
 
-  FProject.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    var
-      Translation: TLocalizerTranslation;
-      ModuleNode, PropNode: TcxTreeListNode;
-    begin
-      // Skip until we reach the current module
-      if (CurrentModule <> nil) then
-      begin
-        if (Prop.Item.Module = CurrentModule) then
-          CurrentModule := nil
-        else
-          Exit(True);
-      end;
+procedure TFormMain.GridItemsTableViewColumnGetCellHint(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+  ACellViewInfo: TcxGridTableDataCellViewInfo; const AMousePos: TPoint; var AHintText: TCaption; var AIsHintMultiLine: Boolean; var AHintTextRect: TRect);
+var
+  Prop: TLocalizerProperty;
+  ImageIndex: integer;
+  r: TRect;
+begin
+  if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) and (TranslationManagerSettings.Editor.StatusGlyphHints) and (Sender.VisibleIndex = 0) then
+  begin
+    r := ACellViewInfo.Bounds;
+    r.Right := r.Left + 1 + DataModuleMain.ImageListTree.Width;
+    if (not r.Contains(AMousePos)) then
+      Exit;
 
-      // Skip until we reach the current property
-      if (CurrentProp <> nil) then
-      begin
-        if (Prop = CurrentProp) then
-          CurrentProp := nil; // Skip current one but check next one
-        Exit(True);
-      end;
+    Prop := FModuleItemsDataSource.Properties[ARecord.RecordIndex];
 
-      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.State = ItemStateUnused) then
-        Exit(True);
+    ImageIndex := DataModuleMain.GetImageIndex(Prop, TranslationLanguage);
+    if (ImageIndex = -1) then
+      Exit;
 
-      if (not Prop.Translations.TryGetTranslation(TargetLanguage, Translation)) or (Translation.Status = tStatusPending) then
-      begin
-        // Found - find treelist nodes
-        // Select module tree node
-        ModuleNode := TreeListModules.Find(Prop.Item.Module, TreeListModules.Root, False, True, TreeListFindFilter);
-        if (ModuleNode = nil) or (ModuleNode.IsHidden) then
-          Exit(True); // ModuleNode might have been hidden by a filter
-
-        // Select module node - this loads the property nodes
-        ModuleNode.MakeVisible;
-        ModuleNode.Focused := True;
-
-        // Select property tree node
-        PropNode := TreeListItems.NodeFromHandle(Prop);
-        if (PropNode = nil) or (PropNode.IsHidden) then
-          Exit(True); // PropNode might have been hidden by a filter
-
-        PropNode.MakeVisible;
-        PropNode.Focused := True;
-
-        TreeListItems.SetFocus;
-
-        // Done
-        Found := True;
-        Exit(False);
-      end;
-
-      Result := True;
-    end);
-
-  if (not Found) then
+    AHintText := DataModuleMain.GetImageHint(ImageIndex);
+    AHintTextRect := ACellViewInfo.Bounds;
+    AHintTextRect.Left := r.Right + 8;
+(* TODO : I would like to reposition the normal hint a bit so the hint text perfectly aligns with the cell text
+  end else
+  begin
+    AHintTextRect := ACellViewInfo.Bounds;
+    AHintTextRect.Left := ACellViewInfo.TextAreaBounds.Left - 2;
 *)
+  end;
+end;
+
+procedure TFormMain.GridItemsTableViewColumnTargetValidateDrawValue(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+  const AValue: Variant; AData: TcxEditValidateInfo);
+var
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+  Warning: TTranslationWarning;
+  s: string;
+  Bitmap: TBitmap;
+resourcestring
+  sValidationWarning = 'Translation has validation warnings:%s';
+begin
+  Prop := FModuleItemsDataSource.Properties[ARecord.RecordIndex];
+  Assert(Prop <> nil);
+
+  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+    Exit;
+
+  if (Translation.Warnings <> []) then
+  begin
+    AData.ErrorType := eetCustom;
+    s := '';
+
+    for Warning in Translation.Warnings do
+      s := s + #13 + '- ' + LoadResString(sTranslationValidationWarnings[Warning]);
+
+    AData.ErrorText := Format(sValidationWarning, [s]);
+
+    Bitmap := TBitmap.Create;
+    try
+      DataModuleMain.ImageListState.GetImage(NodeImageIndexStateWarning, Bitmap);
+      AData.ErrorIcon.Assign(Bitmap);
+    finally
+      Bitmap.Free;
+    end;
+  end;
+end;
+
+procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+
+  procedure PrepareBidi;
+  var
+    Flags: DWORD;
+  begin
+    if (TargetLanguage.IsRightToLeft <> IsRightToLeft) then
+    begin
+      // Target language is Right-to-Left but rest of UI isn't - or vice versa
+
+      (* None of these work:
+      AViewInfo.EditViewInfo.UseRightToLeftAlignment := True;
+      TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).TextOutData.TextParams.RTLReading := True;
+      ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
+      *)
+      Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
+      if (TargetLanguage.IsRightToLeft) then
+      begin
+        // Set RTL
+        Flags := Flags or CXTO_RTLREADING;
+        // Swap left/right alignment
+        if (TranslationManagerSettings.Editor.EditBiDiMode) then
+        begin
+          if ((Flags and $0000000F) = CXTO_LEFT) then
+            Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
+          else
+          if ((Flags and $0000000F) =  CXTO_RIGHT) then
+            Flags := (Flags and $FFFFFFF0) or CXTO_LEFT;
+        end;
+      end else
+        // Clear RTL
+        Flags := Flags and (not CXTO_RTLREADING);
+
+      TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := Flags;
+
+//      AViewInfo.EditViewInfo.Paint(ACanvas);
+
+//      ADone := True;
+    end;
+  end;
+
+  procedure DrawTargetValue;
+  var
+    Prop: TLocalizerProperty;
+    Triangle: array[0..2] of TPoint;
+  begin
+    // Draw indicator if source value is found in Translation Memory
+    if (FModuleItemsDataSource.PeekResult[AViewInfo.GridRecord.RecordIndex] <> TTranslationMemoryPeekResult.prFound) then
+      Exit;
+
+    // Don't draw indicator if we're editing cell
+    if (AViewInfo.Editing) and (AViewInfo.Focused) then
+      Exit;
+
+    Prop := FModuleItemsDataSource.Properties[AViewInfo.GridRecord.RecordIndex];
+
+    if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
+    begin
+      // Status has changed since the flag was set
+      FModuleItemsDataSource.PeekResult[AViewInfo.GridRecord.RecordIndex] := TTranslationMemoryPeekResult.prQueued;
+      Exit;
+    end;
+
+    // Draw the default content
+    if (not ADone) then
+      AViewInfo.EditViewInfo.Paint(ACanvas);
+
+    // Draw a rectangle in the top right corner
+    ACanvas.SaveDC;
+    try
+
+      ACanvas.Pen.Handle := 0; // Work around for messed up pen handle sporadically causing line not to be drawn
+      ACanvas.Pen.Color := $00E39C5B;
+      ACanvas.Pen.Style := psSolid;
+
+      ACanvas.Brush.Style := bsSolid;
+      ACanvas.Brush.Color := clSkyBlue;
+
+      if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+      begin
+        // Top left corner
+        Triangle[0].X := AViewInfo.Bounds.Left+1;
+        Triangle[1].X := Triangle[0].X + HintCornerSize;
+      end else
+      begin
+        // Top right corner
+        Triangle[0].X := AViewInfo.Bounds.Right-2;
+        Triangle[1].X := Triangle[0].X - HintCornerSize;
+      end;
+      Triangle[0].Y := AViewInfo.Bounds.Top;
+      Triangle[1].Y := Triangle[0].Y;
+      Triangle[2].X := Triangle[0].X;
+      Triangle[2].Y := Triangle[0].Y + HintCornerSize;
+
+      ACanvas.Polygon(Triangle);
+
+    finally
+      ACanvas.RestoreDC;
+    end;
+
+    ADone := True;
+  end;
+
+  procedure DrawStatusIndicator;
+  var
+    Prop: TLocalizerProperty;
+    ImageIndex: integer;
+    r: TRect;
+  const
+    ImageOffset = 1;
+    ImageMargin = 4;
+  begin
+    Prop := FModuleItemsDataSource.Properties[AViewInfo.GridRecord.RecordIndex];
+
+    ImageIndex := DataModuleMain.GetImageIndex(Prop, TranslationLanguage);
+    if (ImageIndex = -1) then
+      Exit;
+
+    r := AViewInfo.Bounds;
+
+    // ACanvas.FillRect(r, AViewInfo.EditViewInfo.BackgroundColor);
+    AViewInfo.EditViewInfo.DrawCustomEdit(ACanvas, True, True);
+
+    DataModuleMain.ImageListTree.Draw(ACanvas.Canvas, r.Left + ImageOffset, r.Top + (r.Height-DataModuleMain.ImageListTree.Height) div 2, ImageIndex);
+
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).TextRect.Left :=
+      AViewInfo.TextAreaBounds.Left + DataModuleMain.ImageListTree.Width + ImageOffset + ImageMargin;
+
+    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawText(ACanvas);
+
+    ADone := True;
+  end;
+
+begin
+  if (AViewInfo.Item = GridItemsTableViewColumnTarget) then
+    PrepareBidi;
+
+  if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) and (AViewInfo.Item.VisibleIndex = 0) then
+    DrawStatusIndicator;
+
+  if (AViewInfo.Item = GridItemsTableViewColumnTarget) then
+    DrawTargetValue;
+end;
+
+procedure TFormMain.GridItemsTableViewCustomDrawIndicatorCell(Sender: TcxGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxCustomGridIndicatorItemViewInfo; var ADone: Boolean);
+var
+  r: TRect;
+  Prop: TLocalizerProperty;
+  Flag: TPropertyFlag;
+  ImageIndex: integer;
+  s: string;
+const
+  OffsetNumeric = 10; // Note: Each node can have only one numeric bookmark ATM
+  OffsetFlag = 8;
+begin
+  if (not (AViewInfo is TcxGridIndicatorRowItemViewInfo)) then
+    Exit;
+
+  if (TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.Focused) or (TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.Selected) then
+    ACanvas.FillRect(AViewInfo.Bounds, DataModuleMain.StyleSelected.Color)
+  else
+    ACanvas.FillRect(AViewInfo.Bounds, AViewInfo.Params.Color);
+
+  AViewInfo.LookAndFeelPainter.DrawHeaderBorder(ACanvas, AViewInfo.Bounds, [], []);
+
+  // Find width of longest number
+  s := string.Create('9', Trunc(Log10(AViewInfo.GridView.ViewData.RowCount)+1));
+  r := AViewInfo.Bounds;
+  // Draw row number right-aligned
+  r.Right := r.Left+ACanvas.TextWidth(s)+4;
+  ACanvas.Font.Color := AViewInfo.Params.TextColor;
+  ACanvas.Brush.Style := bsClear;
+  s := IntToStr(TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.GridRecord.Index + 1);
+  ACanvas.DrawTexT(s, r, TAlignment.taRightJustify, TcxAlignmentVert.vaCenter, False, False);
+
+  Prop := FModuleItemsDataSource.Properties[TcxGridIndicatorRowItemViewInfo(AViewInfo).GridRecord.RecordIndex];
+
+  if (Prop <> nil) then
+  begin
+    // Get TM status for row once row becomes visible. If we're drawing the indicator, then the row must be visible
+    QueueTranslationMemoryPeek(TcxGridIndicatorRowItemViewInfo(AViewInfo).GridRecord.RecordIndex);
+
+    r.Top := (AViewInfo.Bounds.Top + AViewInfo.Bounds.Bottom - DataModuleMain.ImageListSmall.Height) div 2;
+    r.Left := AViewInfo.Bounds.Right - DataModuleMain.ImageListSmall.Width;
+
+    for Flag := FlagBookmark9 downto FlagBookmark0 do
+    begin
+      // Draw indicator for numeric bookmarks
+      if (r.Left < AViewInfo.Bounds.Left) then
+        break;
+
+      if (Flag in Prop.Flags) then
+      begin
+        ImageIndex := ImageIndexBookmark0 + Ord(Flag)-Ord(FlagBookmark0);
+
+        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
+
+        Dec(r.Left, OffsetNumeric);
+      end;
+    end;
+
+    for Flag := FlagBookmarkA to FlagBookmarkF do
+    begin
+      // Draw indicator for flag bookmarks
+      if (r.Left < AViewInfo.Bounds.Left) then
+        break;
+
+      if (Flag in Prop.Flags) then
+      begin
+        ImageIndex := ImageIndexBookmarkA + Ord(Flag)-Ord(FlagBookmarkA);
+
+        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
+
+        Dec(r.Left, OffsetFlag);
+      end;
+    end;
+
+  end;
+
+  ADone := True;
+end;
+
+procedure TFormMain.GridItemsTableViewDataControllerRecordChanged(ADataController: TcxCustomDataController; ARecordIndex, AItemIndex: Integer);
+var
+  Prop: TLocalizerProperty;
+  s: string;
+begin
+  if (AItemIndex <> GridItemsTableViewColumnTarget.Index) then
+    Exit;
+
+  if (FUpdateLockCount > 0) then // TODO : Why?
+    Exit;
+
+  Prop := FModuleItemsDataSource.Properties[ARecordIndex];
+  if (Prop.HasTranslation(TranslationLanguage)) then
+    TranslationAdded(Prop);
+
+  // Update text edit in case change was made via in-place edit or Record.Values
+  s := VarToStr(ADataController.Values[ARecordIndex, AItemIndex]);
+  if (EditTargetText.Text <> s) then
+  begin
+    EditTargetText.Text := s;
+    EditTargetText.SelStart := MaxInt;
+    FTextEditModified := False;
+  end;
+end;
+
+procedure TFormMain.GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
+  AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
+begin
+  PostTranslationTextEdit;
+
+  FTextEditProperty := FocusedProperty;
+
+  // Load text edit values
+  if (AFocusedRecord <> nil) and (FTextEditProperty <> nil) then
+  begin
+    EditSourceText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnSource.Index]);
+    EditTargetText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnTarget.Index]);
+    EditTargetText.SelStart := MaxInt;
+    FTextEditModified := False;
+    EditTargetText.Properties.ReadOnly := False;
+  end else
+  begin
+    EditSourceText.Text := '';
+    EditTargetText.Text := '';
+    FTextEditModified := False;
+    EditTargetText.Properties.ReadOnly := True;
+  end;
+end;
+
+procedure TFormMain.GridItemsTableViewInitEdit(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; AEdit: TcxCustomEdit);
+var
+  SourceValue: string;
+  Button: TcxEditButton;
+  PropertyList: TLocalizerPropertyList;
+  Prop: TLocalizerProperty;
+  LookupResult: TTranslationLookupResult;
+{$ifdef DEBUG}
+  StopWatch: TStopWatch;
+{$endif DEBUG}
+begin
+  HideHint;
+
+  if (AItem <> GridItemsTableViewColumnTarget) then
+    Exit;
+
+  (*
+  ** BiDi mode
+  *)
+  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+  begin
+    // Target language is Right-to-Left but rest of UI isn't - or vice versa
+    if (TargetLanguage.IsRightToLeft) then
+      AEdit.BiDiMode := bdRightToLeft
+    else
+      AEdit.BiDiMode := bdLeftToRight;
+  end else
+    AEdit.BiDiMode := BiDiMode;
+
+{$ifdef DEBUG}
+  StopWatch := TStopWatch.StartNew;
+{$endif DEBUG}
+
+  (*
+  ** Populate lookup list with existing translations of same term - and translations from TM
+  *)
+  QueueTranslationMemoryPeek(GridItemsTableView.Controller.FocusedRecord.RecordIndex);
+
+  TcxCustomDropDownEdit(AEdit).Properties.LookupItems.Clear;
+
+  SourceValue := FocusedProperty.Value;
+
+  LookupResult := TTranslationLookupResult.Create;
+  try
+
+    PropertyList := FProjectIndex.Lookup(FocusedProperty);
+
+    // Add existing translations
+    if (PropertyList <> nil) then
+    begin
+      for Prop in PropertyList do
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+          LookupResult.Add(Prop.Value, Prop.TranslatedValue[TranslationLanguage]);
+    end;
+
+    // Add translations from TM
+    if (FModuleItemsDataSource.PeekResult[GridItemsTableView.Controller.FocusedRecord.RecordIndex] = TTranslationMemoryPeekResult.prFound) then
+      FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, LookupResult);
+
+    // Rank by source value similarity
+    LookupResult.RankTranslations(FocusedProperty.Value);
+
+    LookupResult.AddToStrings(TcxCustomComboBox(AEdit).Properties.Items);
+
+  finally
+    LookupResult.Free;
+  end;
+
+  // Display dropdown button if there are any translations
+  ActionTranslationSuggestionList.Visible := (TcxCustomComboBox(AEdit).Properties.Items.Count > 0);
+  TcxCustomComboBox(AEdit).Properties.Buttons[0].Action := ActionTranslationSuggestionList;
+
+  if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
+  begin
+    Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
+    Button.Action := ActionEditTranslationText;
+    Button.Kind := bkEllipsis;
+  end;
+
+{$ifdef DEBUG}
+  StopWatch.Stop;
+  OutputDebugString(PChar(Format('Lookup overhead: %.0n mS', [StopWatch.ElapsedMilliseconds * 1.0])));
+{$endif DEBUG}
+end;
+
+type
+  TcxEditViewInfoCracker = class(TcxCustomEditViewInfo);
+
+procedure TFormMain.GridItemsTableViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  p: TPoint;
+  r: TRect;
+  Prop: TLocalizerProperty;
+  HitTest: TcxGridRecordCellHitTest;
+begin
+  HideHint;
+
+  p := Point(X, Y);
+
+  HitTest := TcxGridRecordCellHitTest(GridItemsTableView.ViewInfo.GetHitTest(p));
+
+  // Require click in target cell
+  if (HitTest.HitTestCode <> htCell) or (HitTest.Item <> GridItemsTableViewColumnTarget) then
+    Exit;
+
+  if (HitTest.Item.Editing) then
+    Exit;
+
+  (*
+  ** Display mini toolbar if user clicks warning indicator
+  *)
+  if (HitTest.Item.FocusedCellViewInfo <> nil) and (TcxEditViewInfoCracker(HitTest.Item.FocusedCellViewInfo.EditViewInfo).GetPart(HitTest.Pos) = ecpErrorIcon) then
+  begin
+    RibbonMiniToolbarValidationWarning.Popup;
+    HitTest.Item.Focused := False; // Prevent click from starting edit mode
+    Exit;
+  end;
+
+  (*
+  ** Translate if user clicks TM indicator
+  *)
+  r := HitTest.ViewInfo.Bounds;
+  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+    // Top left corner
+    r.Right := r.Left + HintCornerSize
+  else
+    // Top right corner
+    r.Left := r.Right - HintCornerSize;
+  r.Bottom := r.Top + HintCornerSize;
+
+  if (not r.Contains(p)) then
+    Exit;
+
+  Prop := FModuleItemsDataSource.Properties[HitTest.GridRecord.RecordIndex];
+  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
+    Exit;
+
+  GridItemsTableView.Controller.ClearSelection;
+  HitTest.GridRecord.Selected := True;
+
+  ActionTranslationMemoryTranslate.Execute;
+end;
+
+procedure TFormMain.GridItemsTableViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+var
+  p: TPoint;
+  r: TRect;
+  Prop: TLocalizerProperty;
+  HitTest: TcxGridRecordCellHitTest;
+begin
+  p := Point(X, Y);
+
+  // Hide current hint if we've moved out of the hint rect
+  if (FHintVisible) or (GridItemsTableView.Controller.IsEditing) then
+  begin
+    if (FHintRect.Contains(p)) then
+      Exit; // We're still inside the hint rect
+
+    FHintProp := nil;
+    HideHint;
+  end else
+  if (not FHintRect.Contains(p)) then
+    FHintProp := nil;
+
+  HitTest := TcxGridRecordCellHitTest(GridItemsTableView.ViewInfo.GetHitTest(p));
+
+  if (HitTest.HitTestCode <> htCell) or (HitTest.Item <> GridItemsTableViewColumnTarget) then
+    Exit;
+
+  if (HitTest.Item.Editing) then
+    Exit;
+
+  r := HitTest.ViewInfo.Bounds;
+
+  (*
+  ** Display TM lookup hint if mouse moves over TM indicator
+  *)
+  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+    // Top left corner
+    r.Right := r.Left + HintCornerSize
+  else
+    // Top right corner
+    r.Left := r.Right - HintCornerSize;
+  r.Bottom := r.Top + HintCornerSize;
+
+  if (not r.Contains(p)) then
+    Exit;
+
+  // Check if node has been marked by the Translation Memory peeker
+  if (FModuleItemsDataSource.PeekResult[HitTest.GridRecord.RecordIndex] <> TTranslationMemoryPeekResult.prFound) then
+    Exit;
+
+  Prop := FModuleItemsDataSource.Properties[HitTest.GridRecord.RecordIndex];
+  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
+  begin
+    // Status has changed since the flag was set
+    FModuleItemsDataSource.PeekResult[HitTest.GridRecord.RecordIndex] := TTranslationMemoryPeekResult.prQueued;
+    Exit;
+  end;
+
+  // Ignore if the hint timed out or we're already waiting for the hint
+  if (FHintProp = Prop) then
+    Exit;
+
+  FHintProp := Prop;
+  FHintRect := r;
+
+  FShowHint := True;
+  TimerHint.Enabled := False;
+  TimerHint.Interval := HintStyleController.HintPause;
+  TimerHint.Enabled := True;
+end;
+
+procedure TFormMain.GridItemsTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
+var
+  Prop: TLocalizerProperty;
+begin
+  Prop := FModuleItemsDataSource.Properties[ARecord.RecordIndex];
+
+  DataModuleMain.GetContentStyle(
+    Sender.IsControlFocused,
+    (ARecord.Focused) and (AItem <> nil) and (AItem.Focused),
+    (ARecord.Selected),
+    (AItem <> nil) and (AItem.Editing),
+    TranslationLanguage, Prop, AStyle);
 end;
 
 // -----------------------------------------------------------------------------
@@ -5442,7 +6154,7 @@ begin
   // Only spell check:
   AAllow :=
     // Translation list in-place editor
-    ((AControl.Parent = TreeListItems) and (AControl is TcxCustomButtonEdit)) or
+    ((AControl.Parent = GridItems) and (AControl is TcxCustomButtonEdit)) or
     // Translation Memory in-place editor, if language matches
     ((AControl is TcxCustomButtonEdit) and (AControl.Tag = integer(TargetLanguage.Locale))) or
     // Text Editor memo, if language matches
@@ -5577,7 +6289,7 @@ begin
     Prop.TranslatedValue[TranslationLanguage] := CheckedText;
 
     // Update treenode
-    LoadFocusedPropertyNode;
+    LoadFocusedProperty;
   end;
 
   Result := (TdxSpellCheckerCracker(SpellChecker).LastDialogResult = mrOK);
@@ -5629,9 +6341,9 @@ begin
         TCustomdxBarControlCracker(PopupMenuBookmark.SubMenuControl).SelectedLink := PopupMenuBookmark.ItemLinks[i];
 
       // Indicate the current bookmark state of the selected items if we are setting a bookmark.
-      SetLength(Props, TreeListItems.SelectionCount);
-      for j := 0 to TreeListItems.SelectionCount-1 do
-        Props[j] := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.Selections[j]));
+      SetLength(Props, GridItemsTableView.Controller.SelectedRecordCount);
+      for j := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
+        Props[j] := FModuleItemsDataSource.Properties[GridItemsTableView.Controller.SelectedRecords[j].RecordIndex];
       AllSet := True;
       for Prop in Props do
       begin
@@ -5727,6 +6439,8 @@ begin
 
   CheckStringsSymbolFile;
 
+  ApplyTranslationTextEdit(False);
+
   SaveCursor(crHourGlass);
 
   FProjectIndex := nil;
@@ -5766,6 +6480,8 @@ begin
     Exit;
 
   CheckStringsSymbolFile;
+
+  ApplyTranslationTextEdit(False);
 
   LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
 
@@ -5873,6 +6589,7 @@ end;
 procedure TFormMain.ViewProperty(Prop: TLocalizerProperty);
 var
   Node: TcxTreeListNode;
+  RowIndex, RecordIndex: integer;
 resourcestring
   sNodeModuleHidden = 'Module has been hidden by a filter and can not be selected';
   sNodeItemHidden = 'Item has been hidden by a filter and can not be selected';
@@ -5880,32 +6597,32 @@ begin
   // Find and select module
   Node := TreeListModules.Find(Prop.Item.Module, nil, False, True, TreeListFindFilter);
 
-  if (Node <> nil) then
+  if (Node = nil) then
+    Exit;
+
+  if (Node.IsHidden) then
   begin
-    if (Node.IsHidden) then
+    QueueToast(sNodeModuleHidden);
+    Exit;
+  end;
+
+  Node.MakeVisible;
+  Node.Focused := True;
+
+  // Find and select property row
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(Prop);
+  if (RecordIndex <> -1) then
+  begin
+    RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, True);
+
+    if (RowIndex <> -1) then
     begin
-      QueueToast(sNodeModuleHidden);
-      Exit;
-    end;
-
-    Node.MakeVisible;
-    Node.Focused := True;
-
-    // Find and select property node
-    Node := TreeListItems.NodeFromHandle(Prop);
-
-    if (Node <> nil) then
-    begin
-      if (Node.IsHidden) then
-      begin
-        QueueToast(sNodeItemHidden);
-        Exit;
-      end;
-
-      Node.MakeVisible;
-      Node.Focused := True;
-      TreeListItems.SetFocus;
-    end;
+      GridItemsTableView.Controller.ClearSelection;
+      GridItemsTableView.ViewData.Rows[RowIndex].Selected := True;
+      GridItemsTableView.ViewData.Rows[RowIndex].Focused := True;
+      GridItemsTableView.Control.SetFocus;
+    end else
+      QueueToast(sNodeItemHidden);
   end;
 end;
 
@@ -5920,13 +6637,18 @@ end;
 
 procedure TFormMain.ReloadProperty(Prop: TLocalizerProperty);
 var
-  Node: TcxTreeListNode;
+  RecordIndex, RowIndex: integer;
 begin
   if (Prop.Item.Module <> FocusedModule) then
     Exit;
-  Node := TreeListItems.NodeFromHandle(Prop);
-  if (Node <> nil) then
-    ReloadNode(Node);
+
+  RecordIndex := FModuleItemsDataSource.IndexOfProperty(Prop);
+  if (RecordIndex <> -1) then
+  begin
+    RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, False);
+    if (RowIndex <> -1) then
+      GridItemsTableView.ViewData.Rows[RowIndex].Invalidate;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -5934,602 +6656,10 @@ end;
 procedure TFormMain.TreeListColumnModuleStatusPropertiesEditValueChanged(Sender: TObject);
 begin
   // Module status edited inline
-  TCustomLocalizerItem(TreeListModules.FocusedNode.Data).Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
+  FocusedModule.Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
 
   LoadModuleNode(TreeListModules.FocusedNode, True);
 end;
-
-procedure TFormMain.TreeListColumnStatePropertiesEditValueChanged(Sender: TObject);
-var
-  Translation: TLocalizerTranslation;
-  TranslationStatus: TTranslationStatus;
-begin
-  TranslationStatus := TTranslationStatus(TcxImageComboBox(Sender).EditValue);
-
-  if (TranslationStatus = tStatusPending) then
-  begin
-    // Remove translation
-    FocusedProperty.Translations.Remove(TranslationLanguage);
-  end else
-  begin
-    if (not FocusedProperty.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-      Translation := FocusedProperty.Translations.AddOrUpdateTranslation(TranslationLanguage, FocusedProperty.Value);
-    Translation.Status := TranslationStatus;
-  end;
-
-  LoadFocusedPropertyNode;
-end;
-
-procedure TFormMain.TreeListColumnStatusPropertiesEditValueChanged(Sender: TObject);
-begin
-  // Item status edited inline
-  FocusedProperty.Status := TLocalizerItemStatus(TcxImageComboBox(Sender).EditValue);
-
-  LoadFocusedPropertyNode;
-end;
-
-procedure TFormMain.TreeListColumnTargetValidateDrawValue(Sender: TcxTreeListColumn; ANode: TcxTreeListNode; const AValue: Variant; AData: TcxEditValidateInfo);
-var
-  Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-  Warning: TTranslationWarning;
-  s: string;
-  Bitmap: TBitmap;
-resourcestring
-  sValidationWarning = 'Translation has validation warnings:%s';
-begin
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(ANode));
-  Assert(Prop <> nil);
-
-  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-    Exit;
-
-  if (Translation.Warnings <> []) then
-  begin
-    AData.ErrorType := eetCustom;
-    s := '';
-
-    for Warning in Translation.Warnings do
-      s := s + #13 + '- ' + LoadResString(sTranslationValidationWarnings[Warning]);
-
-    AData.ErrorText := Format(sValidationWarning, [s]);
-
-    Bitmap := TBitmap.Create;
-    try
-      DataModuleMain.ImageListState.GetImage(NodeImageIndexStateWarning, Bitmap);
-      AData.ErrorIcon.Assign(Bitmap);
-    finally
-      Bitmap.Free;
-    end;
-  end;
-end;
-
-procedure TFormMain.TreeListItemsCustomDrawDataCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo; var ADone: Boolean);
-var
-  Prop: TLocalizerProperty;
-  Triangle: array[0..2] of TPoint;
-  Flags: DWORD;
-begin
-  if (AViewInfo.Column <> TreeListColumnTarget) then
-    Exit;
-
-  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) then
-  begin
-    // Target language is Right-to-Left but rest of UI isn't - or vice versa
-
-    (* None of these work:
-    AViewInfo.EditViewInfo.UseRightToLeftAlignment := True;
-    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).TextOutData.TextParams.RTLReading := True;
-    ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
-    *)
-    Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
-    if (TargetLanguage.IsRightToLeft) then
-    begin
-      // Set RTL
-      Flags := Flags or CXTO_RTLREADING;
-      // Swap left/right alignment
-      if (TranslationManagerSettings.Editor.EditBiDiMode) then
-      begin
-        if ((Flags and $0000000F) = CXTO_LEFT) then
-          Flags := (Flags and $FFFFFFF0) or CXTO_RIGHT
-        else
-        if ((Flags and $0000000F) =  CXTO_RIGHT) then
-          Flags := (Flags and $FFFFFFF0) or CXTO_LEFT;
-      end;
-    end else
-      // Clear RTL
-      Flags := Flags and (not CXTO_RTLREADING);
-
-    TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := Flags;
-
-    AViewInfo.Draw(ACanvas);
-
-    ADone := True;
-  end;
-
-  // Draw indicator if source value is found in Translation Memory
-  if (TTranslationMemoryPeekResult(AViewInfo.Node.Data) <> TTranslationMemoryPeekResult.prFound) then
-    Exit;
-
-  // Don't draw indicator if we're editing cell
-  if (AViewInfo.Editing) and (AViewInfo.Focused) then
-    Exit;
-
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(AViewInfo.Node));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
-  begin
-    // Status has changed since the flag was set
-    AViewInfo.Node.Data := pointer(TTranslationMemoryPeekResult.prQueued);
-    Exit;
-  end;
-
-  // Draw the default content
-  if (not ADone) then
-    AViewInfo.Draw(ACanvas);
-
-  // Draw a rectangle in the top right corner
-  ACanvas.SaveDC;
-  try
-
-    ACanvas.Brush.Style := bsSolid;
-    ACanvas.Brush.Color := clSkyBlue;
-
-    ACanvas.Pen.Style := psSolid;
-    ACanvas.Pen.Color := $00E39C5B;
-
-    if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
-    begin
-      // Top left corner
-      Triangle[0].X := AViewInfo.BoundsRect.Left+1;
-      Triangle[1].X := Triangle[0].X + HintCornerSize;
-    end else
-    begin
-      // Top right corner
-      Triangle[0].X := AViewInfo.BoundsRect.Right-1;
-      Triangle[1].X := Triangle[0].X - HintCornerSize;
-    end;
-    Triangle[0].Y := AViewInfo.BoundsRect.Top+1;
-    Triangle[1].Y := Triangle[0].Y;
-    Triangle[2].X := Triangle[0].X;
-    Triangle[2].Y := Triangle[0].Y + HintCornerSize;
-    ACanvas.Polygon(Triangle);
-
-  finally
-    ACanvas.RestoreDC;
-  end;
-
-  ADone := True;
-end;
-
-procedure TFormMain.TreeListItemsCustomDrawIndicatorCell(Sender: TcxCustomTreeList; ACanvas: TcxCanvas;
-  AViewInfo: TcxTreeListIndicatorCellViewInfo; var ADone: Boolean);
-var
-  r: TRect;
-  Prop: TLocalizerProperty;
-  Flag: TPropertyFlag;
-  ImageIndex: integer;
-  s: string;
-const
-  OffsetNumeric = 10; // Note: Each node can have only one numeric bookmark ATM
-  OffsetFlag = 8;
-begin
-  if (AViewInfo.Node = nil) then
-    Exit;
-
-  if (AViewInfo.Node.Focused) or (AViewInfo.Node.Selected) then
-    ACanvas.FillRect(AViewInfo.BoundsRect, DataModuleMain.StyleSelected.Color)
-  else
-    ACanvas.FillRect(AViewInfo.BoundsRect, AViewInfo.ViewParams.Color);
-
-  AViewInfo.Painter.DrawHeaderBorder(ACanvas, AViewInfo.BoundsRect, [], []);
-
-  s := string.Create('9', Trunc(Log10(AViewInfo.Node.Parent.Count)+1));
-  r := AViewInfo.BoundsRect;
-  r.Right := r.Left+ACanvas.TextWidth(s)+4;
-  ACanvas.Font.Color := AViewInfo.ViewParams.TextColor;
-  ACanvas.Brush.Style := bsClear;
-  s := IntToStr(AViewInfo.Node.Index + 1);
-  ACanvas.DrawTexT(s, r, TAlignment.taRightJustify, TcxAlignmentVert.vaCenter, False, False);
-
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(AViewInfo.Node));
-
-  if (Prop <> nil) then
-  begin
-    // Get TM status for prop once node becomes visible. If we're drawign the indicator, then the node must be visuble
-    QueueTranslationMemoryPeek(AViewInfo.Node);
-
-    r.Top := (AViewInfo.BoundsRect.Top + AViewInfo.BoundsRect.Bottom - DataModuleMain.ImageListSmall.Height) div 2;
-    r.Left := AViewInfo.BoundsRect.Right - DataModuleMain.ImageListSmall.Width;
-
-    for Flag := FlagBookmark9 downto FlagBookmark0 do
-    begin
-      // Draw indicator for numeric bookmarks
-      if (r.Left < AViewInfo.BoundsRect.Left) then
-        break;
-
-      if (Flag in Prop.Flags) then
-      begin
-        ImageIndex := ImageIndexBookmark0 + Ord(Flag)-Ord(FlagBookmark0);
-
-        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
-
-        Dec(r.Left, OffsetNumeric);
-      end;
-    end;
-
-    for Flag := FlagBookmarkA to FlagBookmarkF do
-    begin
-      // Draw indicator for flag bookmarks
-      if (r.Left < AViewInfo.BoundsRect.Left) then
-        break;
-
-      if (Flag in Prop.Flags) then
-      begin
-        ImageIndex := ImageIndexBookmarkA + Ord(Flag)-Ord(FlagBookmarkA);
-
-        ACanvas.DrawImage(DataModuleMain.ImageListSmall, r.Left, r.Top, ImageIndex);
-
-        Dec(r.Left, OffsetFlag);
-      end;
-    end;
-
-  end;
-
-  ADone := True;
-end;
-
-procedure TFormMain.TreeListDblClick(Sender: TObject);
-begin
-  // Double click starts edit mode.
-  // This works around DevExpress' unintuitive "very slow double click to edit"
-  if (TcxTreeList(Sender).FocusedColumn.Options.Editing) then
-    TcxTreeListCracker(Sender).Controller.ShowEdit([], 0, 0);
-end;
-
-procedure TFormMain.TreeListItemsEditing(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; var Allow: Boolean);
-begin
-  // Only allow inline editing of property nodes
-  Allow := (FocusedProperty <> nil);
-end;
-
-procedure TFormMain.TreeListItemsEditValueChanged(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn);
-var
-  Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-begin
-  if (AColumn <> TreeListColumnTarget) then
-    Exit;
-
-  if (FUpdateLockCount > 0) then
-    Exit;
-
-  Prop := FocusedProperty;
-
-  LockUpdates;
-  try
-
-    Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, VarToStr(Sender.InplaceEditor.EditValue));
-    Translation.UpdateWarnings;
-
-    TreeListItems.FocusedNode.Data := pointer(TTranslationMemoryPeekResult.prNone);
-
-    LoadFocusedPropertyNode;
-  finally
-    UnlockUpdates;
-  end;
-
-  TranslationAdded(Prop);
-end;
-
-procedure TFormMain.TreeListGetCellHint(Sender: TcxCustomTreeList; ACell: TObject; var AText: string; var ANeedShow: Boolean);
-begin
-  if (not (ACell is TcxTreeListIndentCellViewInfo)) then
-    Exit;
-
-  if (Sender = TreeListItems) and (TcxTreeListIndentCellViewInfo(ACell).Kind = nikState) then
-  begin
-    AText := GetNodeValidationMessage(TcxTreeListIndentCellViewInfo(ACell).Node);
-    ANeedShow := (AText <> '');
-  end else
-  if (TcxTreeListIndentCellViewInfo(ACell).Kind = nikImage) and (TranslationManagerSettings.Editor.StatusGlyphHints) then
-  begin
-    case TcxTreeListIndentCellViewInfo(ACell).Node.ImageIndex of
-      NodeImageIndexNew:
-        AText := sNodeImageHintNew;
-      NodeImageIndexUnused:
-        AText := sNodeImageHintUnused;
-      NodeImageIndexDontTranslate:
-        AText := sNodeImageHintDontTranslate;
-      NodeImageIndexProposed:
-        AText := sNodeImageHintProposed;
-      NodeImageIndexTranslated:
-        AText := sNodeImageHintTranslated;
-      NodeImageIndexHold:
-        AText := sNodeImageHintHold;
-      NodeImageIndexNotTranslated:
-        AText := sNodeImageHintNotTranslated;
-      NodeImageIndexObsolete:
-        AText := sNodeImageHintObsolete;
-      NodeImageIndexComplete25:
-        AText := sNodeImageHintComplete25;
-      NodeImageIndexComplete50:
-        AText := sNodeImageHintComplete50;
-      NodeImageIndexComplete75:
-        AText := sNodeImageHintComplete75;
-    end;
-    ANeedShow := (AText <> '');
-  end;
-end;
-
-procedure TFormMain.TreeListItemsGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
-var
-  Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-begin
-  AIndex := -1;
-
-  if (not (AIndexType in [tlitImageIndex, tlitSelectedIndex])) then
-    Exit;
-
-  if (not TranslationManagerSettings.Editor.DisplayStatusGlyphs) then
-    Exit;
-
-  Prop := TLocalizerProperty(TcxVirtualTreeList(Sender).HandleFromNode(ANode));
-  Assert(Prop <> nil);
-
-  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-    Translation := nil;
-
-  // Note: Image indicates effective status
-
-  if (Prop.IsUnused) then
-    AIndex := NodeImageIndexUnused
-  else
-  if (ItemStateNew in Prop.State) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Translation = nil) then
-    AIndex := NodeImageIndexNew
-  else
-  if (Prop.EffectiveStatus = ItemStatusDontTranslate) then
-    AIndex := NodeImageIndexDontTranslate
-  else
-  if (Prop.EffectiveStatus = ItemStatusHold) then
-    AIndex := NodeImageIndexHold
-  else
-  if (Translation <> nil) and (Translation.Status <> tStatusPending) then
-  begin
-    if (Translation.Status = tStatusProposed) then
-      AIndex := NodeImageIndexProposed
-    else
-    if (Translation.Status = tStatusTranslated) then
-      AIndex := NodeImageIndexTranslated
-    else
-    if (Translation.Status = tStatusObsolete) then
-      AIndex := NodeImageIndexObsolete
-    else
-      AIndex := -1; // Should never happen
-  end else
-    AIndex := NodeImageIndexNotTranslated;
-end;
-
-procedure TFormMain.TreeListItemsInitEdit(Sender, AItem: TObject; AEdit: TcxCustomEdit);
-var
-  SourceValue: string;
-  Button: TcxEditButton;
-  PropertyList: TLocalizerPropertyList;
-  Prop: TLocalizerProperty;
-  LookupResult: TTranslationLookupResult;
-{$ifdef DEBUG}
-  StopWatch: TStopWatch;
-{$endif DEBUG}
-begin
-  HideHint;
-
-  if (AItem <> TreeListColumnTarget) then
-    Exit;
-
-  if (TargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
-  begin
-    // Target language is Right-to-Left but rest of UI isn't - or vice versa
-    if (TargetLanguage.IsRightToLeft) then
-      AEdit.BiDiMode := bdRightToLeft
-    else
-      AEdit.BiDiMode := bdLeftToRight;
-  end;
-
-{$ifdef DEBUG}
-  StopWatch := TStopWatch.StartNew;
-{$endif DEBUG}
-
-  // Populate lookup list with existing translations of same term - and translations from TM
-  QueueTranslationMemoryPeek(TreeListItems.FocusedNode);
-
-  TcxCustomDropDownEdit(AEdit).Properties.LookupItems.Clear;
-
-  SourceValue := FocusedProperty.Value;
-
-  LookupResult := TTranslationLookupResult.Create;
-  try
-
-    PropertyList := FProjectIndex.Lookup(FocusedProperty);
-
-    // Add existing translations
-    if (PropertyList <> nil) then
-    begin
-      for Prop in PropertyList do
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
-          LookupResult.Add(Prop.Value, Prop.TranslatedValue[TranslationLanguage]);
-    end;
-
-    // Add translations from TM
-    if (TTranslationMemoryPeekResult(TreeListItems.FocusedNode.Data) = TTranslationMemoryPeekResult.prFound) then
-      FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, LookupResult);
-
-    // Rank by source value similarity
-    LookupResult.RankTranslations(FocusedProperty.Value);
-
-    LookupResult.AddToStrings(TcxCustomComboBox(AEdit).Properties.Items);
-
-  finally
-    LookupResult.Free;
-  end;
-
-  // Display dropdown button if there are any translations
-  ActionTranslationSuggestionList.Visible := (TcxCustomComboBox(AEdit).Properties.Items.Count > 0);
-  TcxCustomComboBox(AEdit).Properties.Buttons[0].Action := ActionTranslationSuggestionList;
-
-  if (TcxCustomComboBox(AEdit).Properties.Buttons.Count = 1) then
-  begin
-    Button := TcxCustomComboBox(AEdit).Properties.Buttons.Add;
-    Button.Action := ActionTranslationEditText;
-    Button.Kind := bkEllipsis;
-  end;
-
-{$ifdef DEBUG}
-  StopWatch.Stop;
-  OutputDebugString(PChar(Format('Lookup overhead: %.0n mS', [StopWatch.ElapsedMilliseconds * 1.0])));
-{$endif DEBUG}
-end;
-
-type
-  TcxEditViewInfoCracker = class(TcxCustomEditViewInfo);
-  TcxEditCellViewInfoCracker = class(TcxEditCellViewInfo);
-
-procedure TFormMain.TreeListItemsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var
-  p, RelativePos: TPoint;
-  r: TRect;
-  Node: TcxTreeListNode;
-  Prop: TLocalizerProperty;
-begin
-  HideHint;
-
-  p := Point(X, Y);
-
-  TreeListItems.HitTest.HitPoint := p;
-  TreeListItems.HitTest.ReCalculate;
-
-  // Require click in target cell
-  if (not TreeListItems.HitTest.HitAtNode) or (not TreeListItems.HitTest.HitAtColumn) or (TreeListItems.HitTest.HitTestItem = nil) then
-    Exit;
-
-  if (TreeListItems.HitTest.HitColumn <> TreeListColumnTarget) then
-    Exit;
-
-  // Cache node value because hittest is cleared when we display the modal dialog
-  Node := TreeListItems.HitTest.HitNode;
-  r := TreeListItems.CellRect(Node, TreeListItems.HitTest.HitColumn);
-
-  (*
-  ** Display mini toolbar if user clicks warning indicator
-  *)
-  RelativePos := TreeListItems.HitTest.HitPoint - r.TopLeft;
-  if (TcxEditViewInfoCracker(TreeListItems.HitTest.EditCellViewinfo.EditViewinfo).GetPart(RelativePos) = ecpErrorIcon) then
-  begin
-    RibbonMiniToolbarValidationWarning.Popup;
-    Node.Focused := False; // Prevent click from starting edit mode
-    Exit;
-  end;
-
-  (*
-  ** Translate if user clicks TM indicator
-  *)
-  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
-    // Top left corner
-    r.Right := r.Left + HintCornerSize
-  else
-    // Top right corner
-    r.Left := r.Right - HintCornerSize;
-  r.Bottom := r.Top + HintCornerSize;
-
-  if (not r.Contains(p)) then
-    Exit;
-
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(Node));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
-    Exit;
-
-  TreeListItems.Select(Node);
-
-  ActionTranslationMemoryTranslate.Execute;
-end;
-
-procedure TFormMain.TreeListItemsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-var
-  p: TPoint;
-  r: TRect;
-  Prop: TLocalizerProperty;
-begin
-  p := Point(X, Y);
-
-  // Hide current hint if we've moved out of the hint rect
-  if (FHintVisible) or (TreeListItems.IsEditing) then
-  begin
-    if (FHintRect.Contains(p)) then
-      Exit; // We're still inside the hint rect
-
-    FHintNode := nil;
-    FHintColumn := nil;
-    HideHint;
-  end else
-  if (not FHintRect.Contains(p)) then
-  begin
-    FHintNode := nil;
-    FHintColumn := nil;
-  end;
-
-  TreeListItems.HitTest.HitPoint := p;
-  TreeListItems.HitTest.ReCalculate;
-
-  if (not TreeListItems.HitTest.HitAtNode) or (not TreeListItems.HitTest.HitAtColumn) or (TreeListItems.HitTest.HitTestItem = nil) then
-    Exit;
-
-  if (TreeListItems.HitTest.HitColumn <> TreeListColumnTarget) then
-    Exit;
-
-  if (TreeListItems.HitTest.HitNode.IsEditing) then
-    Exit;
-
-  r := TreeListItems.CellRect(TreeListItems.HitTest.HitNode, TreeListItems.HitTest.HitColumn);
-
-  (*
-  ** Display TM lookup hint if mouse moves over TM indicator
-  *)
-  if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
-    // Top left corner
-    r.Right := r.Left + HintCornerSize
-  else
-    // Top right corner
-    r.Left := r.Right - HintCornerSize;
-  r.Bottom := r.Top + HintCornerSize;
-
-  if (not r.Contains(p)) then
-    Exit;
-
-  // Check if node has been marked by the Translation Memory peeker
-  if (TTranslationMemoryPeekResult(TreeListItems.HitTest.HitNode.Data) <> TTranslationMemoryPeekResult.prFound) then
-    Exit;
-
-  Prop := TLocalizerProperty(TreeListItems.HandleFromNode(TreeListItems.HitTest.HitNode));
-  if (Prop.IsUnused) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.HasTranslation(TranslationLanguage)) then
-  begin
-    // Status has changed since the flag was set
-    TreeListItems.HitTest.HitNode.Data := pointer(TTranslationMemoryPeekResult.prQueued);
-    Exit;
-  end;
-
-  // Ignore if the hint timed out or we're already waiting for the hint
-  if (FHintNode = TreeListItems.HitTest.HitNode) and (FHintColumn = TreeListItems.HitTest.HitColumn) then
-    Exit;
-
-  FHintNode := TreeListItems.HitTest.HitNode;
-  FHintColumn := TreeListItems.HitTest.HitColumn;
-  FHintRect := r;
-
-  FShowHint := True;
-  TimerHint.Enabled := False;
-  TimerHint.Interval := HintStyleController.HintPause;
-  TimerHint.Enabled := True;
-end;
-
 
 procedure TFormMain.HideHint;
 begin
@@ -6591,7 +6721,6 @@ procedure TFormMain.TimerHintTimer(Sender: TObject);
 var
   p: TPoint;
   s: string;
-  Prop: TLocalizerProperty;
   Translations: TStringList;
   HintList: string;
 resourcestring
@@ -6647,15 +6776,13 @@ begin
   if (FShowHint) then
   begin
     // Only display hint if mouse is still in cell rect
-    if (not FHintRect.Contains(TreeListItems.ScreenToClient(Mouse.CursorPos))) then
+    if (not FHintRect.Contains(GridItems.ScreenToClient(Mouse.CursorPos))) then
       Exit;
-
-    Prop := TLocalizerProperty(TreeListItems.HandleFromNode(FHintNode));
 
     Translations := TStringList.Create;
     try
 
-      if (not FTranslationMemory.FindTranslations(Prop, SourceLanguage, TargetLanguage, Translations)) then
+      if (not FTranslationMemory.FindTranslations(FHintProp, SourceLanguage, TargetLanguage, Translations)) then
         Exit;
 
       HintList := '';
@@ -6669,7 +6796,8 @@ begin
     ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate,
       [GetUserDefaultLCID, TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
       sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[TargetLanguage.IsRightToLeft]]);
-    p := TreeListItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));
+
+    p := GridItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));
 
     TdxScreenTipStyle(HintStyleController.HintStyle).ShowScreenTip(p.X, p.Y, ScreenTipTranslationMemory);
     FHintVisible := True;
@@ -6680,69 +6808,6 @@ begin
     TimerHint.Enabled := True;
   end else
     HideHint;
-end;
-
-procedure TFormMain.TreeListItemsStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
-var
-  Prop: TLocalizerProperty;
-  Translation: TLocalizerTranslation;
-begin
-  if (ANode.Selected) and (not Sender.Focused) then
-  begin
-    AStyle := DataModuleMain.StyleInactive;
-    Exit;
-  end else
-  if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then
-  begin
-    AStyle := DataModuleMain.StyleSelected;
-    Exit;
-  end else
-  if (Sender.Focused) and (ANode.Focused) and (AColumn <> nil) and (AColumn.Focused) and (not AColumn.Editing) then
-  begin
-    AStyle := DataModuleMain.StyleFocused;
-    Exit;
-  end;
-
-  Prop := TLocalizerProperty((Sender as TcxVirtualTreeList).HandleFromNode(ANode));
-
-  if (Prop.IsUnused) or (Prop.EffectiveStatus = ItemStatusDontTranslate) then
-  begin
-    AStyle := DataModuleMain.StyleDontTranslate;
-    Exit;
-  end;
-
-  if (Prop.EffectiveStatus = ItemStatusHold) then
-  begin
-    AStyle := DataModuleMain.StyleHold;
-    Exit;
-  end;
-
-  if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
-    Translation := nil;
-
-  if (Translation <> nil) and (Translation.IsTranslated) then
-  begin
-    if (Translation.Status = TTranslationStatus.tStatusProposed) then
-      AStyle := DataModuleMain.StyleProposed
-    else
-      AStyle := DataModuleMain.StyleComplete;
-  end else
-    AStyle := DataModuleMain.StyleNeedTranslation;
-end;
-
-procedure TFormMain.TreeListModulesEnter(Sender: TObject);
-begin
-  FActiveTreeList := TcxCustomTreeList(Sender);
-end;
-
-procedure TFormMain.TreeListModulesExit(Sender: TObject);
-begin
-  FActiveTreeList := nil;
-end;
-
-procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList; APrevFocusedNode, AFocusedNode: TcxTreeListNode);
-begin
-//
 end;
 
 function TFormMain.RecoverUnusedTranslations(OnlyNew: boolean): integer;
@@ -6885,45 +6950,49 @@ end;
 
 procedure TFormMain.TreeListModulesSelectionChanged(Sender: TObject);
 var
-  OldNameVisible, NewNameVisible: boolean;
+  OldValueNameVisible, NewValueNameVisible: boolean;
 begin
   if (FTranslationMemoryPeek <> nil) then
     FTranslationMemoryPeek.Cancel;
 
   SaveCursor(crAppStart);
 
-  TreeListItems.BeginUpdate;
+  GridItemsTableView.BeginUpdate;
   try
 
-    OldNameVisible := TreeListColumnValueName.Visible;
+    OldValueNameVisible := GridItemsTableViewColumnValueName.Visible;
 
     if (TreeListModules.SelectionCount = 1) then
-      FLocalizerDataSource.Module := FocusedModule
+      FModuleItemsDataSource.Module := FocusedModule
     else
-      // Clear item treelist if more than one module is selected
-      FLocalizerDataSource.Module := nil;
+      // Clear item grid if more than one module is selected
+      FModuleItemsDataSource.Module := nil;
 
     // Hide property name column if module is resourcestrings
-    NewNameVisible := (FLocalizerDataSource.Module = nil) or (FLocalizerDataSource.Module.Kind = mkForm);
-    TreeListColumnValueName.Visible := NewNameVisible;
+    NewValueNameVisible := (FModuleItemsDataSource.Module = nil) or (FModuleItemsDataSource.Module.Kind = mkForm);
 
-    if (OldNameVisible <> NewNameVisible) then
+    if (OldValueNameVisible <> NewValueNameVisible) then
     begin
-      if (NewNameVisible) then
-        TreeListColumnItemName.Width := TreeListColumnItemName.Width - TreeListColumnValueName.Width
-      else
-        TreeListColumnItemName.Width := TreeListColumnItemName.Width + TreeListColumnValueName.Width;
+      if (NewValueNameVisible) then
+      begin
+        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width - GridItemsTableViewColumnValueName.Width;
+        GridItemsTableViewColumnValueName.Visible := True;
+      end else
+      begin
+        GridItemsTableViewColumnValueName.Visible := False;
+        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width + GridItemsTableViewColumnValueName.Width;
+      end;
     end;
 
   finally
-    TreeListItems.EndUpdate;
+    GridItemsTableView.EndUpdate;
   end;
 
-  if (TreeListItems.TopNode <> nil) then
-  begin
-    TreeListItems.TopNode.MakeVisible;
-    TreeListItems.TopNode.Focused := True;
-  end;
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.TopRowIndex := 0;
+  GridItemsTableView.Controller.FocusedRowIndex := 0;
+  if (GridItemsTableView.Controller.FocusedRecordIndex <> -1) then
+    GridItemsTableView.Controller.FocusedRecord.Selected := True;
 
   RefreshModuleStats;
 end;
@@ -6977,9 +7046,9 @@ var
   Items: TArray<TCustomLocalizerItem>;
 begin
   // TreeList selection will change during spell check so save a static copy before we start
-  SetLength(Items, FocusedNode.TreeList.SelectionCount);
-  for i := 0 to FocusedNode.TreeList.SelectionCount-1 do
-    Items[i] := NodeToItem(FocusedNode.TreeList.Selections[i]);
+  SetLength(Items, SelectionCount);
+  for i := 0 to SelectionCount-1 do
+    Items[i] := Selection[i];
 
   for Item in Items do
   begin
@@ -7008,110 +7077,89 @@ end;
 
 // -----------------------------------------------------------------------------
 //
-// TLocalizerDataSource
+// TLocalizerModuleItemsDataSource
 //
 // -----------------------------------------------------------------------------
-constructor TLocalizerDataSource.Create(AModule: TLocalizerModule);
+procedure TLocalizerModuleItemsDataSource.Clear;
+begin
+  FTranslationLanguage := nil;
+  Module := nil;
+end;
+
+constructor TLocalizerModuleItemsDataSource.Create(AModule: TLocalizerModule);
 begin
   inherited Create;
-  FModule := AModule;
+
+  Module := AModule;
 end;
 
-function TLocalizerDataSource.GetParentRecordHandle(ARecordHandle: TcxDataRecordHandle): TcxDataRecordHandle;
+destructor TLocalizerModuleItemsDataSource.Destroy;
 begin
-  Result := nil;
+  inherited;
 end;
 
-function TLocalizerDataSource.GetRecordCount: Integer;
-var
-  Item: TLocalizerItem;
+function TLocalizerModuleItemsDataSource.GetPeekResult(Index: integer): TTranslationMemoryPeekResult;
 begin
-  Result := 0;
-
-  if (FModule = nil) then
-    Exit;
-
-  // We can not just sum the status counts because these exclude items that are in the Unused state
-  // Result := FModule.StatusCount[ItemStatusTranslate]+FModule.StatusCount[ItemStatusHold]+FModule.StatusCount[ItemStatusDontTranslate];
-
-  for Item in FModule.Items.Values.ToArray do
-    Inc(Result, Item.Properties.Count);
+  Result := FItems[Index].PeekResult;
 end;
 
-function TLocalizerDataSource.GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle;
-var
-  Item: TLocalizerItem;
+procedure TLocalizerModuleItemsDataSource.SetPeekResult(Index: integer; const Value: TTranslationMemoryPeekResult);
 begin
-  Result := nil;
-
-  if (FModule = nil) then
-    Exit;
-
-  for Item in FModule.Items.Values.ToArray do
-  begin
-    if (ARecordIndex > Item.Properties.Count-1) then
-    begin
-      Dec(ARecordIndex, Item.Properties.Count);
-      continue;
-    end;
-
-    Exit(Item.Properties.Values.ToArray[ARecordIndex]);
-  end;
+  FItems[Index].PeekResult := Value;
 end;
 
-function TLocalizerDataSource.GetRootRecordHandle: TcxDataRecordHandle;
+function TLocalizerModuleItemsDataSource.GetProperty(Index: integer): TLocalizerProperty;
 begin
-  Result := nil;
+  Result := FItems[Index].Prop;
 end;
 
-function TLocalizerDataSource.GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
-const
-  TreeItemIndexName             = 0;
-  TreeItemIndexType             = 1;
-  TreeItemIndexValueName        = 2;
-  TreeItemIndexID               = 3;
-  TreeItemIndexStatus           = 4;
-  TreeItemIndexEffectiveStatus  = 5;
-  TreeItemIndexState            = 6;
-  TreeItemIndexSourceValue      = 7;
-  TreeItemIndexTargetValue      = 8;
+function TLocalizerModuleItemsDataSource.GetRecordCount: Integer;
+begin
+  Result := Length(FItems);
+end;
+
+function TLocalizerModuleItemsDataSource.GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
 var
   ItemIndex: integer;
   Prop: TLocalizerProperty;
   Translation: TLocalizerTranslation;
 begin
-  Prop := TLocalizerProperty(ARecordHandle);
-  ItemIndex := integer(AItemHandle);
+  if (Integer(ARecordHandle) < 0) then
+    Exit('');
+
+  Prop := FItems[Integer(ARecordHandle)].Prop;
+  ItemIndex := GetDefaultItemID(integer(AItemHandle));
 
   case ItemIndex of
-    TreeItemIndexName:
+    ItemIndexName:
       Result := Prop.Item.Name;
 
-    TreeItemIndexType:
+    ItemIndexType:
       Result := Prop.Item.TypeName;
 
-    TreeItemIndexValueName:
+    ItemIndexValueName:
       Result := Prop.Name;
 
-    TreeItemIndexID:
+    ItemIndexID:
       Result := Prop.Item.ResourceID;
 
-    TreeItemIndexStatus:
+    ItemIndexStatus:
       Result := Ord(Prop.Status);
 
-    TreeItemIndexEffectiveStatus:
+    ItemIndexEffectiveStatus:
       Result := Ord(Prop.EffectiveStatus);
 
-    TreeItemIndexState:
+    ItemIndexState:
       if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Result := Ord(Translation.Status)
       else
         Result := Ord(tStatusPending);
 
-    TreeItemIndexSourceValue:
+    ItemIndexSourceValue:
       Result := Prop.Value;
 
-    TreeItemIndexTargetValue:
+    ItemIndexTargetValue:
+      // Don't use Prop.TranslatedValue[] here. We need to get "obsolete" values too
       if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
         Result := Translation.Value
       else
@@ -7121,17 +7169,60 @@ begin
   end;
 end;
 
-procedure TLocalizerDataSource.SetModule(const Value: TLocalizerModule);
+function TLocalizerModuleItemsDataSource.IndexOfProperty(Prop: TLocalizerProperty): integer;
+begin
+  Result := Length(FItems)-1;
+  while (Result >= 0) and (FItems[Result].Prop <> Prop) do
+    Dec(Result);
+end;
+
+procedure TLocalizerModuleItemsDataSource.LoadData;
+var
+  Item: TLocalizerItem;
+  Prop: TLocalizerProperty;
+  n: integer;
+begin
+  if (FModule = nil) then
+  begin
+    SetLength(FItems, 0);
+    Exit;
+  end;
+
+  n := 0;
+  for Item in FModule.Items.Values.ToArray do
+    Inc(n, Item.Properties.Count);
+
+  SetLength(FItems, n);
+
+  n := 0;
+  for Item in FModule.Items.Values.ToArray do
+    for Prop in Item.Properties.Values.ToArray do
+    begin
+      FItems[n].Prop := Prop;
+      FItems[n].PeekResult := prNone;
+      Inc(n);
+    end;
+end;
+
+procedure TLocalizerModuleItemsDataSource.Refresh;
+begin
+  LoadData;
+
+  DataChanged;
+end;
+
+procedure TLocalizerModuleItemsDataSource.SetModule(const Value: TLocalizerModule);
 begin
   if (FModule = Value) then
     Exit;
 
   FModule := Value;
+  LoadData;
 
   DataChanged;
 end;
 
-procedure TLocalizerDataSource.SetTranslationLanguage(const Value: TTranslationLanguage);
+procedure TLocalizerModuleItemsDataSource.SetTranslationLanguage(const Value: TTranslationLanguage);
 begin
   if (FTranslationLanguage = Value) then
     Exit;
@@ -7141,8 +7232,107 @@ begin
   DataChanged;
 end;
 
+procedure TLocalizerModuleItemsDataSource.SetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle; const AValue: Variant);
+var
+  ItemIndex: integer;
+  Prop: TLocalizerProperty;
+  Translation: TLocalizerTranslation;
+  TranslationStatus: TTranslationStatus;
+begin
+  if (Integer(ARecordHandle) < 0) then
+    Exit;
+
+  Prop := FItems[Integer(ARecordHandle)].Prop;
+  ItemIndex := GetDefaultItemID(integer(AItemHandle));
+
+  case ItemIndex of
+    ItemIndexStatus:
+      if (VarIsOrdinal(AValue)) then
+        Prop.Status := TLocalizerItemStatus(AValue);
+
+    ItemIndexState:
+      if (VarIsOrdinal(AValue)) then
+      begin
+        TranslationStatus := TTranslationStatus(AValue);
+
+        if (TranslationStatus = tStatusPending) then
+        begin
+          // Remove translation
+          Prop.Translations.Remove(TranslationLanguage);
+        end else
+        begin
+          // Add translation if we haven't already got one
+          if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) then
+            Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Prop.Value);
+          Translation.Status := TranslationStatus;
+        end;
+      end;
+
+    ItemIndexTargetValue:
+      begin
+        Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, VarToStr(AValue));
+        Translation.UpdateWarnings;
+
+        FItems[Integer(ARecordHandle)].PeekResult := TTranslationMemoryPeekResult.prNone;
+      end;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+//
+// TcxGridTableView redirect
+//
+// -----------------------------------------------------------------------------
+type
+  TamGridTableController = class(TcxGridTableController)
+  public
+    function GetCursor(X, Y: Integer): TCursor; override;
+  end;
+
+function TamGridTableController.GetCursor(X, Y: Integer): TCursor;
+var
+  HitTest: TcxGridRecordCellHitTest;
+  r: TRect;
+begin
+  (*
+  ** Display hand point if cursor hovers over TM or Validation indicators
+  *)
+  HitTest := TcxGridRecordCellHitTest(ViewInfo.GetHitTest(X, Y));
+
+  if (HitTest.HitTestCode <> htCell) or (HitTest.Item <> TFormMain(GridView.Control.Owner).GridItemsTableViewColumnTarget) or (HitTest.Item.Editing) then
+  begin
+    Result := inherited GetCursor(X, Y);
+    Exit;
+  end;
+
+  r := HitTest.ViewInfo.Bounds;
+
+  if (TFormMain(GridView.Control.Owner).UseRightToLeftReading) or (TFormMain(GridView.Control.Owner).TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
+    // Top left corner
+    r.Right := r.Left + HintCornerSize
+  else
+    // Top right corner
+    r.Left := r.Right - HintCornerSize;
+
+  r.Bottom := r.Top + HintCornerSize;
+
+  if (r.Contains(Point(X, Y))) and (TFormMain(GridView.Control.Owner).FModuleItemsDataSource.PeekResult[HitTest.GridRecord.RecordIndex] = TTranslationMemoryPeekResult.prFound) then
+    Result := crHandPoint
+  else
+  if (HitTest.Item.FocusedCellViewInfo <> nil) and (TcxEditViewInfoCracker(HitTest.Item.FocusedCellViewInfo.EditViewInfo).GetPart(HitTest.Pos) = ecpErrorIcon) then
+    Result := crHandPoint
+  else
+    Result := inherited GetCursor(X, Y);
+end;
+
+function TcxGridTableView.GetControllerClass: TcxCustomGridControllerClass;
+begin
+  Result := TamGridTableController;
+end;
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+
 
 end.
