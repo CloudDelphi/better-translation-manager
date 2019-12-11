@@ -140,6 +140,7 @@ object FormMain: TFormMain
     Width = 4
     Height = 462
     HotZoneClassName = 'TcxSimpleStyle'
+    HotZone.ArrowHighlightColor = clHighlight
     PositionAfterOpen = 120
     AutoSnap = True
     MinSize = 80
@@ -597,6 +598,7 @@ object FormMain: TFormMain
         Width = 4
         Height = 102
         HotZoneClassName = 'TcxSimpleStyle'
+        HotZone.ArrowHighlightColor = clHighlight
         PositionAfterOpen = 100
         AutoSnap = True
         MinSize = 50
@@ -757,6 +759,7 @@ object FormMain: TFormMain
       Width = 720
       Height = 4
       HotZoneClassName = 'TcxSimpleStyle'
+      HotZone.ArrowHighlightColor = clHighlight
       AlignSplitter = salBottom
       PositionAfterOpen = 100
       AutoSnap = True

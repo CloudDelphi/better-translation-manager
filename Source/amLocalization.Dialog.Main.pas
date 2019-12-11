@@ -897,6 +897,8 @@ begin
 
   // Only way to avoid skinning splitter
   TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
+  TcxSplitterCracker(SplitterMainEditors).LookAndFeel.SkinName := '';
+  TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
 end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);

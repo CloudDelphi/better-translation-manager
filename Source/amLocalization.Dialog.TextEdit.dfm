@@ -67,6 +67,7 @@ inherited FormTextEditor: TFormTextEditor
           Width = 4
           Height = 238
           HotZoneClassName = 'TcxSimpleStyle'
+          HotZone.ArrowHighlightColor = clHighlight
           PositionAfterOpen = 80
           AutoSnap = True
           MinSize = 50
