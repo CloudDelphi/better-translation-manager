@@ -387,7 +387,6 @@ object FormMain: TFormMain
         OnMouseDown = GridItemsTableViewMouseDown
         OnMouseMove = GridItemsTableViewMouseMove
         Navigator.Buttons.CustomButtons = <>
-        FilterBox.Visible = fvNever
         OnCanFocusRecord = GridItemsTableViewCanFocusRecord
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
