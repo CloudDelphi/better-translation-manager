@@ -391,6 +391,7 @@ object FormMain: TFormMain
         OnCanFocusRecord = GridItemsTableViewCanFocusRecord
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
+        OnEditing = GridItemsTableViewEditing
         OnFocusedRecordChanged = GridItemsTableViewFocusedRecordChanged
         OnInitEdit = GridItemsTableViewInitEdit
         DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
@@ -490,6 +491,8 @@ object FormMain: TFormMain
               Value = 2
             end>
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
+          Options.FilteringAddValueItems = False
           Options.FilteringFilteredItemsList = False
           VisibleForEditForm = bFalse
           Width = 70
@@ -517,8 +520,10 @@ object FormMain: TFormMain
           Properties.ReadOnly = True
           Visible = False
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
           Options.Editing = False
           Options.Focusing = False
+          Options.FilteringAddValueItems = False
           Options.FilteringFilteredItemsList = False
           VisibleForEditForm = bFalse
           Width = 70
@@ -551,6 +556,8 @@ object FormMain: TFormMain
               Value = 3
             end>
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
+          OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
+          Options.FilteringAddValueItems = False
           Options.FilteringFilteredItemsList = False
           VisibleForEditForm = bFalse
           Width = 70
@@ -567,6 +574,22 @@ object FormMain: TFormMain
         object GridItemsTableViewColumnTarget: TcxGridColumn
           Caption = 'Translation'
           PropertiesClassName = 'TcxComboBoxProperties'
+          Properties.ButtonGlyph.SourceDPI = 96
+          Properties.ButtonGlyph.Data = {
+            89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+            610000018149444154785E95923D4B03411086DF5C2E460E430E41B40BB68221
+            3F40447F806552041B4BB11003DA58A8AD42D04AB051080876829595075A5858
+            F851586A224802621203979C97CBBAB364C346EE223EF0B2373737F30EB307C6
+            9890C4B66D936B9BABDAFABC65AD8F4B46278F49DB50A03A1D84520CE02ADCB8
+            4845CA1B08B9454858380E777C6F8B7F93300C630912750272702A678CDD2150
+            CEFB919844D66AE867959C0711A9AC8BEF64AC2BE3A7B4D6A329C7FE9A2C8169
+            7148429D3A62C56984BC3A34FB9AF63407C0522730A140C5438D5318E52CA2F5
+            4304D16BC01763758693625904B97DC7B2C2D9892F63E46D869E459E4593E0DC
+            CB062AFB7CD320B476091235E6796A72C20D6B7E0D763C73D172277641E8CD1B
+            1061E70904BDE779725E8324E0477AF19E67FBAEAFF390A0EBAB521E44C035A2
+            3BDA4E7B74052AEED8261D0722AFA0C39F732FB670DC9CB2F10BCBF71602A640
+            3E9FEF29081D03C8E572F80B0DC1D40A858270A7B3CBEB7F1ACCA7D3E95A2693
+            018962BF063F167DE6F72ACA936D0000000049454E44AE426082}
           Properties.ImmediatePost = True
           Properties.ValidationOptions = [evoShowErrorIcon]
           OnGetCellHint = GridItemsTableViewColumnGetCellHint

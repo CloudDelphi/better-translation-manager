@@ -508,6 +508,8 @@ type
     procedure ActionTextEditNextUpdate(Sender: TObject);
     procedure GridItemsTableViewCanFocusRecord(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; var AAllow: Boolean);
     procedure EditTargetTextPropertiesEditValueChanged(Sender: TObject);
+    procedure GridItemsTableViewColumnStatusStateGetFilterValues(Sender: TcxCustomGridTableItem; AValueList: TcxDataFilterValueList);
+    procedure GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -5612,6 +5614,14 @@ begin
   end;
 end;
 
+procedure TFormMain.GridItemsTableViewColumnStatusStateGetFilterValues(Sender: TcxCustomGridTableItem; AValueList: TcxDataFilterValueList);
+var
+  i: integer;
+begin
+  for i := 0 to TcxImageComboBoxProperties(Sender.Properties).Items.Count-1 do
+    AValueList.Add(fviValue, TcxImageComboBoxProperties(Sender.Properties).Items[i].Value, TcxImageComboBoxProperties(Sender.Properties).Items[i].Description, True);
+end;
+
 procedure TFormMain.GridItemsTableViewColumnTargetValidateDrawValue(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
   const AValue: Variant; AData: TcxEditValidateInfo);
 var
@@ -5894,6 +5904,13 @@ begin
     EditTargetText.SelStart := MaxInt;
     FTextEditModified := False;
   end;
+end;
+
+procedure TFormMain.GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
+begin
+  // TODO : If *source* text contains CRs and editor is being invoked by user (i.e. not from text editor)
+  // then automatically open and focus text editor instead of in-place editor.
+  // This behavior should be controlled by an option..
 end;
 
 procedure TFormMain.GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
