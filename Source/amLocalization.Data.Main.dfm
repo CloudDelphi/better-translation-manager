@@ -113,6 +113,14 @@ object DataModuleMain: TDataModuleMain
       Offsets.RootItemsAreaOffsetVert = 8
       PixelsPerInch = 96
     end
+    object LayoutSkinLookAndFeelTight: TdxLayoutSkinLookAndFeel
+      Offsets.ControlOffsetHorz = 2
+      Offsets.ControlOffsetVert = 2
+      Offsets.ItemOffset = 2
+      Offsets.RootItemsAreaOffsetHorz = 2
+      Offsets.RootItemsAreaOffsetVert = 2
+      PixelsPerInch = 96
+    end
   end
   object EditRepository: TcxEditRepository
     Left = 196

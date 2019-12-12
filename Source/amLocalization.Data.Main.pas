@@ -66,6 +66,7 @@ type
     StyleInactive: TcxStyle;
     StyleProposed: TcxStyle;
     EditRepositoryCheckComboBoxNormalization: TcxEditRepositoryCheckComboBox;
+    LayoutSkinLookAndFeelTight: TdxLayoutSkinLookAndFeel;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);

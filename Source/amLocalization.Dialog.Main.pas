@@ -248,7 +248,7 @@ type
     ButtonItemBookmark: TdxBarButton;
     dxLayoutItem3: TdxLayoutItem;
     LabelCountTranslatedPercent: TcxLabel;
-    dxLayoutGroup1: TdxLayoutGroup;
+    LayoutGroupStatsPercent: TdxLayoutGroup;
     ActionValidate: TAction;
     ActionGotoNextStatus: TAction;
     ActionGotoNextState: TAction;
@@ -365,6 +365,16 @@ type
     ActionTextEditCancel: TAction;
     ActionTextEditPrevious: TAction;
     ActionTextEditNext: TAction;
+    dxLayoutItem4: TdxLayoutItem;
+    LabelCountModuleTranslated: TcxLabel;
+    dxLayoutItem5: TdxLayoutItem;
+    LabelCountModuleTranslatedPercent: TcxLabel;
+    dxLayoutItem6: TdxLayoutItem;
+    LabelCountModulePending: TcxLabel;
+    LayoutGroupStatsTranslated: TdxLayoutGroup;
+    LayoutGroupStatsPending: TdxLayoutGroup;
+    dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
+    dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -518,7 +528,6 @@ type
     FModuleItemsDataSource: TLocalizerModuleItemsDataSource;
     FProjectIndex: ILocalizerProjectPropertyLookup;
     FFilterTargetLanguages: boolean;
-    FTranslationCounts: TDictionary<TLocalizerModule, integer>;
     FRefreshModuleStatsQueued: boolean;
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
@@ -703,11 +712,6 @@ type
     end;
   private
     function CountStuff: TCounts;
-  protected
-    function GetTranslatedCount(Module: TLocalizerModule): integer;
-    procedure InvalidateTranslatedCount(Module: TLocalizerModule);
-    procedure InvalidateTranslatedCounts;
-    procedure RemoveTranslatedCount(Module: TLocalizerModule);
   protected
     // Build
     function BuildLanguageModule(LocaleItem: TLocaleItem; const Filename: string): boolean;
@@ -1004,8 +1008,6 @@ begin
   FProject.OnModuleChanged := OnModuleChanged;
   FProject.OnTranslationWarning := OnTranslationWarning;
 
-  FTranslationCounts := TDictionary<TLocalizerModule, integer>.Create;
-
   FModuleItemsDataSource := TLocalizerModuleItemsDataSource.Create(nil);
   GridItemsTableView.DataController.CustomDataSource := FModuleItemsDataSource;
 
@@ -1062,13 +1064,11 @@ begin
   // Block notifications
   FProject.BeginUpdate;
 
-  FTranslationCounts.Clear;
   FProjectIndex := nil;
   FProject.Clear;
 
   FModuleItemsDataSource.Free;
   FProject.Free;
-  FTranslationCounts.Free;
 
   FreeAndNil(FPendingFileOpen);
   FreeAndNil(FPendingFileOpenLock);
@@ -3309,7 +3309,6 @@ begin
 
   ClearDependents;
   ClearTargetLanguage;
-  FTranslationCounts.Clear;
   FModuleItemsDataSource.Clear;
   TreeListModules.Clear;
 
@@ -3562,7 +3561,6 @@ begin
           end;
           Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
           Node.Free;
-          RemoveTranslatedCount(Module);
           FreeAndNil(Module);
           continue;
         end;
@@ -3624,7 +3622,6 @@ begin
           end;
           Node := TreeListModules.Find(Module, TreeListModules.Root, False, True, TreeListFindFilter);
           Node.Free;
-          RemoveTranslatedCount(Module);
           FreeAndNil(Module);
         end;
 
@@ -4878,8 +4875,6 @@ begin
 
     CreateTranslationMemoryPeeker(True);
 
-    InvalidateTranslatedCounts;
-
     GridItemsTableViewColumnTarget.Caption := FTargetLanguage.LanguageName;
     LabelTargetName.Caption := FTargetLanguage.LanguageName;
     if (FTargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
@@ -5058,8 +5053,6 @@ begin
   FProject.BeginUpdate;
   try
 
-    FTranslationCounts.Clear;
-
     FProject.Clear;
 
     FProject.SourceFilename := SourceFilename;
@@ -5092,7 +5085,6 @@ var
   Modules: TArray<TLocalizerModule>;
   ModuleNode: TcxTreeListNode;
   SelectedModuleFound: boolean;
-  PrimeTranslatedCountCache: boolean;
 begin
   SaveCursor(crHourGlass);
 
@@ -5118,17 +5110,10 @@ begin
 
     SelectedModuleFound := False;
 
-    PrimeTranslatedCountCache := (FTranslationCounts.Count = 0);
-
     for Module in Modules do
     begin
       if (Module.Kind = mkOther) then
         continue;
-
-      // Prime translated count cache to avoid having to grow the cache on demand.
-      // We will still calculate the actual counts on demand.
-      if (PrimeTranslatedCountCache) then
-        FTranslationCounts.Add(Module, -1);
 
       if (Clear) then
         ModuleNode := nil
@@ -5253,8 +5238,6 @@ procedure TFormMain.OnModuleChanged(Module: TLocalizerModule);
 var
   Node: TcxTreeListNode;
 begin
-  InvalidateTranslatedCount(Module);
-
   // Refresh stats for current module
   if (Module = FocusedModule) then
     RefreshModuleStats;
@@ -5416,54 +5399,6 @@ begin
     [1.0*FProject.StatusCount[ItemStatusTranslate], 1.0*FProject.StatusCount[ItemStatusDontTranslate], 1.0*FProject.StatusCount[ItemStatusHold]]);
 
   StatusBar.Update;
-end;
-
-// -----------------------------------------------------------------------------
-
-function TFormMain.GetTranslatedCount(Module: TLocalizerModule): integer;
-var
-  Count: integer;
-begin
-  if (FTranslationCounts.TryGetValue(Module, Result)) and (Result <> -1) then
-    Exit;
-
-  // Calculate translated count
-  Count := 0;
-  Module.Traverse(
-    function(Prop: TLocalizerProperty): boolean
-    begin
-      if (not Prop.IsUnused) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
-        Inc(Count);
-      Result := True;
-    end);
-
-  Result := Count;
-
-  // Update cache
-  FTranslationCounts.AddOrSetValue(Module, Result);
-
-  // Current module stats has updated - refresh display
-  if (Module = FModuleItemsDataSource.Module) then
-    RefreshModuleStats;
-end;
-
-procedure TFormMain.InvalidateTranslatedCount(Module: TLocalizerModule);
-begin
-  if (FTranslationCounts.ContainsKey(Module)) then
-    FTranslationCounts.AddOrSetValue(Module, -1);
-end;
-
-procedure TFormMain.InvalidateTranslatedCounts;
-var
-  i: integer;
-begin
-  for i := 0 to FTranslationCounts.Count-1 do
-    FTranslationCounts.AddOrSetValue(FTranslationCounts.Keys.ToArray[i], -1);
-end;
-
-procedure TFormMain.RemoveTranslatedCount(Module: TLocalizerModule);
-begin
-  FTranslationCounts.Remove(Module);
 end;
 
 // -----------------------------------------------------------------------------
@@ -6873,7 +6808,7 @@ end;
 
 procedure TFormMain.RefreshModuleStats;
 begin
-  // Prevent recursion - GetTranslatedCount will call RefreshModuleStats
+  // Prevent recursion
   if (FRefreshModuleStatsQueued) then
     Exit;
 
@@ -6890,22 +6825,41 @@ var
   PendingCount: integer;
 begin
   try
-    TranslatedCount := 0;
-    TranslatableCount := 0;
-    for i := 0 to TreeListModules.SelectionCount-1 do
-    begin
-      Module := TLocalizerModule(TreeListModules.Selections[i].Data);
-      Inc(TranslatedCount, GetTranslatedCount(Module));
-      Inc(TranslatableCount, Module.StatusCount[ItemStatusTranslate]);
-    end;
-    PendingCount := TranslatableCount - TranslatedCount;
+    LayoutControlModules.BeginUpdate;
+    try
+      // Module stats
+      TranslatedCount := 0;
+      TranslatableCount := 0;
+      for i := 0 to TreeListModules.SelectionCount-1 do
+      begin
+        Module := TLocalizerModule(TreeListModules.Selections[i].Data);
+        Inc(TranslatedCount, Module.TranslatedCount[TranslationLanguage]);
+        Inc(TranslatableCount, Module.StatusCount[ItemStatusTranslate]);
+      end;
+      PendingCount := TranslatableCount - TranslatedCount;
 
-    LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
-    LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
-    if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
-      LabelCountTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
-    else
-      LabelCountTranslatedPercent.Caption := '';
+      LabelCountModuleTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
+      LabelCountModulePending.Caption := Format('%.0n', [1.0 * PendingCount]);
+      if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
+        LabelCountModuleTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
+      else
+        LabelCountModuleTranslatedPercent.Caption := '';
+
+      // Project stats
+      TranslatedCount := FProject.TranslatedCount[TranslationLanguage];
+      TranslatableCount := FProject.StatusCount[ItemStatusTranslate];
+      PendingCount := TranslatableCount - TranslatedCount;
+
+      LabelCountTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
+      LabelCountPending.Caption := Format('%.0n', [1.0 * PendingCount]);
+      if (TranslatedCount <> 0) and (TranslatableCount <> 0) then
+        LabelCountTranslatedPercent.Caption := Format('(%.1n%%)', [TranslatedCount/TranslatableCount*100])
+      else
+        LabelCountTranslatedPercent.Caption := '';
+
+    finally
+      LayoutControlModules.EndUpdate;
+    end;
   finally
     FRefreshModuleStatsQueued := False;
   end;
@@ -6932,7 +6886,7 @@ begin
   else
   if (Module.EffectiveStatus = ItemStatusTranslate) then
   begin
-    TranslatedCount := GetTranslatedCount(Module);
+    TranslatedCount := Module.TranslatedCount[TranslationLanguage];
     // Calculate completeness in %
     if (Module.StatusCount[ItemStatusTranslate] <> 0) then
       Completeness := MulDiv(TranslatedCount, 100, Module.StatusCount[ItemStatusTranslate])
@@ -7048,7 +7002,7 @@ begin
     Exit;
   end;
 
-  if (GetTranslatedCount(Module) = Module.StatusCount[ItemStatusTranslate]) then
+  if (Module.TranslatedCount[TranslationLanguage] = Module.StatusCount[ItemStatusTranslate]) then
     AStyle := DataModuleMain.StyleComplete
   else
     AStyle := DataModuleMain.StyleNeedTranslation;
