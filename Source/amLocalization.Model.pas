@@ -741,9 +741,9 @@ begin
 
   UpdateTranslated := ((FStatus = ItemStatusTranslate) <> (Value = ItemStatusTranslate));
 
+  UpdateStatusCount(FStatus, -1);
   if (not (ItemStateUnused in FState)) then
   begin
-    UpdateStatusCount(FStatus, -1);
     if (UpdateTranslated) and (FStatus = ItemStatusTranslate) then
       for TranslatedCount in FTranslatedCount do
         UpdateParentTranslatedCount(TranslatedCount.Key, -TranslatedCount.Value);
@@ -751,9 +751,9 @@ begin
 
   FStatus := Value;
 
+  UpdateStatusCount(FStatus, 1);
   if (not (ItemStateUnused in FState)) then
   begin
-    UpdateStatusCount(FStatus, 1);
     if (UpdateTranslated) and (FStatus = ItemStatusTranslate) then
       for TranslatedCount in FTranslatedCount do
         UpdateParentTranslatedCount(TranslatedCount.Key, TranslatedCount.Value);
