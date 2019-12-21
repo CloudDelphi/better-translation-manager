@@ -6109,7 +6109,9 @@ begin
     ((AControl.Parent = GridItems) and (AControl is TcxCustomButtonEdit)) or
     // Translation Memory in-place editor, if language matches
     ((AControl is TcxCustomButtonEdit) and (AControl.Tag = integer(TargetLanguage.Locale))) or
-    // Text Editor memo, if language matches
+    // Text Editor memo
+    (AControl = EditTargetText) or
+    // Text Editor dialog memo, if language matches
     ((AControl.Owner is TFormTextEditor) and (TFormTextEditor(AControl.Owner).TargetLanguage = TargetLanguage) and (AControl is TcxCustomMemo));
 end;
 
