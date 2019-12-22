@@ -4798,6 +4798,15 @@ begin
   FProject.SourceLanguageID := FSourceLanguage.Locale;
   GridItemsTableViewColumnSource.Caption := FSourceLanguage.LanguageName;
   LabelSourceName.Caption := FSourceLanguage.LanguageName;
+  if (FSourceLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
+  begin
+    // Source language is Right-to-Left but rest of UI isn't - or vice versa
+    if (FSourceLanguage.IsRightToLeft) then
+      EditSourceText.BiDiMode := bdRightToLeft
+    else
+      EditSourceText.BiDiMode := bdLeftToRight;
+  end else
+    EditSourceText.BiDiMode := BiDiMode;
 
   CreateTranslationMemoryPeeker(True);
 end;
@@ -5596,11 +5605,11 @@ end;
 
 procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
 
-  procedure PrepareBidi;
+  procedure PrepareBidi(Language: TLocaleItem);
   var
     Flags: DWORD;
   begin
-    if (TargetLanguage.IsRightToLeft <> IsRightToLeft) then
+    if (Language.IsRightToLeft <> IsRightToLeft) then
     begin
       // Target language is Right-to-Left but rest of UI isn't - or vice versa
 
@@ -5610,7 +5619,7 @@ procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableV
       ACanvas.TextFlags := ACanvas.TextFlags or CXTO_RTLREADING;
       *)
       Flags := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags;
-      if (TargetLanguage.IsRightToLeft) then
+      if (Language.IsRightToLeft) then
       begin
         // Set RTL
         Flags := Flags or CXTO_RTLREADING;
@@ -5628,10 +5637,6 @@ procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableV
         Flags := Flags and (not CXTO_RTLREADING);
 
       TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo).DrawTextFlags := Flags;
-
-//      AViewInfo.EditViewInfo.Paint(ACanvas);
-
-//      ADone := True;
     end;
   end;
 
@@ -5729,7 +5734,10 @@ procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableV
 
 begin
   if (AViewInfo.Item = GridItemsTableViewColumnTarget) then
-    PrepareBidi;
+    PrepareBidi(TargetLanguage)
+  else
+  if (AViewInfo.Item = GridItemsTableViewColumnSource) then
+    PrepareBidi(SourceLanguage);
 
   if (TranslationManagerSettings.Editor.DisplayStatusGlyphs) and (AViewInfo.Item.VisibleIndex = 0) then
     DrawStatusIndicator;
