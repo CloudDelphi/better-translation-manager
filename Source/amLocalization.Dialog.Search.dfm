@@ -10,7 +10,7 @@ inherited FormSearch: TFormSearch
   OnKeyPress = FormKeyPress
   OnShortCut = FormShortCut
   ExplicitWidth = 723
-  ExplicitHeight = 377
+  ExplicitHeight = 378
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
@@ -169,15 +169,15 @@ inherited FormSearch: TFormSearch
         691
         240)
       object EditSearchText: TcxTextEdit [0]
-        Left = 35
+        Left = 46
         Top = 6
         Anchors = [akLeft, akTop, akRight]
         Style.HotTrack = False
         TabOrder = 0
-        Width = 367
+        Width = 356
       end
       object ComboBoxSearchScope: TcxCheckComboBox [1]
-        Left = 35
+        Left = 46
         Top = 33
         Anchors = [akTop, akRight]
         Properties.Items = <
@@ -199,14 +199,14 @@ inherited FormSearch: TFormSearch
         EditValue = 8
         Style.HotTrack = False
         TabOrder = 1
-        Width = 367
+        Width = 356
       end
       object CheckBoxOptionSearchAll: TcxCheckBox [2]
         Left = 420
         Top = 6
         Action = ActionOptionGlobal
         Style.HotTrack = False
-        TabOrder = 2
+        TabOrder = 4
         Transparent = True
       end
       object CheckBoxOptionCaseSensitive: TcxCheckBox [3]
@@ -215,7 +215,7 @@ inherited FormSearch: TFormSearch
         Action = ActionOptionCaseSensitive
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 3
+        TabOrder = 5
         Transparent = True
       end
       object CheckBoxOptionRegExp: TcxCheckBox [4]
@@ -224,7 +224,7 @@ inherited FormSearch: TFormSearch
         Action = ActionOptionRegExp
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 4
+        TabOrder = 6
         Transparent = True
       end
       object ButtonRegExHelp: TcxButton [5]
@@ -273,7 +273,7 @@ inherited FormSearch: TFormSearch
         SpeedButtonOptions.CanBeFocused = False
         SpeedButtonOptions.Flat = True
         SpeedButtonOptions.Transparent = True
-        TabOrder = 5
+        TabOrder = 7
         OnClick = ButtonRegExHelpClick
       end
       object ListViewResult: TcxListView [6]
@@ -316,7 +316,7 @@ inherited FormSearch: TFormSearch
         MultiSelect = True
         ReadOnly = True
         RowSelect = True
-        TabOrder = 10
+        TabOrder = 12
         ViewStyle = vsReport
         OnDblClick = ListViewResultDblClick
         OnEnter = ListViewResultEnter
@@ -328,7 +328,7 @@ inherited FormSearch: TFormSearch
         Action = ActionOptionIgnoreAccelerator
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 6
+        TabOrder = 8
         Transparent = True
       end
       object CheckBoxOptionFuzzy: TcxCheckBox [8]
@@ -337,12 +337,15 @@ inherited FormSearch: TFormSearch
         Action = ActionOptionFuzzy
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 8
+        TabOrder = 10
         Transparent = True
       end
       object EditOptionFuzzy: TcxSpinEdit [9]
         Left = 640
         Top = 63
+        Hint = 
+          'Levenshtein distance|Number of deletions, insertions and substit' +
+          'utions required to make the strings equal'
         Properties.Alignment.Horz = taRightJustify
         Properties.LargeIncrement = 1.000000000000000000
         Properties.MaxValue = 5.000000000000000000
@@ -350,7 +353,7 @@ inherited FormSearch: TFormSearch
         Properties.UseLeftAlignmentOnEditing = False
         Properties.OnChange = SpinEditFuzzyPropertiesChange
         Style.HotTrack = False
-        TabOrder = 9
+        TabOrder = 11
         Value = 1
         Width = 45
       end
@@ -360,8 +363,47 @@ inherited FormSearch: TFormSearch
         Action = ActionOptionExact
         Style.HotTrack = False
         Style.TransparentBorder = True
-        TabOrder = 7
+        TabOrder = 9
         Transparent = True
+      end
+      object CheckComboBoxStatus: TcxCheckComboBox [11]
+        Left = 46
+        Top = 60
+        Properties.EmptySelectionText = '(any)'
+        Properties.Items = <
+          item
+            Description = 'Translate'
+          end
+          item
+            Description = 'Hold'
+          end
+          item
+            Description = 'Don'#39't translate'
+          end>
+        Style.HotTrack = False
+        TabOrder = 2
+        Width = 158
+      end
+      object CheckComboBoxState: TcxCheckComboBox [12]
+        Left = 245
+        Top = 60
+        Properties.EmptySelectionText = '(any)'
+        Properties.Items = <
+          item
+            Description = 'Obsolete'
+          end
+          item
+            Description = 'Pending'
+          end
+          item
+            Description = 'Proposed'
+          end
+          item
+            Description = 'Translated'
+          end>
+        Style.HotTrack = False
+        TabOrder = 3
+        Width = 157
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
@@ -390,7 +432,6 @@ inherited FormSearch: TFormSearch
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = 'New Group'
         ButtonOptions.Buttons = <>
-        ItemIndex = 2
         LayoutDirection = ldHorizontal
         ShowBorder = False
         Index = 0
@@ -495,7 +536,7 @@ inherited FormSearch: TFormSearch
         AlignHorz = ahClient
         CaptionOptions.Visible = False
         ButtonOptions.Buttons = <>
-        ItemIndex = 1
+        ItemIndex = 2
         ShowBorder = False
         Index = 0
       end
@@ -533,6 +574,34 @@ inherited FormSearch: TFormSearch
         ControlOptions.OriginalWidth = 85
         ControlOptions.ShowBorder = False
         Index = 1
+      end
+      object dxLayoutItem14: TdxLayoutItem
+        Parent = dxLayoutGroup5
+        AlignHorz = ahClient
+        CaptionOptions.Text = 'Status:'
+        Control = CheckComboBoxStatus
+        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalWidth = 121
+        ControlOptions.ShowBorder = False
+        Index = 0
+      end
+      object dxLayoutItem10: TdxLayoutItem
+        Parent = dxLayoutGroup5
+        AlignHorz = ahClient
+        CaptionOptions.Text = 'State:'
+        Control = CheckComboBoxState
+        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalWidth = 121
+        ControlOptions.ShowBorder = False
+        Index = 1
+      end
+      object dxLayoutGroup5: TdxLayoutGroup
+        Parent = dxLayoutGroup7
+        CaptionOptions.Visible = False
+        ButtonOptions.Buttons = <>
+        LayoutDirection = ldHorizontal
+        ShowBorder = False
+        Index = 2
       end
     end
   end

@@ -110,6 +110,11 @@ type
     ActionOptionExact: TAction;
     dxLayoutItem9: TdxLayoutItem;
     CheckBoxOptionExact: TcxCheckBox;
+    CheckComboBoxStatus: TcxCheckComboBox;
+    dxLayoutItem14: TdxLayoutItem;
+    dxLayoutItem10: TdxLayoutItem;
+    CheckComboBoxState: TcxCheckComboBox;
+    dxLayoutGroup5: TdxLayoutGroup;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -132,10 +137,15 @@ type
     procedure ActionMarkSetExecute(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
     procedure ActionOptionExactUpdate(Sender: TObject);
+  private type
+    TLocalizerItemStatusSet = set of TLocalizerItemStatus;
+    TTranslationStatusSet = set of TTranslationStatus;
   private
     FSearchText: string;
     FRegExp: TRegEx;
     FSearchScope: TSearchScopes;
+    FSearchStatus: TLocalizerItemStatusSet;
+    FSearchState: TTranslationStatusSet;
     FSearchHost: ILocalizerSearchHost;
     FFuzzyThreshold: integer;
     FLastMessagePump: TStopwatch;
@@ -367,6 +377,8 @@ var
   FoundText: string;
   Found: boolean;
   ListItem: TListItem;
+  State: TTranslationStatus;
+  Translation: TLocalizerTranslation;
 resourcestring
   sElementName = 'Element';
   sPropertyName = 'Property';
@@ -376,6 +388,19 @@ begin
   // Search in fields
   Found := False;
   FoundText := '';
+
+  if (FSearchStatus <> []) and (not(Prop.EffectiveStatus in FSearchStatus)) then
+    Exit(True);
+
+  if (FSearchState <> []) then
+  begin
+    if (Prop.Translations.TryGetTranslation(FSearchHost.TranslationLanguage, Translation)) then
+      State := Translation.Status
+    else
+      State := tStatusPending;
+    if (not(State in FSearchState)) then
+      Exit(True);
+  end;
 
   if (ssElement in FSearchScope) then
   begin
@@ -459,6 +484,8 @@ begin
   SaveCursor(crAppStart);
 
   FSearchText := Trim(SearchString);
+  FSearchStatus := TLocalizerItemStatusSet(Byte(CheckComboBoxStatus.Value));;
+  FSearchState := TTranslationStatusSet(Byte(CheckComboBoxState.Value));
 
   if (ActionOptionGlobal.Checked) or (FSearchHost.SelectedModule = nil) then
     SearchRoot := FSearchHost.Project
