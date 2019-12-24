@@ -1,4 +1,4 @@
-inherited FormFilters: TFormFilters
+inherited FormStopList: TFormStopList
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSizeable
   Caption = 'Stop List'
@@ -6,7 +6,7 @@ inherited FormFilters: TFormFilters
   ClientWidth = 655
   OnShow = FormShow
   ExplicitWidth = 671
-  ExplicitHeight = 566
+  ExplicitHeight = 567
   PixelsPerInch = 96
   TextHeight = 13
   inherited LayoutControlButtons: TdxLayoutControl
@@ -44,7 +44,7 @@ inherited FormFilters: TFormFilters
       ExplicitLeft = 8
       ExplicitWidth = 639
       ExplicitHeight = 429
-      object TreeListFilters: TcxTreeList [0]
+      object TreeListStopList: TcxTreeList [0]
         Left = 6
         Top = 6
         Width = 627
@@ -61,22 +61,22 @@ inherited FormFilters: TFormFilters
         OptionsCustomizing.StackedColumns = False
         OptionsData.AnsiSort = True
         OptionsSelection.MultiSelect = True
-        OptionsView.CategorizedColumn = TreeListFiltersColumnGroup
+        OptionsView.CategorizedColumn = TreeListStopListColumnGroup
         OptionsView.CheckGroups = True
         OptionsView.PaintStyle = tlpsCategorized
         OptionsView.TreeLineStyle = tllsNone
         TabOrder = 0
-        OnBeginDragNode = TreeListFiltersBeginDragNode
-        OnDeletion = TreeListFiltersDeletion
-        OnDragOver = TreeListFiltersDragOver
-        OnInitEditValue = TreeListFiltersInitEditValue
-        OnKeyDown = TreeListFiltersKeyDown
-        OnMoveTo = TreeListFiltersMoveTo
-        OnNodeChanged = TreeListFiltersNodeChanged
-        OnNodeCheckChanged = TreeListFiltersNodeCheckChanged
-        object TreeListFiltersColumnGroup: TcxTreeListColumn
+        OnBeginDragNode = TreeListStopListBeginDragNode
+        OnDeletion = TreeListStopListDeletion
+        OnDragOver = TreeListStopListDragOver
+        OnInitEditValue = TreeListStopListInitEditValue
+        OnKeyDown = TreeListStopListKeyDown
+        OnMoveTo = TreeListStopListMoveTo
+        OnNodeChanged = TreeListStopListNodeChanged
+        OnNodeCheckChanged = TreeListStopListNodeCheckChanged
+        object TreeListStopListColumnGroup: TcxTreeListColumn
           PropertiesClassName = 'TcxComboBoxProperties'
-          Properties.OnValidate = TreeListFiltersColumnGroupPropertiesValidate
+          Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
           Caption.Text = 'Group'
           DataBinding.ValueType = 'String'
           Width = 140
@@ -87,10 +87,10 @@ inherited FormFilters: TFormFilters
           SortIndex = 0
           Summary.FooterSummaryItems = <>
           Summary.GroupFooterSummaryItems = <>
-          OnGetDisplayText = TreeListFiltersColumnGroupGetDisplayText
-          OnGetEditingProperties = TreeListFiltersColumnGroupGetEditingProperties
+          OnGetDisplayText = TreeListStopListColumnGroupGetDisplayText
+          OnGetEditingProperties = TreeListStopListColumnGroupGetEditingProperties
         end
-        object TreeListFiltersColumnField: TcxTreeListColumn
+        object TreeListStopListColumnField: TcxTreeListColumn
           PropertiesClassName = 'TcxImageComboBoxProperties'
           Properties.Items = <
             item
@@ -129,7 +129,7 @@ inherited FormFilters: TFormFilters
           Summary.FooterSummaryItems = <>
           Summary.GroupFooterSummaryItems = <>
         end
-        object TreeListFiltersColumnOperator: TcxTreeListColumn
+        object TreeListStopListColumnOperator: TcxTreeListColumn
           PropertiesClassName = 'TcxImageComboBoxProperties'
           Properties.Items = <
             item
@@ -163,11 +163,11 @@ inherited FormFilters: TFormFilters
           Summary.FooterSummaryItems = <>
           Summary.GroupFooterSummaryItems = <>
         end
-        object TreeListFiltersColumnValue: TcxTreeListColumn
+        object TreeListStopListColumnValue: TcxTreeListColumn
           PropertiesClassName = 'TcxTextEditProperties'
           Properties.ValidateOnEnter = True
           Properties.ValidationOptions = [evoShowErrorIcon]
-          Properties.OnValidate = TreeListFiltersColumnValuePropertiesValidate
+          Properties.OnValidate = TreeListStopListColumnValuePropertiesValidate
           Caption.Text = 'Value'
           DataBinding.ValueType = 'String'
           Options.Sorting = False
@@ -186,7 +186,7 @@ inherited FormFilters: TFormFilters
         Parent = LayoutControlGroup_Root
         AlignVert = avClient
         CaptionOptions.Visible = False
-        Control = TreeListFilters
+        Control = TreeListStopList
         ControlOptions.OriginalHeight = 150
         ControlOptions.OriginalWidth = 250
         ControlOptions.ShowBorder = False
@@ -200,7 +200,7 @@ inherited FormFilters: TFormFilters
     PixelsPerInch = 96
     object EditRepositoryTextItem: TcxEditRepositoryTextItem
       Properties.ValidateOnEnter = True
-      Properties.OnValidate = TreeListFiltersColumnGroupPropertiesValidate
+      Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
     end
   end
 end

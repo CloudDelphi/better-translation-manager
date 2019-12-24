@@ -212,11 +212,11 @@
         <DCCReference Include="amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas">
             <Form>FormSelectFileFormat</Form>
         </DCCReference>
-        <DCCReference Include="amLocalization.Dialog.Filters.pas">
-            <Form>FormFilters</Form>
+        <DCCReference Include="amLocalization.Dialog.StopList.pas">
+            <Form>FormStopList</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="amLocalization.Filters.pas"/>
+        <DCCReference Include="amLocalization.StopList.pas"/>
         <DCCReference Include="amLocalization.Provider.TranslationMemory.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.pas"/>
         <DCCReference Include="amLocalization.Portable.pas"/>

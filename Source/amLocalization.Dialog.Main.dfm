@@ -35,7 +35,6 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
-      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -51,6 +50,7 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
+      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -66,7 +66,7 @@ object FormMain: TFormMain
           ToolbarName = 'BarManagerBarMark'
         end
         item
-          ToolbarName = 'BarManagerBarFilters'
+          ToolbarName = 'BarManagerBarStopList'
         end>
       Index = 1
     end
@@ -267,7 +267,7 @@ object FormMain: TFormMain
       AutoSize = True
       LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTight
       ShowDesignSelectors = False
-      ExplicitLeft = -2
+      ExplicitTop = 436
       object LabelCountTranslated: TcxLabel
         Left = 62
         Top = 3
@@ -324,7 +324,7 @@ object FormMain: TFormMain
         AnchorX = 137
       end
       object LabelCountModulePending: TcxLabel
-        Left = 193
+        Left = 199
         Top = 20
         Caption = '99.999'
         Style.HotTrack = False
@@ -417,7 +417,7 @@ object FormMain: TFormMain
         Control = LabelCountModulePending
         ControlOptions.AlignHorz = ahRight
         ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 40
+        ControlOptions.OriginalWidth = 34
         ControlOptions.ShowBorder = False
         Index = 1
       end
@@ -1324,8 +1324,8 @@ object FormMain: TFormMain
       Visible = True
       WholeRow = False
     end
-    object BarManagerBarFilters: TdxBar
-      Caption = 'Filters'
+    object BarManagerBarStopList: TdxBar
+      Caption = 'Stop List'
       CaptionButtons = <>
       DockedLeft = 655
       DockedTop = 0
@@ -1336,12 +1336,12 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
-          ItemName = 'BarButtonFilters'
+          ItemName = 'BarButtonStopList'
         end
         item
           ViewLevels = [ivlLargeControlOnly, ivlSmallIconWithText, ivlSmallIcon, ivlControlOnly]
           Visible = True
-          ItemName = 'RibbonGalleryItemFilters'
+          ItemName = 'RibbonGalleryItemStopList'
         end
         item
           Visible = True
@@ -1717,16 +1717,16 @@ object FormMain: TFormMain
       Category = 0
       LargeImageIndex = 14
     end
-    object BarButtonFilters: TdxBarButton
-      Action = ActionFilters
+    object BarButtonStopList: TdxBarButton
+      Action = ActionStopList
       Category = 0
     end
     object dxBarButton7: TdxBarButton
-      Action = ActionFiltersApply
+      Action = ActionStopListApply
       Category = 0
     end
-    object RibbonGalleryItemFilters: TdxRibbonGalleryItem
-      Action = ActionFiltersAdd
+    object RibbonGalleryItemStopList: TdxRibbonGalleryItem
+      Action = ActionStopListAdd
       Category = 0
       GalleryOptions.ColumnCount = 1
       GalleryFilter.Categories = <>
@@ -1737,32 +1737,32 @@ object FormMain: TFormMain
       ItemLinks = <>
       ItemOptions.ShowDescriptions = True
       ItemOptions.ShowShortCuts = True
-      OnPopup = RibbonGalleryItemFiltersPopup
+      OnPopup = RibbonGalleryItemStopListPopup
       object RibbonGalleryItemGroup: TdxRibbonGalleryGroup
         Options.AssignedValues = [avItemTextKind]
         Options.ItemTextKind = itkCaptionAndDescription
         object dxRibbonGalleryItem1Group1Item1: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddModule
+          Action = ActionStopListAddModule
           ActionIndex = nil
         end
         object dxRibbonGalleryItem1Group1Item2: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddElement
+          Action = ActionStopListAddElement
           ActionIndex = nil
         end
         object dxRibbonGalleryItem1Group1Item3: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddType
+          Action = ActionStopListAddType
           ActionIndex = nil
         end
         object dxRibbonGalleryItem1Group1Item4: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddName
+          Action = ActionStopListAddName
           ActionIndex = nil
         end
         object dxRibbonGalleryItem1Group1Item5: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddTypeAndName
+          Action = ActionStopListAddTypeAndName
           ActionIndex = nil
         end
         object dxRibbonGalleryItem1Group1Item6: TdxRibbonGalleryGroupItem
-          Action = ActionFiltersAddValue
+          Action = ActionStopListAddValue
           ActionIndex = nil
         end
       end
@@ -2231,74 +2231,74 @@ object FormMain: TFormMain
       Enabled = False
       ImageIndex = 61
     end
-    object ActionFilters: TAction
-      Category = 'Filters'
+    object ActionStopList: TAction
+      Category = 'StopList'
       Caption = 'Stop List...'
       Hint = 'List of items that should never be translated'
       ImageIndex = 70
-      OnExecute = ActionFiltersExecute
+      OnExecute = ActionStopListExecute
     end
-    object ActionFiltersApply: TAction
-      Category = 'Filters'
+    object ActionStopListApply: TAction
+      Category = 'StopList'
       Caption = 'Apply stop list...'
       Hint = 'Apply stop list to the project'
       ImageIndex = 71
-      OnExecute = ActionFiltersApplyExecute
-      OnUpdate = ActionFiltersApplyUpdate
+      OnExecute = ActionStopListApplyExecute
+      OnUpdate = ActionStopListApplyUpdate
     end
-    object ActionFiltersAdd: TAction
-      Category = 'Filters'
+    object ActionStopListAdd: TAction
+      Category = 'StopList'
       Caption = 'Add to stop list...'
       ImageIndex = 69
       ShortCut = 24624
       OnExecute = ActionDummyExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
-    object ActionFiltersAddModule: TAction
-      Category = 'Filters'
+    object ActionStopListAddModule: TAction
+      Category = 'StopList'
       Caption = 'Module:'
       ShortCut = 24625
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasItemFocusedUpdate
     end
-    object ActionFiltersAddElement: TAction
+    object ActionStopListAddElement: TAction
       Tag = 1
-      Category = 'Filters'
+      Category = 'StopList'
       Caption = 'Element:'
       ShortCut = 24626
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionFiltersAddType: TAction
+    object ActionStopListAddType: TAction
       Tag = 2
-      Category = 'Filters'
+      Category = 'StopList'
       Caption = 'Type:'
       ShortCut = 24627
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionFiltersAddName: TAction
+    object ActionStopListAddName: TAction
       Tag = 3
-      Category = 'Filters'
+      Category = 'StopList'
       Caption = 'Name:'
       ShortCut = 24628
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionFiltersAddTypeAndName: TAction
+    object ActionStopListAddTypeAndName: TAction
       Tag = 4
-      Category = 'Filters'
+      Category = 'StopList'
       Caption = 'Type and Name:'
       ShortCut = 24629
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
     end
-    object ActionFiltersAddValue: TAction
+    object ActionStopListAddValue: TAction
       Tag = 5
-      Category = 'Filters'
+      Category = 'StopList'
       Caption = 'Value:'
       ShortCut = 24630
-      OnExecute = ActionFiltersAddExecute
+      OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
     end
     object ActionEditTranslationText: TAction
@@ -2481,7 +2481,7 @@ object FormMain: TFormMain
       end
       item
         Visible = True
-        ItemName = 'RibbonGalleryItemFilters'
+        ItemName = 'RibbonGalleryItemStopList'
       end>
     Ribbon = RibbonMain
     UseOwnFont = False

@@ -30,7 +30,7 @@ uses
   amRegConfig,
   amFileUtils,
   amLocalization.ResourceWriter,
-  amLocalization.Filters,
+  amLocalization.StopList,
   amLocalization.Normalization;
 
 
@@ -262,7 +262,7 @@ type
     property ModuleTree: TTranslationManagerLayoutTreeSettings read FModuleTree;
     property ItemGrid: TTranslationManagerLayoutGridSettings read FItemGrid;
     property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
-    property BlackList: TTranslationManagerLayoutGridSettings read FBlackList;
+    property StopList: TTranslationManagerLayoutGridSettings read FBlackList;
   end;
 
 
@@ -358,17 +358,17 @@ type
     property SanitizeRules: TSanitizeRules read FSanitizeRules write FSanitizeRules;
   end;
 
-  TTranslationManagerFilterGroupSettings = class(TConfigurationStringList)
+  TTranslationManagerStopListGroupSettings = class(TConfigurationStringList)
   private
     FExpanded: boolean;
   published
     property Expanded: boolean read FExpanded write FExpanded default False;
   end;
 
-  TTranslationManagerFiltersSettings = class(TConfigurationSectionValues<TTranslationManagerFilterGroupSettings>)
+  TTranslationManagerStopListSettings = class(TConfigurationSectionValues<TTranslationManagerStopListGroupSettings>)
   private
     FValid: boolean;
-    FFilters: TFilterItemList;
+    FStopList: TStopListItemList;
     FExpandedState: TDictionary<string, boolean>;
   protected
     function GetGroupExpanded(const Name: string): boolean;
@@ -379,7 +379,7 @@ type
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
 
-    property Filters: TFilterItemList read FFilters;
+    property StopList: TStopListItemList read FStopList;
     property Expanded[const Name: string]: boolean read GetGroupExpanded write SetGroupExpanded;
   published
     property Valid: boolean read FValid write FValid;
@@ -468,10 +468,11 @@ type
     FLayout: TTranslationManagerLayoutSettings;
     FBackup: TTranslationManagerBackupSettings;
     FEditor: TTranslationManagerEditorSettings;
-    FFilters: TTranslationManagerFiltersSettings;
+    FStopList: TTranslationManagerStopListSettings;
   private
     class function GetFolderInstall: string; static;
   protected
+    procedure ReadSection(const Key: string); override;
   public
     constructor Create(Root: HKEY; const APath: string; AAccess: LongWord = KEY_ALL_ACCESS); override;
     destructor Destroy; override;
@@ -493,7 +494,7 @@ type
     property Layout: TTranslationManagerLayoutSettings read FLayout;
     property Backup: TTranslationManagerBackupSettings read FBackup;
     property Editor: TTranslationManagerEditorSettings read FEditor;
-    property Filters: TTranslationManagerFiltersSettings read FFilters;
+    property StopList: TTranslationManagerStopListSettings read FStopList;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -507,6 +508,7 @@ uses
   StrUtils,
   Math,
   Types,
+  Registry,
   cxPropertiesStore,
   amVersionInfo,
   amLocalization.Environment,
@@ -765,7 +767,7 @@ begin
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
   FBackup := TTranslationManagerBackupSettings.Create(Self);
   FEditor := TTranslationManagerEditorSettings.Create(Self);
-  FFilters := TTranslationManagerFiltersSettings.Create(Self);
+  FStopList := TTranslationManagerStopListSettings.Create(Self);
 
   if (Assigned(FOnSettingsCreating)) then
     FOnSettingsCreating(Self);
@@ -784,7 +786,7 @@ begin
   FLayout.Free;
   FBackup.Free;
   FEditor.Free;
-  FFilters.Free;
+  FStopList.Free;
 
   inherited;
 end;
@@ -799,6 +801,23 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure TTranslationManagerSettings.ReadSection(const Key: string);
+begin
+  inherited;
+
+  // Migrate Filters to StopList
+  if (not StopList.Valid) and (Registry.KeyExists(KeyPath+'Filters')) then
+  begin
+    StopList.ReadSection('Filters\');
+
+    if (StopList.Valid) then
+    begin
+      StopList.WriteSection(StopList.Name+'\');
+      TRegistry(Registry).DeleteKey(KeyPath+'Filters');
+    end;
+  end;
+end;
+
 procedure TTranslationManagerSettings.ResetSettings;
 begin
   ApplyDefault;
@@ -806,7 +825,6 @@ begin
   FForms.ResetSettings;
   FFolders.ResetSettings;
 end;
-
 
 //------------------------------------------------------------------------------
 //
@@ -977,7 +995,7 @@ begin
   FModuleTree.Free;
   FItemGrid.Free;
   FTranslationMemory.Free;
-  BlackList.Free;
+  StopList.Free;
 
   inherited;
 end;
@@ -1224,48 +1242,48 @@ end;
 
 { TTranslationManagerFiltersSettings }
 
-constructor TTranslationManagerFiltersSettings.Create(AOwner: TConfigurationSection);
+constructor TTranslationManagerStopListSettings.Create(AOwner: TConfigurationSection);
 begin
   inherited Create(AOwner);
   PurgeOnWrite := True;
-  FFilters := TFilterItemList.Create;
+  FStopList := TStopListItemList.Create;
   FExpandedState := TDictionary<string, boolean>.Create;
 end;
 
-destructor TTranslationManagerFiltersSettings.Destroy;
+destructor TTranslationManagerStopListSettings.Destroy;
 begin
-  FFilters.Free;
+  FStopList.Free;
   FExpandedState.Free;
   inherited;
 end;
 
-function TTranslationManagerFiltersSettings.GetGroupExpanded(const Name: string): boolean;
+function TTranslationManagerStopListSettings.GetGroupExpanded(const Name: string): boolean;
 var
   Group: string;
 begin
   Group := Name;
   if (Group = '') then
-    Group := sFilterGroupGeneral;
+    Group := sStopListGroupGeneral;
   if (not FExpandedState.TryGetValue(Group, Result)) then
     Result := False;
 end;
 
-procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
+procedure TTranslationManagerStopListSettings.ReadSection(const Key: string);
 
-  procedure StringToFilter(const Group, Value: string);
+  procedure StringToStopList(const Group, Value: string);
   var
     Values: TArray<string>;
     s: string;
-    Filter: TFilterItem;
+    StopListItem: TStopListItem;
     n, Start, Next: integer;
   begin
-    Filter := TFilterItem.Create;
-    FFilters.Add(Filter);
+    StopListItem := TStopListItem.Create;
+    FStopList.Add(StopListItem);
 
     s := Group;
-    if (s = sFilterGroupGeneral) then
+    if (s = sStopListGroupGeneral) then
       s := '';
-    Filter.Group := s;
+    StopListItem.Group := s;
 
     SetLength(Values, 4);
     n := 0;
@@ -1286,34 +1304,34 @@ procedure TTranslationManagerFiltersSettings.ReadSection(const Key: string);
       Start := Next + 1;
     end;
 
-    Filter.Enabled := boolean(StrToInt(Values[0]));
-    Filter.Field := TFilterField(StrToInt(Values[1]));
-    Filter.FilterOperator := TFilterOperator(StrToInt(Values[2]));
-    Filter.Value := Values[3];
+    StopListItem.Enabled := boolean(StrToInt(Values[0]));
+    StopListItem.Field := TStopListField(StrToInt(Values[1]));
+    StopListItem.StopListOperator := TStopListOperator(StrToInt(Values[2]));
+    StopListItem.Value := Values[3];
   end;
 
 var
   i, j: integer;
   Group: string;
-  GroupSection: TTranslationManagerFilterGroupSettings;
+  GroupSection: TTranslationManagerStopListGroupSettings;
 begin
   inherited ReadSection(Key);
 
-  FFilters.Clear;
+  FStopList.Clear;
   FExpandedState.Clear;
 
   if (not Valid) then
   begin
     // Add a few filters just to get us going
     // Don't translate
-    StringToFilter('', '1/3/0/Font.Name');
-    StringToFilter('', '1/4/0/TAction.Category');
-    StringToFilter('', '1/5/1/Lorem ipsum');
-    StringToFilter('DevExpress', '1/2/0/TdxLayoutEmptySpaceItem');
-    StringToFilter('DevExpress', '1/2/0/TdxLayoutSeparatorItem');
-    StringToFilter('DevExpress', '1/2/0/TcxImageList');
-    StringToFilter('DevExpress', '1/3/0/Properties.KeyFieldNames');
-    StringToFilter('DevExpress', '1/3/0/DataBinding.ValueType');
+    StringToStopList('', '1/3/0/Font.Name');
+    StringToStopList('', '1/4/0/TAction.Category');
+    StringToStopList('', '1/5/1/Lorem ipsum');
+    StringToStopList('DevExpress', '1/2/0/TdxLayoutEmptySpaceItem');
+    StringToStopList('DevExpress', '1/2/0/TdxLayoutSeparatorItem');
+    StringToStopList('DevExpress', '1/2/0/TcxImageList');
+    StringToStopList('DevExpress', '1/3/0/Properties.KeyFieldNames');
+    StringToStopList('DevExpress', '1/3/0/DataBinding.ValueType');
     Exit;
   end;
 
@@ -1323,53 +1341,53 @@ begin
     GroupSection := Items[Group];
 
     for j := 0 to GroupSection.Count-1 do
-      StringToFilter(Group, GroupSection[j]);
+      StringToStopList(Group, GroupSection[j]);
 
-    if (Group = sFilterGroupGeneral) then
+    if (Group = sStopListGroupGeneral) then
       Group := '';
     FExpandedState.AddOrSetValue(Group, GroupSection.Expanded);
   end;
 end;
 
-procedure TTranslationManagerFiltersSettings.SetGroupExpanded(const Name: string; const Value: boolean);
+procedure TTranslationManagerStopListSettings.SetGroupExpanded(const Name: string; const Value: boolean);
 var
   Group: string;
 begin
   Group := Name;
   if (Group = '') then
-    Group := sFilterGroupGeneral;
+    Group := sStopListGroupGeneral;
   FExpandedState.AddOrSetValue(Group, Value);
 end;
 
-procedure TTranslationManagerFiltersSettings.WriteSection(const Key: string);
+procedure TTranslationManagerStopListSettings.WriteSection(const Key: string);
 
-  function FilterToString(Filter: TFilterItem): string;
+  function StopListToString(StopListItem: TStopListItem): string;
   begin
-    Result := Format('%d/%d/%d/%s', [Ord(Filter.Enabled), Ord(Filter.Field), Ord(Filter.FilterOperator), Filter.Value]);
+    Result := Format('%d/%d/%d/%s', [Ord(StopListItem.Enabled), Ord(StopListItem.Field), Ord(StopListItem.StopListOperator), StopListItem.Value]);
   end;
 
 var
-  Filter: TFilterItem;
+  StopListItem: TStopListItem;
   Group: string;
-  GroupSection: TTranslationManagerFilterGroupSettings;
+  GroupSection: TTranslationManagerStopListGroupSettings;
   i: integer;
   Expanded: boolean;
 begin
   Clear;
 
-  for Filter in FFilters do
+  for StopListItem in FStopList do
   begin
-    Group := Filter.Group;
+    Group := StopListItem.Group;
     if (Group = '') then
-      Group := sFilterGroupGeneral;
+      Group := sStopListGroupGeneral;
     GroupSection := FindOrAdd(Group);
-    GroupSection.Add(FilterToString(Filter));
+    GroupSection.Add(StopListToString(StopListItem));
   end;
 
   for i := 0 to Count-1 do
   begin
     Group := Names[i];
-    if (Group = sFilterGroupGeneral) then
+    if (Group = sStopListGroupGeneral) then
       Group := '';
     if (not FExpandedState.TryGetValue(Group, Expanded)) then
       Expanded := False;

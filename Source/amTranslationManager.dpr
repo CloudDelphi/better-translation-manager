@@ -55,8 +55,8 @@ uses
   amLocalization.Provider.Microsoft.Terminology in 'amLocalization.Provider.Microsoft.Terminology.pas',
   amLocalization.TranslationMemory.FileFormats.GenericCSV in 'amLocalization.TranslationMemory.FileFormats.GenericCSV.pas',
   amLocalization.Dialog.TranslationMemory.SelectFileFormat in 'amLocalization.Dialog.TranslationMemory.SelectFileFormat.pas' {FormSelectFileFormat},
-  amLocalization.Dialog.Filters in 'amLocalization.Dialog.Filters.pas' {FormFilters},
-  amLocalization.Filters in 'amLocalization.Filters.pas',
+  amLocalization.Dialog.StopList in 'amLocalization.Dialog.StopList.pas' {FormStopList},
+  amLocalization.StopList in 'amLocalization.StopList.pas',
   amLocalization.Provider.TranslationMemory in 'amLocalization.Provider.TranslationMemory.pas',
   amLocalization.TranslationMemory in 'amLocalization.TranslationMemory.pas',
   amLocalization.Portable in 'amLocalization.Portable.pas',
@@ -370,7 +370,6 @@ begin
   CursorRecall := SaveCursorScoped(crAppStart, True);
 
   Application.CreateForm(TFormMain, FormMain);
-
   // Make sure main form does not activate when it is shown as this would cause the
   // splash to hide itself.
   if (Application.ShowMainForm) then

@@ -1,4 +1,4 @@
-﻿unit amLocalization.Filters;
+﻿unit amLocalization.StopList;
 
 (*
  * Copyright © 2019 Anders Melander
@@ -17,61 +17,61 @@ uses
   amLocalization.Model;
 
 type
-  TFilterField = (ffModule, ffElement, ffType, ffName, ffTypeAndName, ffText);
-  TFilterOperator = (foEquals, foStarts, foEnds, ftContains, foRegExp);
+  TStopListField = (slFieldModule, slFieldElement, slFieldType, slFieldName, slFieldTypeAndName, slFieldText);
+  TStopListOperator = (slOpEquals, slOpStarts, slOpEnds, slOpContains, slOpRegExp);
 
-  TFilterItem = class
+  TStopListItem = class
   private
-    FField: TFilterField;
+    FField: TStopListField;
     FValue: string;
-    FFilterOperator: TFilterOperator;
+    FStopListOperator: TStopListOperator;
     FGroup: string;
     FEnabled: boolean;
     FRegEx: TRegEx;
     FHasRegEx: boolean;
   protected
     procedure SetEnabled(const Value: boolean);
-    procedure SetFilterOperator(const Value: TFilterOperator);
+    procedure SetStopListOperator(const Value: TStopListOperator);
     procedure SetValue(const Value: string);
     procedure ClearState; inline;
   public
-    procedure Assign(Filter: TFilterItem);
+    procedure Assign(StopListItem: TStopListItem);
 
     function ExtractValue(Prop: TLocalizerProperty): string; overload;
-    class function ExtractValue(FilterField: TFilterField; Prop: TLocalizerProperty): string; overload;
+    class function ExtractValue(StopListField: TStopListField; Prop: TLocalizerProperty): string; overload;
 
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty): boolean; overload;
     function Evaluate(const Text: string): boolean; overload;
 
     property Group: string read FGroup write FGroup;
-    property Field: TFilterField read FField write FField;
-    property FilterOperator: TFilterOperator read FFilterOperator write SetFilterOperator;
+    property Field: TStopListField read FField write FField;
+    property StopListOperator: TStopListOperator read FStopListOperator write SetStopListOperator;
     property Value: string read FValue write SetValue;
     property Enabled: boolean read FEnabled write SetEnabled;
   end;
 
-  TFilterItemList = class(TObjectList<TFilterItem>)
+  TStopListItemList = class(TObjectList<TStopListItem>)
   public type
-    TFilterStats = record
+    TStopListStats = record
       ModuleCount: integer;
       PropertyCount: integer;
     end;
   public
-    procedure Assign(Filters: TFilterItemList);
+    procedure Assign(StopList: TStopListItemList);
 
-    function Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate = nil; const Progress: IProgress = nil): TFilterStats;
+    function Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate = nil; const Progress: IProgress = nil): TStopListStats;
 
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty; SkipModule: boolean = True): boolean; overload;
   end;
 
 resourcestring
-  sFilterGroupGeneralDisplay = 'General';
+  sStopListGroupGeneralDisplay = 'General';
 
 const
-  sFilterGroupGeneral = 'General';
-  sFilterTypeNameSeparator = '.';
+  sStopListGroupGeneral = 'General';
+  sStopListTypeNameSeparator = '.';
 
 implementation
 
@@ -79,47 +79,47 @@ uses
   SysUtils,
   StrUtils;
 
-{ TFilterItem }
+{ TStopListItem }
 
-procedure TFilterItem.Assign(Filter: TFilterItem);
+procedure TStopListItem.Assign(StopListItem: TStopListItem);
 begin
   ClearState;
-  FField := Filter.Field;
-  FValue := Filter.Value;
-  FFilterOperator := Filter.FilterOperator;
-  FGroup := Filter.Group;
-  FEnabled := Filter.Enabled;
+  FField := StopListItem.Field;
+  FValue := StopListItem.Value;
+  FStopListOperator := StopListItem.StopListOperator;
+  FGroup := StopListItem.Group;
+  FEnabled := StopListItem.Enabled;
 end;
 
-procedure TFilterItem.ClearState;
+procedure TStopListItem.ClearState;
 begin
-  if (FFilterOperator = foRegExp) and (FHasRegEx) then
+  if (FStopListOperator = slOpRegExp) and (FHasRegEx) then
   begin
     FRegEx := Default(TRegEx);
     FHasRegEx := False;
   end;
 end;
 
-procedure TFilterItem.SetEnabled(const Value: boolean);
+procedure TStopListItem.SetEnabled(const Value: boolean);
 begin
   FEnabled := Value;
   if (not FEnabled) then
     ClearState;
 end;
 
-procedure TFilterItem.SetFilterOperator(const Value: TFilterOperator);
+procedure TStopListItem.SetStopListOperator(const Value: TStopListOperator);
 begin
   ClearState;
-  FFilterOperator := Value;
+  FStopListOperator := Value;
 end;
 
-procedure TFilterItem.SetValue(const Value: string);
+procedure TStopListItem.SetValue(const Value: string);
 begin
   ClearState;
   FValue := Value;
 end;
 
-function TFilterItem.Evaluate(Prop: TLocalizerProperty): boolean;
+function TStopListItem.Evaluate(Prop: TLocalizerProperty): boolean;
 begin
   if (not Enabled) then
     Exit(False);
@@ -134,32 +134,36 @@ begin
 *)
 end;
 
-function TFilterItem.Evaluate(Module: TLocalizerModule): boolean;
+function TStopListItem.Evaluate(Module: TLocalizerModule): boolean;
 begin
   Result := False;
 
   if (not Enabled) then
     Exit;
 
-  if (FField <> ffModule) then
+  if (FField <> slFieldModule) then
     Exit;
 
   Result := Evaluate(Module.Name);
 end;
 
-function TFilterItem.Evaluate(const Text: string): boolean;
+function TStopListItem.Evaluate(const Text: string): boolean;
 begin
   Result := False;
-  case FFilterOperator of
-    foEquals:
+  case FStopListOperator of
+    slOpEquals:
       Result := AnsiSameText(Value, Text);
-    foStarts:
+
+    slOpStarts:
       Result := Text.StartsWith(Value, True);
-    foEnds:
+
+    slOpEnds:
       Result := Text.EndsWith(Value, True);
-    ftContains:
+
+    slOpContains:
       Result := Text.ToLower.Contains(Value.ToLower);
-    foRegExp:
+
+    slOpRegExp:
       begin
         if (not FHasRegEx) then
         begin
@@ -168,7 +172,7 @@ begin
             FRegEx := TRegEx.Create(Value, [roCompiled]);
 
           except
-            // RegEx is invalid - Disable filter
+            // RegEx is invalid - Disable item
             Enabled := False;
             raise;
           end;
@@ -179,41 +183,46 @@ begin
   end;
 end;
 
-class function TFilterItem.ExtractValue(FilterField: TFilterField; Prop: TLocalizerProperty): string;
+class function TStopListItem.ExtractValue(StopListField: TStopListField; Prop: TLocalizerProperty): string;
 begin
-  case FilterField of
-    ffModule:
+  case StopListField of
+    slFieldModule:
       Result := Prop.Item.Module.Name;
-    ffElement:
+
+    slFieldElement:
       Result := Prop.Item.Name;
-    ffType:
+
+    slFieldType:
       Result := Prop.Item.TypeName;
-    ffName:
+
+    slFieldName:
       Result := Prop.Name;
-    ffTypeAndName:
-      Result := Prop.Item.TypeName + sFilterTypeNameSeparator + Prop.Name;
-    ffText:
+
+    slFieldTypeAndName:
+      Result := Prop.Item.TypeName + sStopListTypeNameSeparator + Prop.Name;
+
+    slFieldText:
       Result := Prop.Value;
   else
     Result := '';
   end;
 end;
 
-function TFilterItem.ExtractValue(Prop: TLocalizerProperty): string;
+function TStopListItem.ExtractValue(Prop: TLocalizerProperty): string;
 begin
   Result := ExtractValue(FField, Prop);
 end;
 
-{ TFilterItemList }
+{ TStopListItemList }
 
-function TFilterItemList.Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate; const Progress: IProgress): TFilterStats;
+function TStopListItemList.Apply(Project: TLocalizerProject; Callback: TLocalizerObjectDelegate; const Progress: IProgress): TStopListStats;
 var
-  Stats: TFilterStats;
+  Stats: TStopListStats;
 begin
   if (Progress <> nil) then
     Progress.Progress(psBegin, 0, Project.Modules.Count+Project.PropertyCount);
 
-  Stats := Default(TFilterStats);
+  Stats := Default(TStopListStats);
 
   Project.BeginUpdate;
   try
@@ -262,21 +271,21 @@ begin
   Result := Stats;
 end;
 
-procedure TFilterItemList.Assign(Filters: TFilterItemList);
+procedure TStopListItemList.Assign(StopList: TStopListItemList);
 var
-  Filter: TFilterItem;
+  StopListItem: TStopListItem;
   i: integer;
 begin
   Clear;
-  for i := 0 to Filters.Count-1 do
+  for i := 0 to StopList.Count-1 do
   begin
-    Filter := TFilterItem.Create;
-    Add(Filter);
-    Filter.Assign(Filters[i]);
+    StopListItem := TStopListItem.Create;
+    Add(StopListItem);
+    StopListItem.Assign(StopList[i]);
   end;
 end;
 
-function TFilterItemList.Evaluate(Module: TLocalizerModule): boolean;
+function TStopListItemList.Evaluate(Module: TLocalizerModule): boolean;
 var
   i: integer;
 begin
@@ -286,15 +295,16 @@ begin
       Exit(True);
 end;
 
-function TFilterItemList.Evaluate(Prop: TLocalizerProperty; SkipModule: boolean): boolean;
+function TStopListItemList.Evaluate(Prop: TLocalizerProperty; SkipModule: boolean): boolean;
 var
   i: integer;
 begin
   Result := False;
   for i := 0 to Count-1 do
   begin
-    if (SkipModule) and (Items[i].Field = ffModule) then
+    if (SkipModule) and (Items[i].Field = slFieldModule) then
       continue;
+
     if (Items[i].Evaluate(Prop)) then
       Exit(True);
   end;

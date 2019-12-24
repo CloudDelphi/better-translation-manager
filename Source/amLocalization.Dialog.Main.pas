@@ -36,7 +36,7 @@ uses
   amLocalization.Provider,
   amLocalization.Dialog.Search,
   amLocalization.TranslationMemory,
-  amLocalization.Filters,
+  amLocalization.StopList,
   amLocalization.Index;
 
 
@@ -293,19 +293,19 @@ type
     PopupMenuTranslateProviders: TdxRibbonPopupMenu;
     ActionImportCSV: TAction;
     TimerToast: TTimer;
-    BarManagerBarFilters: TdxBar;
-    BarButtonFilters: TdxBarButton;
-    ActionFilters: TAction;
-    ActionFiltersAdd: TAction;
-    ActionFiltersAddModule: TAction;
-    ActionFiltersAddElement: TAction;
-    ActionFiltersAddType: TAction;
-    ActionFiltersAddName: TAction;
-    ActionFiltersAddValue: TAction;
-    ActionFiltersApply: TAction;
+    BarManagerBarStopList: TdxBar;
+    BarButtonStopList: TdxBarButton;
+    ActionStopList: TAction;
+    ActionStopListAdd: TAction;
+    ActionStopListAddModule: TAction;
+    ActionStopListAddElement: TAction;
+    ActionStopListAddType: TAction;
+    ActionStopListAddName: TAction;
+    ActionStopListAddValue: TAction;
+    ActionStopListApply: TAction;
     dxBarButton7: TdxBarButton;
-    ActionFiltersAddTypeAndName: TAction;
-    RibbonGalleryItemFilters: TdxRibbonGalleryItem;
+    ActionStopListAddTypeAndName: TAction;
+    RibbonGalleryItemStopList: TdxRibbonGalleryItem;
     RibbonGalleryItemGroup: TdxRibbonGalleryGroup;
     dxRibbonGalleryItem1Group1Item1: TdxRibbonGalleryGroupItem;
     dxRibbonGalleryItem1Group1Item2: TdxRibbonGalleryGroupItem;
@@ -462,11 +462,11 @@ type
     procedure TimerToastTimer(Sender: TObject);
     procedure StatusBarHint(Sender: TObject);
     procedure StatusBarPanels2Click(Sender: TObject);
-    procedure ActionFiltersExecute(Sender: TObject);
-    procedure ActionFiltersAddExecute(Sender: TObject);
-    procedure ActionFiltersApplyExecute(Sender: TObject);
-    procedure ActionFiltersApplyUpdate(Sender: TObject);
-    procedure RibbonGalleryItemFiltersPopup(Sender: TObject);
+    procedure ActionStopListExecute(Sender: TObject);
+    procedure ActionStopListAddExecute(Sender: TObject);
+    procedure ActionStopListApplyExecute(Sender: TObject);
+    procedure ActionStopListApplyUpdate(Sender: TObject);
+    procedure RibbonGalleryItemStopListPopup(Sender: TObject);
     procedure PopupMenuBuildPopup(Sender: TObject);
     procedure ButtonBuildAllClick(Sender: TObject);
     procedure ActionProofingCheckUpdate(Sender: TObject);
@@ -679,7 +679,7 @@ type
     procedure DoRefreshModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
     procedure TranslationAdded(AProp: TLocalizerProperty);
-    function ApplyStopList(const Progress: IProgress = nil): TFilterItemList.TFilterStats;
+    function ApplyStopList(const Progress: IProgress = nil): TStopListItemList.TStopListStats;
     function RecoverUnusedTranslations(OnlyNew: boolean): integer;
   protected
     procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
@@ -808,7 +808,7 @@ uses
 {$ifdef MADEXCEPT}
   amLocalization.Dialog.Feedback,
 {$endif MADEXCEPT}
-  amLocalization.Dialog.Filters;
+  amLocalization.Dialog.StopList;
 
 resourcestring
   sLocalizerFindNone = 'None found';
@@ -2929,22 +2929,22 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.RibbonGalleryItemFiltersPopup(Sender: TObject);
+procedure TFormMain.RibbonGalleryItemStopListPopup(Sender: TObject);
 var
   i: integer;
-  FilterField: TFilterField;
+  StopListField: TStopListField;
   Value: string;
 begin
   for i := 0 to RibbonGalleryItemGroup.Items.Count-1 do
   begin
     RibbonGalleryItemGroup.Items[i].Selected := False;
 
-    FilterField := TFilterField(RibbonGalleryItemGroup.Items[i].Action.Tag);
+    StopListField := TStopListField(RibbonGalleryItemGroup.Items[i].Action.Tag);
 
     if (IsPropertyActive) then
-      Value := TFilterItem.ExtractValue(FilterField, FocusedProperty)
+      Value := TStopListItem.ExtractValue(StopListField, FocusedProperty)
     else
-    if (FilterField = ffModule) then
+    if (StopListField = slFieldModule) then
       Value := FocusedModule.Name // Module name
     else
       Value := '-';
@@ -2954,42 +2954,42 @@ begin
   end;
 end;
 
-procedure TFormMain.ActionFiltersAddExecute(Sender: TObject);
+procedure TFormMain.ActionStopListAddExecute(Sender: TObject);
 var
   i: integer;
   Item: TCustomLocalizerItem;
-  FormFilters: TFormFilters;
-  FilterField: TFilterField;
+  FormStopList: TFormStopList;
+  StopListField: TStopListField;
   Value: string;
 begin
-  FormFilters := TFormFilters.Create(nil);
+  FormStopList := TFormStopList.Create(nil);
   try
-    FilterField := TFilterField(TAction(Sender).Tag);
+    StopListField := TStopListField(TAction(Sender).Tag);
 
-    FormFilters.BeginAddFilter;
+    FormStopList.BeginAddStopList;
 
     for i := 0 to SelectionCount-1 do
     begin
       Item := Selection[i];
 
       if (Item is TLocalizerProperty) then
-        Value := TFilterItem.ExtractValue(FilterField, TLocalizerProperty(Item))
+        Value := TStopListItem.ExtractValue(StopListField, TLocalizerProperty(Item))
       else
         Value := Item.Name; // Module name
 
-      FormFilters.ContinueAddFilter('', FilterField, foEquals, Value);
+      FormStopList.ContinueAddStopList('', StopListField, slOpEquals, Value);
     end;
 
-    if (FormFilters.EndAddFilter) then
-      ActionFiltersApply.Execute;
+    if (FormStopList.EndAddStopList) then
+      ActionStopListApply.Execute;
   finally
-    FormFilters.Free;
+    FormStopList.Free;
   end;
 end;
 
-function TFormMain.ApplyStopList(const Progress: IProgress): TFilterItemList.TFilterStats;
+function TFormMain.ApplyStopList(const Progress: IProgress): TStopListItemList.TStopListStats;
 begin
-  Result := TranslationManagerSettings.Filters.Filters.Apply(FProject,
+  Result := TranslationManagerSettings.StopList.StopList.Apply(FProject,
     procedure(Item: TCustomLocalizerItem)
     begin
       if (Item is TLocalizerProperty) then
@@ -3002,23 +3002,23 @@ begin
     end, Progress);
 end;
 
-procedure TFormMain.ActionFiltersApplyExecute(Sender: TObject);
+procedure TFormMain.ActionStopListApplyExecute(Sender: TObject);
 resourcestring
-  sFiltersApply = 'Applying Stop List';
-  sFiltersApplyPromptTitle = 'Apply Stop List';
-  sFiltersApplyPrompt = 'Applying the Stop List will mark all properties which match any stop list criteria as "Don''t translate".'#13#13+
+  sStopListApply = 'Applying Stop List';
+  sStopListApplyPromptTitle = 'Apply Stop List';
+  sStopListApplyPrompt = 'Applying the Stop List will mark all properties which match any stop list criteria as "Don''t translate".'#13#13+
     'Do you want to apply the stop list to your project now?';
-  sFiltersResultTitle = 'Stop list applied';
-  sFiltersResult = '%.0n modules, %.0n properties were marked "Don''t Translate".';
+  sStopListResultTitle = 'Stop list applied';
+  sStopListResult = '%.0n modules, %.0n properties were marked "Don''t Translate".';
 var
   Progress: IProgress;
-  Stats: TFilterItemList.TFilterStats;
+  Stats: TStopListItemList.TStopListStats;
 begin
-  if (TaskMessageDlg(sFiltersApplyPromptTitle, sFiltersApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+  if (TaskMessageDlg(sStopListApplyPromptTitle, sStopListApplyPrompt, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
   SaveCursor(crHourGlass);
-  Progress := ShowProgress(sFiltersApply);
+  Progress := ShowProgress(sStopListApply);
 
   Stats := ApplyStopList(Progress);
 
@@ -3028,25 +3028,25 @@ begin
 
   RefreshModuleStats;
 
-  TaskMessageDlg(sFiltersResultTitle, Format(sFiltersResult, [Stats.ModuleCount*1.0, Stats.PropertyCount*1.0]), mtInformation, [mbOK], 0);
+  TaskMessageDlg(sStopListResultTitle, Format(sStopListResult, [Stats.ModuleCount*1.0, Stats.PropertyCount*1.0]), mtInformation, [mbOK], 0);
 end;
 
-procedure TFormMain.ActionFiltersApplyUpdate(Sender: TObject);
+procedure TFormMain.ActionStopListApplyUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (TranslationManagerSettings.Filters.Filters.Count > 0);
+  TAction(Sender).Enabled := (FProject.Modules.Count > 0) and (TranslationManagerSettings.StopList.StopList.Count > 0);
 end;
 
-procedure TFormMain.ActionFiltersExecute(Sender: TObject);
+procedure TFormMain.ActionStopListExecute(Sender: TObject);
 var
-  FormFilters: TFormFilters;
+  FormStopList: TFormStopList;
 begin
-  FormFilters := TFormFilters.Create(nil);
+  FormStopList := TFormStopList.Create(nil);
   try
 
-    FormFilters.Execute;
+    FormStopList.Execute;
 
   finally
-    FormFilters.Free;
+    FormStopList.Free;
   end;
 end;
 
