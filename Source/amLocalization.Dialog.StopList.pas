@@ -33,6 +33,15 @@ type
     TreeListStopListColumnOperator: TcxTreeListColumn;
     EditRepository: TcxEditRepository;
     EditRepositoryTextItem: TcxEditRepositoryTextItem;
+    ButtonImport: TcxButton;
+    LayoutItemButtonImport: TdxLayoutItem;
+    ActionImport: TAction;
+    TaskDialogImport: TTaskDialog;
+    OpenDialogStopList: TOpenDialog;
+    SaveDialogStopList: TSaveDialog;
+    ButtonExport: TcxButton;
+    LayoutItemButtonExport: TdxLayoutItem;
+    ActionExport: TAction;
     procedure TreeListStopListBeginDragNode(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; var Allow: Boolean);
     procedure TreeListStopListDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure TreeListStopListMoveTo(Sender: TcxCustomTreeList; AttachNode: TcxTreeListNode; AttachMode: TcxTreeListNodeAttachMode; Nodes: TList; var IsCopy, Done: Boolean);
@@ -48,12 +57,16 @@ type
       var Error: Boolean);
     procedure TreeListStopListColumnValuePropertiesValidate(Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
       var Error: Boolean);
+    procedure ActionImportExecute(Sender: TObject);
+    procedure ActionExportExecute(Sender: TObject);
   private
     FStopList: TStopListItemList;
+    FStopListLocked: boolean;
     FUpdatingNode: boolean;
   protected
     procedure LoadStopList;
     procedure SaveStopList;
+    procedure DoLoadStopList;
     function FindGroup(const Name: string): TcxTreeListNode;
     function AddGroup(const Name: string): TcxTreeListNode;
     function LoadStopListItem(StopListItem: TStopListItem): TcxTreeListNode;
@@ -78,6 +91,7 @@ implementation
 
 uses
   UITypes,
+  IOUtils,
   RegularExpressions,
   amLocalization.Settings;
 
@@ -179,13 +193,24 @@ begin
 end;
 
 procedure TFormStopList.LoadStopList;
+begin
+  FStopListLocked := True;
+  try
+    FStopList.Assign(TranslationManagerSettings.StopList.StopList);
+
+    DoLoadStopList;
+  finally
+    FStopListLocked := False;
+  end;
+end;
+
+procedure TFormStopList.DoLoadStopList;
 var
   StopListItem: TStopListItem;
 begin
   TreeListStopList.BeginUpdate;
   try
     TreeListStopList.Clear;
-    FStopList.Assign(TranslationManagerSettings.StopList.StopList);
 
     for StopListItem in FStopList do
       LoadStopListItem(StopListItem);
@@ -262,6 +287,55 @@ begin
       Result := TreeListStopList.Root.Items[i];
       break;
     end;
+end;
+
+procedure TFormStopList.ActionExportExecute(Sender: TObject);
+begin
+  if (SaveDialogStopList.InitialDir = '') then
+    SaveDialogStopList.InitialDir := TranslationManagerSettings.Folders.FolderDocuments;
+
+  if (not SaveDialogStopList.Execute(Handle)) then
+    Exit;
+
+  // Remember folder for next time
+  SaveDialogStopList.InitialDir := TPath.GetDirectoryName(SaveDialogStopList.FileName);
+
+  FStopList.SaveToFile(SaveDialogStopList.FileName);
+end;
+
+procedure TFormStopList.ActionImportExecute(Sender: TObject);
+var
+  Merge: boolean;
+begin
+  if (OpenDialogStopList.InitialDir = '') then
+    OpenDialogStopList.InitialDir := TranslationManagerSettings.Folders.FolderDocuments;
+
+  if (not OpenDialogStopList.Execute(Handle)) then
+    Exit;
+
+  // Remember folder for next time
+  OpenDialogStopList.InitialDir := TPath.GetDirectoryName(OpenDialogStopList.FileName);
+
+  if (TreeListStopList.Count > 0) then
+  begin
+    if (not TaskDialogImport.Execute) then
+      Exit;
+
+    if (TaskDialogImport.ModalResult = mrCancel) then
+      Exit;
+
+    Merge := (TaskDialogImport.ModalResult = 101);
+  end else
+    Merge := False;
+
+  FStopListLocked := True;
+  try
+    FStopList.LoadFromFile(OpenDialogStopList.FileName, Merge);
+
+    DoLoadStopList;
+  finally
+    FStopListLocked := False;
+  end;
 end;
 
 function TFormStopList.AddGroup(const Name: string): TcxTreeListNode;
@@ -344,7 +418,7 @@ end;
 
 procedure TFormStopList.TreeListStopListDeletion(Sender: TcxCustomTreeList; ANode: TcxTreeListNode);
 begin
-  if (FStopList <> nil) and (ANode.Data <> nil) then
+  if (not FStopListLocked) and (FStopList <> nil) and (ANode.Data <> nil) then
     FStopList.Remove(TStopListItem(ANode.Data));
 end;
 

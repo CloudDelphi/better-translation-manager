@@ -1272,42 +1272,18 @@ procedure TTranslationManagerStopListSettings.ReadSection(const Key: string);
 
   procedure StringToStopList(const Group, Value: string);
   var
-    Values: TArray<string>;
     s: string;
     StopListItem: TStopListItem;
-    n, Start, Next: integer;
   begin
     StopListItem := TStopListItem.Create;
     FStopList.Add(StopListItem);
+
+    StopListItem.LoadFromString(Value, False);
 
     s := Group;
     if (s = sStopListGroupGeneral) then
       s := '';
     StopListItem.Group := s;
-
-    SetLength(Values, 4);
-    n := 0;
-    Start := 1;
-    while (n < Length(Values)) do
-    begin
-      if (n < Length(Values)-1) then
-        Next := PosEx('/', Value, Start)
-      else
-        Next := MaxInt-1;
-
-      if (Next > Start) then
-        Values[n] := Copy(Value, Start, Next-Start)
-      else
-        Values[n] := '';
-
-      Inc(n);
-      Start := Next + 1;
-    end;
-
-    StopListItem.Enabled := boolean(StrToInt(Values[0]));
-    StopListItem.Field := TStopListField(StrToInt(Values[1]));
-    StopListItem.StopListOperator := TStopListOperator(StrToInt(Values[2]));
-    StopListItem.Value := Values[3];
   end;
 
 var
@@ -1343,8 +1319,8 @@ begin
     for j := 0 to GroupSection.Count-1 do
       StringToStopList(Group, GroupSection[j]);
 
-    if (Group = sStopListGroupGeneral) then
-      Group := '';
+    if (Group = '') then
+      Group := sStopListGroupGeneral;
     FExpandedState.AddOrSetValue(Group, GroupSection.Expanded);
   end;
 end;
@@ -1360,12 +1336,6 @@ begin
 end;
 
 procedure TTranslationManagerStopListSettings.WriteSection(const Key: string);
-
-  function StopListToString(StopListItem: TStopListItem): string;
-  begin
-    Result := Format('%d/%d/%d/%s', [Ord(StopListItem.Enabled), Ord(StopListItem.Field), Ord(StopListItem.StopListOperator), StopListItem.Value]);
-  end;
-
 var
   StopListItem: TStopListItem;
   Group: string;
@@ -1381,14 +1351,14 @@ begin
     if (Group = '') then
       Group := sStopListGroupGeneral;
     GroupSection := FindOrAdd(Group);
-    GroupSection.Add(StopListToString(StopListItem));
+    GroupSection.Add(StopListItem.SaveToString(False));
   end;
 
   for i := 0 to Count-1 do
   begin
     Group := Names[i];
-    if (Group = sStopListGroupGeneral) then
-      Group := '';
+    if (Group = '') then
+      Group := sStopListGroupGeneral;
     if (not FExpandedState.TryGetValue(Group, Expanded)) then
       Expanded := False;
 

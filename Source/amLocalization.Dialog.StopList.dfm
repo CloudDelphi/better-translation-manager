@@ -5,6 +5,7 @@ inherited FormStopList: TFormStopList
   ClientHeight = 528
   ClientWidth = 655
   OnShow = FormShow
+  ExplicitTop = -66
   ExplicitWidth = 671
   ExplicitHeight = 567
   PixelsPerInch = 96
@@ -16,11 +17,57 @@ inherited FormStopList: TFormStopList
     ExplicitWidth = 655
     inherited ButtonOK: TcxButton
       Left = 488
+      TabOrder = 2
       ExplicitLeft = 488
     end
     inherited ButtonCancel: TcxButton
       Left = 569
+      TabOrder = 3
       ExplicitLeft = 569
+    end
+    object ButtonImport: TcxButton [2]
+      Left = 11
+      Top = 11
+      Width = 75
+      Height = 25
+      Action = ActionImport
+      TabOrder = 0
+    end
+    object ButtonExport: TcxButton [3]
+      Left = 92
+      Top = 11
+      Width = 75
+      Height = 25
+      Action = ActionExport
+      TabOrder = 1
+    end
+    inherited LayoutItemButtonOK: TdxLayoutItem
+      Index = 2
+    end
+    inherited LayoutItemButtonCancel: TdxLayoutItem
+      Index = 3
+    end
+    inherited LayoutGroupButtons: TdxLayoutGroup
+      CaptionOptions.Visible = False
+      ItemIndex = 1
+    end
+    object LayoutItemButtonImport: TdxLayoutItem
+      Parent = LayoutGroupButtons
+      CaptionOptions.Visible = False
+      Control = ButtonImport
+      ControlOptions.OriginalHeight = 25
+      ControlOptions.OriginalWidth = 75
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object LayoutItemButtonExport: TdxLayoutItem
+      Parent = LayoutGroupButtons
+      CaptionOptions.Visible = False
+      Control = ButtonExport
+      ControlOptions.OriginalHeight = 25
+      ControlOptions.OriginalWidth = 75
+      ControlOptions.ShowBorder = False
+      Index = 1
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -194,6 +241,16 @@ inherited FormStopList: TFormStopList
       end
     end
   end
+  inherited ActionList: TActionList
+    object ActionImport: TAction
+      Caption = 'Import...'
+      OnExecute = ActionImportExecute
+    end
+    object ActionExport: TAction
+      Caption = 'Export...'
+      OnExecute = ActionExportExecute
+    end
+  end
   object EditRepository: TcxEditRepository
     Left = 368
     Top = 123
@@ -202,5 +259,42 @@ inherited FormStopList: TFormStopList
       Properties.ValidateOnEnter = True
       Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
     end
+  end
+  object TaskDialogImport: TTaskDialog
+    Buttons = <
+      item
+        Caption = 'Replace'
+        Default = True
+        CommandLinkHint = 'Clear stop list and then add the imported stop list entries'
+        ModalResult = 100
+      end
+      item
+        Caption = 'Merge'
+        CommandLinkHint = 'Add the imported entries to the current stop list'
+        ModalResult = 101
+      end>
+    Caption = 'Import Stop List'
+    CommonButtons = [tcbCancel]
+    Flags = [tfAllowDialogCancellation, tfUseCommandLinksNoIcon]
+    RadioButtons = <>
+    Text = 
+      'Do you want to replace your current stop list or merge the selec' +
+      'ted file into it?'
+    Title = 'Replace or Merge Stop List'
+    Left = 128
+    Top = 135
+  end
+  object OpenDialogStopList: TOpenDialog
+    Filter = 'Stop lists (*.xstp)|*.xspt|All files (*.*)|*.*'
+    Options = [ofHideReadOnly, ofAllowMultiSelect, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Left = 120
+    Top = 224
+  end
+  object SaveDialogStopList: TSaveDialog
+    DefaultExt = 'xstp'
+    Filter = 'Stop lists (*.xstp)|*.xspt|All files (*.*)|*.*'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
+    Left = 232
+    Top = 224
   end
 end

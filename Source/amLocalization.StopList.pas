@@ -37,12 +37,17 @@ type
   public
     procedure Assign(StopListItem: TStopListItem);
 
+    function SaveToString(IncludeGroup: boolean = True): string;
+    procedure LoadFromString(const AValue: string; IncludeGroup: boolean = True);
+
     function ExtractValue(Prop: TLocalizerProperty): string; overload;
     class function ExtractValue(StopListField: TStopListField; Prop: TLocalizerProperty): string; overload;
 
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty): boolean; overload;
     function Evaluate(const Text: string): boolean; overload;
+
+    function IsEquivalent(StopListItem: TStopListItem): boolean;
 
     property Group: string read FGroup write FGroup;
     property Field: TStopListField read FField write FField;
@@ -64,6 +69,9 @@ type
 
     function Evaluate(Module: TLocalizerModule): boolean; overload;
     function Evaluate(Prop: TLocalizerProperty; SkipModule: boolean = True): boolean; overload;
+
+    procedure LoadFromFile(const Filename: string; Merge: boolean = False);
+    procedure SaveToFile(const Filename: string);
   end;
 
 resourcestring
@@ -77,7 +85,9 @@ implementation
 
 uses
   SysUtils,
-  StrUtils;
+  StrUtils,
+  Classes,
+  System.NetEncoding;
 
 { TStopListItem }
 
@@ -89,6 +99,69 @@ begin
   FStopListOperator := StopListItem.StopListOperator;
   FGroup := StopListItem.Group;
   FEnabled := StopListItem.Enabled;
+end;
+
+function TStopListItem.SaveToString(IncludeGroup: boolean): string;
+
+  function Escape(const Value: string): string;
+  begin
+    Result := TNetEncoding.URL.Encode(Value);
+  end;
+
+begin
+  Result := Format('%d/%d/%d/%s', [Ord(Enabled), Ord(Field), Ord(StopListOperator), Escape(Value)]);
+  if (IncludeGroup) then
+    Result := Format('%s/%s', [Escape(Group), Result]);
+end;
+
+procedure TStopListItem.LoadFromString(const AValue: string; IncludeGroup: boolean);
+
+  function Unescape(const Value: string): string;
+  begin
+    Result := TNetEncoding.URL.Decode(Value);
+  end;
+
+var
+  Values: TArray<string>;
+  n: integer;
+
+  function HasNextValue: boolean;
+  begin
+    Result := (n < Length(Values));
+  end;
+
+  function GetNextValue: string;
+  begin
+    if (n < Length(Values)) then
+    begin
+      Result := Values[n];
+      Inc(n);
+    end else
+      Result := '';
+  end;
+
+begin
+  Values := AValue.Split(['/']);
+  n := 0;
+
+  if (IncludeGroup) and (HasNextValue) then
+  begin
+    Group := Unescape(GetNextValue);
+    if (Group = sStopListGroupGeneral) then
+      Group := '';
+  end;
+
+  if (HasNextValue) then
+    Enabled := boolean(StrToIntDef(GetNextValue, 0));
+
+  if (HasNextValue) then
+    Field := TStopListField(StrToIntDef(GetNextValue, 0));
+
+  if (HasNextValue) then
+    StopListOperator := TStopListOperator(StrToIntDef(GetNextValue, 0));
+
+  if (HasNextValue) then
+    Value := Unescape(GetNextValue);
 end;
 
 procedure TStopListItem.ClearState;
@@ -145,6 +218,13 @@ begin
     Exit;
 
   Result := Evaluate(Module.Name);
+end;
+
+function TStopListItem.IsEquivalent(StopListItem: TStopListItem): boolean;
+begin
+  Result := (Field = StopListItem.Field) and
+    (StopListOperator = StopListItem.StopListOperator) and
+    (Value = StopListItem.Value);
 end;
 
 function TStopListItem.Evaluate(const Text: string): boolean;
@@ -307,6 +387,79 @@ begin
 
     if (Items[i].Evaluate(Prop)) then
       Exit(True);
+  end;
+end;
+
+procedure TStopListItemList.LoadFromFile(const Filename: string; Merge: boolean);
+var
+  Reader: TStreamReader;
+  StopListItem, NewStopListItem: TStopListItem;
+  Value: string;
+  First: boolean;
+begin
+  Reader := TStreamReader.Create(Filename, TEncoding.UTF8);
+  try
+
+    if (not Merge) then
+      Clear;
+
+    First := True;
+
+    while (not Reader.EndOfStream) do
+    begin
+      Value := Reader.ReadLine.Trim;
+
+      if (Value.IsEmpty) or (Value.StartsWith(';')) then
+        continue;
+
+      if (First) and (Value = 'stoplist version 1') then
+        continue;
+      First := False;
+
+      NewStopListItem := TStopListItem.Create;
+      try
+
+        NewStopListItem.LoadFromString(Value);
+
+        if (Merge) then
+        begin
+          // Check for duplicates
+          for StopListItem in Self do
+            if (StopListItem.IsEquivalent(NewStopListItem)) then
+            begin
+              // Duplicate found. Current Group and Enabled state takes precedence.
+              FreeAndNil(NewStopListItem);
+              break;
+            end;
+        end;
+
+        if (NewStopListItem <> nil) then
+          Add(NewStopListItem);
+      except
+        NewStopListItem.Free;
+        raise;
+      end;
+    end;
+
+  finally
+    Reader.Free;
+  end;
+end;
+
+procedure TStopListItemList.SaveToFile(const Filename: string);
+var
+  Writer: TStreamWriter;
+  StopListItem: TStopListItem;
+begin
+  Writer := TStreamWriter.Create(Filename); // Always write ASCII so no need for encoding
+  try
+
+    Writer.WriteLine('stoplist version 1');
+    for StopListItem in Self do
+      Writer.WriteLine(StopListItem.SaveToString);
+
+  finally
+    Writer.Free;
   end;
 end;
 
