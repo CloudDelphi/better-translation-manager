@@ -13,6 +13,7 @@ interface
 {$WARN SYMBOL_PLATFORM OFF}
 
 uses
+  Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.StdCtrls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.ExtCtrls,
   Data.DB,
@@ -78,7 +79,7 @@ type
     LayoutGroupDuplicates: TdxLayoutGroup;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
     StyleRepository: TcxStyleRepository;
-    StyleDuplicate: TcxStyle;
+    StyleDuplicateOdd: TcxStyle;
     PopupMenuGrid: TPopupMenu;
     Viewduplicates1: TMenuItem;
     ActionRowInsert: TAction;
@@ -86,6 +87,8 @@ type
     N2: TMenuItem;
     Insertrow1: TMenuItem;
     Deleterows1: TMenuItem;
+    StyleDuplicateEven: TcxStyle;
+    StyleDuplicate: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
@@ -109,6 +112,8 @@ type
     procedure ActionRowDeleteExecute(Sender: TObject);
     procedure ActionRowDeleteUpdate(Sender: TObject);
     procedure GridTMDBTableViewColumnPosChanged(Sender: TcxGridTableView; AColumn: TcxGridColumn);
+    procedure GridTMDBTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord;
+      AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
   private
     FTranslationMemory: ITranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
@@ -126,7 +131,7 @@ type
   private
     FViewDuplicates: boolean;
     FDuplicateColumn: TcxGridDBColumn;
-    FDuplicates: TTranslationMemoryRecordList;
+    FDuplicates: TTranslationMemoryRecordList; // [RecordIndex] = DuplicateIndex
     FDuplicateLocaleItem: TLocaleItem;
     FDuplicateSourceColumn: TcxGridColumn;
     FSanitizeRules: TSanitizeRules;
@@ -169,6 +174,7 @@ implementation
 {$R *.dfm}
 
 uses
+  System.Generics.Defaults,
   IOUtils,
   UITypes,
   cxDrawTextUtils,
@@ -227,6 +233,7 @@ begin
 
     if (DataSourceTranslationMemory.DataSet.RecordCount > 100*1024) then
       SaveCursor(crHourGlass, True);
+
     GridTMDBTableView.EndUpdate; // This takes ages if the dataset is very large (hence the SaveCursor above)
   end;
   Dec(FUpdateCount);
@@ -236,7 +243,7 @@ procedure TFormTranslationMemory.NeedUpdate(Update: TTranslationMemoryUpdate);
 begin
   BeginUpdate;
   Include(FUpdates, Update);
-  ENdUpdate;
+  EndUpdate;
 end;
 
 // -----------------------------------------------------------------------------
@@ -299,7 +306,7 @@ begin
   ShowModal;
 
   // Make sure duplicate column doesn't affect saved layout
-  FDuplicateColumn.Free;
+  FreeAndNil(FDuplicateColumn); // Must use free and nil. Free causes repaint. Repaint references object.
 
   SaveLayout;
 
@@ -429,7 +436,7 @@ begin
       FDuplicateColumn.Caption := sDuplicate;
       FDuplicateColumn.Width := 150;
       FDuplicateColumn.BestFitMaxWidth := 300;
-      FDuplicateColumn.Styles.Content := StyleDuplicate;
+      //FDuplicateColumn.Styles.Content := StyleDuplicateOdd;
       FDuplicateColumn.OnGetDataText := GridTMDBTableViewColumnDuplicateGetDataText;
 
       // Column added. We must update the RTL array.
@@ -470,6 +477,7 @@ var
   RecNo: integer;
   List: TTranslationMemoryRecordList;
   Progress: IProgress;
+  i, Index: integer;
 begin
   FLookupIndex := nil;
   if (not FViewDuplicates) then
@@ -487,8 +495,17 @@ begin
   // Get the values
   Values := FLookupIndex.GetValues;
 
+  // Sort values so we can determine odd/even values directly from the group index
+  TArray.Sort<string>(Values, TOrdinalIStringComparer.Create);
+
   // For each value get the record list (the duplicates)
   FDuplicates.Clear;
+  FDuplicates.Count := GridTMDBTableView.DataController.RecordCount;
+
+  for i := 0 to FDuplicates.Count-1 do
+    FDuplicates[i] := -1;
+
+  Index := 0;
   for Value in Values do
   begin
     Progress.AdvanceProgress;
@@ -499,11 +516,10 @@ begin
 
     // Add records to duplicate list
     for RecNo in List do
-      FDuplicates.Add(RecNo-1);
-  end;
+      FDuplicates[RecNo-1] := Index;
 
-  // Sort list so we can use binary search on it
-  FDuplicates.Sort;
+    Inc(Index);
+  end;
 
   Progress.UpdateMessage('Loading data...');
 
@@ -524,17 +540,22 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormTranslationMemory.ActionRowDeleteExecute(Sender: TObject);
+var
+  i: integer;
 begin
   if (MessageDlg('Delete selected row(s)?', mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
 
   SaveCursor(crAppStart);
 
+  for i:= 0 to GridTMDBTableView.Controller.SelectedRecordCount-1 do
+    FDuplicates.Delete(GridTMDBTableView.Controller.SelectedRecords[i].RecordIndex);
+
   BeginUpdate;
   try
     GridTMDBTableView.DataController.DeleteSelection;
 
-    NeedUpdate(tmUpdateDuplicates);
+//    NeedUpdate(tmUpdateDuplicates);
   finally
     EndUpdate;
   end;
@@ -882,12 +903,10 @@ end;
 
 procedure TFormTranslationMemory.GridTMDBTableViewDataControllerFilterRecord(ADataController: TcxCustomDataController;
   ARecordIndex: Integer; var Accept: Boolean);
-var
-  Dummy: integer;
 begin
   if (FViewDuplicates) then
     // Only display row if record is in duplicate list
-    Accept := FDuplicates.BinarySearch(ARecordIndex, Dummy);
+    Accept := (FDuplicates[ARecordIndex] <> -1);
 end;
 
 // -----------------------------------------------------------------------------
@@ -908,6 +927,29 @@ begin
   // Store Locale in tag so we can use it when opening the text editor.
   // See: TDataModuleMain.EditRepositoryTextItemPropertiesButtonClick
   AEdit.Tag := TcxGridDBColumn(AItem).DataBinding.Field.Tag;
+end;
+
+procedure TFormTranslationMemory.GridTMDBTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView;
+  ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
+begin
+  if (ARecord.Focused) and (AItem.Focused) then
+    AStyle := DataModuleMain.StyleFocused
+  else
+  if (FViewDuplicates) and (FDuplicateColumn <> nil) then
+  begin
+(*
+    if (AItem = FDuplicateColumn) then
+      AStyle := StyleDuplicate
+    else
+*)
+    if (FDuplicateColumn.SortIndex = 0) then
+    begin
+      if (Odd(FDuplicates[ARecord.RecordIndex])) then
+        AStyle := StyleDuplicateOdd
+      else
+        AStyle := StyleDuplicateEven;
+    end;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

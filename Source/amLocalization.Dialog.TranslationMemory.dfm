@@ -128,7 +128,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
           OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
           OnInitEdit = GridTMDBTableViewInitEdit
           DataController.DataSource = DataSourceTranslationMemory
-          DataController.Options = [dcoAnsiSort, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding, dcoSortByDisplayText]
+          DataController.Options = [dcoAnsiSort, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
           DataController.Summary.DefaultGroupSummaryItems = <>
           DataController.Summary.FooterSummaryItems = <>
           DataController.Summary.SummaryGroups = <>
@@ -151,7 +151,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
           OptionsView.GroupByBox = False
           OptionsView.HeaderEndEllipsis = True
           OptionsView.Indicator = True
-          Styles.Inactive = DataModuleMain.StyleSelected
+          Styles.OnGetContentStyle = GridTMDBTableViewStylesGetContentStyle
+          Styles.Inactive = DataModuleMain.StyleInactive
           Styles.Selection = DataModuleMain.StyleSelected
           OnColumnPosChanged = GridTMDBTableViewColumnPosChanged
         end
@@ -380,10 +381,17 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Left = 340
     Top = 295
     PixelsPerInch = 96
+    object StyleDuplicateOdd: TcxStyle
+      AssignedValues = [svColor]
+      Color = 15918295
+    end
+    object StyleDuplicateEven: TcxStyle
+      AssignedValues = [svColor]
+      Color = clWindow
+    end
     object StyleDuplicate: TcxStyle
-      AssignedValues = [svColor, svTextColor]
-      Color = clInactiveCaption
-      TextColor = clInactiveCaptionText
+      AssignedValues = [svColor]
+      Color = 15389113
     end
   end
   object PopupMenuGrid: TPopupMenu
