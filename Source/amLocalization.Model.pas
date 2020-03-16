@@ -1380,6 +1380,7 @@ begin
     if (ProjectStateLoading in State) then
       Result.ClearState(ItemStateNew);
     Result.ClearState(ItemStateUpdating);
+    Result.ClearState(ItemStateUnused);
   end else
     Result := nil;
 end;
@@ -1577,6 +1578,7 @@ begin
     if (ProjectStateLoading in Project.State) then
       Result.ClearState(ItemStateNew);
     Result.ClearState(ItemStateUpdating);
+    Result.ClearState(ItemStateUnused);
   end else
     Result := nil;
 end;
@@ -1595,6 +1597,7 @@ begin
         if (ProjectStateLoading in Project.State) then
           Result.ClearState(ItemStateNew);
         Result.ClearState(ItemStateUpdating);
+        Result.ClearState(ItemStateUnused);
         break;
       end;
 end;
@@ -1751,6 +1754,7 @@ begin
     if (ProjectStateLoading in Module.Project.State) then
       Result.ClearState(ItemStateNew);
     Result.ClearState(ItemStateUpdating);
+    Result.ClearState(ItemStateUnused);
   end else
     Result := nil;
 end;
