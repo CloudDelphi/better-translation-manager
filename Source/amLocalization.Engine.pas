@@ -571,12 +571,79 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TModuleDFMResourceProcessor.ReadProperty(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+
+  procedure HandleProperty(const PropertyName, Value: string; StartPos, EndPos: int64; StringList: boolean);
+  var
+    Prop: TLocalizerProperty;
+    NewValue: string;
+    Start, n: integer;
+  begin
+    if (Item <> nil) then
+    begin
+      if (Action in [liaUpdateSource, liaTranslate]) then
+        Prop := Item.AddProperty(PropertyName, Value)
+      else
+      if (Action = liaUpdateTarget) and (Language <> nil) then
+      begin
+        Prop := Item.FindProperty(PropertyName, True);
+        if (Prop <> nil) then
+          DoSetTranslation(Prop, Language, Value);
+      end else
+        Prop := nil;
+    end else
+      Prop := nil;
+
+    // Perform translation
+    if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) and (Prop <> nil) then
+    begin
+      NewValue := Prop.Value;
+
+      if (Translator(Language, Prop, NewValue)) and (NewValue <> Value) and (FWriter <> nil) then
+      begin
+        // Copy up until original value
+        CopyToHere(StartPos);
+
+        // Write new value
+        if (StringList) then
+        begin
+          FWriter.WriteListBegin;
+
+          // Split CR/LF delimited string into individual strings
+          Start := 1;
+          while (Start < Length(NewValue)) do
+          begin
+            n := Pos(#13, NewValue, Start);
+            if (n = 0) then
+            begin
+              FWriter.WriteString(Copy(NewValue, Start, MaxInt));
+              break;
+            end else
+              FWriter.WriteString(Copy(NewValue, Start, n-Start));
+
+            Inc(n);
+            // Ignore LF
+            while (NewValue[n] = #10) do
+              Inc(n);
+
+            Start := n;
+          end;
+          FWriter.WriteListEnd;
+
+        end else
+          FWriter.WriteString(NewValue);
+
+        // Skip original value in source so it doesn't get copied
+        FLastCopied := EndPos;
+      end;
+    end;
+  end;
+
+
 var
   PropertyName: string;
-  Prop: TLocalizerProperty;
   ValueType: TValueType;
   StartPos, EndPos: int64;
-  Value, NewValue: string;
+  Value: string;
 begin
   // TReader.ReadProperty
   PropertyName := FReader.ReadStr;
@@ -599,39 +666,46 @@ begin
 
       EndPos := FReader.Position;
 
-      if (Item <> nil) then
-      begin
-        if (Action in [liaUpdateSource, liaTranslate]) then
-          Prop := Item.AddProperty(PropertyName, Value)
-        else
-        if (Action = liaUpdateTarget) and (Language <> nil) then
-        begin
-          Prop := Item.FindProperty(PropertyName, True);
-          if (Prop <> nil) then
-            DoSetTranslation(Prop, Language, Value);
-        end else
-          Prop := nil;
-      end else
-        Prop := nil;
-
-      // Perform translation
-      if (Action = liaTranslate) and (Language <> nil) and (Assigned(Translator)) and (Prop <> nil) then
-      begin
-        NewValue := Prop.Value;
-
-        if (Translator(Language, Prop, NewValue)) and (NewValue <> Value) and (FWriter <> nil) then
-        begin
-          // Copy up until original value
-          CopyToHere(StartPos);
-
-          // Write new value
-          FWriter.WriteString(NewValue);
-
-          // Skip original value in source so it doesn't get copied
-          FLastCopied := EndPos;
-        end;
-      end;
+      HandleProperty(PropertyName, Value, StartPos, EndPos, False);
     end;
+
+  vaList:
+    begin
+      // Attempt to handle TStrings
+      // Properties of type TStrings are named <propertyname>.Strings - See TStrings.DefineProperties
+      if (not PropertyName.EndsWith('.Strings')) then
+      begin
+        FReader.SkipValue;
+        Exit;
+      end;
+
+      StartPos := FReader.Position;
+      FReader.ReadValue;
+      Value := '';
+      // TStrings is stored as a list of string values
+      while (not FReader.EndOfList) do
+      begin
+        ValueType := FReader.NextValue;
+
+        if (not (ValueType in [vaWString, vaUTF8String, vaString, vaLString])) then
+        begin
+          // Unexpected value type encountered - rewind and skip
+          FReader.Position := StartPos;
+          FReader.SkipValue;
+          Exit;
+        end;
+
+        // Append value to list
+        if (Value <> '') then
+          Value := Value + #13;
+        Value := Value + FReader.ReadString;
+      end;
+      FReader.ReadListEnd;
+      EndPos := FReader.Position;
+
+      HandleProperty(PropertyName, Value, StartPos, EndPos, True);
+    end;
+
   else
     FReader.SkipValue;
   end;
