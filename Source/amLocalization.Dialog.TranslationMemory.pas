@@ -548,6 +548,7 @@ begin
 
   SaveCursor(crAppStart);
 
+  if (FViewDuplicates) then
   for i:= 0 to GridTMDBTableView.Controller.SelectedRecordCount-1 do
     FDuplicates.Delete(GridTMDBTableView.Controller.SelectedRecords[i].RecordIndex);
 
