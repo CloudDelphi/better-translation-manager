@@ -366,8 +366,9 @@ type
   end;
 
   TTranslationManagerStopListSettings = class(TConfigurationSectionValues<TTranslationManagerStopListGroupSettings>)
-  private
+  strict private
     FValid: boolean;
+    FVersion: integer;
     FStopList: TStopListItemList;
     FExpandedState: TDictionary<string, boolean>;
   protected
@@ -383,6 +384,7 @@ type
     property Expanded[const Name: string]: boolean read GetGroupExpanded write SetGroupExpanded;
   published
     property Valid: boolean read FValid write FValid;
+    property Version: integer read FVersion write FVersion;
   end;
 
   TTranslationManagerSystemSettings = class(TConfigurationSection)
@@ -808,6 +810,9 @@ begin
   // Migrate Filters to StopList
   if (not StopList.Valid) and (Registry.KeyExists(KeyPath+'Filters')) then
   begin
+    // The Filters section did not encode the string values.
+    StopList.Version := cStopListVersionNoEncoded;
+
     StopList.ReadSection('Filters\');
 
     if (StopList.Valid) then
@@ -1248,6 +1253,10 @@ begin
   PurgeOnWrite := True;
   FStopList := TStopListItemList.Create;
   FExpandedState := TDictionary<string, boolean>.Create;
+
+  // cStopListVersionUrlEncoded was the last version that didn't store the version value.
+  // If the value is stored it will be set to the correct version by ReadSection.
+  FVersion := cStopListVersionUrlEncoded;
 end;
 
 destructor TTranslationManagerStopListSettings.Destroy;
@@ -1278,7 +1287,7 @@ procedure TTranslationManagerStopListSettings.ReadSection(const Key: string);
     StopListItem := TStopListItem.Create;
     FStopList.Add(StopListItem);
 
-    StopListItem.LoadFromString(Value, False);
+    StopListItem.LoadFromString(Value, False, FVersion);
 
     s := Group;
     if (s = sStopListGroupGeneral) then
@@ -1309,6 +1318,12 @@ begin
     StringToStopList('DevExpress', '1/3/0/Properties.KeyFieldNames');
     StringToStopList('DevExpress', '1/3/0/DataBinding.ValueType');
     Exit;
+  end;
+
+  if (FVersion < cStopListVersion) then
+  begin
+    // Upgrade older version
+    // ...
   end;
 
   for i := 0 to Count-1 do
@@ -1366,6 +1381,7 @@ begin
   end;
 
   FValid := True;
+  FVersion := cStopListVersion;
 
   inherited WriteSection(Key);
 end;

@@ -16,6 +16,15 @@ uses
   amProgress,
   amLocalization.Model;
 
+const
+  // 0: Strings are not encoded
+  // 1: URL encoded strings
+  // 2: / encoded strings
+  cStopListVersionNoEncoded = 0;
+  cStopListVersionUrlEncoded = 1;
+  cStopListVersionSlashEncoded = 2;
+  cStopListVersion = cStopListVersionSlashEncoded;
+
 type
   TStopListField = (slFieldModule, slFieldElement, slFieldType, slFieldName, slFieldTypeAndName, slFieldText);
   TStopListOperator = (slOpEquals, slOpStarts, slOpEnds, slOpContains, slOpRegExp);
@@ -37,8 +46,8 @@ type
   public
     procedure Assign(StopListItem: TStopListItem);
 
-    function SaveToString(IncludeGroup: boolean = True): string;
-    procedure LoadFromString(const AValue: string; IncludeGroup: boolean = True);
+    function SaveToString(IncludeGroup: boolean): string;
+    procedure LoadFromString(const AValue: string; IncludeGroup: boolean; Version: integer = cStopListVersion);
 
     function ExtractValue(Prop: TLocalizerProperty): string; overload;
     class function ExtractValue(StopListField: TStopListField; Prop: TLocalizerProperty): string; overload;
@@ -105,7 +114,7 @@ function TStopListItem.SaveToString(IncludeGroup: boolean): string;
 
   function Escape(const Value: string): string;
   begin
-    Result := TNetEncoding.URL.Encode(Value);
+    Result := Value.Replace('/', '//', [rfReplaceAll]);
   end;
 
 begin
@@ -114,11 +123,14 @@ begin
     Result := Format('%s/%s', [Escape(Group), Result]);
 end;
 
-procedure TStopListItem.LoadFromString(const AValue: string; IncludeGroup: boolean);
+procedure TStopListItem.LoadFromString(const AValue: string; IncludeGroup: boolean; Version: integer);
 
   function Unescape(const Value: string): string;
   begin
-    Result := TNetEncoding.URL.Decode(Value);
+    if (Version = cStopListVersionUrlEncoded) then
+      Result := TNetEncoding.URL.Decode(Value)
+    else
+      Result := Value;
   end;
 
 var
@@ -141,7 +153,15 @@ var
   end;
 
 begin
-  Values := AValue.Split(['/']);
+  if (Version >= cStopListVersionSlashEncoded) then
+    // Simple, but inefficient, decoding of "/" escaped value:
+    //   Replace // with #1
+    //   Replace / with #2
+    //   Replace #1 with /
+    Values := AValue.Replace('//', #1, [rfReplaceAll]).Replace('/', #2, [rfReplaceAll]).Replace(#1, '/', [rfReplaceAll]).Split([#2])
+  else
+    Values := AValue.Split(['/']);
+
   n := 0;
 
   if (IncludeGroup) and (HasNextValue) then
@@ -396,6 +416,7 @@ var
   StopListItem, NewStopListItem: TStopListItem;
   Value: string;
   First: boolean;
+  Version: integer;
 begin
   Reader := TStreamReader.Create(Filename, TEncoding.UTF8);
   try
@@ -403,6 +424,7 @@ begin
     if (not Merge) then
       Clear;
 
+    Version := cStopListVersionUrlEncoded;
     First := True;
 
     while (not Reader.EndOfStream) do
@@ -412,14 +434,24 @@ begin
       if (Value.IsEmpty) or (Value.StartsWith(';')) then
         continue;
 
-      if (First) and (Value = 'stoplist version 1') then
+      if (First) and (Value.StartsWith('stoplist')) then
+      begin
+        System.Delete(Value, 1, Length('stoplist'));
+        Value := Value.Trim;
+        if (Value.StartsWith('version')) then
+        begin
+          System.Delete(Value, 1, Length('version'));
+          // cStopListVersionUrlEncoded was first version to support stoplist files
+          Version := StrToIntDef(Value.Trim, cStopListVersionUrlEncoded);
+        end;
         continue;
+      end;
       First := False;
 
       NewStopListItem := TStopListItem.Create;
       try
 
-        NewStopListItem.LoadFromString(Value);
+        NewStopListItem.LoadFromString(Value, True, Version);
 
         if (Merge) then
         begin
@@ -454,9 +486,9 @@ begin
   Writer := TStreamWriter.Create(Filename); // Always write ASCII so no need for encoding
   try
 
-    Writer.WriteLine('stoplist version 1');
+    Writer.WriteLine(Format('stoplist version %d', [cStopListVersion]));
     for StopListItem in Self do
-      Writer.WriteLine(StopListItem.SaveToString);
+      Writer.WriteLine(StopListItem.SaveToString(True));
 
   finally
     Writer.Free;
