@@ -440,6 +440,10 @@ begin
     LanguageNode.Attributes['translated'] := Project.TranslationLanguages[i].TranslatedCount;
   end;
 
+  Node := RootNode.AddChild('options');
+  // Store the stringlist handling setting that was used with the project
+  Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
+
   ModulesNode := ProjectNode.AddChild('modules');
 
   for Module in Project.Modules.Values do

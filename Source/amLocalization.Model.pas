@@ -534,6 +534,21 @@ type
 
 // -----------------------------------------------------------------------------
 //
+// String list handling
+//
+// -----------------------------------------------------------------------------
+type
+  TStringListHandling = (
+    slIgnore,           // String list properties are not supported.
+    slStringLines,      // String list propeties are handled as CR-delimited strings.
+    slSplit             // Individual strings in string list propeties are handled as individual string properties.
+    );
+
+var
+  StringListHandling: TStringListHandling = slSplit;
+
+// -----------------------------------------------------------------------------
+//
 // Strings
 //
 // -----------------------------------------------------------------------------

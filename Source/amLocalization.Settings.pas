@@ -408,6 +408,8 @@ type
     FAutoApplyStopList: boolean;
     FPortable: boolean;
     FPortablePurge: boolean;
+    FStringListSplit: boolean;
+    FStringListSupport: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -448,6 +450,9 @@ type
     property DefaultTargetLanguage: LCID read FDefaultTargetLanguage write FDefaultTargetLanguage;
 
     property PortablePurge: boolean read FPortablePurge write FPortablePurge;
+
+    property StringListSupport: boolean read FStringListSupport write FStringListSupport default False;
+    property StringListSplit: boolean read FStringListSplit write FStringListSplit default False;
   end;
 
 
