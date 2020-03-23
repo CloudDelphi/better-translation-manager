@@ -27,6 +27,9 @@ object FormMain: TFormMain
     Margins.Bottom = 0
     Align = alClient
     ItemHeight = 13
+    Items.Strings = (
+      'Foo'
+      'Bar')
     TabOrder = 0
     ExplicitLeft = 9
     ExplicitTop = 34

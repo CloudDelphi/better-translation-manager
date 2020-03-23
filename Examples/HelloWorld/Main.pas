@@ -31,7 +31,7 @@ uses
 
 procedure TFormMain.ButtonAddClick(Sender: TObject);
 begin
-  ListBoxValues.Items.Add(EditValue.Text);
+  ListBoxValues.Items.Insert(0, EditValue.Text);
   EditValue.Text := '';
 end;
 
