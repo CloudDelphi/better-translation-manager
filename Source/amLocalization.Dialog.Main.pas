@@ -826,21 +826,22 @@ resourcestring
 
 resourcestring
   sTranslationsUpdatedTitle = 'Translations updated';
-  sTranslationsUpdated = 'Translations has been updated with the following changes:'#13#13+
+  sTranslationsUpdated = 'Translations have been updated with the following changes:'#13#13+
     'Added: %.0n'#13+
     'Updated: %.0n'#13+
     'Skipped: %.0n';
 
 resourcestring
   sRecoverUnusedTranslationsTitle = 'Recover translations';
-  sRecoverUnusedTranslationsUpdate = '%d translations has been marked unused.'#13+
-    'This is likely because components were deleted, moved or renamed since the previous update.'#13#13+
-    'For components that has been moved or renamed their translations can often be recovered and applied to the new components.'#13#13+
+  sRecoverUnusedTranslationsUpdate = '%d translations have been marked unused.';
+  sRecoverUnusedTranslationsAction = '%d translations are currently marked unused.';
+  sRecoverUnusedTranslations = '%s'#13+
+    'This is likely because components have been deleted, moved or renamed.'#13#13+
+    'For components that have been moved or renamed their translations can often be recovered and applied to the new components.'#13#13+
     'Do you want to attempt an automatic recovery of these translations?';
-  sRecoverUnusedTranslationsAction = '%d translations are currently marked unused.'#13+
-    'This is likely because components has been deleted, moved or renamed.'#13#13+
-    'For components that has been moved or renamed their translations can often be recovered and applied to the new components.'#13#13+
-    'Do you want to attempt an automatic recovery of these translations?';
+  sRecoverUnusedStatusTitle = 'Recover completed';
+  sRecoverUnusedStatus = '%d of %d unused translations were recovered.';
+  sRecoverUnusedStatusNone = 'No translations recovered.';
 
 resourcestring
   sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
@@ -3226,7 +3227,7 @@ var
   Count: TCounts;
 resourcestring
   sProjectInitializedTitle = 'Project initialized';
-  sProjectInitialized = 'Project has been initialized.'+#13#13+'The following resources was read from the source file:'#13#13+
+  sProjectInitialized = 'Project has been initialized.'+#13#13+'The following resources were read from the source file:'#13#13+
     'Modules: %.0n'#13+
     'Items: %.0n'#13+
     'Properties: %.0n';
@@ -3532,16 +3533,23 @@ var
   Node: TcxTreeListNode;
   Msg: string;
 resourcestring
-  sLocalizerPurgeStatusTitle = 'Purge completed.';
-  sLocalizerPurgeStatus = 'The following was removed from the project:'#13#13+
+  sPurgeUnusedTranslationsTitle = 'Purge unused translations';
+  sPurgeUnusedTranslations = '%d translations are marked as unused.'#13+
+    'This is likely because components were deleted, moved or renamed since the previous update.'#13#13+
+    'Do you want to delete all unused translations?';
+  sPurgeUnusedStatusTitle = 'Purge completed';
+  sPurgeUnusedStatus = 'The following was removed from the project:'#13#13+
     'Modules: %.0n'#13'Items: %.0n'#13'Properties: %.0n';
 begin
+  CountBefore := CountStuff;
+
+  if (TaskMessageDlg(sPurgeUnusedTranslationsTitle, Format(sPurgeUnusedTranslations, [CountBefore.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+    Exit;
+
   SaveCursor(crHourGlass);
 
   NeedReload := False;
   CurrentModule := FocusedModule;
-
-  CountBefore := CountStuff;
 
   GridItemsTableView.BeginUpdate;
   try
@@ -3644,31 +3652,36 @@ begin
 
   CountAfter := CountStuff;
 
-  Msg := Format(sLocalizerPurgeStatus,
+  Msg := Format(sPurgeUnusedStatus,
     [
     1.0*(CountBefore.CountModule-CountAfter.CountModule),
     1.0*(CountBefore.CountItem-CountAfter.CountItem),
     1.0*(CountBefore.CountProperty-CountAfter.CountProperty)
     ]);
-  TaskMessageDlg(sLocalizerPurgeStatusTitle, Msg, mtInformation, [mbOK], 0);
+  TaskMessageDlg(sPurgeUnusedStatusTitle, Msg, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionProjectRecoverExecute(Sender: TObject);
 var
   Count: TCounts;
   CountRecovered: integer;
+  Msg: string;
+resourcestring
+  sRecoverUnusedNothing = 'Nothing to recover.';
 begin
   Count := CountStuff;
 
   if (Count.UnusedTranslation = 0) then
   begin
-    ShowMessage('Nothing to recover.');
+    ShowMessage(sRecoverUnusedNothing);
     Exit;
   end;
 
   ApplyTranslationTextEdit(False);
 
-  if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsAction, [Count.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+  Msg := Format(sRecoverUnusedTranslationsAction, [Count.UnusedTranslation]);
+  Msg := Format(sRecoverUnusedTranslations, [Msg]);
+  if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Msg, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
   CountRecovered := RecoverUnusedTranslations(False);
@@ -3676,9 +3689,9 @@ begin
   if (CountRecovered > 0) then
   begin
     LoadProject(FProject, False);
-    ShowMessageFmt('%d of %d translations recovered', [CountRecovered, Count.UnusedTranslation]);
+    TaskMessageDlg(sRecoverUnusedStatusTitle, Format(sRecoverUnusedStatus, [CountRecovered, Count.UnusedTranslation]), mtInformation, [mbOK], 0);
   end else
-    ShowMessage('No translations recovered.');
+    TaskMessageDlg(sRecoverUnusedStatusTitle, sRecoverUnusedStatusNone, mtInformation, [mbOK], 0);
 end;
 
 procedure TFormMain.ActionProjectSaveExecute(Sender: TObject);
@@ -3837,7 +3850,9 @@ begin
 
     if (CountAfter.UnusedTranslation > CountBefore.UnusedTranslation) then
     begin
-      if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Format(sRecoverUnusedTranslationsUpdate, [CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+      Msg := Format(sRecoverUnusedTranslationsUpdate, [CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]);
+      Msg := Format(sRecoverUnusedTranslations, [Msg]);
+      if (TaskMessageDlg(sRecoverUnusedTranslationsTitle, Msg, mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
         Exit;
 
       CountRecovered := RecoverUnusedTranslations(True);
@@ -3845,9 +3860,9 @@ begin
       if (CountRecovered > 0) then
       begin
         LoadProject(FProject, False);
-        ShowMessageFmt('%d of %d translations recovered :-)', [CountRecovered, CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]);
+        TaskMessageDlg(sRecoverUnusedStatusTitle, Format(sRecoverUnusedStatus, [CountRecovered, CountAfter.UnusedTranslation-CountBefore.UnusedTranslation]), mtInformation, [mbOK], 0);
       end else
-        ShowMessage('No translations recovered.'#13'Sorry :-(');
+        TaskMessageDlg(sRecoverUnusedStatusTitle, sRecoverUnusedStatusNone, mtInformation, [mbOK], 0);
     end;
   end else
     TaskMessageDlg(sProjectUpdatedTitle, sProjectUpdatedNothing, mtInformation, [mbOK], 0);
