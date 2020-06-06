@@ -499,7 +499,7 @@ begin
   RootNode := XML.AddChild(sLocalizationFileformatRoot);
 
   Node := RootNode.AddChild('meta');
-  Node.AddChild('version').Text := LocalizationFileFormatVersionCurrent;
+  Node.AddChild('version').Text := IntToStr(LocalizationFileFormatVersionCurrent);
   Node.AddChild('created').Text := DateToISO8601(Now, False);
   Node.AddChild('tool').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
   Node.AddChild('toolversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
