@@ -1129,7 +1129,7 @@ end;
 procedure TFormMain.ApplySettings;
 begin
   (*
-  ** Settings that can NOT be modified via GUI
+  ** Settings that can NOT be modified via GUI or which require restart
   *)
   TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
   SpellChecker.UseThreadedLoad := (not TranslationManagerSettings.System.SafeMode);

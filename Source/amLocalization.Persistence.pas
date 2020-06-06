@@ -33,6 +33,7 @@ type
       sItemStatus: array[TLocalizerItemStatus] of string = ('', 'hold', 'skip');
   private
     class function EncodeString(const Value: string): string;
+    class function DecodeStringOld(const Value: string): string;
     class function DecodeString(const Value: string): string;
   public
     class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
@@ -45,6 +46,10 @@ type
 type
   ELocalizationPersistence = class(Exception);
 
+const
+  LocalizationFileFormatVersionUnknown = 1;             // Old verson that didn't write meta\version value
+  LocalizationFileFormatVersionBadTextEncoding = 1;     // Old version with badly designed text encoding
+  LocalizationFileFormatVersionCurrent = 2;             // Current version
 
 const
   sLocalizationFileformatRoot = 'xlat';
@@ -67,6 +72,7 @@ uses
   Variants,
   XMLDoc, XMLIntf,
   System.Character,
+  System.NetEncoding,
   amLocale,
   amPath,
   amVersionInfo;
@@ -76,7 +82,7 @@ uses
 // TLocalizationProjectFiler
 //
 // -----------------------------------------------------------------------------
-class function TLocalizationProjectFiler.DecodeString(const Value: string): string;
+class function TLocalizationProjectFiler.DecodeStringOld(const Value: string): string;
 begin
   Result := StringReplace(Value, '##', '#', [rfReplaceAll]);
   Result := StringReplace(Result, '#13', #13, [rfReplaceAll]);
@@ -84,12 +90,68 @@ begin
   Result := StringReplace(Result, '#9', #9, [rfReplaceAll]);
 end;
 
-class function TLocalizationProjectFiler.EncodeString(const Value: string): string;
+class function TLocalizationProjectFiler.DecodeString(const Value: string): string;
 begin
-  Result := StringReplace(Value, '#', '##', [rfReplaceAll]);
-  Result := StringReplace(Result, #13, '#13', [rfReplaceAll]);
-  Result := StringReplace(Result, #10, '#10', [rfReplaceAll]);
-  Result := StringReplace(Result, #9, '#9', [rfReplaceAll]);
+  Result := TNetEncoding.HTML.Decode(Value);
+end;
+
+class function TLocalizationProjectFiler.EncodeString(const Value: string): string;
+var
+  i, DestinationPos: Integer;
+
+  procedure Encode(const AStr: string);
+  begin
+    if (DestinationPos+Length(AStr)-1 > Length(Result)) then
+      // Grow target * 4
+      SetLength(Result, Length(Result) + Length(AStr) + (Length(Value)-i+1)*4);
+
+    Move(AStr[1], Result[DestinationPos], Length(AStr) * SizeOf(Char));
+    Inc(DestinationPos, Length(AStr));
+  end;
+
+begin
+  // Initial twice oversize to avoid reallocation
+  SetLength(Result, Length(Value) * 2);
+
+  DestinationPos := 1;
+  for i := 1 to Length(Value) do
+  begin
+    // Handle reserved chars first
+    (* These are automatically handled by MSXML
+    var Handled := True;
+    case Value[i] of
+      '&': Encode('&amp;');
+      '<': Encode('&lt;');
+      '>': Encode('&gt;');
+      '"': Encode('&quot;');
+    else
+      Handled := False;
+    end;
+
+    if (Handled) then
+      continue;
+    *)
+
+    // Handle unicode range
+    // Any Unicode character, excluding the surrogate blocks, FFFE, and FFFF and the restricted chars.
+    // See https://www.w3.org/TR/xml11/#charsets
+    case Value[i] of
+      #$20..#$7E,
+      #$A0..#$D7FF,
+      #$E000..#$FFFD:
+        begin
+          if (DestinationPos > Length(Result)) then
+            // Grow target * 4
+            SetLength(Result, Length(Result) + (Length(Value)-i+1)*4);
+          Result[DestinationPos] := Value[i];
+          Inc(DestinationPos);
+        end;
+    else
+      Encode('&#'+IntToStr(Ord(Value[i]))+';');
+    end;
+  end;
+  // Trim oversize
+  SetLength(Result, DestinationPos - 1);
 end;
 
 // -----------------------------------------------------------------------------
@@ -173,9 +235,12 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
     end;
   end;
 
+type
+  TTextDecoder = reference to function(const Value: string): string;
 var
+  FileFormatVersion: integer;
   XML: IXMLDocument;
-  RootNode, ProjectNode: IXMLNode;
+  RootNode, ProjectNode, Node: IXMLNode;
   LanguagesNode, LanguageNode: IXMLNode;
   ModulesNode, ModuleNode: IXMLNode;
   ItemsNode, ItemNode: IXMLNode;
@@ -189,9 +254,13 @@ var
 //  Translation: TLocalizerTranslation;
   TranslationStatus: TTranslationStatus;
   s: string;
+  TextDecoder: TTextDecoder;
 begin
   if (Progress <> nil) then
     Progress.UpdateMessage(sProgressProjectLoad);
+
+  TextDecoder := DecodeString;
+  FileFormatVersion := LocalizationFileFormatVersionUnknown;
 
   XML := TXMLDocument.Create(nil);
   XML.Options := XML.Options + [doAttrNull];
@@ -201,6 +270,14 @@ begin
   RootNode := XML.ChildNodes[sLocalizationFileformatRoot];
   if (RootNode = nil) then
     raise ELocalizationPersistence.CreateFmt('Malformed project file. Root element not found: %s', [sLocalizationFileformatRoot]);
+
+  Node := RootNode.ChildNodes['meta'];
+  if (Node <> nil) then
+    FileFormatVersion := StrToIntDef(Node.ChildValues['version'], LocalizationFileFormatVersionUnknown);
+
+  // Select text decoder based on file format version
+  if (FileFormatVersion = LocalizationFileFormatVersionBadTextEncoding) then
+    TextDecoder := DecodeStringOld;
 
   ProjectNode := RootNode.ChildNodes['project'];
   if (ProjectNode = nil) then
@@ -284,7 +361,7 @@ begin
                   begin
                     s := VarToStr(PropNode.ChildValues['value']);
                     // s := s.Replace(#10, #13);
-                    s := DecodeString(s);
+                    s := TextDecoder(s);
                     Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
                     StringToItemState(Prop, VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
@@ -304,7 +381,7 @@ begin
                           TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
                           s := XlatNode.Text;
                           // s := s.Replace(#10, #13);
-                          s := DecodeString(s);
+                          s := TextDecoder(s);
                           {Translation :=} Prop.Translations.AddOrUpdateTranslation(Language, s, TranslationStatus);
                         end;
                         XlatNode := XlatNode.NextSibling;
@@ -417,11 +494,12 @@ begin
   XML := TXMLDocument.Create(nil);
   XML.Options := [doNodeAutoIndent];
   XML.Active := True;
+  XML.Encoding := 'utf-8';
 
   RootNode := XML.AddChild(sLocalizationFileformatRoot);
 
   Node := RootNode.AddChild('meta');
-  Node.AddChild('version').Text := '1';
+  Node.AddChild('version').Text := LocalizationFileFormatVersionCurrent;
   Node.AddChild('created').Text := DateToISO8601(Now, False);
   Node.AddChild('tool').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
   Node.AddChild('toolversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
@@ -476,7 +554,7 @@ begin
         WriteItemStatus(PropNode, Prop);
         WritePropFlags(PropNode, Prop);
 
-        PropNode.AddChild('value').Text := EncodeString(Prop.Value);
+        PropNode.AddChild('value').NodeValue := EncodeString(Prop.Value);
 
         XlatsNode := nil;
         Prop.Traverse(
