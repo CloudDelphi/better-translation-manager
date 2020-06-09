@@ -58,6 +58,7 @@ type
 implementation
 
 uses
+  Generics.Collections,
   SyncObjs,
   System.json,
   System.json.Types,
