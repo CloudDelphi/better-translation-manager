@@ -52,7 +52,6 @@ uses
 {$ifdef DEBUG}
   Diagnostics,
   Windows,
-  SysUtils,
 {$endif DEBUG}
   SysUtils,
   Classes;

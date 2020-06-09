@@ -32,11 +32,15 @@ object TranslationProviderMicrosoftV3: TTranslationProviderMicrosoftV3
     Accept = 'application/json, text/plain; q=0.9, text/html;q=0.8,'
     AcceptCharset = 'UTF-8, *;q=0.8'
     AutoCreateParams = False
-    BaseURL = 'https://api.cognitive.microsofttranslator.com/'
+    BaseURL = 'https://api.cognitive.microsofttranslator.com'
     Params = <
       item
         Kind = pkHTTPHEADER
         Name = 'Ocp-Apim-Subscription-Key'
+      end
+      item
+        Kind = pkHTTPHEADER
+        Name = 'Ocp-Apim-Subscription-Region'
       end>
     RaiseExceptionOn500 = False
     Left = 72

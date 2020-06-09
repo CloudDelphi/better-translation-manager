@@ -333,6 +333,8 @@ type
     dxLayoutItem65: TdxLayoutItem;
     dxLayoutItem66: TdxLayoutItem;
     ComboBoxNormalization: TcxCheckComboBox;
+    EditTranslatorMSAPIRegion: TcxComboBox;
+    dxLayoutItem67: TdxLayoutItem;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -623,6 +625,7 @@ begin
   EditTranslatorMSAPIKey.Text := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey;
   if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKeyValidated) then
     EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex := 1;
+  EditTranslatorMSAPIRegion.Text := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.Region;
 
   (*
   ** Files section
@@ -697,6 +700,7 @@ begin
 
   TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey := EditTranslatorMSAPIKey.Text;
   TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKeyValidated := (EditTranslatorMSAPIKey.Properties.Buttons[0].ImageIndex = 1);
+  TranslationManagerSettings.Providers.MicrosoftTranslatorV3.Region := EditTranslatorMSAPIRegion.Text;
 
   (*
   ** Files section
@@ -1731,7 +1735,7 @@ begin
   TranslationProvider := TTranslationProviderMicrosoftV3.Create(nil);
   try
 
-    if (TranslationProvider.ValidateAPIKey(EditTranslatorMSAPIKey.Text, ErrorMessage)) then
+    if (TranslationProvider.ValidateAPIKey(EditTranslatorMSAPIKey.Text, EditTranslatorMSAPIRegion.Text, ErrorMessage)) then
     begin
       EditTranslatorMSAPIKey.Properties.Buttons[AButtonIndex].ImageIndex := 1;
       MessageDlg(sTranslatorMSAPIKeyValid, mtInformation, [mbOK], 0);

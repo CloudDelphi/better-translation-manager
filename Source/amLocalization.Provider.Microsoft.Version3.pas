@@ -21,7 +21,7 @@ uses
 type
   ITranslationProviderMicrosoftV3 = interface
     ['{BCB967CF-9D86-404E-824F-3952F31B4AEC}']
-    function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+    function ValidateAPIKey(const APIKey, Region: string; var ErrorMessage: string): boolean;
   end;
 
 // -----------------------------------------------------------------------------
@@ -47,7 +47,7 @@ type
     function GetProviderName: string; override;
 
     // ITranslationProviderMicrosoftV3
-    function ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+    function ValidateAPIKey(const APIKey, Region: string; var ErrorMessage: string): boolean;
   public
   end;
 
@@ -90,6 +90,8 @@ begin
     Exit(False);
   end else
     RESTClient.Params[0].Value := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey;
+
+  RESTClient.Params[1].Value := TranslationManagerSettings.Providers.MicrosoftTranslatorV3.Region;
 
   Result := True;
 end;
@@ -138,6 +140,8 @@ begin
     // API key is valid - Save it if we haven't already
     if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey = '') then
       TranslationManagerSettings.Providers.MicrosoftTranslatorV3.APIKey := RESTClient.Params[0].Value;
+    if (TranslationManagerSettings.Providers.MicrosoftTranslatorV3.Region = '') then
+      TranslationManagerSettings.Providers.MicrosoftTranslatorV3.Region := RESTClient.Params[1].Value;
 
     JsonResultArray := RESTResponseResult.JSONValue as TJsonArray;
     JsonTranslationItem := JsonResultArray.items[0] as TJsonObject;
@@ -158,12 +162,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TTranslationProviderMicrosoftV3.ValidateAPIKey(const APIKey: string; var ErrorMessage: string): boolean;
+function TTranslationProviderMicrosoftV3.ValidateAPIKey(const APIKey, Region: string; var ErrorMessage: string): boolean;
 var
   JsonError: TJsonObject;
 begin
   // Call web service
   RESTClient.Params[0].Value := APIKey;
+  RESTClient.Params[1].Value := Region;
 
   RESTRequestValidateAPIKey.Body.ClearBody;
   RESTRequestValidateAPIKey.Body.JSONWriter.WriteStartArray;

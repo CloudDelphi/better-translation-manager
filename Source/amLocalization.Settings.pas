@@ -178,10 +178,14 @@ type
   private
     FAPIKey: string;
     FAPIKeyValidated: boolean;
+    FRegion: string;
+  protected
+    procedure ApplyDefault; override;
   public
   published
     property APIKey: string read FAPIKey write FAPIKey;
     property APIKeyValidated: boolean read FAPIKeyValidated write FAPIKeyValidated;
+    property Region: string read FRegion write FRegion;
   end;
 
   TTranslationManagerProviderMicrosoftTerminologySettings = class(TConfigurationSection)
@@ -1391,6 +1395,14 @@ begin
   inherited WriteSection(Key);
 end;
 
+
+{ TTranslationManagerProviderMicrosoftTranslatorV3Settings }
+
+procedure TTranslationManagerProviderMicrosoftTranslatorV3Settings.ApplyDefault;
+begin
+  inherited;
+  FRegion := 'global';
+end;
 
 initialization
 //  ConfigurationServiceRegistryKey := TranslationManagerRegistryKey;
