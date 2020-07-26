@@ -8,6 +8,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *)
 
+{$R 'EmptyResourceModule.res' 'resources\EmptyResourceModule.rc'}
+
 uses
   madExcept,
   madListModules,

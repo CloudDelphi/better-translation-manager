@@ -1,0 +1,3 @@
+LANGUAGE 0x00,0x00 // Language neutral
+
+EMPTYRESOURCEMODULE RCDATA "EmptyResourceModule.dll"

@@ -11,7 +11,9 @@
 {$APPTYPE CONSOLE}
 
 {$R *.res}
-{$R amTranslationManager.res}
+
+
+{$R 'EmptyResourceModule.res' 'resources\EmptyResourceModule.rc'}
 
 uses
   madExcept,

@@ -146,6 +146,9 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <RcCompile Include="resources\EmptyResourceModule.rc">
+            <Form>EmptyResourceModule.res</Form>
+        </RcCompile>
         <DCCReference Include="amLocalization.Dialog.pas">
             <Form>FormDialog</Form>
         </DCCReference>

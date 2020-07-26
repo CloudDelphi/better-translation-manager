@@ -8,7 +8,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *)
 
-{$define INTERNAL_RESOURCE_MODULE}
 {$WARN SYMBOL_PLATFORM OFF}
 
 interface
@@ -89,8 +88,10 @@ uses
   IOUtils,
   amLocale;
 
-{$ifdef INTERNAL_RESOURCE_MODULE}
 const
+  sResourceModuleStub = 'EmptyResourceModule.dll';
+  sResourceModuleStubRes = 'EmptyResourceModule'; // Name of above file as an embedded resource
+
   // The following is the content of the file specified by the sResourceModuleStub constant.
   // It should be a minimal (i.e. no code) PE module containing nothing but a resource section without any resources.
   sResourceModuleData : AnsiString =
@@ -142,10 +143,6 @@ const
     #$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00+
     #$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00+
     #$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00;
-{$else INTERNAL_RESOURCE_MODULE}
-const
-  sResourceModuleStub = 'ResourceModule.dll';
-{$endif INTERNAL_RESOURCE_MODULE}
 
 
 // -----------------------------------------------------------------------------
@@ -208,12 +205,16 @@ var
 begin
   LocaleItem := TLocaleItems.FindLCID(LocaleID);
   case ModuleNameScheme of
+
     mnsISO639_2:
       Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LanguageShortName);
+
     mnsISO639_1:
       Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.ISO639_1Name);
+
     mnsRFC4646:
       Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LocaleName);
+
   end;
 end;
 
@@ -227,28 +228,58 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TResourceModuleWriter.BeginWrite;
-{$ifdef INTERNAL_RESOURCE_MODULE}
 var
-  FileStream: TFileStream;
-{$endif INTERNAL_RESOURCE_MODULE}
+  SourceStream, TargetStream: TStream;
+  Filename: string;
 begin
-{$ifdef INTERNAL_RESOURCE_MODULE}
-  FileStream := TFileStream.Create(FFilename, fmCreate);
-  try
+  // External DLL stub is located in same folder as application
+  Filename := TPath.Combine(TPath.GetDirectoryName(ParamStr(0)), sResourceModuleStub);
 
-    FileStream.WriteBuffer(PAnsiChar(sResourceModuleData)^, Length(sResourceModuleData));
+  // Use external DLL stub if it exist
+  if (TFile.Exists(Filename)) then
+  begin
 
-  finally
-    FileStream.Free;
+    TFile.Copy(Filename, FFilename, True);
+
+  end else
+  if (FindResource(hInstance, PChar(sResourceModuleStubRes), RT_RCDATA) <> 0) then
+  begin
+    // Otherwise use embedded resource
+
+    SourceStream := TResourceStream.Create(hInstance, PChar(sResourceModuleStubRes), RT_RCDATA);
+    try
+
+      TargetStream := TFileStream.Create(FFilename, fmCreate);
+      try
+
+        TargetStream.CopyFrom(SourceStream, 0);
+
+      finally
+        TargetStream.Free;
+      end;
+
+    finally
+      SourceStream.Free;
+    end;
+
+  end else
+  begin
+
+    // Otherwise use internal stub (by default they should all three be the same)
+
+    TargetStream := TFileStream.Create(FFilename, fmCreate);
+    try
+
+      TargetStream.WriteBuffer(PAnsiChar(sResourceModuleData)^, Length(sResourceModuleData));
+
+    finally
+      TargetStream.Free;
+    end;
+
   end;
-{$else INTERNAL_RESOURCE_MODULE}
-  if (not TFile.Exist(sResourceModuleStub)) then
-    raise EPerfCountProvider.CreateFmt('Resource module stub file not found: %s', [sResourceModuleStub]);
-
-  TFile.Copy(sResourceModuleStub, FFilename, True);
-{$endif INTERNAL_RESOURCE_MODULE}
 
   FResourceHandle := BeginUpdateResource(PChar(FFilename), True);
+
   if (FResourceHandle = 0) then
     RaiseLastOSError;
 end;
