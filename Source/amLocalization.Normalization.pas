@@ -304,6 +304,18 @@ begin
 end;
 
 function SanitizeText(const Value: string; Kind: TSanitizeRules; ReduceToNothing: boolean): string;
+
+  procedure DeleteIndexWidthPrecision(var n: integer);
+  begin
+    if (Result[n] = '*') then
+      // Delete asterix parameter specifier
+      Delete(Result, n, 1)
+    else
+      // Delete Index/Width/Precision specifier
+      while (Result[n].IsDigit) do
+        Delete(Result, n, 1);
+  end;
+
 var
   n: integer;
   SurroundPair: TSurroundPair;
@@ -330,29 +342,33 @@ begin
         // Escaped % - ignore
         Delete(Result, n, 1);
       end else
-      if (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
+      if (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['*', '0'..'9', '-', '.', 'd', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
       begin
         Result[n-1] := ' '; // Replace %... with space
 
         // Remove chars until end of format specifier
-        while (Result[n].IsDigit) do
-          Delete(Result, n, 1);
+
+        // [index ":"]
+        DeleteIndexWidthPrecision(n);
 
         if (Result[n] = ':') then
           Delete(Result, n, 1);
 
+        // ["-"] [width]
         if (Result[n] = '-') then
           Delete(Result, n, 1);
 
-        while (Result[n].IsDigit) do
-          Delete(Result, n, 1);
+        DeleteIndexWidthPrecision(n);
 
+        // ["." prec]
         if (Result[n] = '.') then
+        begin
           Delete(Result, n, 1);
 
-        while (Result[n].IsDigit) do
-          Delete(Result, n, 1);
+          DeleteIndexWidthPrecision(n);
+        end;
 
+        // type
         if (IsAnsi(Result[n])) and (AnsiChar(Result[n]) in ['d', 'u', 'e', 'f', 'g', 'n', 'm', 'p', 's', 'x']) then
           Delete(Result, n, 1)
         else
