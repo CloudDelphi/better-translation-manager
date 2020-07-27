@@ -598,6 +598,10 @@ var
   Progress: IProgress;
   MergeFile: boolean;
 resourcestring
+  sLoadTranslationMemoryErrorTitle = 'Error importing Translation Memory?';
+  sLoadTranslationMemoryError = 'The specified translation memory file could not be imported.'+#13#13+
+      'File: %s'#13+
+      'Error: %s';
   sLoadTranslationMemoryMergeTitle = 'Merge Translation Memory?';
   sLoadTranslationMemoryMerge = 'Do you want to merge the selected file(s) into your existing Translation Memory?'+#13#13+
       'If you answer No then your current Translation Memory will be emptied and replaced with the translations in the specified file.';
@@ -682,6 +686,13 @@ begin
           OneStats := FileFormat.LoadFromFile(Filename, DuplicateAction, MergeFile, Progress);
 
         except
+          on E: ETranslationMemoryFileFormat do
+          begin
+            Res := TaskMessageDlg(sLoadTranslationMemoryErrorTitle, Format(sLoadTranslationMemoryError, [Filename, E.Message]), mtWarning, [mbAbort, mbIgnore], 0, mbAbort);
+            if (Res = mrAbort) then
+              break;
+          end;
+
           on E: EAbort do
             break; // Do not propagate - just don't continue
         end;

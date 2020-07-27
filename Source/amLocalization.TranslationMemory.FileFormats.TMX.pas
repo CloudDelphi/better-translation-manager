@@ -36,7 +36,7 @@ type
   end;
 
 type
-  ETranslationMemoryTMX = class(ETranslationMemoryFileFormat);
+  ETranslationMemoryFileFormatTMX = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -129,14 +129,11 @@ begin
     end;
   except
     on E: EDOMParseError do
-    begin
-      MessageDlg(E.Message, mtWarning, [mbOK], 0);
-      Exit(False);
-    end;
+      raise ETranslationMemoryFileFormatTMX.CreateFmt('Error parsing XML/TMX document: %s', [E.Message]);
   end;
 
   if (XML.DocumentElement.NodeName <> 'tmx') then
-    raise ETranslationMemoryTMX.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
+    raise ETranslationMemoryFileFormatTMX.CreateFmt('XML document root node is not named "tmx": %s', [XML.DocumentElement.NodeName]);
 
   SourceLanguage := '';
 
@@ -163,7 +160,7 @@ begin
 
   Body := XML.DocumentElement.ChildNodes.FindNode('body');
   if (Body = nil) then
-    raise ETranslationMemoryTMX.Create('Required node not found: tmx\body');
+    raise ETranslationMemoryFileFormatTMX.Create('Required node not found: tmx\body');
 
   if (DetailedProgress) then
     Progress.Progress(psBegin, 0, Body.ChildNodes.Count, sTranslationMemoryReadingTerms);

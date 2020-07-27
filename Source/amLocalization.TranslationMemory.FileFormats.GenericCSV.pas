@@ -36,6 +36,7 @@ type
     class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
+  ETranslationMemoryFileFormatCSV = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -167,10 +168,7 @@ begin
             begin
               Fields[i] := GetField(TermRow[i]);
               if (Fields[i] = nil) then
-              begin
-                MessageDlg(Format(sUnknownLanguage, [TermRow[i]]), mtWarning, [mbOK], 0);
-                Exit(False);
-              end;
+                raise ETranslationMemoryFileFormatCSV.CreateFmt(sUnknownLanguage, [TermRow[i]]);
             end;
 
             // Default source language is the first one

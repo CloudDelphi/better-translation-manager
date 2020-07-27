@@ -38,6 +38,7 @@ type
     class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
+  ETranslationMemoryFileFormatMSGlossary = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -170,7 +171,8 @@ var
   Terms: TTerms;
   SourceField, TargetField: TField;
 resourcestring
-  sUnknownLanguage = 'Unknown language: "%s"';
+  sUnknownSourceLanguage = 'Unknown source language: "%s"';
+  sUnknownTargetLanguage = 'Unknown target language: "%s"';
 begin
   Settings := TCsvSettings.Default;
   Settings.Codepage := CP_UTF8;
@@ -181,17 +183,11 @@ begin
 
   SourceField := GetField(SourceLanguage);
   if (SourceField = nil) then
-  begin
-    MessageDlg(Format(sUnknownLanguage, [SourceLanguage]), mtWarning, [mbOK], 0);
-    Exit(False);
-  end;
+    raise ETranslationMemoryFileFormatMSGlossary.CreateFmt(sUnknownSourceLanguage, [SourceLanguage]);
 
   TargetField := GetField(FTargetLanguage);
   if (TargetField = nil) then
-  begin
-    MessageDlg(Format(sUnknownLanguage, [FTargetLanguage]), mtWarning, [mbOK], 0);
-    Exit(False);
-  end;
+    raise ETranslationMemoryFileFormatMSGlossary.CreateFmt(sUnknownTargetLanguage, [FTargetLanguage]);
 
   if (DetailedProgress) then
     ProgressStream := TProgressStream.Create(Stream, Progress)

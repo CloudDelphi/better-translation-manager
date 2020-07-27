@@ -35,7 +35,7 @@ type
     class function FileFormatCapabilities: TFileFormatCapabilities; override;
   end;
 
-  ETranslationMemoryTBX = class(ETranslationMemoryFileFormat);
+  ETranslationMemoryFileFormatTBX = class(ETranslationMemoryFileFormat);
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -125,14 +125,11 @@ begin
     end;
   except
     on E: EDOMParseError do
-    begin
-      MessageDlg(E.Message, mtWarning, [mbOK], 0);
-      Exit(False);
-    end;
+      raise ETranslationMemoryFileFormatTBX.CreateFmt('Error parsing XML/TBX document: %s', [E.Message]);
   end;
 
   if (XML.DocumentElement.NodeName <> 'martif') then
-    raise ETranslationMemoryTBX.CreateFmt('XML document root node is not named "martif": %s', [XML.DocumentElement.NodeName]);
+    raise ETranslationMemoryFileFormatTBX.CreateFmt('XML document root node is not named "martif": %s', [XML.DocumentElement.NodeName]);
 
   HeaderNode := XML.DocumentElement.ChildNodes.FindNode('martifheader');
   if (HeaderNode <> nil) then
@@ -141,11 +138,11 @@ begin
 
   Node := XML.DocumentElement.ChildNodes.FindNode('text');
   if (Node = nil) then
-    raise ETranslationMemoryTBX.Create('Required node not found: martif\text');
+    raise ETranslationMemoryFileFormatTBX.Create('Required node not found: martif\text');
 
   BodyNode := Node.ChildNodes.FindNode('body');
   if (BodyNode = nil) then
-    raise ETranslationMemoryTBX.Create('Required node not found: martif\text\body');
+    raise ETranslationMemoryFileFormatTBX.Create('Required node not found: martif\text\body');
 
   SourceLanguage := '';
 

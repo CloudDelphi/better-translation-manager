@@ -38,9 +38,11 @@ end;
 function TFormSelectFileFormat.Execute(FileFormatClasses: TTranslationMemoryFileFormatClasses): TTranslationMemoryFileFormatClass;
 var
   FileFormatClass: TTranslationMemoryFileFormatClass;
+resourcestring
+  sFileFormatEntry = '%s (%s)';
 begin
   for FileFormatClass in FileFormatClasses do
-    ComboBoxFileFormat.Properties.Items.Add(FileFormatClass.FileFormatFileDescription);
+    ComboBoxFileFormat.Properties.Items.Add(Format(sFileFormatEntry, [FileFormatClass.FileFormatFileDescription, FileFormatClass.FileFormatFileType]));
 
   ComboBoxFileFormat.ItemIndex := 0;
 
