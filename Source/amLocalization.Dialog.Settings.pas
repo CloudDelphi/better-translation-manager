@@ -546,6 +546,7 @@ begin
   PageControl.HideTabs := True;
   ActionCategoryGeneral.Execute;
   // PageControl.ActivePage := TabSheetGeneral;
+  PanelCategory.ParentBackground := True; // This keeps getting set to False at design time if the main form isn't opened in the editor
 
   LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Assign(Font);
   LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Style := [fsBold];
