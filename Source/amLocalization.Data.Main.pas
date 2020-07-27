@@ -12,12 +12,16 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.ImageList, Vcl.ImgList, Vcl.Controls,
-  Data.DB, Datasnap.DBClient,
-  MidasLib,
+  Data.DB,
+
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
+  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+
   cxStyles, cxCustomData, cxGraphics, cxFilter, cxData, cxDataStorage,
   cxEdit, cxNavigator, dxDateRanges, cxDataControllerConditionalFormattingRulesManagerDialog, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxClasses, cxControls, cxGridCustomView, cxGrid, dxLayoutLookAndFeels, cxEditRepositoryItems,
-  cxDBExtLookupComboBox, cxImageList, cxExtEditRepositoryItems, cxCheckBox,
+  cxDBExtLookupComboBox, cxImageList, cxExtEditRepositoryItems, cxCheckBox, dxScrollbarAnnotations,
+
   amLocalization.Model;
 
 // -----------------------------------------------------------------------------
@@ -27,11 +31,11 @@ uses
 // -----------------------------------------------------------------------------
 type
   TDataModuleMain = class(TDataModule)
-    ClientDataSetLanguages: TClientDataSet;
-    ClientDataSetLanguagesLocaleID: TWordField;
-    ClientDataSetLanguagesLocaleName: TStringField;
-    ClientDataSetLanguagesLanguageName: TStringField;
-    ClientDataSetLanguagesCountryName: TStringField;
+    DataSetLanguages: TFDMemTable;
+    DataSetLanguagesLocaleID: TWordField;
+    DataSetLanguagesLocaleName: TStringField;
+    DataSetLanguagesLanguageName: TStringField;
+    DataSetLanguagesCountryName: TStringField;
     DataSourceLanguages: TDataSource;
     GridViewRepository: TcxGridViewRepository;
     GridTableViewLanguages: TcxGridDBTableView;
@@ -44,6 +48,11 @@ type
     GridTableViewFilteredTargetLanguagesLocaleName: TcxGridDBColumn;
     GridTableViewFilteredTargetLanguagesLanguage: TcxGridDBColumn;
     GridTableViewFilteredTargetLanguagesCountry: TcxGridDBColumn;
+    GridTableViewFilteredApplicationLanguages: TcxGridDBTableView;
+    GridTableViewFilteredApplicationLanguagesLocaleID: TcxGridDBColumn;
+    GridTableViewFilteredApplicationLanguagesLocaleName: TcxGridDBColumn;
+    GridTableViewFilteredApplicationLanguagesLanguage: TcxGridDBColumn;
+    GridTableViewFilteredApplicationLanguagesCountry: TcxGridDBColumn;
     LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
     LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
     EditRepository: TcxEditRepository;
@@ -51,6 +60,7 @@ type
     LayoutSkinLookAndFeelHeader: TdxLayoutSkinLookAndFeel;
     EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem;
     EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem;
+    EditRepositoryComboBoxItemFilteredApplicationLanguage: TcxEditRepositoryExtLookupComboBoxItem;
     ImageListTree: TcxImageList;
     ImageListState: TcxImageList;
     ImageListSmall: TcxImageList;
@@ -71,6 +81,8 @@ type
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
     procedure EditRepositoryTextItemPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
+    procedure GridTableViewFilteredApplicationLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
+      ARecordIndex: Integer; var Accept: Boolean);
   private
     FFilterTargetLanguages: boolean;
     FProject: TLocalizerProject;
@@ -141,9 +153,11 @@ implementation
 {$R *.dfm}
 
 uses
+  IOUtils,
   cxButtonEdit,
   amLocale,
   amLocalization.Settings,
+  amLocalization.ResourceWriter,
   amLocalization.Dialog.TextEdit;
 
 type
@@ -161,26 +175,26 @@ begin
 
   FFilterTargetLanguages := True;
 
-  ClientDataSetLanguages.CreateDataSet;
-  ClientDataSetLanguages.DisableControls;
+  DataSetLanguages.CreateDataSet;
+  DataSetLanguages.DisableControls;
   try
     for i := 0 to TLocaleItems.Count-1 do
     begin
-      ClientDataSetLanguages.Append;
+      DataSetLanguages.Append;
       try
-        ClientDataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
-        ClientDataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
-        ClientDataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
-        ClientDataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
+        DataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
+        DataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
+        DataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
+        DataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
 
-        ClientDataSetLanguages.Post;
+        DataSetLanguages.Post;
       except
-        ClientDataSetLanguages.Cancel;
+        DataSetLanguages.Cancel;
         raise;
       end;
     end;
   finally
-    ClientDataSetLanguages.EnableControls;
+    DataSetLanguages.EnableControls;
   end;
 end;
 
@@ -315,13 +329,31 @@ begin
     Result := NodeImageIndexNotTranslated;
 end;
 
+procedure TDataModuleMain.GridTableViewFilteredApplicationLanguagesDataControllerFilterRecord(
+  ADataController: TcxCustomDataController; ARecordIndex: Integer; var Accept: Boolean);
+begin
+  var LocaleID: Word := ADataController.Values[ARecordIndex, GridTableViewFilteredApplicationLanguagesLocaleID.Index];
+
+  // Accept row if resource module exist with any of the supportted file names.
+  for var ModuleNameScheme := Low(TModuleNameScheme) to High(TModuleNameScheme) do
+  begin
+    var Filename := TResourceModuleWriter.BuildModuleFilename(ParamStr(0), LocaleID, ModuleNameScheme);
+    if (TFile.Exists(Filename)) then
+    begin
+      Accept := True;
+      Exit;
+    end;
+  end;
+  Accept := False;
+end;
+
 procedure TDataModuleMain.GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
   ARecordIndex: Integer; var Accept: Boolean);
 begin
   if (not FFilterTargetLanguages) or (FProject = nil) then
     Exit;
 
-  Accept := (FProject.TranslationLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewLanguagesColumnLocaleID.Index]));
+  Accept := (FProject.TranslationLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewFilteredTargetLanguagesLocaleID.Index]));
 end;
 
 end.

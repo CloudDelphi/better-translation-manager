@@ -3,30 +3,35 @@ object DataModuleMain: TDataModuleMain
   OnCreate = DataModuleCreate
   Height = 408
   Width = 441
-  object ClientDataSetLanguages: TClientDataSet
-    Aggregates = <>
-    Params = <>
+  object DataSetLanguages: TFDMemTable
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
     Left = 64
     Top = 17
-    object ClientDataSetLanguagesLocaleID: TWordField
+    object DataSetLanguagesLocaleID: TWordField
       FieldName = 'LocaleID'
     end
-    object ClientDataSetLanguagesLocaleName: TStringField
+    object DataSetLanguagesLocaleName: TStringField
       FieldName = 'LocaleName'
       Size = 10
     end
-    object ClientDataSetLanguagesLanguageName: TStringField
+    object DataSetLanguagesLanguageName: TStringField
       FieldName = 'LanguageName'
       Size = 40
     end
-    object ClientDataSetLanguagesCountryName: TStringField
+    object DataSetLanguagesCountryName: TStringField
       FieldName = 'CountryName'
       Size = 40
     end
   end
   object DataSourceLanguages: TDataSource
     AutoEdit = False
-    DataSet = ClientDataSetLanguages
+    DataSet = DataSetLanguages
     Left = 64
     Top = 69
   end
@@ -79,6 +84,12 @@ object DataModuleMain: TDataModuleMain
       DataController.Summary.SummaryGroups = <>
       DataController.OnFilterRecord = GridTableViewTargetLanguagesDataControllerFilterRecord
       OptionsBehavior.ShowHourglassCursor = False
+      OptionsData.Deleting = False
+      OptionsData.Editing = False
+      OptionsData.Inserting = False
+      OptionsSelection.CellSelect = False
+      OptionsView.ColumnAutoWidth = True
+      OptionsView.GroupByBox = False
       object GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn
         Caption = 'Locale ID'
         DataBinding.FieldName = 'LocaleID'
@@ -96,6 +107,45 @@ object DataModuleMain: TDataModuleMain
       object GridTableViewFilteredTargetLanguagesCountry: TcxGridDBColumn
         Caption = 'Country'
         DataBinding.FieldName = 'CountryName'
+        Visible = False
+      end
+    end
+    object GridTableViewFilteredApplicationLanguages: TcxGridDBTableView
+      Navigator.Buttons.CustomButtons = <>
+      ScrollbarAnnotations.CustomAnnotations = <>
+      DataController.DataSource = DataSourceLanguages
+      DataController.Filter.Active = True
+      DataController.KeyFieldNames = 'LocaleID'
+      DataController.Summary.DefaultGroupSummaryItems = <>
+      DataController.Summary.FooterSummaryItems = <>
+      DataController.Summary.SummaryGroups = <>
+      DataController.OnFilterRecord = GridTableViewFilteredApplicationLanguagesDataControllerFilterRecord
+      OptionsBehavior.ShowHourglassCursor = False
+      OptionsData.Deleting = False
+      OptionsData.Editing = False
+      OptionsData.Inserting = False
+      OptionsSelection.CellSelect = False
+      OptionsView.NoDataToDisplayInfoText = '<None available>'
+      OptionsView.ColumnAutoWidth = True
+      OptionsView.GroupByBox = False
+      object GridTableViewFilteredApplicationLanguagesLocaleID: TcxGridDBColumn
+        Caption = 'Locale ID'
+        DataBinding.FieldName = 'LocaleID'
+      end
+      object GridTableViewFilteredApplicationLanguagesLocaleName: TcxGridDBColumn
+        Caption = 'Locale'
+        DataBinding.FieldName = 'LocaleName'
+      end
+      object GridTableViewFilteredApplicationLanguagesLanguage: TcxGridDBColumn
+        Caption = 'Language'
+        DataBinding.FieldName = 'LanguageName'
+        SortIndex = 0
+        SortOrder = soAscending
+      end
+      object GridTableViewFilteredApplicationLanguagesCountry: TcxGridDBColumn
+        Caption = 'Country'
+        DataBinding.FieldName = 'CountryName'
+        Visible = False
       end
     end
   end
@@ -150,6 +200,13 @@ object DataModuleMain: TDataModuleMain
       Properties.View = GridTableViewFilteredTargetLanguages
       Properties.KeyFieldNames = 'LocaleID'
       Properties.ListFieldItem = GridTableViewFilteredTargetLanguagesLanguage
+    end
+    object EditRepositoryComboBoxItemFilteredApplicationLanguage: TcxEditRepositoryExtLookupComboBoxItem
+      Properties.DropDownAutoSize = True
+      Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
+      Properties.View = GridTableViewFilteredApplicationLanguages
+      Properties.KeyFieldNames = 'LocaleID'
+      Properties.ListFieldItem = GridTableViewFilteredApplicationLanguagesLanguage
     end
     object EditRepositoryCheckComboBoxNormalization: TcxEditRepositoryCheckComboBox
       Properties.Delimiter = ','

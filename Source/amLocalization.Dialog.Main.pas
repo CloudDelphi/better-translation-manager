@@ -16,7 +16,7 @@ uses
   Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, System.Actions,
-  Vcl.ActnList, System.ImageList, Vcl.ImgList, Datasnap.DBClient, UITypes, Data.DB, Vcl.Menus,
+  Vcl.ActnList, System.ImageList, Vcl.ImgList, UITypes, Data.DB, Vcl.Menus,
   SyncObjs,
 
   dxRibbonForm,

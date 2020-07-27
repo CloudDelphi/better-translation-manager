@@ -213,7 +213,6 @@ object FormMain: TFormMain
         BestFitMaxWidth = 200
         Caption.AlignVert = vaTop
         Caption.Text = 'Module'
-        DataBinding.ValueType = 'String'
         Options.Editing = False
         Options.Filtering = False
         Options.Focusing = False

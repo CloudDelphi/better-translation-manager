@@ -88,10 +88,6 @@ inherited FormSettings: TFormSettings
     TabOrder = 2
     Visible = False
     ExplicitWidth = 595
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 573
-      Width = 573
-    end
   end
   inherited PanelMain: TPanel
     Width = 595
@@ -264,7 +260,7 @@ inherited FormSettings: TFormSettings
             object ComboBoxApplicationLanguage: TcxExtLookupComboBox
               Left = 138
               Top = 413
-              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemFilteredApplicationLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
               Properties.DropDownSizeable = True
