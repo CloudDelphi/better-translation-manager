@@ -69,6 +69,8 @@ type
     FAnimate: TSplashAnimate;
     FShouldAnimate: boolean;
     FAnimating: boolean;
+  private
+    const DXM_SKINS_GETISSKINNED = WM_APP + 100 + 182; // Value inferred from DevExpress dxMessages.pas
   protected
     procedure CreateParams(var Params: TCreateParams); override;
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
@@ -77,6 +79,7 @@ type
     procedure WMPrint(var Message: TWMPrint); message WM_PRINT;
     procedure WMShow(var Message: TMessage); message WM_SHOWWINDOW;
     procedure MMNotify(var Message: TMessage); message MM_MCINOTIFY;
+    procedure DxmSkinsGetIsSkinned(var Message: TMessage); message DXM_SKINS_GETISSKINNED;
     procedure DrawBannerImage(Alpha: Byte);
     procedure DrawSplashImage(Alpha: Byte);
     procedure DrawImage(Bitmap: TBitmap; Alpha: Byte);
@@ -853,6 +856,12 @@ end;
 procedure TFormSplash.DrawSplashImage(Alpha: Byte);
 begin
   DrawImage(FSplashBitmap, Alpha);
+end;
+
+procedure TFormSplash.DxmSkinsGetIsSkinned(var Message: TMessage);
+begin
+  // Work around for DevExpress attaching form shadow on all windows
+  Message.Result := 1;
 end;
 
 procedure TFormSplash.DrawImage(Bitmap: TBitmap; Alpha: Byte);
