@@ -664,7 +664,7 @@ type
   protected
     FPendingFileOpen: TStrings;
     FPendingFileOpenLock: TCriticalSection;
-    procedure LoadFromFile(const Filename: string);
+    function LoadFromFile(const Filename: string): boolean;
     procedure LoadFromSingleInstance(const Param: string);
   protected
     procedure LoadProject(Project: TLocalizerProject; Clear: boolean = True);
@@ -692,7 +692,7 @@ type
     function GotoNext(Predicate: TLocalizerPropertyDelegate; DisplayNotFound: boolean = True; FromStart: boolean = False; AutoWrap: boolean = True): boolean;
     procedure UpdateProjectModifiedIndicator;
     function CheckSourceFile: boolean;
-    function CheckStringsSymbolFile: boolean;
+    function CheckStringsSymbolFile(CheckForOutOfDate: boolean): boolean;
   protected
     FTextEditProperty: TLocalizerProperty; // Property being edited
     FTextEditing: boolean; // True if text editor has focus
@@ -2241,7 +2241,8 @@ begin
     FProject.SourceFilename := Filename;
     FProject.StringSymbolFilename := TPath.ChangeExtension(Filename, TranslationManagerShell.sFileTypeStringSymbols);
 
-    CheckStringsSymbolFile;
+    if (not CheckStringsSymbolFile(True)) then
+      Exit;
 
     SaveCursor(crHourGlass);
 
@@ -3109,38 +3110,52 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.CheckStringsSymbolFile: boolean;
+function TFormMain.CheckStringsSymbolFile(CheckForOutOfDate: boolean): boolean;
 var
-  Res: Word;
   SymbolFilename: string;
 resourcestring
-  sStringSymbolsNotFoundTitle = 'Symbol file not found';
+  sStringSymbolsNotFoundTitle = 'String Symbol file not found';
   sStringSymbolsNotFound = 'The resourcestring symbol file does not exist in the same folder as the source application file.'+#13#13+
     'The name of the file is expected to be: %s'+#13#13+
-    'The file is required for support of resourcestrings.'+#13#13+
+    'The file is required for support of resourcestrings. Delphi will generate this file automatically if '+
+    'the "Output resourcestring .drc file" linker option is enabled.'+#13#13+
     'Do you want to locate the file now?';
+  sStringSymbolsOutOfDateTitle = 'String Symbols file out of date';
+  sStringSymbolsOutOfDate = 'The DRC file appears to be out of date based on its timestamps compared to that of the EXE file.'#13#13+
+    'EXE was last modified: %s'#13+
+    'DRC was last modified: %s'#13#13+
+    'Beware that using an out of date DRC file can cause resourcestring translations to be lost or become unusable.'#13#13+
+    'Are you sure you want to use the specified DRC file?';
+const
+  MaxTimeDifference = 10; // seconds
 begin
   Result := True;
+  var UpdateFilename := False;
 
   SaveCursor(crAppStart);
 
   if (FProject.StringSymbolFilename = '') then
   begin
     SymbolFilename := TPath.ChangeExtension(FProject.SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
-    Result := False;
+    UpdateFilename := True;
   end else
     // Path might be relative - Get absolute path
     SymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
   while (not TFile.Exists(SymbolFilename)) do
   begin
-    Result := False;
+    UpdateFilename := True;
 
     // Symbol file does not exist. Try to locate it.
-    Res := TaskMessageDlg(sStringSymbolsNotFoundTitle, Format(sStringSymbolsNotFound, [FProject.StringSymbolFilename]),
-      mtWarning, [mbYes, mbNo], 0, mbYes);
+    var Res := TaskMessageDlg(sStringSymbolsNotFoundTitle,
+      Format(sStringSymbolsNotFound, [FProject.StringSymbolFilename]),
+      mtWarning, [mbYes, mbNo, mbCancel], 0, mbYes);
+
     if (Res <> mrYes) then
-      Exit(False);
+    begin
+      Result := (Res <> mrCancel);
+      Exit;
+    end;
 
     if (SymbolFilename <> '') then
     begin
@@ -3149,18 +3164,35 @@ begin
     end;
 
     if (not OpenDialogDRC.Execute(Handle)) then
-      Exit(False);
+      continue;
 
     SymbolFilename := OpenDialogDRC.Filename;
   end;
 
-  if (not Result) then
+  // Check for out-of-date DRC file
+  if (CheckForOutOfDate) then
+  begin
+    var TimeStampEXE := TFile.GetLastWriteTime(FProject.SourceFilename);
+    var TimeStampDRC := TFile.GetLastWriteTime(SymbolFilename);
+
+    var TimeDifference := Abs(TimeStampEXE - TimeStampDRC);
+
+    if (TimeDifference * 24*60*60 > MaxTimeDifference) then
+    begin
+      var Res := TaskMessageDlg(sStringSymbolsOutOfDateTitle,
+        Format(sStringSymbolsOutOfDate, [DateTimeToStr(TimeStampEXE), DateTimeToStr(TimeStampDRC)]),
+        mtWarning, [mbYes, mbNo], 0, mbNo);
+
+      if (Res = mrNo) then
+        Exit(False);
+    end;
+  end;
+
+  if (UpdateFilename) then
   begin
     FProject.StringSymbolFilename := SymbolFilename;
     FProject.Modified := True;
   end;
-
-  Result := True;
 end;
 
 function TFormMain.CheckSourceFile: boolean;
@@ -3261,7 +3293,9 @@ begin
 
   if (not CheckSourceFile) then
     Exit;
-  CheckStringsSymbolFile;
+
+  if (not CheckStringsSymbolFile(True)) then
+    Exit;
 
   // Initial scan
   SaveCursor(crHourGlass);
@@ -3298,14 +3332,24 @@ begin
   LoadProject(FProject);
 end;
 
-procedure TFormMain.LoadFromFile(const Filename: string);
+function TFormMain.LoadFromFile(const Filename: string): boolean;
 var
   Stream: TStream;
   ProgressStream: TStream;
   BestLanguage: TTranslationLanguage;
   i: integer;
   Progress: IProgress;
+resourcestring
+  sFileNotFound = 'File not found: %s';
 begin
+  Result := True;
+
+  if (not TFile.Exists(Filename)) then
+  begin
+    MessageDlg(Format(sFileNotFound, [Filename]), mtWarning, [mbOK], 0);
+    Exit(False);
+  end;
+
   SaveCursor(crHourGlass);
 
   ClearDependents;
@@ -3385,7 +3429,7 @@ begin
   AddRecentFile(FProjectFilename);
 
   if (CheckSourceFile) then
-    CheckStringsSymbolFile;
+    CheckStringsSymbolFile(False);
 end;
 
 procedure TFormMain.LoadFromSingleInstance(const Param: string);
@@ -3798,7 +3842,7 @@ begin
   if (not CheckSourceFile) then
     Exit;
 
-  CheckStringsSymbolFile;
+  CheckStringsSymbolFile(True);
 
   ApplyTranslationTextEdit(True);
 
@@ -4449,7 +4493,16 @@ begin
   if (not CheckSave) then
     exit;
 
-  LoadFromFile(TdxBarItem(Sender).Hint);
+  var Filename := TdxBarItem(Sender).Hint;
+
+  if (not LoadFromFile(Filename)) then
+  begin
+    // File could not be opened - remove from recent files list
+    var n := TranslationManagerSettings.Folders.RecentFiles.IndexOf(Filename);
+    if (n <> -1) then
+      TranslationManagerSettings.Folders.RecentFiles.Delete(n);
+    Sender.Free;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -6414,7 +6467,8 @@ begin
   if (not CheckSourceFile) then
     Exit;
 
-  CheckStringsSymbolFile;
+  if (not CheckStringsSymbolFile(True)) then
+    Exit;
 
   ApplyTranslationTextEdit(False);
 
@@ -6456,7 +6510,8 @@ begin
   if (not CheckSourceFile) then
     Exit;
 
-  CheckStringsSymbolFile;
+  if (not CheckStringsSymbolFile(True)) then
+    Exit;
 
   ApplyTranslationTextEdit(False);
 
