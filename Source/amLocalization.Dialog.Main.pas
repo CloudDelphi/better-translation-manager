@@ -4835,9 +4835,16 @@ end;
 function TFormMain.GetLanguageID(Value: LCID): LCID;
 begin
   if (Value > 0) then
-    Result := Value
-  else
+    Exit(Value);
+
     Result := GetUserDefaultLCID;
+
+  // If the user locale isn't a real locale we fall back to the system default locale
+  // Note: The following values denotes custom locales (which we do not support):
+  //       $1000, $2000, $2400, $2800, $2C00, $3000, $3400, $3800, $3C00, $4000, $4400, $4800, $4C00
+
+  if (TLocaleItems.FindLCID(Result) = nil) then
+    Result := GetSystemDefaultLCID;
 end;
 
 function TFormMain.GetSourceLanguageID: Word;
@@ -6826,7 +6833,7 @@ begin
     end;
 
     ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate,
-      [GetUserDefaultLCID, TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
+      [GetLanguageID(0), TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
       sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[TargetLanguage.IsRightToLeft]]);
 
     p := GridItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));
