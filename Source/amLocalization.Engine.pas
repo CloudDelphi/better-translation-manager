@@ -12,6 +12,7 @@ interface
 
 uses
   Windows,
+  SysUtils,
   Generics.Collections,
   amLocalization.Model,
   amLocalization.ResourceWriter;
@@ -88,6 +89,10 @@ type
     property IncludeVersionInfo: boolean read FIncludeVersionInfo write FIncludeVersionInfo;
   end;
 
+  EResourceProcessor = class(Exception);
+
+resourcestring
+  sErrorLoadingModuleTitle = 'Error loading module';
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -97,7 +102,6 @@ implementation
 
 uses
   Classes,
-  SysUtils,
   IOUtils,
   amPath;
 
@@ -1028,7 +1032,11 @@ const
 begin
   Module := LoadLibraryEx(PChar(Filename), 0, LOAD_LIBRARY_AS_DATAFILE or LOAD_LIBRARY_AS_IMAGE_RESOURCE);
   if (Module = 0) then
+  begin
+    if (GetLastError = ERROR_BAD_EXE_FORMAT) then
+      raise EResourceProcessor.CreateFmt('The specified file is not a valid PE image (EXE or DLL): %s', [Filename]);
     RaiseLastOSError;
+  end;
   try
 
     Execute(Action, Project, Module, Language, ResourceWriter, Translator);

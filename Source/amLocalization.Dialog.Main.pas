@@ -2252,9 +2252,17 @@ begin
 
     ProjectProcessor := TProjectResourceProcessor.Create;
     try
+    try
 
       ProjectProcessor.ScanProject(FProject, Filename);
 
+      except
+        on E: EResourceProcessor do
+        begin
+          TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+          Exit;
+        end;
+      end;
     finally
       ProjectProcessor.Free;
     end;
@@ -2332,8 +2340,17 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
+  try
 
     ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TranslationLanguage, nil);
+
+    except
+      on E: EResourceProcessor do
+      begin
+        TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+        Exit;
+      end;
+    end;
 
     Stats := ProjectProcessor.TranslationCount;
 
@@ -3308,9 +3325,17 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
+  try
 
     ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
+    except
+      on E: EResourceProcessor do
+      begin
+        TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+        Exit;
+      end;
+    end;
   finally
     ProjectProcessor.Free;
   end;
@@ -3859,9 +3884,17 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
+  try
 
     ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
+    except
+      on E: EResourceProcessor do
+      begin
+        TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+        Exit;
+      end;
+    end;
   finally
     ProjectProcessor.Free;
   end;
@@ -6452,6 +6485,11 @@ begin
         end;
 
       except
+        on E: EResourceProcessor do
+        begin
+          TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+          Exit;
+        end;
         on E: EFCreateError do
         begin
           // Sharing violation - resource module is probably loaded
