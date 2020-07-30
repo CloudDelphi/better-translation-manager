@@ -97,6 +97,8 @@ type
     constructor Create(AModule: TLocalizerModule);
     destructor Destroy; override;
 
+    procedure DataChanged; override;
+
     function IndexOfProperty(Prop: TLocalizerProperty): integer;
     procedure Clear;
     procedure Refresh;
@@ -7149,6 +7151,15 @@ begin
   inherited Create;
 
   Module := AModule;
+end;
+
+procedure TLocalizerModuleItemsDataSource.DataChanged;
+begin
+  inherited;
+
+  // Work around for DevExpress bug t918956
+  // https://supportcenter.devexpress.com/ticket/details/t918956
+  DataController.DataControllerInfo.ClearSelectionAnchor;
 end;
 
 destructor TLocalizerModuleItemsDataSource.Destroy;
