@@ -71,7 +71,8 @@ uses
   amLocalization.Normalization in 'amLocalization.Normalization.pas',
   amLocalization.Skin in 'amLocalization.Skin.pas',
   amLocalization.Environment in 'amLocalization.Environment.pas',
-  amLocalization.ExceptionHandler.Info.Default in 'amLocalization.ExceptionHandler.Info.Default.pas';
+  amLocalization.ExceptionHandler.Info.Default in 'amLocalization.ExceptionHandler.Info.Default.pas',
+  amLocalization.Data.ModuleItemsDataSource in 'amLocalization.Data.ModuleItemsDataSource.pas';
 
 {$R *.res}
 

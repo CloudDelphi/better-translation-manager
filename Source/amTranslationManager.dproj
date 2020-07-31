@@ -233,6 +233,7 @@
         <DCCReference Include="amLocalization.Skin.pas"/>
         <DCCReference Include="amLocalization.Environment.pas"/>
         <DCCReference Include="amLocalization.ExceptionHandler.Info.Default.pas"/>
+        <DCCReference Include="amLocalization.Data.ModuleItemsDataSource.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
