@@ -154,6 +154,7 @@ implementation
 
 uses
   IOUtils,
+  Windows,
   cxButtonEdit,
   amLocale,
   amLocalization.Settings,
@@ -164,8 +165,6 @@ type
   TcxCustomGridViewCracker = class(TcxCustomGridView);
 
 procedure TDataModuleMain.DataModuleCreate(Sender: TObject);
-var
-  i: integer;
 begin
   // Clone
   TcxCustomGridViewCracker(GridTableViewFilteredTargetLanguages).AssignPattern(GridTableViewLanguages);
@@ -178,7 +177,7 @@ begin
   DataSetLanguages.CreateDataSet;
   DataSetLanguages.DisableControls;
   try
-    for i := 0 to TLocaleItems.Count-1 do
+    for var i := 0 to TLocaleItems.Count-1 do
     begin
       DataSetLanguages.Append;
       try
@@ -332,7 +331,14 @@ end;
 procedure TDataModuleMain.GridTableViewFilteredApplicationLanguagesDataControllerFilterRecord(
   ADataController: TcxCustomDataController; ARecordIndex: Integer; var Accept: Boolean);
 begin
-  var LocaleID: Word := ADataController.Values[ARecordIndex, GridTableViewFilteredApplicationLanguagesLocaleID.Index];
+  var LocaleID: LCID := ADataController.Values[ARecordIndex, GridTableViewFilteredApplicationLanguagesLocaleID.Index];
+
+  // Native application language is en-US
+  if (LocaleID = $00000409) then
+  begin
+    Accept := True;
+    Exit;
+  end;
 
   // Accept row if resource module exist with any of the supportted file names.
   for var ModuleNameScheme := Low(TModuleNameScheme) to High(TModuleNameScheme) do
@@ -353,7 +359,8 @@ begin
   if (not FFilterTargetLanguages) or (FProject = nil) then
     Exit;
 
-  Accept := (FProject.TranslationLanguages.Contains(ADataController.Values[ARecordIndex, GridTableViewFilteredTargetLanguagesLocaleID.Index]));
+  var LocaleID := LCID(ADataController.Values[ARecordIndex, GridTableViewFilteredTargetLanguagesLocaleID.Index]);
+  Accept := (FProject.TranslationLanguages.Contains(LocaleID));
 end;
 
 end.
