@@ -149,6 +149,8 @@
         <RcCompile Include="resources\EmptyResourceModule.rc">
             <Form>EmptyResourceModule.res</Form>
         </RcCompile>
+        <DCCReference Include="amLocalization.ExceptionHandler.API.pas"/>
+        <DCCReference Include="amLocalization.ExceptionHandler.MadExcept.pas"/>
         <DCCReference Include="amLocalization.Dialog.pas">
             <Form>FormDialog</Form>
         </DCCReference>
@@ -230,6 +232,7 @@
         <DCCReference Include="amLocalization.Normalization.pas"/>
         <DCCReference Include="amLocalization.Skin.pas"/>
         <DCCReference Include="amLocalization.Environment.pas"/>
+        <DCCReference Include="amLocalization.ExceptionHandler.Info.Default.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

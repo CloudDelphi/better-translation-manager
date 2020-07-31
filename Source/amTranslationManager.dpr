@@ -24,6 +24,8 @@ uses
   amSplash,
   amCursorService,
   DelphiDabbler.SingleInstance,
+  amLocalization.ExceptionHandler.API in 'amLocalization.ExceptionHandler.API.pas',
+  amLocalization.ExceptionHandler.MadExcept in 'amLocalization.ExceptionHandler.MadExcept.pas',
   amLocalization.Dialog in 'amLocalization.Dialog.pas' {FormDialog},
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {FormMain},
   amLocalization.Model in 'amLocalization.Model.pas',
@@ -68,7 +70,8 @@ uses
   amLocalization.System.Restart in 'amLocalization.System.Restart.pas',
   amLocalization.Normalization in 'amLocalization.Normalization.pas',
   amLocalization.Skin in 'amLocalization.Skin.pas',
-  amLocalization.Environment in 'amLocalization.Environment.pas';
+  amLocalization.Environment in 'amLocalization.Environment.pas',
+  amLocalization.ExceptionHandler.Info.Default in 'amLocalization.ExceptionHandler.Info.Default.pas';
 
 {$R *.res}
 

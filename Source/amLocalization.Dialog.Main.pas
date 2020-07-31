@@ -37,7 +37,8 @@ uses
   amLocalization.Dialog.Search,
   amLocalization.TranslationMemory,
   amLocalization.StopList,
-  amLocalization.Index;
+  amLocalization.Index,
+  amLocalization.ExceptionHandler.API;
 
 
 const
@@ -131,7 +132,7 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TFormMain = class(TdxRibbonForm, ILocalizerSearchHost)
+  TFormMain = class(TdxRibbonForm, ILocalizerSearchHost, IExceptionInfoProvider)
     OpenDialogXLIFF: TOpenDialog;
     BarManager: TdxBarManager;
     RibbonMain: TdxRibbon;
@@ -725,6 +726,9 @@ type
     function ILocalizerSearchHost.GetTranslationLanguage = GetTranslationLanguage;
     procedure ILocalizerSearchHost.ViewItem = ViewProperty;
     procedure ILocalizerSearchHost.InvalidateItem = ReloadProperty;
+  protected
+    // IExceptionInfoProvider
+    procedure GetExceptionInfo(const ExceptIntf: IUnknown; const ExceptionInfoConsumer: IExceptionInfoConsumer);
   private
     // Skin
     FSkin: string;
@@ -1049,11 +1053,15 @@ begin
   // Load ribbon banner
   LoadBanner;
 
+  ExceptionHandler.RegisterExceptionInfoProvider(Self);
+
   SingleInstance.OnProcessParam := LoadFromSingleInstance;
 end;
 
 procedure TFormMain.FormDestroy(Sender: TObject);
 begin
+  ExceptionHandler.UnregisterExceptionInfoProvider(Self);
+
   FTranslationMemoryPeek := nil;
   FTranslationMemory := nil;
 
@@ -1075,6 +1083,32 @@ begin
 
   FreeAndNil(FPendingFileOpen);
   FreeAndNil(FPendingFileOpenLock);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.GetExceptionInfo(const ExceptIntf: IInterface; const ExceptionInfoConsumer: IExceptionInfoConsumer);
+begin
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Portable', TranslationManagerSettings.System.Portable.ToString(TUseBoolStrs.True));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'SingleInstance', TranslationManagerSettings.System.SingleInstance.ToString(TUseBoolStrs.True));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Skin', FSkin);
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'ApplicationLanguage', TranslationManagerSettings.System.ApplicationLanguage.ToHexString(8));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Safe Mode', TranslationManagerSettings.System.SafeMode.ToString(TUseBoolStrs.True));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Last boot completed', TranslationManagerSettings.System.LastBootCompleted.ToString(TUseBoolStrs.True));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'First run', TranslationManagerSettings.System.FirstRun.ToString(TUseBoolStrs.True));
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'First this version', TranslationManagerSettings.System.FirstRunThisVersion.ToString(TUseBoolStrs.True));
+
+  ExceptionInfoConsumer.AddExceptionInfo('Folders', 'Install', TranslationManagerSettings.FolderInstall);
+  for var Folder := Low(TTranslationManagerFolder) to High(TTranslationManagerFolder) do
+    ExceptionInfoConsumer.AddExceptionInfo('Folders', TranslationManagerSettings.Folders.FolderName[Folder], TranslationManagerSettings.Folders[Folder]);
+
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language ID', SourceLanguageID.ToHexString(8));
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language', SourceLanguage.LocaleName);
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language ID', TargetLanguageID.ToHexString(8));
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language', TargetLanguage.LocaleName);
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Filename', FProjectFilename);
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source filename', FProject.SourceFilename);
+  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Symbol Filename', FProject.StringSymbolFilename);
 end;
 
 // -----------------------------------------------------------------------------
@@ -2252,9 +2286,9 @@ begin
 
     ProjectProcessor := TProjectResourceProcessor.Create;
     try
-    try
+      try
 
-      ProjectProcessor.ScanProject(FProject, Filename);
+        ProjectProcessor.ScanProject(FProject, Filename);
 
       except
         on E: EResourceProcessor do
@@ -2340,9 +2374,9 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
-  try
+    try
 
-    ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TranslationLanguage, nil);
+      ProjectProcessor.Execute(liaUpdateTarget, FProject, OpenDialogEXE.FileName, TranslationLanguage, nil);
 
     except
       on E: EResourceProcessor do
@@ -3325,9 +3359,9 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
-  try
+    try
 
-    ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
+      ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
     except
       on E: EResourceProcessor do
@@ -3884,9 +3918,9 @@ begin
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
-  try
+    try
 
-    ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
+      ProjectProcessor.ScanProject(FProject, FProject.SourceFilename);
 
     except
       on E: EResourceProcessor do
@@ -4872,7 +4906,7 @@ begin
   if (Value > 0) then
     Exit(Value);
 
-    Result := GetUserDefaultLCID;
+  Result := GetUserDefaultLCID;
 
   // If the user locale isn't a real locale we fall back to the system default locale
   // Note: The following values denotes custom locales (which we do not support):
@@ -7442,4 +7476,6 @@ end;
 // -----------------------------------------------------------------------------
 
 
+initialization
+  InitializeExceptionHandler;
 end.
