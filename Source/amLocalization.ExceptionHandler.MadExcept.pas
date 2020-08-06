@@ -33,11 +33,10 @@ uses
   madExcept,
   madListModules,
 
-  amLocalization.BootManager,
   amLocalization.ExceptionHandler.API;
 
-const
-  sBugreportMailAddress = 'anders@melander.dk'; // Only for test
+var
+  sBugreportMailAddress: string = 'anders@melander.dk'; // Only for test
 
 resourcestring
   sBugreportSendButton = 'Send bug report';
