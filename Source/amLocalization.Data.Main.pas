@@ -77,6 +77,8 @@ type
     StyleProposed: TcxStyle;
     EditRepositoryCheckComboBoxNormalization: TcxEditRepositoryCheckComboBox;
     LayoutSkinLookAndFeelTight: TdxLayoutSkinLookAndFeel;
+    StyleDisabled: TcxStyle;
+    StyleNeedAction: TcxStyle;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
@@ -111,6 +113,7 @@ const
   ImageIndexBookmarkA           = 37;
   ImageIndexModified            = 44;
   ImageIndexNotModified         = -1;
+  ImageIndexWarning             = 84;
 
 const
   NodeImageIndexStateWarning    = 0;
@@ -141,6 +144,7 @@ resourcestring
   sNodeImageHintComplete25 = 'Approximately 25% has been translated';
   sNodeImageHintComplete50 = 'Approximately 50% has been translated';
   sNodeImageHintComplete75 = 'Approximately 75% has been translated';
+
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------

@@ -58,9 +58,6 @@ type
     property AlwaysQuote: boolean read FAlwaysQuote write FAlwaysQuote;
   end;
 
-resourcestring
-  sFileFilterCSV = 'CSV files (*.csv)|*.csv';
-
 implementation
 
 uses

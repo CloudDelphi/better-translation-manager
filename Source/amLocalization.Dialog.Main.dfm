@@ -1889,8 +1889,8 @@ object FormMain: TFormMain
       Category = 'Import'
       Caption = 'Import XLIFF...'
       Hint = 
-        'Import translation from XLIFF file (used by Delphi amonst others' +
-        ')'
+        'Import translations from XLIFF file (used by Delphi amongst othe' +
+        'rs)'
       ImageIndex = 77
       OnExecute = ActionImportXLIFFExecute
       OnUpdate = ActionHasProjectUpdate
@@ -2227,8 +2227,10 @@ object FormMain: TFormMain
     object ActionImportCSV: TAction
       Category = 'Import'
       Caption = 'Import CSV...'
-      Enabled = False
+      Hint = 'Import translations from a delimited text file'
       ImageIndex = 61
+      OnExecute = ActionImportCSVExecute
+      OnUpdate = ActionHasProjectUpdate
     end
     object ActionStopList: TAction
       Category = 'StopList'
@@ -2657,7 +2659,7 @@ object FormMain: TFormMain
         CommandLinkHint = 'Existing translations are updated. New ones are added.'
         ModalResult = 101
       end>
-    Caption = 'PO file import'
+    Caption = 'Translation import'
     Flags = [tfAllowDialogCancellation, tfUseCommandLinks]
     RadioButtons = <>
     Text = 

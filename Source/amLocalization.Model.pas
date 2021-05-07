@@ -92,6 +92,8 @@ type
 
     property Count: integer read GetCount;
     property Languages[Index: integer]: TTranslationLanguage read GetItem; default;
+
+    function GetEnumerator: TEnumerator<TTranslationLanguage>;
   end;
 
 
@@ -416,7 +418,8 @@ type
 
     property Owner: TLocalizerProperty read FOwner;
 
-    procedure Update(const AValue: string; AStatus: TTranslationStatus);
+    procedure Update(const AValue: string; AStatus: TTranslationStatus); overload;
+    procedure Update(const AValue: string); overload;
     procedure UpdateWarnings;
 
     property Value: string read FValue write SetValue;
@@ -1045,6 +1048,11 @@ end;
 function TTranslationLanguageList.GetCount: integer;
 begin
   Result := FLanguages.Count;
+end;
+
+function TTranslationLanguageList.GetEnumerator: TEnumerator<TTranslationLanguage>;
+begin
+  Result := FLanguages.Values.GetEnumerator;
 end;
 
 function TTranslationLanguageList.GetItem(Index: integer): TTranslationLanguage;
@@ -2082,6 +2090,11 @@ begin
 
   if ((FWarnings = []) <> (OldWarnings = [])) then
     NotifyWarnings;
+end;
+
+procedure TLocalizerTranslation.Update(const AValue: string);
+begin
+  Update(AValue, TLocalizerTranslations.DefaultStatus);
 end;
 
 procedure TLocalizerTranslation.Update(const AValue: string; AStatus: TTranslationStatus);

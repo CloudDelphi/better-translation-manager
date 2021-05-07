@@ -26,7 +26,7 @@ type
   TCsvSettings = record
     Codepage: integer;
     EscapeChar: Char;
-    FirstRow: integer;
+    FirstRow: integer; // 1 based
     QuoteChar: Char;
     DelimiterChar: Char;
     DecimalSeparator: Char;
@@ -58,8 +58,11 @@ type
 type
   ICsvReaderRowTarget = interface
     ['{7ADFB41A-05A4-4E5A-BB96-89AE8D22F6AB}']
+    // At the beginning of each row the PrepareRow method is called.
     function PrepareRow: boolean;
+    // For each column value within a row the SaveValue method is called. The Column parameter is zero based.
     function SaveValue(Index: integer; const Value: string): boolean;
+    // At the end of each row the FinalizeRow method is called.
     function FinalizeRow: boolean;
   end;
 
@@ -245,7 +248,6 @@ begin
   end;
 
   Progress.UpdateMessage(sCsvReaderPrepare);
-  Progress.Show;
 
   Encoding := TEncoding.GetEncoding(Settings.Codepage);
   try
@@ -292,23 +294,29 @@ begin
   Reader.EndOfStream;
 
   // Iterate to load all rows
-  Result := 0;
+  Result := 1;
   while (not Reader.EndOfStream) do
   begin
     if (MaxRows = -1) then
       CurrentProgress := Reader.BaseStream.Position
     else
-      CurrentProgress := Result + 1;
+      CurrentProgress := Result;
 
     if (Progress <> nil) then
       Progress.Progress(psProgress, CurrentProgress, MaxProgress, sCsvReaderImport);
 
     // Load row
-    if (not ParseCsvRow(Settings, Reader, Target)) then
-      break;
+    if (Result >= Settings.FirstRow) then
+    begin
+      if (not ParseCsvRow(Settings, Reader, Target)) then
+        break;
+    end else
+      // Skip line by parsing it instead of using Reader.ReadLine because we still need to handle different variations of CR/LF
+      ParseCsvRow(Settings, Reader, nil);
 
     Inc(Result);
   end;
+  Dec(Result);
 
   if (Progress <> nil) then
     Progress.Progress(psEnd, MaxProgress, MaxProgress, sCsvReaderImport);
@@ -486,7 +494,6 @@ end;
 function TCsvReaderRowTargetColumnCounter.PrepareRow: boolean;
 begin
   Result := (FCount = 0);
-  FCount := 0;
 end;
 
 // -----------------------------------------------------------------------------
@@ -523,7 +530,7 @@ end;
 
 function TCsvReaderStringArrayRowTarget.SaveValue(Index: integer; const Value: string): boolean;
 begin
-  if (Index+1 > FCount) then
+  if (Index >= FCount) then
     FCount := Index+1;
 
   if (Index >= Length(FValues)) then

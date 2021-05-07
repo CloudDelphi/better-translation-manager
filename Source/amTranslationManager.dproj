@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{37DFBCD3-209C-472F-B667-74407DBC7456}</ProjectGuid>
-        <ProjectVersion>18.7</ProjectVersion>
+        <ProjectVersion>19.2</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <MainSource>amTranslationManager.dpr</MainSource>
         <Base>True</Base>
@@ -72,11 +72,11 @@
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
         <SanitizedProjectName>amTranslationManager</SanitizedProjectName>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.1.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.2.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_OutputDRCFile>true</DCC_OutputDRCFile>
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MinorVer>1</VerInfo_MinorVer>
+        <VerInfo_MinorVer>2</VerInfo_MinorVer>
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -234,6 +234,11 @@
         <DCCReference Include="amLocalization.Environment.pas"/>
         <DCCReference Include="amLocalization.ExceptionHandler.Info.Default.pas"/>
         <DCCReference Include="amLocalization.Data.ModuleItemsDataSource.pas"/>
+        <DCCReference Include="amLocalization.Dialog.Import.CSV.pas">
+            <Form>FormCSVImport</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="amLocalization.Common.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

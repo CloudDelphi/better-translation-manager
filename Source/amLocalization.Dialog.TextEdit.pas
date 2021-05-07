@@ -94,6 +94,8 @@ implementation
 
 uses
   Consts,
+  amLocalization.Common,
+  amLocalization.Data.Main,
   amLocalization.Settings;
 
 //------------------------------------------------------------------------------
@@ -138,8 +140,6 @@ type
   TcxSplitterCracker = class(TcxSplitter);
 
 procedure TFormTextEditor.FormCreate(Sender: TObject);
-resourcestring
-  sFileTextFilter = 'Text files (*.txt)|*.txt';
 begin
   FileOpen1.Dialog.Filter := sFileTextFilter + '|' + SDefaultFilter;
   FileOpen1.Dialog.FilterIndex := 0;

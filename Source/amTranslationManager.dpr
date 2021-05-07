@@ -72,7 +72,9 @@ uses
   amLocalization.Skin in 'amLocalization.Skin.pas',
   amLocalization.Environment in 'amLocalization.Environment.pas',
   amLocalization.ExceptionHandler.Info.Default in 'amLocalization.ExceptionHandler.Info.Default.pas',
-  amLocalization.Data.ModuleItemsDataSource in 'amLocalization.Data.ModuleItemsDataSource.pas';
+  amLocalization.Data.ModuleItemsDataSource in 'amLocalization.Data.ModuleItemsDataSource.pas',
+  amLocalization.Dialog.Import.CSV in 'amLocalization.Dialog.Import.CSV.pas' {FormCSVImport},
+  amLocalization.Common in 'amLocalization.Common.pas';
 
 {$R *.res}
 

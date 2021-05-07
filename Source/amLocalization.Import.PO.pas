@@ -77,9 +77,6 @@ type
     property CountIgnored: integer read FCountIgnored;
   end;
 
-resourcestring
-  sFileFilterPO = 'GNU GetText PO files (*.po)|*.po';
-
 implementation
 
 uses
@@ -271,7 +268,6 @@ end;
 
 type
   TMatchness = (MatchNone, MatchSanitized, MatchSame, MatchExact);
-
 
 procedure TLocalizerPOImport.ProcessTerm;
 var

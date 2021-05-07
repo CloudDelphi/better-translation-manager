@@ -55,11 +55,12 @@ type
 implementation
 
 uses
-  Windows,
-  SysUtils,
-  Themes,
-  Forms,
-  IOUtils;
+  WinApi.Windows,
+  System.SysUtils,
+  System.IOUtils,
+  VCL.Themes,
+  VCL.Controls,
+  VCL.Forms;
 
 function BoolToStr(Value: boolean): string;
 begin

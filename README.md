@@ -10,7 +10,7 @@ The Better Translation Manager (BTM) is a replacement for the Delphi Translation
 ## Why?
 
 The standard Translation Manager that ships with Delphi today was originally an individual product known as the Borland Translation Suite. With [Delphi 5 it became a part of the enterprise edition](https://web.archive.org/web/20020220081654/http://www.borland.com:80/delphi/del5/feaben/translation.html).  
-The Borland Translation Suite showed great promise but unfortunately it never evolved from its roots as an external tool and has always been hampered by severe bugs that made it completely unusable in practice. As a result nobody uses it. This can be witnessed by the plethora of homegrown and commercial alternatives.
+The Borland Translation Suite showed great promise but unfortunately it never evolved from its roots as an external tool and has always been hampered by severe bugs that made it completely unusable in practice. As a result nobody uses it as can be witnessed by the plethora of homegrown and commercial alternatives.
 
 The great benefit of the standard translation system is that it just works (this is the system itself I'm talking about, not the tools. The tools suck). Apart from the requirement that you must use  resourcestrings you don't need to do anything special when writing your code. At run time you just place the compiled resource modules in the same folder as your application and the Delphi Run Time Library automatically takes care of loading and using the translations based on the current Windows user interface language.
 
@@ -130,7 +130,7 @@ Pull requests for new features or other changes should be backed by well argued 
 ### License
 The source code is released under the MPL 2.0 license:
 
-> Copyright © 2019 Anders Melander  
+> Copyright © 2019-2021 Anders Melander  
 > This Source Code Form is subject to the terms of the Mozilla Public  
 > License, v. 2.0. If a copy of the MPL was not distributed with this  
 > file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -139,7 +139,7 @@ The source code is released under the MPL 2.0 license:
 ### Requirements
 BTM has been tested with the following versions but probably works with older (and newer) versions too:
 
-* Delphi 10.2.3
+* Delphi 10.3.x
 * DevExpress VCL version 19.1.4
 * madCollection 2.8.8.9
 
@@ -147,7 +147,7 @@ BTM has been tested with the following versions but probably works with older (a
 The following commercial 3rd party libraries are required in order to compile the source:
 
 * [DevExpress VCL](https://www.devexpress.com/products/vcl/)
-* [MadExcept](http://madshi.net/) (optional)
+* [madExcept](http://madshi.net/) (optional)
 
 The libraries must in the Delphi default library search path.
 

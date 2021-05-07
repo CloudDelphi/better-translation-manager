@@ -464,6 +464,7 @@ type
     procedure EditTargetTextPropertiesEditValueChanged(Sender: TObject);
     procedure GridItemsTableViewColumnStatusStateGetFilterValues(Sender: TcxCustomGridTableItem; AValueList: TcxDataFilterValueList);
     procedure GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
+    procedure ActionImportCSVExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -745,6 +746,7 @@ uses
   amLocalization.Shell,
   amLocalization.Settings,
   amLocalization.Environment,
+  amLocalization.Common,
   amLocalization.Export.CSV,
   amLocalization.Import.PO,
   amLocalization.Dialog.TextEdit,
@@ -755,7 +757,8 @@ uses
 {$ifdef MADEXCEPT}
   amLocalization.Dialog.Feedback,
 {$endif MADEXCEPT}
-  amLocalization.Dialog.StopList;
+  amLocalization.Dialog.StopList,
+  amLocalization.Dialog.Import.CSV;
 
 resourcestring
   sLocalizerFindNone = 'None found';
@@ -789,9 +792,6 @@ resourcestring
   sRecoverUnusedStatusTitle = 'Recover completed';
   sRecoverUnusedStatus = '%d of %d unused translations were recovered.';
   sRecoverUnusedStatusNone = 'No translations recovered.';
-
-resourcestring
-  sResourceModuleFilter = '%s resource modules (*.%1:s)|*.%1:s|';
 
 resourcestring
   sDone = 'Done!';
@@ -2179,6 +2179,32 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.ActionImportCSVExecute(Sender: TObject);
+begin
+  var FormCSVImport := TFormCSVImport.Create(nil);
+  try
+
+    if (TranslationLanguage.TranslatedCount > 0) then
+    begin
+      var s := TaskDialogImportUpdate.Text;
+      try
+        TaskDialogImportUpdate.Text := Format(s, [TranslationLanguage.TranslatedCount*1.0, TargetLanguage.LanguageName]);
+
+        if (not TaskDialogImportUpdate.Execute) then
+          Exit;
+      finally
+        TaskDialogImportUpdate.Text := s;
+      end;
+      FormCSVImport.UpdateExisting := (TaskDialogImportUpdate.ModalResult = 101);
+    end else
+      FormCSVImport.UpdateExisting := True;
+
+    FormCSVImport.Execute(FProject);
+  finally
+    FormCSVImport.Free;
+  end;
+end;
 
 procedure TFormMain.ActionImportFileExecute(Sender: TObject);
 begin
@@ -6827,7 +6853,7 @@ const
 begin
   TimerHint.Enabled := False;
 
-  if (FShowHint) then
+  if (FShowHint) and (FHintProp <> nil) then
   begin
     // Only display hint if mouse is still in cell rect
     if (not FHintRect.Contains(GridItems.ScreenToClient(Mouse.CursorPos))) then

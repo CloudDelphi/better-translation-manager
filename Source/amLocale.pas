@@ -1206,7 +1206,7 @@ function DetectCodePage(Stream: TStream): integer;
 var
   MultiLanguage: IMultiLanguage2;
   ComStream: IStream;
-  EncodingInfo: tagDetectEncodingInfo;
+  EncodingInfo: TArray<tagDetectEncodingInfo>;
   Count: integer;
   SavePos: Int64;
 const
@@ -1221,11 +1221,12 @@ begin
   try
     ComStream := TStreamAdapter.Create(Stream);
     try
-      Count := 1;
-      if (MultiLanguage.DetectCodepageInIStream(MLDETECTCP_NONE, 0, ComStream, EncodingInfo, Count) <> S_OK) then
+      Count := 4;
+      SetLength(EncodingInfo, Count);
+      if (MultiLanguage.DetectCodepageInIStream(MLDETECTCP_NONE, 0, ComStream, EncodingInfo[0], Count) <> S_OK) then
         exit;
 
-      Result := EncodingInfo.nCodePage;
+      Result := EncodingInfo[0].nCodePage;
     finally
       ComStream := nil;
     end;

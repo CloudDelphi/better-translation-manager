@@ -110,6 +110,7 @@ uses
   amLocale,
   amVersionInfo,
   amFileUtils,
+  amLocalization.Common,
   amLocalization.Settings,
   amLocalization.Normalization,
   amLocalization.TranslationMemory.Data;
@@ -142,8 +143,6 @@ end;
 
 
 class function TTranslationMemoryFileFormat.FileFormatFileFilter: string;
-resourcestring
-  sFileFilterGeneric = '%0:s files (*.%1:s)|*.%1:s';
 begin
   Result := Format(sFileFilterGeneric, [FileFormatFileDescription, FileFormatFileType]);
 end;
@@ -152,8 +151,6 @@ class function TTranslationMemoryFileFormat.FileFormatFileFilters(Capability: TF
 var
   FileFormatClass: TTranslationMemoryFileFormatClass;
   AllFilter: string;
-resourcestring
-  sFileFilterAll = 'All supported files (%0:s)|%0:s';
 begin
   Result := '';
   if (FFileFormatRegistry = nil) then
