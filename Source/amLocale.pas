@@ -14,12 +14,12 @@
 interface
 
 uses
-  Generics.Collections,
-  Generics.Defaults,
-  Windows,
-  Graphics,
-  Classes,
-  ActiveX;
+  System.Generics.Collections,
+  System.Generics.Defaults,
+  System.Classes,
+  WinApi.Windows,
+  WinApi.ActiveX,
+  VCL.Graphics;
 
 type
 //------------------------------------------------------------------------------
@@ -367,8 +367,8 @@ function GetCodePageDescription(Codepage: integer): string;
 implementation
 
 uses
-  SysUtils,
-  IOUtils;
+  System.SysUtils,
+  System.IOUtils;
 
 //------------------------------------------------------------------------------
 //
@@ -458,7 +458,12 @@ begin
     NewInst := hInstance;
 
   if (NewInst <> 0) then
-    Result := SetResourceHInstance(NewInst)
+  begin
+    Result := SetResourceHInstance(NewInst);
+{$if RTLVersion >= 34}
+    ResStringCleanupCache;
+{$endif}
+  end;
 end;
 
 //------------------------------------------------------------------------------
