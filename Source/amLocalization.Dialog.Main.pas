@@ -3827,7 +3827,7 @@ begin
       if (not SafeReplaceFile(ProjectFilename,
         function(const Filename: string): boolean
         begin
-          TLocalizationProjectFiler.SaveToFile(FProject, Filename);
+          TLocalizationProjectFiler.SaveToFile(FProject, Filename, Progress);
           Result := True;
         end, TranslationManagerSettings.Backup.SaveBackups)) then
       begin

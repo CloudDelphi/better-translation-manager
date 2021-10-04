@@ -536,6 +536,9 @@ begin
 
     for Item in Module.Items.Values do
     begin
+      if (Progress <> nil) then
+        Progress.AdvanceProgress;
+
       ItemNode := ItemsNode.AddChild('item');
       WriteItemName(ItemNode, Item);
       WriteItemID(ItemNode, Item.ResourceID);
