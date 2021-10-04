@@ -86,6 +86,9 @@ implementation
 uses
   SysUtils,
   IOUtils,
+  Dialogs,
+  System.UITypes,
+  Controls,
   amLocale;
 
 const
@@ -287,14 +290,54 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TResourceModuleWriter.EndWrite(Commit: boolean);
+resourcestring
+  sModuleWriteAccessDeniedTitle = 'Error writing resource module';
+  sModuleWriteAccessDeniedMsg = 'The resource module could not be updated.'#13+
+    'Filename: %s'#13+
+    'Error: %s'#13#13+
+    'Please make sure that your anti virus program isn''t preventing the file from being updated';
 begin
   try
 
-    if (FResourceHandle <> 0) then
-      EndUpdateResourceW(FResourceHandle, not Commit);
+    while (True) do
+    begin
+      try
+
+        if (FResourceHandle <> 0) then
+          Win32Check(EndUpdateResourceW(FResourceHandle, not Commit));
+
+        break;
+
+      except
+        on E: EOSError do
+        begin
+          if (Commit) and (E.ErrorCode = ERROR_ACCESS_DENIED) then
+          begin
+            var Res := TaskMessageDlg(sModuleWriteAccessDeniedTitle, Format(sModuleWriteAccessDeniedMsg, [FFilename, E.Message]),
+              mtWarning, [mbAbort, mbRetry], 0, mbRetry);
+
+            if (Res <> mrRetry) then
+              Abort;
+          end else
+          // Retry after anti-virus has deleted the temp file created by BeginUpdateResource has been
+          // observed to cause internal AVs returned as ERROR_INTERNAL_ERROR or ERROR_INVALID_HANDLE.
+          if (E.ErrorCode = ERROR_INTERNAL_ERROR) or (E.ErrorCode = ERROR_INVALID_HANDLE) then
+          begin
+            TaskMessageDlg(sModuleWriteAccessDeniedTitle, Format(sModuleWriteAccessDeniedMsg, [FFilename, E.Message]),
+              mtError, [mbAbort], 0);
+            FResourceHandle := 0;
+            Abort;
+          end else
+            raise;
+        end;
+      end;
+
+    end;
 
   except
-    EndUpdateResourceW(FResourceHandle, True);
+    if (FResourceHandle <> 0) and (Commit) then
+      EndUpdateResourceW(FResourceHandle, True);
+    // TODO : Should we delete the file here?
     raise;
   end;
 end;
