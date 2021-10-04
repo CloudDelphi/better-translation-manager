@@ -6113,6 +6113,16 @@ begin
   if (HitTest.Item.FocusedCellViewInfo <> nil) and (TcxEditViewInfoCracker(HitTest.Item.FocusedCellViewInfo.EditViewInfo).GetPart(HitTest.Pos) = ecpErrorIcon) then
   begin
     RibbonMiniToolbarValidationWarning.Popup;
+
+    // Work around for TdxRibbonMiniToolbar not updating actions
+    // https://supportcenter.devexpress.com/ticket/details/t1034109
+    for var i := 0 to RibbonMiniToolbarValidationWarning.ItemLinks.Count-1 do
+    begin
+      var Action := RibbonMiniToolbarValidationWarning.ItemLinks[i].Item.Action;
+      if (Action <> nil) then
+        Action.Update;
+    end;
+
     HitTest.Item.Focused := False; // Prevent click from starting edit mode
     Exit;
   end;
