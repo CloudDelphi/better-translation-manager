@@ -3606,6 +3606,8 @@ var
   Msg: string;
 resourcestring
   sPurgeUnusedTranslationsTitle = 'Purge unused translations';
+  sPurgeUnusedTranslationsNone = 'No translations are marked as unused.'#13#13+
+    'Nothing to purge';
   sPurgeUnusedTranslations = '%d translations are marked as unused.'#13+
     'This is likely because components were deleted, moved or renamed since the previous update.'#13#13+
     'Do you want to delete all unused translations?';
@@ -3614,6 +3616,12 @@ resourcestring
     'Modules: %.0n'#13'Items: %.0n'#13'Properties: %.0n';
 begin
   CountBefore := CountStuff;
+
+  if (CountBefore.UnusedTranslation = 0) then
+  begin
+    TaskMessageDlg(sPurgeUnusedTranslationsTitle, sPurgeUnusedTranslationsNone, mtInformation, [mbOK], 0);
+    Exit;
+  end;
 
   if (TaskMessageDlg(sPurgeUnusedTranslationsTitle, Format(sPurgeUnusedTranslations, [CountBefore.UnusedTranslation]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
