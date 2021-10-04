@@ -36,6 +36,8 @@ type
   public
   end;
 
+  ELocalizationProviderMicrosoftTerminology = class(ELocalizationProvider);
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -44,6 +46,7 @@ implementation
 
 uses
   Dialogs,
+  Soap.InvokeRegistry,
   amLocalization.Normalization,
   amLocalization.Settings;
 
@@ -76,11 +79,6 @@ function TTranslationProviderMicrosoftTerminology.Lookup(Prop: TLocalizerPropert
 var
   Sources: TranslationSources;
   ResultMatches: Matches;
-  Match: Match2;
-  Translation: Translation2;
-  SourceValue: string;
-  TargetValue: string;
-  n: integer;
 begin
   SetLength(Sources, 1);
   Sources[0] := TranslationSource.UiStrings;
@@ -88,22 +86,35 @@ begin
   // We are searching on the raw UI string since the Terminology Service can handle that.
   // We could also search on the sanitized value but that would produce more mismatches
   // and doesn't seem necessary.
-  SourceValue := Prop.Value;
+  var SourceValue := Prop.Value;
 
-   // Call web service
-  ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleName, TargetLanguage.LocaleName,
-    SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True,
-    TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult, False, nil);
+  // Call web service
+  try
+
+    ResultMatches := FTerminology.GetTranslations(SourceValue, SourceLanguage.LocaleName, TargetLanguage.LocaleName,
+      SearchStringComparison.CaseInsensitive, SearchOperator.Exact, Sources, True,
+      TranslationManagerSettings.Providers.MicrosoftTerminology.MaxResult, False, nil);
+
+  except
+    on E: ERemotableException do
+    begin
+      var Msg := E.Message;
+      if (E.FaultDetail <> '') then
+        Msg := Msg + #13 + E.FaultDetail;
+
+      Exception.RaiseOuterException(ELocalizationProviderMicrosoftTerminology.CreateFmt('Microsoft Terminology provider lookup failed: %s', [Msg]));
+    end;
+  end;
 
   // Get result
   Result := False;
   if (Length(ResultMatches) > 0) then
   begin
-    for Match in ResultMatches do
+    for var Match in ResultMatches do
     begin
-      for Translation in Match.Translations do
+      for var Translation in Match.Translations do
       begin
-        TargetValue := Translation.TranslatedText;
+        var TargetValue := Translation.TranslatedText;
 
         if (SourceValue = Match.OriginalText) then
         begin
@@ -112,7 +123,7 @@ begin
           // Exact match - Insert in front
           if (Translations.Count > 0) then
           begin
-            n := Translations.IndexOf(TargetValue);
+            var n := Translations.IndexOf(TargetValue);
             if (n = -1) then
               Translations.Insert(0, TargetValue)
             else

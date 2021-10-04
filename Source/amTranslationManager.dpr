@@ -74,7 +74,8 @@ uses
   amLocalization.ExceptionHandler.Info.Default in 'amLocalization.ExceptionHandler.Info.Default.pas',
   amLocalization.Data.ModuleItemsDataSource in 'amLocalization.Data.ModuleItemsDataSource.pas',
   amLocalization.Dialog.Import.CSV in 'amLocalization.Dialog.Import.CSV.pas' {FormCSVImport},
-  amLocalization.Common in 'amLocalization.Common.pas';
+  amLocalization.Common in 'amLocalization.Common.pas',
+  amLocalization.ExceptionHandler.Prompt in 'amLocalization.ExceptionHandler.Prompt.pas';
 
 {$R *.res}
 

@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{37DFBCD3-209C-472F-B667-74407DBC7456}</ProjectGuid>
-        <ProjectVersion>19.2</ProjectVersion>
+        <ProjectVersion>19.3</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <MainSource>amTranslationManager.dpr</MainSource>
         <Base>True</Base>
@@ -239,6 +239,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="amLocalization.Common.pas"/>
+        <DCCReference Include="amLocalization.ExceptionHandler.Prompt.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

@@ -12,6 +12,7 @@ interface
 
 uses
   Classes,
+  SysUtils,
   Generics.Collections,
   amLocale,
   amLocalization.Model;
@@ -150,6 +151,9 @@ type
   end;
 
 
+type
+  ELocalizationProvider = class(Exception);
+
 // -----------------------------------------------------------------------------
 //
 // CreateTranslationService
@@ -167,10 +171,12 @@ function CreateTranslationService(const ATranslationProvider: ITranslationProvid
 implementation
 
 uses
-  SysUtils,
   StrUtils,
   SyncObjs,
   System.Character,
+  System.UITypes,
+  VCL.Dialogs,
+  amLocalization.ExceptionHandler.Prompt,
   amLocalization.Settings,
   amLocalization.Normalization,
   amLocalization.Dialog.TranslationMemory.SelectDuplicate;
@@ -240,6 +246,9 @@ end;
 function TTranslationService.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
 var
   Translations: TStringList;
+resourcestring
+  sProviderLookupFailed = 'Provider lookup failed';
+  sProviderLookupFailedMsg = 'Error: %s'#13'%s';
 begin
   if (Prop.Value.Trim.IsEmpty) then
     Exit(False);
@@ -247,7 +256,18 @@ begin
   Translations := TStringList.Create;
   try
 
-    Result := FTranslationProvider.Lookup(Prop, SourceLanguage, TargetLanguage, Translations);
+    try
+
+      Result := FTranslationProvider.Lookup(Prop, SourceLanguage, TargetLanguage, Translations);
+
+    except
+      on E: ELocalizationProvider do
+      begin
+        if (PromptPropagateError(sProviderLookupFailed, sProviderLookupFailedMsg, [E.ToString, E.ClassName])) then
+          raise;
+        Exit(False);
+      end;
+    end;
 
     if (not Result) then
       Exit;
