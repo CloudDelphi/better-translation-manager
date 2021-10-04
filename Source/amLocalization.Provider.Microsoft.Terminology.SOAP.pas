@@ -1,4 +1,4 @@
-﻿// ************************************************************************ //
+// ************************************************************************ //
 // The types declared in this file were generated from data read from the
 // WSDL File described below:
 // WSDL     : http://api.terminology.microsoft.com/Terminology.svc?wsdl
@@ -7,10 +7,11 @@
 //  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd0
 //  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd2
 //  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd3
+//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd4
 //  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd1
 // Encoding : utf-8
 // Version  : 1.0
-// (25-09-2019 16:48:52 - - $Rev: 90173 $)
+// (04-10-2021 22:02:56 - - $Rev: 106319 $)
 // ************************************************************************ //
 
 unit amLocalization.Provider.Microsoft.Terminology.SOAP;
@@ -39,28 +40,28 @@ type
   // !:int             - "http://www.w3.org/2001/XMLSchema"[Gbl]
   // !:boolean         - "http://www.w3.org/2001/XMLSchema"[Gbl]
 
-  Unexpected           = class;                 { "http://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
-  InvalidParameters    = class;                 { "http://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
-  MissingParameter     = class;                 { "http://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
-  EntityBase2          = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  EntityBase           = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Version2             = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Version              = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Product2             = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Language2            = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Language             = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Product              = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Capability2          = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Capability           = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Translation2         = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Translation          = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  Match2               = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Match                = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
-  BaseFault2           = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  MissingParameter2    = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Unexpected2          = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  InvalidParameters2   = class;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  BaseFault            = class;                 { "http://api.terminology.microsoft.com/terminology"[GblElm] }
+  Unexpected           = class;                 { "https://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
+  MissingParameter     = class;                 { "https://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
+  InvalidParameters    = class;                 { "https://api.terminology.microsoft.com/terminology"[Flt][GblElm] }
+  EntityBase2          = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Version2             = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Version              = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  Product2             = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Match2               = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Match                = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  Language2            = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Language             = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  Capability2          = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Capability           = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  Product              = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  EntityBase           = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  Translation2         = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Translation          = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  BaseFault2           = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Unexpected2          = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  BaseFault            = class;                 { "https://api.terminology.microsoft.com/terminology"[GblElm] }
+  MissingParameter2    = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  InvalidParameters2   = class;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
 
   {$SCOPEDENUMS ON}
   { "http://schemas.datacontract.org/2004/07/Microsoft.Terminology.WebService.Index.Core"[GblSmpl] }
@@ -78,7 +79,7 @@ type
 
   // ************************************************************************ //
   // XML       : Unexpected, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // Info      : Fault
   // Base Types: BaseFault, Unexpected
   // ************************************************************************ //
@@ -100,26 +101,8 @@ type
 
 
   // ************************************************************************ //
-  // XML       : InvalidParameters, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // Info      : Fault
-  // Base Types: BaseFault, InvalidParameters
-  // ************************************************************************ //
-  InvalidParameters = class(ERemotableException)
-  private
-    FMessage_: string;
-    FMessage__Specified: boolean;
-    procedure SetMessage_(Index: Integer; const Astring: string);
-    function  Message__Specified(Index: Integer): boolean;
-  published
-    property Message_: string  Index (IS_OPTN or IS_NLBL) read FMessage_ write SetMessage_ stored Message__Specified;
-  end;
-
-
-
-  // ************************************************************************ //
   // XML       : MissingParameter, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // Info      : Fault
   // Base Types: BaseFault, MissingParameter
   // ************************************************************************ //
@@ -138,34 +121,41 @@ type
     property ParameterName: string  Index (IS_OPTN or IS_NLBL) read FParameterName write SetParameterName stored ParameterName_Specified;
   end;
 
-  Versions   = array of Version2;               { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
+
+
+  // ************************************************************************ //
+  // XML       : InvalidParameters, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // Info      : Fault
+  // Base Types: BaseFault, InvalidParameters
+  // ************************************************************************ //
+  InvalidParameters = class(ERemotableException)
+  private
+    FMessage_: string;
+    FMessage__Specified: boolean;
+    procedure SetMessage_(Index: Integer; const Astring: string);
+    function  Message__Specified(Index: Integer): boolean;
+  published
+    property Message_: string  Index (IS_OPTN or IS_NLBL) read FMessage_ write SetMessage_ stored Message__Specified;
+  end;
+
 
 
   // ************************************************************************ //
   // XML       : EntityBase, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   EntityBase2 = class(TRemotable)
   private
   published
   end;
 
-
-
-  // ************************************************************************ //
-  // XML       : EntityBase, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  EntityBase = class(EntityBase2)
-  private
-  published
-  end;
-
+  Versions   = array of Version2;               { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
 
 
   // ************************************************************************ //
   // XML       : Version, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Version2 = class(EntityBase2)
   private
@@ -186,20 +176,21 @@ type
 
   // ************************************************************************ //
   // XML       : Version, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Version = class(Version2)
   private
   published
   end;
 
-  Matches    = array of Match2;                 { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  TranslationSources = array of TranslationSource;   { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Matches    = array of Match2;                 { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  TranslationSources = array of TranslationSource;   { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Products   = array of Product2;               { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
 
 
   // ************************************************************************ //
   // XML       : Product, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Product2 = class(EntityBase2)
   private
@@ -223,121 +214,12 @@ type
     property Versions: Versions  Index (IS_OPTN or IS_NLBL) read FVersions write SetVersions stored Versions_Specified;
   end;
 
-  Products   = array of Product2;               { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-  Languages  = array of Language2;              { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
-
-
-  // ************************************************************************ //
-  // XML       : Language, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Language2 = class(EntityBase2)
-  private
-    FCode: string;
-    FCode_Specified: boolean;
-    procedure SetCode(Index: Integer; const Astring: string);
-    function  Code_Specified(Index: Integer): boolean;
-  published
-    property Code: string  Index (IS_OPTN or IS_NLBL) read FCode write SetCode stored Code_Specified;
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Language, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Language = class(Language2)
-  private
-  published
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Product, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Product = class(Product2)
-  private
-  published
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Capability, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Capability2 = class(TRemotable)
-  private
-    FSupportsAnyToAny: Boolean;
-    FSupportsAnyToAny_Specified: boolean;
-    FSupportsAnyToEnUs: Boolean;
-    FSupportsAnyToEnUs_Specified: boolean;
-    FSupportsEnUsToAny: Boolean;
-    FSupportsEnUsToAny_Specified: boolean;
-    procedure SetSupportsAnyToAny(Index: Integer; const ABoolean: Boolean);
-    function  SupportsAnyToAny_Specified(Index: Integer): boolean;
-    procedure SetSupportsAnyToEnUs(Index: Integer; const ABoolean: Boolean);
-    function  SupportsAnyToEnUs_Specified(Index: Integer): boolean;
-    procedure SetSupportsEnUsToAny(Index: Integer; const ABoolean: Boolean);
-    function  SupportsEnUsToAny_Specified(Index: Integer): boolean;
-  published
-    property SupportsAnyToAny:  Boolean  Index (IS_OPTN) read FSupportsAnyToAny write SetSupportsAnyToAny stored SupportsAnyToAny_Specified;
-    property SupportsAnyToEnUs: Boolean  Index (IS_OPTN) read FSupportsAnyToEnUs write SetSupportsAnyToEnUs stored SupportsAnyToEnUs_Specified;
-    property SupportsEnUsToAny: Boolean  Index (IS_OPTN) read FSupportsEnUsToAny write SetSupportsEnUsToAny stored SupportsEnUsToAny_Specified;
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Capability, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Capability = class(Capability2)
-  private
-  published
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Translation, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Translation2 = class(TRemotable)
-  private
-    FLanguage: string;
-    FLanguage_Specified: boolean;
-    FTranslatedText: string;
-    FTranslatedText_Specified: boolean;
-    procedure SetLanguage(Index: Integer; const Astring: string);
-    function  Language_Specified(Index: Integer): boolean;
-    procedure SetTranslatedText(Index: Integer; const Astring: string);
-    function  TranslatedText_Specified(Index: Integer): boolean;
-  published
-    property Language:       string  Index (IS_OPTN or IS_NLBL) read FLanguage write SetLanguage stored Language_Specified;
-    property TranslatedText: string  Index (IS_OPTN or IS_NLBL) read FTranslatedText write SetTranslatedText stored TranslatedText_Specified;
-  end;
-
-
-
-  // ************************************************************************ //
-  // XML       : Translation, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  Translation = class(Translation2)
-  private
-  published
-  end;
-
-  Translations = array of Translation2;         { "http://api.terminology.microsoft.com/terminology"[GblCplx] }
+  Translations = array of Translation2;         { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
 
 
   // ************************************************************************ //
   // XML       : Match, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Match2 = class(TRemotable)
   private
@@ -390,9 +272,128 @@ type
 
   // ************************************************************************ //
   // XML       : Match, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Match = class(Match2)
+  private
+  published
+  end;
+
+  Languages  = array of Language2;              { "https://api.terminology.microsoft.com/terminology"[GblCplx] }
+
+
+  // ************************************************************************ //
+  // XML       : Language, global, <complexType>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Language2 = class(EntityBase2)
+  private
+    FCode: string;
+    FCode_Specified: boolean;
+    procedure SetCode(Index: Integer; const Astring: string);
+    function  Code_Specified(Index: Integer): boolean;
+  published
+    property Code: string  Index (IS_OPTN or IS_NLBL) read FCode write SetCode stored Code_Specified;
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Language, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Language = class(Language2)
+  private
+  published
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Capability, global, <complexType>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Capability2 = class(TRemotable)
+  private
+    FSupportsAnyToAny: Boolean;
+    FSupportsAnyToAny_Specified: boolean;
+    FSupportsAnyToEnUs: Boolean;
+    FSupportsAnyToEnUs_Specified: boolean;
+    FSupportsEnUsToAny: Boolean;
+    FSupportsEnUsToAny_Specified: boolean;
+    procedure SetSupportsAnyToAny(Index: Integer; const ABoolean: Boolean);
+    function  SupportsAnyToAny_Specified(Index: Integer): boolean;
+    procedure SetSupportsAnyToEnUs(Index: Integer; const ABoolean: Boolean);
+    function  SupportsAnyToEnUs_Specified(Index: Integer): boolean;
+    procedure SetSupportsEnUsToAny(Index: Integer; const ABoolean: Boolean);
+    function  SupportsEnUsToAny_Specified(Index: Integer): boolean;
+  published
+    property SupportsAnyToAny:  Boolean  Index (IS_OPTN) read FSupportsAnyToAny write SetSupportsAnyToAny stored SupportsAnyToAny_Specified;
+    property SupportsAnyToEnUs: Boolean  Index (IS_OPTN) read FSupportsAnyToEnUs write SetSupportsAnyToEnUs stored SupportsAnyToEnUs_Specified;
+    property SupportsEnUsToAny: Boolean  Index (IS_OPTN) read FSupportsEnUsToAny write SetSupportsEnUsToAny stored SupportsEnUsToAny_Specified;
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Capability, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Capability = class(Capability2)
+  private
+  published
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Product, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Product = class(Product2)
+  private
+  published
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : EntityBase, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  EntityBase = class(EntityBase2)
+  private
+  published
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Translation, global, <complexType>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Translation2 = class(TRemotable)
+  private
+    FLanguage: string;
+    FLanguage_Specified: boolean;
+    FTranslatedText: string;
+    FTranslatedText_Specified: boolean;
+    procedure SetLanguage(Index: Integer; const Astring: string);
+    function  Language_Specified(Index: Integer): boolean;
+    procedure SetTranslatedText(Index: Integer; const Astring: string);
+    function  TranslatedText_Specified(Index: Integer): boolean;
+  published
+    property Language:       string  Index (IS_OPTN or IS_NLBL) read FLanguage write SetLanguage stored Language_Specified;
+    property TranslatedText: string  Index (IS_OPTN or IS_NLBL) read FTranslatedText write SetTranslatedText stored TranslatedText_Specified;
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : Translation, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  Translation = class(Translation2)
   private
   published
   end;
@@ -401,7 +402,7 @@ type
 
   // ************************************************************************ //
   // XML       : BaseFault, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   BaseFault2 = class(TRemotable)
   private
@@ -416,24 +417,8 @@ type
 
 
   // ************************************************************************ //
-  // XML       : MissingParameter, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
-  // ************************************************************************ //
-  MissingParameter2 = class(BaseFault2)
-  private
-    FParameterName: string;
-    FParameterName_Specified: boolean;
-    procedure SetParameterName(Index: Integer; const Astring: string);
-    function  ParameterName_Specified(Index: Integer): boolean;
-  published
-    property ParameterName: string  Index (IS_OPTN or IS_NLBL) read FParameterName write SetParameterName stored ParameterName_Specified;
-  end;
-
-
-
-  // ************************************************************************ //
   // XML       : Unexpected, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
   Unexpected2 = class(BaseFault2)
   private
@@ -448,10 +433,10 @@ type
 
 
   // ************************************************************************ //
-  // XML       : InvalidParameters, global, <complexType>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // XML       : BaseFault, global, <element>
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
-  InvalidParameters2 = class(BaseFault2)
+  BaseFault = class(BaseFault2)
   private
   published
   end;
@@ -459,10 +444,26 @@ type
 
 
   // ************************************************************************ //
-  // XML       : BaseFault, global, <element>
-  // Namespace : http://api.terminology.microsoft.com/terminology
+  // XML       : MissingParameter, global, <complexType>
+  // Namespace : https://api.terminology.microsoft.com/terminology
   // ************************************************************************ //
-  BaseFault = class(BaseFault2)
+  MissingParameter2 = class(BaseFault2)
+  private
+    FParameterName: string;
+    FParameterName_Specified: boolean;
+    procedure SetParameterName(Index: Integer; const Astring: string);
+    function  ParameterName_Specified(Index: Integer): boolean;
+  published
+    property ParameterName: string  Index (IS_OPTN or IS_NLBL) read FParameterName write SetParameterName stored ParameterName_Specified;
+  end;
+
+
+
+  // ************************************************************************ //
+  // XML       : InvalidParameters, global, <complexType>
+  // Namespace : https://api.terminology.microsoft.com/terminology
+  // ************************************************************************ //
+  InvalidParameters2 = class(BaseFault2)
   private
   published
   end;
@@ -553,17 +554,6 @@ begin
   Result := FErrorCode_Specified;
 end;
 
-procedure InvalidParameters.SetMessage_(Index: Integer; const Astring: string);
-begin
-  FMessage_ := Astring;
-  FMessage__Specified := True;
-end;
-
-function InvalidParameters.Message__Specified(Index: Integer): boolean;
-begin
-  Result := FMessage__Specified;
-end;
-
 procedure MissingParameter.SetMessage_(Index: Integer; const Astring: string);
 begin
   FMessage_ := Astring;
@@ -584,6 +574,17 @@ end;
 function MissingParameter.ParameterName_Specified(Index: Integer): boolean;
 begin
   Result := FParameterName_Specified;
+end;
+
+procedure InvalidParameters.SetMessage_(Index: Integer; const Astring: string);
+begin
+  FMessage_ := Astring;
+  FMessage__Specified := True;
+end;
+
+function InvalidParameters.Message__Specified(Index: Integer): boolean;
+begin
+  Result := FMessage__Specified;
 end;
 
 procedure Version2.SetId(Index: Integer; const AInteger: Integer);
@@ -649,72 +650,6 @@ end;
 function Product2.Versions_Specified(Index: Integer): boolean;
 begin
   Result := FVersions_Specified;
-end;
-
-procedure Language2.SetCode(Index: Integer; const Astring: string);
-begin
-  FCode := Astring;
-  FCode_Specified := True;
-end;
-
-function Language2.Code_Specified(Index: Integer): boolean;
-begin
-  Result := FCode_Specified;
-end;
-
-procedure Capability2.SetSupportsAnyToAny(Index: Integer; const ABoolean: Boolean);
-begin
-  FSupportsAnyToAny := ABoolean;
-  FSupportsAnyToAny_Specified := True;
-end;
-
-function Capability2.SupportsAnyToAny_Specified(Index: Integer): boolean;
-begin
-  Result := FSupportsAnyToAny_Specified;
-end;
-
-procedure Capability2.SetSupportsAnyToEnUs(Index: Integer; const ABoolean: Boolean);
-begin
-  FSupportsAnyToEnUs := ABoolean;
-  FSupportsAnyToEnUs_Specified := True;
-end;
-
-function Capability2.SupportsAnyToEnUs_Specified(Index: Integer): boolean;
-begin
-  Result := FSupportsAnyToEnUs_Specified;
-end;
-
-procedure Capability2.SetSupportsEnUsToAny(Index: Integer; const ABoolean: Boolean);
-begin
-  FSupportsEnUsToAny := ABoolean;
-  FSupportsEnUsToAny_Specified := True;
-end;
-
-function Capability2.SupportsEnUsToAny_Specified(Index: Integer): boolean;
-begin
-  Result := FSupportsEnUsToAny_Specified;
-end;
-
-procedure Translation2.SetLanguage(Index: Integer; const Astring: string);
-begin
-  FLanguage := Astring;
-  FLanguage_Specified := True;
-end;
-
-function Translation2.Language_Specified(Index: Integer): boolean;
-begin
-  Result := FLanguage_Specified;
-end;
-
-procedure Translation2.SetTranslatedText(Index: Integer; const Astring: string);
-begin
-  FTranslatedText := Astring;
-  FTranslatedText_Specified := True;
-end;
-
-function Translation2.TranslatedText_Specified(Index: Integer): boolean;
-begin
-  Result := FTranslatedText_Specified;
 end;
 
 destructor Match2.Destroy;
@@ -815,6 +750,72 @@ begin
   Result := FTranslations_Specified;
 end;
 
+procedure Language2.SetCode(Index: Integer; const Astring: string);
+begin
+  FCode := Astring;
+  FCode_Specified := True;
+end;
+
+function Language2.Code_Specified(Index: Integer): boolean;
+begin
+  Result := FCode_Specified;
+end;
+
+procedure Capability2.SetSupportsAnyToAny(Index: Integer; const ABoolean: Boolean);
+begin
+  FSupportsAnyToAny := ABoolean;
+  FSupportsAnyToAny_Specified := True;
+end;
+
+function Capability2.SupportsAnyToAny_Specified(Index: Integer): boolean;
+begin
+  Result := FSupportsAnyToAny_Specified;
+end;
+
+procedure Capability2.SetSupportsAnyToEnUs(Index: Integer; const ABoolean: Boolean);
+begin
+  FSupportsAnyToEnUs := ABoolean;
+  FSupportsAnyToEnUs_Specified := True;
+end;
+
+function Capability2.SupportsAnyToEnUs_Specified(Index: Integer): boolean;
+begin
+  Result := FSupportsAnyToEnUs_Specified;
+end;
+
+procedure Capability2.SetSupportsEnUsToAny(Index: Integer; const ABoolean: Boolean);
+begin
+  FSupportsEnUsToAny := ABoolean;
+  FSupportsEnUsToAny_Specified := True;
+end;
+
+function Capability2.SupportsEnUsToAny_Specified(Index: Integer): boolean;
+begin
+  Result := FSupportsEnUsToAny_Specified;
+end;
+
+procedure Translation2.SetLanguage(Index: Integer; const Astring: string);
+begin
+  FLanguage := Astring;
+  FLanguage_Specified := True;
+end;
+
+function Translation2.Language_Specified(Index: Integer): boolean;
+begin
+  Result := FLanguage_Specified;
+end;
+
+procedure Translation2.SetTranslatedText(Index: Integer; const Astring: string);
+begin
+  FTranslatedText := Astring;
+  FTranslatedText_Specified := True;
+end;
+
+function Translation2.TranslatedText_Specified(Index: Integer): boolean;
+begin
+  Result := FTranslatedText_Specified;
+end;
+
 procedure BaseFault2.SetMessage_(Index: Integer; const Astring: string);
 begin
   FMessage_ := Astring;
@@ -826,17 +827,6 @@ begin
   Result := FMessage__Specified;
 end;
 
-procedure MissingParameter2.SetParameterName(Index: Integer; const Astring: string);
-begin
-  FParameterName := Astring;
-  FParameterName_Specified := True;
-end;
-
-function MissingParameter2.ParameterName_Specified(Index: Integer): boolean;
-begin
-  Result := FParameterName_Specified;
-end;
-
 procedure Unexpected2.SetErrorCode(Index: Integer; const AInteger: Integer);
 begin
   FErrorCode := AInteger;
@@ -846,6 +836,17 @@ end;
 function Unexpected2.ErrorCode_Specified(Index: Integer): boolean;
 begin
   Result := FErrorCode_Specified;
+end;
+
+procedure MissingParameter2.SetParameterName(Index: Integer; const Astring: string);
+begin
+  FParameterName := Astring;
+  FParameterName_Specified := True;
+end;
+
+function MissingParameter2.ParameterName_Specified(Index: Integer): boolean;
+begin
+  Result := FParameterName_Specified;
 end;
 
 initialization
@@ -867,67 +868,67 @@ initialization
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetTranslations', 'searchOperator', '',
                                 '[Namespace="http://schemas.datacontract.org/2004/07/Microsoft.Terminology.WebService.Index.Core"]');
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetTranslations', 'sources', '',
-                                '[ArrayItemName="TranslationSource"]', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology", ArrayItemName="TranslationSource"]', IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetTranslations', 'unique', '',
                                 '', IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetTranslations', 'products', '',
-                                '[ArrayItemName="Product"]', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology", ArrayItemName="Product"]', IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetTranslations', 'GetTranslationsResult', '',
-                                '[ArrayItemName="Match"]', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology", ArrayItemName="Match"]', IS_NLBL);
   { Terminology.GetLanguages }
   InvRegistry.RegisterMethodInfo(TypeInfo(Terminology), 'GetLanguages', '',
                                  '[ReturnName="GetLanguagesResult"]', IS_OPTN or IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetLanguages', 'GetLanguagesResult', '',
-                                '[ArrayItemName="Language"]', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology", ArrayItemName="Language"]', IS_NLBL);
   { Terminology.GetProducts }
   InvRegistry.RegisterMethodInfo(TypeInfo(Terminology), 'GetProducts', '',
                                  '[ReturnName="GetProductsResult"]', IS_OPTN or IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetProducts', 'GetProductsResult', '',
-                                '[ArrayItemName="Product"]', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology", ArrayItemName="Product"]', IS_NLBL);
   { Terminology.GetCapability }
   InvRegistry.RegisterMethodInfo(TypeInfo(Terminology), 'GetCapability', '',
                                  '[ReturnName="GetCapabilityResult"]', IS_OPTN or IS_NLBL);
   InvRegistry.RegisterParamInfo(TypeInfo(Terminology), 'GetCapability', 'GetCapabilityResult', '',
-                                '', IS_NLBL);
+                                '[Namespace="https://api.terminology.microsoft.com/terminology"]', IS_NLBL);
+  RemClassRegistry.RegisterXSClass(Unexpected, 'https://api.terminology.microsoft.com/terminology', 'Unexpected');
+  RemClassRegistry.RegisterExternalPropName(TypeInfo(Unexpected), 'Message_', '[ExtName="Message"]');
   RemClassRegistry.RegisterXSInfo(TypeInfo(SearchOperator), 'http://schemas.datacontract.org/2004/07/Microsoft.Terminology.WebService.Index.Core', 'SearchOperator');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(SearchOperator), 'Contains_', 'Contains');
   RemClassRegistry.RegisterXSInfo(TypeInfo(SearchStringComparison), 'http://schemas.datacontract.org/2004/07/Microsoft.Terminology.WebService.Index.Core', 'SearchStringComparison');
-  RemClassRegistry.RegisterXSClass(Unexpected, 'http://api.terminology.microsoft.com/terminology', 'Unexpected');
-  RemClassRegistry.RegisterExternalPropName(TypeInfo(Unexpected), 'Message_', '[ExtName="Message"]');
-  RemClassRegistry.RegisterXSClass(InvalidParameters, 'http://api.terminology.microsoft.com/terminology', 'InvalidParameters');
-  RemClassRegistry.RegisterExternalPropName(TypeInfo(InvalidParameters), 'Message_', '[ExtName="Message"]');
-  RemClassRegistry.RegisterXSClass(MissingParameter, 'http://api.terminology.microsoft.com/terminology', 'MissingParameter');
+  RemClassRegistry.RegisterXSClass(MissingParameter, 'https://api.terminology.microsoft.com/terminology', 'MissingParameter');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(MissingParameter), 'Message_', '[ExtName="Message"]');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(Versions), 'http://api.terminology.microsoft.com/terminology', 'Versions');
-  RemClassRegistry.RegisterXSClass(EntityBase2, 'http://api.terminology.microsoft.com/terminology', 'EntityBase2', 'EntityBase');
-  RemClassRegistry.RegisterXSClass(EntityBase, 'http://api.terminology.microsoft.com/terminology', 'EntityBase');
-  RemClassRegistry.RegisterXSClass(Version2, 'http://api.terminology.microsoft.com/terminology', 'Version2', 'Version');
+  RemClassRegistry.RegisterXSClass(InvalidParameters, 'https://api.terminology.microsoft.com/terminology', 'InvalidParameters');
+  RemClassRegistry.RegisterExternalPropName(TypeInfo(InvalidParameters), 'Message_', '[ExtName="Message"]');
+  RemClassRegistry.RegisterXSClass(EntityBase2, 'https://api.terminology.microsoft.com/terminology', 'EntityBase2', 'EntityBase');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(Versions), 'https://api.terminology.microsoft.com/terminology', 'Versions');
+  RemClassRegistry.RegisterXSClass(Version2, 'https://api.terminology.microsoft.com/terminology', 'Version2', 'Version');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(Version2), 'Name_', '[ExtName="Name"]');
-  RemClassRegistry.RegisterXSClass(Version, 'http://api.terminology.microsoft.com/terminology', 'Version');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(Matches), 'http://api.terminology.microsoft.com/terminology', 'Matches');
+  RemClassRegistry.RegisterXSClass(Version, 'https://api.terminology.microsoft.com/terminology', 'Version');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(Matches), 'https://api.terminology.microsoft.com/terminology', 'Matches');
   RemClassRegistry.RegisterXSInfo(TypeInfo(TranslationSource), 'http://schemas.datacontract.org/2004/07/Microsoft.Terminology.WebService.Index.Entities', 'TranslationSource');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(TranslationSources), 'http://api.terminology.microsoft.com/terminology', 'TranslationSources');
-  RemClassRegistry.RegisterXSClass(Product2, 'http://api.terminology.microsoft.com/terminology', 'Product2', 'Product');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(TranslationSources), 'https://api.terminology.microsoft.com/terminology', 'TranslationSources');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(Products), 'https://api.terminology.microsoft.com/terminology', 'Products');
+  RemClassRegistry.RegisterXSClass(Product2, 'https://api.terminology.microsoft.com/terminology', 'Product2', 'Product');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(Product2), 'Name_', '[ExtName="Name"]');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(Product2), 'Versions', '[ArrayItemName="Version"]');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(Products), 'http://api.terminology.microsoft.com/terminology', 'Products');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(Languages), 'http://api.terminology.microsoft.com/terminology', 'Languages');
-  RemClassRegistry.RegisterXSClass(Language2, 'http://api.terminology.microsoft.com/terminology', 'Language2', 'Language');
-  RemClassRegistry.RegisterXSClass(Language, 'http://api.terminology.microsoft.com/terminology', 'Language');
-  RemClassRegistry.RegisterXSClass(Product, 'http://api.terminology.microsoft.com/terminology', 'Product');
-  RemClassRegistry.RegisterXSClass(Capability2, 'http://api.terminology.microsoft.com/terminology', 'Capability2', 'Capability');
-  RemClassRegistry.RegisterXSClass(Capability, 'http://api.terminology.microsoft.com/terminology', 'Capability');
-  RemClassRegistry.RegisterXSClass(Translation2, 'http://api.terminology.microsoft.com/terminology', 'Translation2', 'Translation');
-  RemClassRegistry.RegisterXSClass(Translation, 'http://api.terminology.microsoft.com/terminology', 'Translation');
-  RemClassRegistry.RegisterXSInfo(TypeInfo(Translations), 'http://api.terminology.microsoft.com/terminology', 'Translations');
-  RemClassRegistry.RegisterXSClass(Match2, 'http://api.terminology.microsoft.com/terminology', 'Match2', 'Match');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(Translations), 'https://api.terminology.microsoft.com/terminology', 'Translations');
+  RemClassRegistry.RegisterXSClass(Match2, 'https://api.terminology.microsoft.com/terminology', 'Match2', 'Match');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(Match2), 'Translations', '[ArrayItemName="Translation"]');
-  RemClassRegistry.RegisterXSClass(Match, 'http://api.terminology.microsoft.com/terminology', 'Match');
-  RemClassRegistry.RegisterXSClass(BaseFault2, 'http://api.terminology.microsoft.com/terminology', 'BaseFault2', 'BaseFault');
+  RemClassRegistry.RegisterXSClass(Match, 'https://api.terminology.microsoft.com/terminology', 'Match');
+  RemClassRegistry.RegisterXSInfo(TypeInfo(Languages), 'https://api.terminology.microsoft.com/terminology', 'Languages');
+  RemClassRegistry.RegisterXSClass(Language2, 'https://api.terminology.microsoft.com/terminology', 'Language2', 'Language');
+  RemClassRegistry.RegisterXSClass(Language, 'https://api.terminology.microsoft.com/terminology', 'Language');
+  RemClassRegistry.RegisterXSClass(Capability2, 'https://api.terminology.microsoft.com/terminology', 'Capability2', 'Capability');
+  RemClassRegistry.RegisterXSClass(Capability, 'https://api.terminology.microsoft.com/terminology', 'Capability');
+  RemClassRegistry.RegisterXSClass(Product, 'https://api.terminology.microsoft.com/terminology', 'Product');
+  RemClassRegistry.RegisterXSClass(EntityBase, 'https://api.terminology.microsoft.com/terminology', 'EntityBase');
+  RemClassRegistry.RegisterXSClass(Translation2, 'https://api.terminology.microsoft.com/terminology', 'Translation2', 'Translation');
+  RemClassRegistry.RegisterXSClass(Translation, 'https://api.terminology.microsoft.com/terminology', 'Translation');
+  RemClassRegistry.RegisterXSClass(BaseFault2, 'https://api.terminology.microsoft.com/terminology', 'BaseFault2', 'BaseFault');
   RemClassRegistry.RegisterExternalPropName(TypeInfo(BaseFault2), 'Message_', '[ExtName="Message"]');
-  RemClassRegistry.RegisterXSClass(MissingParameter2, 'http://api.terminology.microsoft.com/terminology', 'MissingParameter2', 'MissingParameter');
-  RemClassRegistry.RegisterXSClass(Unexpected2, 'http://api.terminology.microsoft.com/terminology', 'Unexpected2', 'Unexpected');
-  RemClassRegistry.RegisterXSClass(InvalidParameters2, 'http://api.terminology.microsoft.com/terminology', 'InvalidParameters2', 'InvalidParameters');
-  RemClassRegistry.RegisterXSClass(BaseFault, 'http://api.terminology.microsoft.com/terminology', 'BaseFault');
+  RemClassRegistry.RegisterXSClass(Unexpected2, 'https://api.terminology.microsoft.com/terminology', 'Unexpected2', 'Unexpected');
+  RemClassRegistry.RegisterXSClass(BaseFault, 'https://api.terminology.microsoft.com/terminology', 'BaseFault');
+  RemClassRegistry.RegisterXSClass(MissingParameter2, 'https://api.terminology.microsoft.com/terminology', 'MissingParameter2', 'MissingParameter');
+  RemClassRegistry.RegisterXSClass(InvalidParameters2, 'https://api.terminology.microsoft.com/terminology', 'InvalidParameters2', 'InvalidParameters');
 
 end.
