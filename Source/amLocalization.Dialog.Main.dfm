@@ -1153,6 +1153,10 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton4'
+        end
+        item
+          Visible = True
+          ItemName = 'dxBarButton15'
         end>
       OneOnRow = False
       Row = 0
@@ -1767,6 +1771,10 @@ object FormMain: TFormMain
       Action = ActionGotoAgain
       Category = 0
       ShortCut = 114
+    end
+    object ButtonTranslationMemoryUpdate: TdxBarButton
+      Action = ActionTranslationMemoryUpdate
+      Category = 0
     end
   end
   object SkinController: TdxSkinController
@@ -2397,6 +2405,14 @@ object FormMain: TFormMain
       ShortCut = 24631
       OnExecute = ActionStopListAddExecute
       OnUpdate = ActionHasActivePropertyUpdate
+    end
+    object ActionTranslationMemoryUpdate: TAction
+      Category = 'Automation'
+      Caption = 'Update TM'
+      Hint = 'Update the Translation Memory with translations from the project'
+      ImageIndex = 85
+      OnExecute = ActionTranslationMemoryUpdateExecute
+      OnUpdate = ActionTranslationMemoryUpdateUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

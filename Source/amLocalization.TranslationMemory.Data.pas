@@ -92,6 +92,7 @@ type
     function GetLanguages: TArray<TLocaleItem>;
     function CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
@@ -1577,6 +1578,44 @@ procedure TDataModuleTranslationMemory.TableTranslationMemoryAfterModify(DataSet
 begin
   FModified := True;
   FRefreshEvent.SetEvent;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TDataModuleTranslationMemory.HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
+var
+  SourceField: TField;
+  SourceValue: string;
+begin
+  if (not CheckLoaded) then
+    Exit(False);
+
+  if (not HasData) then
+    Exit(False);
+
+  SourceField := FindField(SourceLanguage);
+
+  if (SourceField = nil) then
+    // Languages doesn't exist in TM
+    Exit(False);
+
+  SourceValue := SanitizeText(Prop.Value);
+
+  // Populate list of matching target terms
+  TableTranslationMemory.First;
+
+  while (not TableTranslationMemory.EOF) do
+  begin
+    if (not SourceField.IsNull) then
+    begin
+      if (AnsiSameText(SourceValue, SanitizeText(SourceField.AsString))) then
+        Exit(True);
+    end;
+
+    TableTranslationMemory.Next;
+  end;
+
+  Result := False;
 end;
 
 // -----------------------------------------------------------------------------

@@ -94,6 +94,7 @@ type
     function GetLanguages: TArray<TLocaleItem>;
     function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 

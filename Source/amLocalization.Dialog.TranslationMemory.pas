@@ -156,6 +156,7 @@ type
 
 resourcestring
   sTranslationMemoryAddCompleteTitle = 'Translation added';
+  sTranslationMemoryUpdateCompleteTitle = 'Translation added';
   sTranslationMemoryMergeCompleteTitle = 'Merge completed';
   sTranslationMemoryMergeComplete = 'The translations were added to the Translation Memory.'#13#13+
     'Values added: %.0n'#13+

@@ -325,6 +325,8 @@ type
     dxBarSeparator2: TdxBarSeparator;
     dxBarButton15: TdxBarButton;
     ActionGotoAgain: TAction;
+    ButtonTranslationMemoryUpdate: TdxBarButton;
+    ActionTranslationMemoryUpdate: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -476,6 +478,8 @@ type
     procedure ActionGotoAgainExecute(Sender: TObject);
     procedure ActionGotoNextStateExistingExecute(Sender: TObject);
     procedure ActionGotoNextStateUnusedExecute(Sender: TObject);
+    procedure ActionTranslationMemoryUpdateUpdate(Sender: TObject);
+    procedure ActionTranslationMemoryUpdateExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -1837,6 +1841,127 @@ begin
 
   TAction(Sender).Enabled := (Item <> nil) and (not Item.IsUnused) and (Item.EffectiveStatus <> ItemStatusDontTranslate) and
     (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
+end;
+
+procedure TFormMain.ActionTranslationMemoryUpdateExecute(Sender: TObject);
+var
+  i: integer;
+  Item: TCustomLocalizerItem;
+  Count, ElegibleCount: integer;
+  ElegibleWarning: string;
+  Stats, OneStats: TTranslationMemoryMergeStats;
+  DuplicateAction: TTranslationMemoryDuplicateAction;
+  Progress: IProgress;
+  TargetValues: TDictionary<string, TLocalizerProperty>;
+  TargetValue: TPair<string, TLocalizerProperty>;
+resourcestring
+  sUpdateDictionaryPromptTitle = 'Update Translation Memory?';
+  sUpdateDictionaryPrompt = 'Do you want to update the Translation Memory with the selected %.0n values?%s';
+  sUpdateDictionaryEligibleWarning = 'Note: %.0n of the selected values are not elegible for translation and have been excluded.';
+  sProgressUpdateTranslationMemory = 'Updating Translation Memory...';
+begin
+  if (not HasSelection) then
+    Exit;
+
+  // Count eligible values so we can prompt the user
+  Count := 0;
+  for i := 0 to SelectionCount-1 do
+  begin
+    Item := Selection[i];
+    Item.Traverse(
+      function(Prop: TLocalizerProperty): boolean
+      begin
+        Inc(Count);
+        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+          Inc(ElegibleCount);
+        Result := True;
+      end);
+  end;
+
+  if (ElegibleCount = 0) then
+    Exit;
+
+  if (ElegibleCount < Count) then
+    ElegibleWarning :=  #13#13 + Format(sUpdateDictionaryEligibleWarning, [(Count-ElegibleCount) * 1.0])
+  else
+    ElegibleWarning :=  '';
+
+  if (TaskMessageDlg(sUpdateDictionaryPromptTitle, Format(sUpdateDictionaryPrompt, [ElegibleCount * 1.0, ElegibleWarning]),
+    mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
+    Exit;
+
+
+  // Create list of sanitized target values
+  TargetValues := TDictionary<string, TLocalizerProperty>.Create(ElegibleCount);
+  try
+    Stats := Default(TTranslationMemoryMergeStats);
+
+    for i := 0 to SelectionCount-1 do
+    begin
+      Item := Selection[i];
+      Item.Traverse(
+        function(Prop: TLocalizerProperty): boolean
+        var
+          TargetValue: string;
+        begin
+          Inc(Count);
+          if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+          begin
+            TargetValue := SanitizeText(Prop.TranslatedValue[TranslationLanguage]);
+            if (not TargetValues.TryAdd(TargetValue, Prop)) then // Ignore duplicates
+              Inc(Stats.Duplicate);
+          end;
+          Result := True;
+        end);
+    end;
+
+    if (FTranslationMemoryPeek <> nil) then
+      FTranslationMemoryPeek.Cancel;
+
+    Progress := ShowProgress(sProgressUpdateTranslationMemory);
+    Progress.EnableAbort := True;
+    Progress.Progress(psProgress, 0, TargetValues.Count);
+    DuplicateAction := tmDupActionPrompt;
+
+
+    // Add target values to TM
+    for TargetValue in TargetValues do
+    begin
+      Progress.AdvanceProgress;
+
+      if (FTranslationMemory.HasSourceTerm(TargetValue.Value, SourceLanguage)) then
+      begin
+        DuplicateAction := FTranslationMemory.Add(SourceLanguage, TargetValue.Value.Value, TargetLanguage, TargetValue.Key, OneStats, DuplicateAction);
+
+        Inc(Stats.Added, OneStats.Added);
+        Inc(Stats.Merged, OneStats.Merged);
+        Inc(Stats.Skipped, OneStats.Skipped);
+        Inc(Stats.Duplicate, OneStats.Duplicate);
+      end else
+        Inc(Stats.Skipped);
+
+      if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
+        break;
+    end;
+  finally
+    TargetValues.Free;
+  end;
+
+  Progress.Hide;
+
+  QueueTranslationMemoryPeek;
+
+  if (DuplicateAction = tmDupActionAbort) and (ElegibleCount = 1) then
+    Exit; // Nothing to report
+
+  TaskMessageDlg(sTranslationMemoryUpdateCompleteTitle,
+    Format(sTranslationMemoryMergeComplete, [Stats.Added * 1.0, Stats.Merged * 1.0, Stats.Skipped * 1.0, Stats.Duplicate * 1.0]),
+    mtInformation, [mbOK], 0);
+end;
+
+procedure TFormMain.ActionTranslationMemoryUpdateUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (HasSelection) and (SourceLanguage <> TargetLanguage) and (FTranslationMemory.IsAvailable);
 end;
 
 // -----------------------------------------------------------------------------
