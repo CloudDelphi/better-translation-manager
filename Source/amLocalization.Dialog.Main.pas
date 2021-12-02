@@ -2087,9 +2087,6 @@ var
   i: integer;
   DoSet: boolean;
 begin
-  if (ActiveProperty = nil) then
-    exit;
-
   Flag := TPropertyFlag(TAction(Sender).Tag);
 
   FLastBookmark := Ord(Flag);
@@ -2105,6 +2102,9 @@ begin
       end, True, Flag in [FlagBookmark0..FlagBookmark9]);
   end else
   begin
+    if (ActiveProperty = nil) then
+      exit;
+
     // Change the generic set boomark action to indicate what kind of bookmark it will set
     ActionEditMark.ImageIndex := TAction(Sender).ImageIndex;
     ActionEditMark.Tag := TAction(Sender).Tag;
