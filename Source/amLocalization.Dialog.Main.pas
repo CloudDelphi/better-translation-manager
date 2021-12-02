@@ -1717,8 +1717,8 @@ begin
   if (not TranslationService.BeginLookup(SourceLanguage, TargetLanguage)) then
     Exit;
 
-  // Abort any pending TM peek - we will requeue them all when we're done
   if (FTranslationMemoryPeek <> nil) then
+    // Abort any pending TM peek - we will requeue them all when we're done
     FTranslationMemoryPeek.Cancel;
   try
     try
@@ -1774,7 +1774,8 @@ begin
 
                 Translation.UpdateWarnings;
 
-                ReloadProperty(Prop);
+                // Optionally apply translation to rest of project, reload property
+                TranslationAdded(Prop);
               end;
               Result := True;
             end);
@@ -1917,6 +1918,11 @@ begin
   if (PropertyList <> nil) then
   begin
     for Prop in PropertyList do
+    begin
+      if (Prop = AProp) then
+        continue;
+
+      // TODO : Prompt to translate those that already has a (maybe incorrect) translation
       if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.HasTranslation(TranslationLanguage)) then
       begin
         if (SourceValue = Prop.Value) then
@@ -1931,6 +1937,7 @@ begin
 
         Inc(Count);
       end;
+    end;
   end;
 
   if (Count > 0) then
