@@ -580,6 +580,30 @@ const
     @sTranslationValidationWarningPipe,
     @sTranslationValidationWarningSurround);
 
+resourcestring
+  sLocalizerItemStatusTranslate         = 'Translate';
+  sLocalizerItemStatusHold              = 'Hold';
+  sLocalizerItemStatusDontTranslate     = 'Don''t translate';
+
+const
+  sLocalizerItemStatus: array[TLocalizerItemStatus] of PResStringRec = (
+    @sLocalizerItemStatusTranslate,
+    @sLocalizerItemStatusHold,
+    @sLocalizerItemStatusDontTranslate);
+
+resourcestring
+  sLocalizerTranslationStatusObsolete   = 'Obsolete';
+  sLocalizerTranslationStatusPending    = 'Pending';
+  sLocalizerTranslationStatusProposed   = 'Proposed';
+  sLocalizerTranslationStatusTranslated = 'Translated';
+
+const
+  sLocalizerTranslationStatus: array[TTranslationStatus] of PResStringRec = (
+    @sLocalizerTranslationStatusObsolete,
+    @sLocalizerTranslationStatusPending,
+    @sLocalizerTranslationStatusProposed,
+    @sLocalizerTranslationStatusTranslated);
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------

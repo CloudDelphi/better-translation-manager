@@ -1142,6 +1142,7 @@ begin
           begin
             if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TStrings)) then
             begin
+              // TODO : This doesn't work (or makes sense) anymore
               StringList := TStrings(GetOrdProp(Instance, PropList[i]));
               if (StringList.Count = 0) then
               begin
@@ -1260,6 +1261,7 @@ begin
             end else
             if (GetTypeData(PropList[i]^.PropType^)^.ClassType.InheritsFrom(TStrings)) then
             begin
+                // TODO : This doesn't work (or makes sense) anymore
                Strings := TStrings(GetOrdProp(Instance, PropList[i]));
                MemStream := TMemoryStream.Create;
                try

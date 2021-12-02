@@ -10,27 +10,31 @@ inherited FormSearch: TFormSearch
   OnKeyPress = FormKeyPress
   OnShortCut = FormShortCut
   ExplicitWidth = 723
-  ExplicitHeight = 378
+  ExplicitHeight = 377
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 291
     Width = 707
     ExplicitTop = 291
     ExplicitWidth = 707
     inherited ButtonOK: TcxButton
-      Left = 540
+      Left = 520
+      Top = 13
       TabOrder = 5
-      ExplicitLeft = 540
+      ExplicitLeft = 520
+      ExplicitTop = 13
     end
     inherited ButtonCancel: TcxButton
-      Left = 621
+      Left = 602
+      Top = 13
       TabOrder = 6
-      ExplicitLeft = 621
+      ExplicitLeft = 602
+      ExplicitTop = 13
     end
     object ButtonGoto: TcxButton [2]
-      Left = 11
-      Top = 11
+      Left = 13
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionGoTo
@@ -39,8 +43,8 @@ inherited FormSearch: TFormSearch
       TabOrder = 0
     end
     object ButtonAbort: TcxButton [3]
-      Left = 378
-      Top = 11
+      Left = 356
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionAbort
@@ -49,8 +53,8 @@ inherited FormSearch: TFormSearch
       TabOrder = 3
     end
     object ButtonSearch: TcxButton [4]
-      Left = 297
-      Top = 11
+      Left = 274
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionSearch
@@ -59,8 +63,8 @@ inherited FormSearch: TFormSearch
       TabOrder = 2
     end
     object ButtonClose: TcxButton [5]
-      Left = 459
-      Top = 11
+      Left = 438
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionClose
@@ -70,8 +74,8 @@ inherited FormSearch: TFormSearch
       TabOrder = 4
     end
     object ButtonMark: TcxButton [6]
-      Left = 92
-      Top = 11
+      Left = 95
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionMark
@@ -106,8 +110,8 @@ inherited FormSearch: TFormSearch
     object LayoutItemAbort: TdxLayoutItem
       Parent = LayoutGroupButtons
       AlignHorz = ahRight
-      CaptionOptions.Visible = False
       Visible = False
+      CaptionOptions.Visible = False
       Control = ButtonAbort
       ControlOptions.OriginalHeight = 25
       ControlOptions.OriginalWidth = 75
@@ -149,8 +153,8 @@ inherited FormSearch: TFormSearch
     Visible = False
     ExplicitWidth = 707
     inherited LabelHeader: TcxLabel
-      ExplicitWidth = 685
-      Width = 685
+      ExplicitWidth = 664
+      Width = 664
     end
   end
   inherited PanelMain: TPanel
@@ -168,17 +172,20 @@ inherited FormSearch: TFormSearch
       DesignSize = (
         691
         240)
-      object EditSearchText: TcxTextEdit [0]
-        Left = 46
-        Top = 6
+      object EditSearchText: TcxMRUEdit [0]
+        Left = 48
+        Top = 7
         Anchors = [akLeft, akTop, akRight]
+        Properties.CaseInsensitive = False
+        Properties.MaxItemCount = 10
+        Properties.ShowEllipsis = False
         Style.HotTrack = False
         TabOrder = 0
-        Width = 356
+        Width = 337
       end
       object ComboBoxSearchScope: TcxCheckComboBox [1]
-        Left = 46
-        Top = 33
+        Left = 48
+        Top = 37
         Anchors = [akTop, akRight]
         Properties.Items = <
           item
@@ -199,19 +206,19 @@ inherited FormSearch: TFormSearch
         EditValue = 8
         Style.HotTrack = False
         TabOrder = 1
-        Width = 356
+        Width = 337
       end
       object CheckBoxOptionSearchAll: TcxCheckBox [2]
-        Left = 420
-        Top = 6
+        Left = 405
+        Top = 7
         Action = ActionOptionGlobal
         Style.HotTrack = False
         TabOrder = 4
         Transparent = True
       end
       object CheckBoxOptionCaseSensitive: TcxCheckBox [3]
-        Left = 420
-        Top = 25
+        Left = 405
+        Top = 26
         Action = ActionOptionCaseSensitive
         Style.HotTrack = False
         Style.TransparentBorder = True
@@ -219,8 +226,8 @@ inherited FormSearch: TFormSearch
         Transparent = True
       end
       object CheckBoxOptionRegExp: TcxCheckBox [4]
-        Left = 420
-        Top = 44
+        Left = 405
+        Top = 45
         Action = ActionOptionRegExp
         Style.HotTrack = False
         Style.TransparentBorder = True
@@ -228,8 +235,8 @@ inherited FormSearch: TFormSearch
         Transparent = True
       end
       object ButtonRegExHelp: TcxButton [5]
-        Left = 539
-        Top = 44
+        Left = 531
+        Top = 45
         Width = 21
         Height = 21
         Cursor = crHandPoint
@@ -276,73 +283,27 @@ inherited FormSearch: TFormSearch
         TabOrder = 7
         OnClick = ButtonRegExHelpClick
       end
-      object ListViewResult: TcxListView [6]
-        Left = 6
-        Top = 90
-        Width = 679
-        Height = 138
-        ColumnClick = False
-        Columns = <
-          item
-            Caption = 'Module'
-            MaxWidth = 200
-            MinWidth = 50
-            Width = 60
-          end
-          item
-            AutoSize = True
-            Caption = 'Element'
-            MaxWidth = 400
-            MinWidth = 50
-          end
-          item
-            Caption = 'Name'
-            MaxWidth = 400
-            MinWidth = 50
-            Width = 100
-          end
-          item
-            Caption = 'Text'
-            MaxWidth = 400
-            MinWidth = 50
-            Width = 150
-          end
-          item
-            Caption = 'Found in'
-            MaxWidth = 200
-            MinWidth = 50
-            Width = 100
-          end>
-        MultiSelect = True
-        ReadOnly = True
-        RowSelect = True
-        TabOrder = 12
-        ViewStyle = vsReport
-        OnDblClick = ListViewResultDblClick
-        OnEnter = ListViewResultEnter
-        OnExit = ListViewResultExit
-      end
-      object CheckBoxOptionIgnoreAccelerator: TcxCheckBox [7]
-        Left = 566
-        Top = 6
+      object CheckBoxOptionIgnoreAccelerator: TcxCheckBox [6]
+        Left = 559
+        Top = 7
         Action = ActionOptionIgnoreAccelerator
         Style.HotTrack = False
         Style.TransparentBorder = True
         TabOrder = 8
         Transparent = True
       end
-      object CheckBoxOptionFuzzy: TcxCheckBox [8]
-        Left = 566
-        Top = 44
+      object CheckBoxOptionFuzzy: TcxCheckBox [7]
+        Left = 559
+        Top = 45
         Action = ActionOptionFuzzy
         Style.HotTrack = False
         Style.TransparentBorder = True
         TabOrder = 10
         Transparent = True
       end
-      object EditOptionFuzzy: TcxSpinEdit [9]
-        Left = 640
-        Top = 63
+      object EditOptionFuzzy: TcxSpinEdit [8]
+        Left = 639
+        Top = 64
         Hint = 
           'Levenshtein distance|Number of deletions, insertions and substit' +
           'utions required to make the strings equal'
@@ -357,18 +318,18 @@ inherited FormSearch: TFormSearch
         Value = 1
         Width = 45
       end
-      object CheckBoxOptionExact: TcxCheckBox [10]
-        Left = 566
-        Top = 25
+      object CheckBoxOptionExact: TcxCheckBox [9]
+        Left = 559
+        Top = 26
         Action = ActionOptionExact
         Style.HotTrack = False
         Style.TransparentBorder = True
         TabOrder = 9
         Transparent = True
       end
-      object CheckComboBoxStatus: TcxCheckComboBox [11]
-        Left = 46
-        Top = 60
+      object CheckComboBoxStatus: TcxCheckComboBox [10]
+        Left = 48
+        Top = 67
         Properties.EmptySelectionText = '(any)'
         Properties.Items = <
           item
@@ -382,11 +343,11 @@ inherited FormSearch: TFormSearch
           end>
         Style.HotTrack = False
         TabOrder = 2
-        Width = 158
+        Width = 148
       end
-      object CheckComboBoxState: TcxCheckComboBox [12]
-        Left = 245
-        Top = 60
+      object CheckComboBoxState: TcxCheckComboBox [11]
+        Left = 238
+        Top = 67
         Properties.EmptySelectionText = '(any)'
         Properties.Items = <
           item
@@ -403,17 +364,99 @@ inherited FormSearch: TFormSearch
           end>
         Style.HotTrack = False
         TabOrder = 3
-        Width = 157
+        Width = 147
+      end
+      object GridResult: TcxGrid [12]
+        Left = 7
+        Top = 97
+        Width = 677
+        Height = 129
+        TabOrder = 12
+        OnEnter = GridResultEnter
+        OnExit = GridResultExit
+        object GridResultTableView: TcxGridTableView
+          Navigator.Buttons.CustomButtons = <>
+          ScrollbarAnnotations.CustomAnnotations = <>
+          OnCellDblClick = GridResultTableViewCellDblClick
+          DataController.Summary.DefaultGroupSummaryItems = <>
+          DataController.Summary.FooterSummaryItems = <>
+          DataController.Summary.SummaryGroups = <>
+          OptionsBehavior.CellHints = True
+          OptionsCustomize.ColumnGrouping = False
+          OptionsCustomize.ColumnsQuickCustomization = True
+          OptionsCustomize.ColumnsQuickCustomizationShowCommands = False
+          OptionsData.Deleting = False
+          OptionsData.Editing = False
+          OptionsData.Inserting = False
+          OptionsSelection.CellSelect = False
+          OptionsSelection.MultiSelect = True
+          OptionsView.CellEndEllipsis = True
+          OptionsView.NoDataToDisplayInfoText = '<No result>'
+          OptionsView.ColumnAutoWidth = True
+          OptionsView.GroupByBox = False
+          OptionsView.Indicator = True
+          OptionsView.ShowColumnFilterButtons = sfbWhenSelected
+          Styles.Selection = DataModuleMain.StyleSelected
+          object GridResultTableViewColumnModule: TcxGridColumn
+            Caption = 'Module'
+            Width = 60
+          end
+          object GridResultTableViewColumnItemName: TcxGridColumn
+            Caption = 'Element'
+            Width = 260
+          end
+          object GridResultTableViewColumnType: TcxGridColumn
+            Caption = 'Type'
+            Visible = False
+          end
+          object GridResultTableViewColumnValueName: TcxGridColumn
+            Caption = 'Name'
+            Width = 100
+          end
+          object GridResultTableViewColumnID: TcxGridColumn
+            Caption = 'ID'
+            Visible = False
+          end
+          object GridResultTableViewColumnStatus: TcxGridColumn
+            Caption = 'Status'
+            DataBinding.ValueType = 'Integer'
+            RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemStatus
+            Visible = False
+          end
+          object GridResultTableViewColumnState: TcxGridColumn
+            Caption = 'State'
+            DataBinding.ValueType = 'Integer'
+            RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemState
+            Visible = False
+          end
+          object GridResultTableViewColumnSource: TcxGridColumn
+            Caption = 'Lorem ipsum'
+            Width = 150
+          end
+          object GridResultTableViewColumnTarget: TcxGridColumn
+            Caption = 'Lorem ipsum'
+            Visible = False
+            Width = 150
+          end
+          object GridResultTableViewColumnFoundIn: TcxGridColumn
+            Caption = 'Found in'
+            Width = 100
+          end
+        end
+        object GridResultLevel: TcxGridLevel
+          GridView = GridResultTableView
+        end
       end
       inherited LayoutControlGroup_Root: TdxLayoutGroup
         AlignVert = avClient
+        ItemIndex = 1
       end
       object dxLayoutItem1: TdxLayoutItem
         Parent = dxLayoutGroup7
         AlignHorz = ahClient
         CaptionOptions.Text = '&Find:'
         Control = EditSearchText
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 121
         ControlOptions.ShowBorder = False
         Index = 0
@@ -423,7 +466,7 @@ inherited FormSearch: TFormSearch
         AlignHorz = ahClient
         CaptionOptions.Text = 'in'
         Control = ComboBoxSearchScope
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 393
         ControlOptions.ShowBorder = False
         Index = 1
@@ -431,7 +474,6 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup2: TdxLayoutGroup
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = 'New Group'
-        ButtonOptions.Buttons = <>
         LayoutDirection = ldHorizontal
         ShowBorder = False
         Index = 0
@@ -459,7 +501,7 @@ inherited FormSearch: TFormSearch
         CaptionOptions.Visible = False
         Control = CheckBoxOptionRegExp
         ControlOptions.OriginalHeight = 19
-        ControlOptions.OriginalWidth = 113
+        ControlOptions.OriginalWidth = 119
         ControlOptions.ShowBorder = False
         Index = 0
       end
@@ -475,7 +517,6 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup3: TdxLayoutGroup
         Parent = dxLayoutGroup1
         CaptionOptions.Text = 'New Group'
-        ButtonOptions.Buttons = <>
         ItemIndex = 2
         ShowBorder = False
         UseIndent = False
@@ -489,20 +530,10 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup4: TdxLayoutGroup
         Parent = dxLayoutGroup3
         CaptionOptions.Text = 'New Group'
-        ButtonOptions.Buttons = <>
         ItemIndex = 1
         LayoutDirection = ldHorizontal
         ShowBorder = False
         Index = 2
-      end
-      object LayoutItemList: TdxLayoutItem
-        Parent = LayoutControlGroup_Root
-        AlignVert = avClient
-        Control = ListViewResult
-        ControlOptions.OriginalHeight = 259
-        ControlOptions.OriginalWidth = 121
-        ControlOptions.ShowBorder = False
-        Index = 1
       end
       object dxLayoutItem11: TdxLayoutItem
         Parent = dxLayoutGroup6
@@ -516,7 +547,6 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup1: TdxLayoutGroup
         Parent = dxLayoutGroup2
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ItemIndex = 1
         LayoutDirection = ldHorizontal
         ShowBorder = False
@@ -525,7 +555,6 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup6: TdxLayoutGroup
         Parent = dxLayoutGroup1
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ItemIndex = 1
         ShowBorder = False
         UseIndent = False
@@ -535,7 +564,6 @@ inherited FormSearch: TFormSearch
         Parent = dxLayoutGroup2
         AlignHorz = ahClient
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ItemIndex = 2
         ShowBorder = False
         Index = 0
@@ -552,11 +580,11 @@ inherited FormSearch: TFormSearch
       object dxLayoutItem13: TdxLayoutItem
         Parent = dxLayoutGroup6
         AlignHorz = ahLeft
-        CaptionOptions.Text = 'Threshold:'
         Padding.Left = 18
         Padding.AssignedValues = [lpavLeft]
+        CaptionOptions.Text = 'Threshold:'
         Control = EditOptionFuzzy
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 45
         ControlOptions.ShowBorder = False
         Index = 3
@@ -580,7 +608,7 @@ inherited FormSearch: TFormSearch
         AlignHorz = ahClient
         CaptionOptions.Text = 'Status:'
         Control = CheckComboBoxStatus
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 121
         ControlOptions.ShowBorder = False
         Index = 0
@@ -590,7 +618,7 @@ inherited FormSearch: TFormSearch
         AlignHorz = ahClient
         CaptionOptions.Text = 'State:'
         Control = CheckComboBoxState
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 121
         ControlOptions.ShowBorder = False
         Index = 1
@@ -598,17 +626,26 @@ inherited FormSearch: TFormSearch
       object dxLayoutGroup5: TdxLayoutGroup
         Parent = dxLayoutGroup7
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         LayoutDirection = ldHorizontal
         ShowBorder = False
         Index = 2
+      end
+      object LayoutItemGrid: TdxLayoutItem
+        Parent = LayoutControlGroup_Root
+        AlignVert = avClient
+        CaptionOptions.Visible = False
+        Control = GridResult
+        ControlOptions.OriginalHeight = 73
+        ControlOptions.OriginalWidth = 349
+        ControlOptions.ShowBorder = False
+        Index = 1
       end
     end
   end
   inherited ActionList: TActionList
     Images = DataModuleMain.ImageListSmall
-    Left = 324
-    Top = 204
+    Left = 60
+    Top = 200
     inherited ActionOK: TAction
       Enabled = False
     end
@@ -723,8 +760,8 @@ inherited FormSearch: TFormSearch
         ItemName = 'dxBarButton3'
       end>
     UseOwnFont = False
-    Left = 408
-    Top = 203
+    Left = 152
+    Top = 195
     PixelsPerInch = 96
   end
   object BarManagerSearch: TdxBarManager
@@ -743,8 +780,8 @@ inherited FormSearch: TFormSearch
     ImageOptions.StretchGlyphs = False
     PopupMenuLinks = <>
     UseSystemFont = True
-    Left = 500
-    Top = 203
+    Left = 260
+    Top = 199
     PixelsPerInch = 96
     object dxBarButton1: TdxBarButton
       Action = ActionMarkTranslate

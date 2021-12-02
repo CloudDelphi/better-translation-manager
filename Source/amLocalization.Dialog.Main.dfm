@@ -556,25 +556,7 @@ object FormMain: TFormMain
         object GridItemsTableViewColumnStatus: TcxGridColumn
           Caption = 'Status'
           DataBinding.ValueType = 'Integer'
-          PropertiesClassName = 'TcxImageComboBoxProperties'
-          Properties.ImmediatePost = True
-          Properties.ImmediateUpdateText = True
-          Properties.Items = <
-            item
-              Description = 'Translate'
-              ImageIndex = 0
-              Value = 0
-            end
-            item
-              Description = 'Hold'
-              ImageIndex = 5
-              Value = 1
-            end
-            item
-              Description = 'Don'#39't translate'
-              ImageIndex = 2
-              Value = 2
-            end>
+          RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemStatus
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
           Options.FilteringAddValueItems = False
@@ -585,24 +567,7 @@ object FormMain: TFormMain
         object GridItemsTableViewColumnEffectiveStatus: TcxGridColumn
           Caption = 'Effetive status'
           DataBinding.ValueType = 'Integer'
-          PropertiesClassName = 'TcxImageComboBoxProperties'
-          Properties.Items = <
-            item
-              Description = 'Translate'
-              ImageIndex = 0
-              Value = 0
-            end
-            item
-              Description = 'Hold'
-              ImageIndex = 5
-              Value = 1
-            end
-            item
-              Description = 'Don'#39't translate'
-              ImageIndex = 2
-              Value = 2
-            end>
-          Properties.ReadOnly = True
+          RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemStatus
           Visible = False
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
@@ -616,30 +581,7 @@ object FormMain: TFormMain
         object GridItemsTableViewColumnState: TcxGridColumn
           Caption = 'State'
           DataBinding.ValueType = 'Integer'
-          PropertiesClassName = 'TcxImageComboBoxProperties'
-          Properties.ImmediatePost = True
-          Properties.ImmediateUpdateText = True
-          Properties.Items = <
-            item
-              Description = 'Obsolete'
-              ImageIndex = 7
-              Value = 0
-            end
-            item
-              Description = 'Pending'
-              ImageIndex = 6
-              Value = 1
-            end
-            item
-              Description = 'Proposed'
-              ImageIndex = 3
-              Value = 2
-            end
-            item
-              Description = 'Translated'
-              ImageIndex = 4
-              Value = 3
-            end>
+          RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemState
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           OnGetFilterValues = GridItemsTableViewColumnStatusStateGetFilterValues
           Options.FilteringAddValueItems = False

@@ -79,6 +79,8 @@ type
     LayoutSkinLookAndFeelTight: TdxLayoutSkinLookAndFeel;
     StyleDisabled: TcxStyle;
     StyleNeedAction: TcxStyle;
+    EditRepositoryComboBoxItemStatus: TcxEditRepositoryImageComboBoxItem;
+    EditRepositoryComboBoxItemState: TcxEditRepositoryImageComboBoxItem;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);

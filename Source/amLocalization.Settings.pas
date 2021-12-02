@@ -25,7 +25,7 @@ uses
   Classes,
   Forms,
   Graphics,
-  dxSpellChecker,
+  dxSpellChecker, // TODO : Get rid of this dependency
   cxCustomData,
   amRegConfig,
   amFileUtils,
@@ -362,6 +362,17 @@ type
     property SanitizeRules: TSanitizeRules read FSanitizeRules write FSanitizeRules;
   end;
 
+  TTranslationManagerSearchSettings = class(TConfigurationSection)
+  private
+    FHistory: TConfigurationStringList; // TConfigurationStringList
+  protected
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+  published
+    property History: TConfigurationStringList read FHistory;
+  end;
+
   TTranslationManagerStopListGroupSettings = class(TConfigurationStringList)
   private
     FExpanded: boolean;
@@ -479,6 +490,7 @@ type
     FLayout: TTranslationManagerLayoutSettings;
     FBackup: TTranslationManagerBackupSettings;
     FEditor: TTranslationManagerEditorSettings;
+    FSearch: TTranslationManagerSearchSettings;
     FStopList: TTranslationManagerStopListSettings;
   private
     class function GetFolderInstall: string; static;
@@ -505,6 +517,7 @@ type
     property Layout: TTranslationManagerLayoutSettings read FLayout;
     property Backup: TTranslationManagerBackupSettings read FBackup;
     property Editor: TTranslationManagerEditorSettings read FEditor;
+    property Search: TTranslationManagerSearchSettings read FSearch;
     property StopList: TTranslationManagerStopListSettings read FStopList;
   end;
 
@@ -520,7 +533,7 @@ uses
   Math,
   Types,
   Registry,
-  cxPropertiesStore,
+  cxPropertiesStore, // TODO : Get rid of this dependency
   amVersionInfo,
   amLocalization.Environment,
   amLocalization.TranslationMemory.Data;
@@ -778,6 +791,7 @@ begin
   FLayout := TTranslationManagerLayoutSettings.Create(Self);
   FBackup := TTranslationManagerBackupSettings.Create(Self);
   FEditor := TTranslationManagerEditorSettings.Create(Self);
+  FSearch := TTranslationManagerSearchSettings.Create(Self);
   FStopList := TTranslationManagerStopListSettings.Create(Self);
 
   if (Assigned(FOnSettingsCreating)) then
@@ -797,6 +811,7 @@ begin
   FLayout.Free;
   FBackup.Free;
   FEditor.Free;
+  FSearch.Free;
   FStopList.Free;
 
   inherited;
@@ -1402,6 +1417,20 @@ procedure TTranslationManagerProviderMicrosoftTranslatorV3Settings.ApplyDefault;
 begin
   inherited;
   FRegion := 'global';
+end;
+
+{ TTranslationManagerSearchSettings }
+
+constructor TTranslationManagerSearchSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+  FHistory := TConfigurationStringList.Create(Self);
+end;
+
+destructor TTranslationManagerSearchSettings.Destroy;
+begin
+  FHistory.Free;
+  inherited;
 end;
 
 initialization

@@ -233,6 +233,53 @@ object DataModuleMain: TDataModuleMain
           ShortDescription = 'Space'
         end>
     end
+    object EditRepositoryComboBoxItemStatus: TcxEditRepositoryImageComboBoxItem
+      Properties.Images = ImageListTree
+      Properties.ImmediatePost = True
+      Properties.ImmediateUpdateText = True
+      Properties.Items = <
+        item
+          Description = 'Translate'
+          ImageIndex = 0
+          Value = 0
+        end
+        item
+          Description = 'Hold'
+          ImageIndex = 5
+          Value = 1
+        end
+        item
+          Description = 'Don'#39't translate'
+          ImageIndex = 2
+          Value = 2
+        end>
+    end
+    object EditRepositoryComboBoxItemState: TcxEditRepositoryImageComboBoxItem
+      Properties.Images = ImageListTree
+      Properties.ImmediatePost = True
+      Properties.ImmediateUpdateText = True
+      Properties.Items = <
+        item
+          Description = 'Obsolete'
+          ImageIndex = 7
+          Value = 0
+        end
+        item
+          Description = 'Pending'
+          ImageIndex = 6
+          Value = 1
+        end
+        item
+          Description = 'Proposed'
+          ImageIndex = 3
+          Value = 2
+        end
+        item
+          Description = 'Translated'
+          ImageIndex = 4
+          Value = 3
+        end>
+    end
   end
   object ImageListTree: TcxImageList
     SourceDPI = 96

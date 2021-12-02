@@ -11,17 +11,22 @@
 interface
 
 uses
+  Generics.Collections,
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus,
   System.Actions, Vcl.ActnList, Vcl.ComCtrls, Vcl.StdCtrls,
-  RegularExpressions, Diagnostics,
+  RegularExpressions, Diagnostics, Vcl.ExtCtrls,
 
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore,
   cxClasses, dxLayoutContainer, dxLayoutControl, cxContainer, cxEdit, dxLayoutcxEditAdapters, dxLayoutControlAdapters, cxButtons,
-  cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit,
+  cxCheckBox, cxMaskEdit, cxDropDownEdit, cxTextEdit, cxCheckComboBox, cxSpinEdit,
+  cxLabel, dxBar, cxStyles, cxCustomData,
+  cxFilter, cxData, cxDataStorage, cxNavigator, dxDateRanges,
+  dxScrollbarAnnotations, cxGridCustomView, cxGridCustomTableView,
+  cxGridTableView, cxGridLevel, cxGrid, cxMRUEdit,
 
   amLocalization.Dialog,
-  amLocalization.Model, Vcl.ExtCtrls, cxLabel, dxBar;
+  amLocalization.Model;
 
 type
   ILocalizerSearchHost = interface
@@ -50,9 +55,34 @@ type
   TSearchScopes = set of TSearchScope;
 
 type
+  TLocalizerSearchResult = record
+    Prop: TLocalizerProperty;
+    FoundIn: string;
+  end;
+
+  TLocalizerSearchResultList = TList<TLocalizerSearchResult>;
+
+  TLocalizerSearchResultDataSource = class(TcxCustomDataSource)
+  private type
+    TLocalizerSearchResultColumn = (rcModule, rcItemName, rcType, rcValueName, rcID, rcStatus, rcState, rcSource, rcTarget, rcFoundIn);
+  private
+    FSearchHost: ILocalizerSearchHost;
+    FList: TLocalizerSearchResultList;
+  protected
+    function GetRecordCount: Integer; override;
+    function GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant; override;
+    function GetItemHandle(AItemIndex: Integer): TcxDataItemHandle; override;
+    function IsMultiThreadingSupported: Boolean; override;
+  public
+    constructor Create(const ASearchHost: ILocalizerSearchHost; AList: TLocalizerSearchResultList);
+
+    procedure DataChanged; override;
+  end;
+
+type
   TFormSearch = class(TFormDialog, ILocalizerSearchProvider)
     dxLayoutItem1: TdxLayoutItem;
-    EditSearchText: TcxTextEdit;
+    EditSearchText: TcxMRUEdit;
     dxLayoutItem2: TdxLayoutItem;
     ComboBoxSearchScope: TcxCheckComboBox;
     dxLayoutGroup2: TdxLayoutGroup;
@@ -69,8 +99,6 @@ type
     dxLayoutGroup4: TdxLayoutGroup;
     ActionSearch: TAction;
     ActionClose: TAction;
-    LayoutItemList: TdxLayoutItem;
-    ListViewResult: TcxListView;
     ActionGoTo: TAction;
     ActionOptionRegExp: TAction;
     ActionOptionCaseSensitive: TAction;
@@ -115,17 +143,28 @@ type
     dxLayoutItem10: TdxLayoutItem;
     CheckComboBoxState: TcxCheckComboBox;
     dxLayoutGroup5: TdxLayoutGroup;
+    GridResultLevel: TcxGridLevel;
+    GridResult: TcxGrid;
+    LayoutItemGrid: TdxLayoutItem;
+    GridResultTableView: TcxGridTableView;
+    GridResultTableViewColumnModule: TcxGridColumn;
+    GridResultTableViewColumnItemName: TcxGridColumn;
+    GridResultTableViewColumnValueName: TcxGridColumn;
+    GridResultTableViewColumnSource: TcxGridColumn;
+    GridResultTableViewColumnTarget: TcxGridColumn;
+    GridResultTableViewColumnFoundIn: TcxGridColumn;
+    GridResultTableViewColumnType: TcxGridColumn;
+    GridResultTableViewColumnStatus: TcxGridColumn;
+    GridResultTableViewColumnState: TcxGridColumn;
+    GridResultTableViewColumnID: TcxGridColumn;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
-    procedure ListViewResultDblClick(Sender: TObject);
     procedure ActionGoToExecute(Sender: TObject);
     procedure ActionGoToUpdate(Sender: TObject);
     procedure ActionCloseExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
     procedure ActionSearchUpdate(Sender: TObject);
-    procedure ListViewResultEnter(Sender: TObject);
-    procedure ListViewResultExit(Sender: TObject);
     procedure ComboBoxSearchScopePropertiesChange(Sender: TObject);
     procedure ActionDummyExecute(Sender: TObject);
     procedure ActionOptionFuzzyUpdate(Sender: TObject);
@@ -137,10 +176,17 @@ type
     procedure ActionMarkSetExecute(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
     procedure ActionOptionExactUpdate(Sender: TObject);
+    procedure GridResultTableViewCellDblClick(Sender: TcxCustomGridTableView;
+      ACellViewInfo: TcxGridTableDataCellViewInfo; AButton: TMouseButton;
+      AShift: TShiftState; var AHandled: Boolean);
+    procedure GridResultEnter(Sender: TObject);
+    procedure GridResultExit(Sender: TObject);
   private type
     TLocalizerItemStatusSet = set of TLocalizerItemStatus;
     TTranslationStatusSet = set of TTranslationStatus;
   private
+    FSearchResult: TLocalizerSearchResultList;
+    FSearchResultDataSource: TLocalizerSearchResultDataSource;
     FSearchText: string;
     FRegExp: TRegEx;
     FSearchScope: TSearchScopes;
@@ -165,6 +211,7 @@ type
     procedure Clear;
   public
     constructor Create(const ASearchHost: ILocalizerSearchHost); reintroduce;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -181,6 +228,8 @@ uses
 {$endif MADEXCEPT}
   amCursorService,
   amShell,
+  amLocale,
+  amLocalization.Settings,
   amLocalization.Normalization,
   amLocalization.Data.Main;
 
@@ -198,18 +247,43 @@ var
 // -----------------------------------------------------------------------------
 
 constructor TFormSearch.Create(const ASearchHost: ILocalizerSearchHost);
+var
+  LocaleItem: TLocaleItem;
 begin
   inherited Create(Application);
   FSearchHost := ASearchHost;
   FSearchScope := [ssTarget];
   FFuzzyThreshold := 1;
   FLastMessagePump := TStopwatch.StartNew;
+
+  LocaleItem := TLocaleItems.FindLCID(FSearchHost.Project.SourceLanguageID);
+  GridResultTableViewColumnSource.Caption := LocaleItem.LanguageName;
+
+  FSearchResult := TLocalizerSearchResultList.Create;
+  FSearchResultDataSource := TLocalizerSearchResultDataSource.Create(FSearchHost, FSearchResult);
+  GridResultTableView.DataController.CustomDataSource := FSearchResultDataSource;
+
+  EditSearchText.Properties.LookupItems.Assign(TranslationManagerSettings.Search.History);
+end;
+
+destructor TFormSearch.Destroy;
+begin
+  TranslationManagerSettings.Search.History.Assign(EditSearchText.Properties.LookupItems);
+
+  FSearchResultDataSource.Free;
+  FSearchResult.Free;
+  inherited;
 end;
 
 // -----------------------------------------------------------------------------
 
 procedure TFormSearch.Show;
+var
+  LocaleItem: TLocaleItem;
 begin
+  LocaleItem := TLocaleItems.FindLCID(FSearchHost.TranslationLanguage.LanguageID);
+  GridResultTableViewColumnTarget.Caption := LocaleItem.LanguageName;
+
   inherited Show;
   SetFocus;
   EditSearchText.SetFocus;
@@ -227,33 +301,20 @@ end;
 
 function TFormSearch.CanSelectNextResult: boolean;
 begin
-  Result := (ListViewResult.Items.Count > 1);
+  Result := (FSearchResult.Count > 1);
 end;
 
 function TFormSearch.SelectNextResult: boolean;
-var
-  SelectedIndex: integer;
 begin
-  if (ListViewResult.Items.Count = 0) then
+  if (FSearchResult.Count = 0) then
     Exit(False);
 
-  SelectedIndex := ListViewResult.ItemIndex;
+  GridResultTableView.Controller.GoToNext(False);
+  GridResultTableView.Controller.ClearSelection;
 
-  if (SelectedIndex = -1) then
-    // Select first
-    SelectedIndex := 0
-  else
-  if (SelectedIndex < ListViewResult.Items.Count-1) then
-    // Select next
-    Inc(SelectedIndex)
-  else
-    // Wrap around
-    SelectedIndex := 0;
+  if (GridResultTableView.Controller.FocusedRow <> nil) then
+    GridResultTableView.Controller.FocusedRow.MakeVisible;
 
-  ListViewResult.ClearSelection;
-  ListViewResult.ItemIndex := SelectedIndex;
-
-  ListViewResult.Selected.MakeVisible(False);
   ActionGoTo.Execute;
 
   Result := True;
@@ -271,7 +332,8 @@ end;
 
 procedure TFormSearch.Clear;
 begin
-  ListViewResult.Items.Clear;
+  FSearchResult.Clear;
+  FSearchResultDataSource.DataChanged;
   SetStatusText('');
 end;
 
@@ -376,7 +438,7 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
 var
   FoundText: string;
   Found: boolean;
-  ListItem: TListItem;
+  SearchResult: TLocalizerSearchResult;
   State: TTranslationStatus;
   Translation: TLocalizerTranslation;
 resourcestring
@@ -456,16 +518,11 @@ begin
 
   if (Found) then
   begin
-    ListItem := ListViewResult.Items.Add;
-    ListItem.Data := Prop;
+    SearchResult.Prop := Prop;
+    SearchResult.FoundIn := FoundText;
+    FSearchResult.Add(SearchResult);
 
-    ListItem.Caption := Prop.Item.Module.Name;
-    ListItem.SubItems.Add(Prop.Item.Name);
-    ListItem.SubItems.Add(Prop.Name);
-    ListItem.SubItems.Add(Prop.Value);
-    ListItem.SubItems.Add(FoundText);
-
-    SetStatusText(Format(sSearchResultItems, [ListViewResult.Items.Count]));
+    SetStatusText(Format(sSearchResultItems, [FSearchResult.Count]));
   end;
 
   ProcessMessages;
@@ -514,7 +571,7 @@ begin
   if (not ActionOptionCaseSensitive.Checked) then
     FSearchText := AnsiUpperCase(FSearchText);
 
-  ListViewResult.Items.BeginUpdate;
+  GridResultTableView.BeginUpdate;
   try
 
     FAbort := False;
@@ -527,6 +584,8 @@ begin
 
       SearchRoot.Traverse(SearchItem, True);
 
+      FSearchResultDataSource.DataChanged;
+
     finally
       FSearchInProgress := False;
       LayoutItemAbort.Visible := False;
@@ -534,16 +593,15 @@ begin
     end;
 
   finally
-    ListViewResult.Items.EndUpdate;
+    GridResultTableView.EndUpdate;
   end;
-  ListViewResult.Update;
 
-  SetStatusText(Format(sSearchResultItems, [ListViewResult.Items.Count]));
+  SetStatusText(Format(sSearchResultItems, [FSearchResult.Count]));
 
   if (FAbort) then
     ShowMessage('Search aborted')
   else
-  if (ListViewResult.Items.Count = 0) then
+  if (FSearchResult.Count = 0) then
     ShowMessage('No results found');
 end;
 
@@ -573,12 +631,13 @@ end;
 
 procedure TFormSearch.ActionGoToExecute(Sender: TObject);
 begin
-  ViewItem(TLocalizerProperty(ListViewResult.Selected.Data));
+  if (GridResultTableView.Controller.FocusedRowIndex <> -1) then
+    ViewItem(FSearchResult[GridResultTableView.Controller.FocusedRowIndex].Prop);
 end;
 
 procedure TFormSearch.ActionGoToUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (ListViewResult.SelCount = 1);
+  TAction(Sender).Enabled := (GridResultTableView.Controller.SelectedRowCount = 1);
 end;
 
 // -----------------------------------------------------------------------------
@@ -591,20 +650,22 @@ end;
 procedure TFormSearch.ActionMarkSetExecute(Sender: TObject);
 var
   i: integer;
+  Prop: TLocalizerProperty;
 begin
-  for i := 0 to ListViewResult.Items.Count-1 do
-    if (ListViewResult.Items[i].Selected) then
-    begin
-      TLocalizerProperty(ListViewResult.Items[i].Data).Status := TLocalizerItemStatus(TAction(Sender).Tag);
+  for i := 0 to GridResultTableView.Controller.SelectedRowCount-1 do
+  begin
+    Prop := FSearchResult[GridResultTableView.Controller.FocusedRowIndex].Prop;
 
-      if (FSearchHost <> nil) then
-        FSearchHost.InvalidateItem(TLocalizerProperty(ListViewResult.Items[i].Data));
-    end;
+    Prop.Status := TLocalizerItemStatus(TAction(Sender).Tag);
+
+    if (FSearchHost <> nil) then
+      FSearchHost.InvalidateItem(Prop);
+  end;
 end;
 
 procedure TFormSearch.ActionMarkUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (ListViewResult.SelCount > 0);
+  TAction(Sender).Enabled := (GridResultTableView.Controller.SelectedRowCount > 0);
 end;
 
 // -----------------------------------------------------------------------------
@@ -637,17 +698,17 @@ begin
 
   DoSearch(EditSearchText.Text);
 
-  if (ListViewResult.Items.Count > 0) then
+  if (FSearchResult.Count > 0) then
   begin
-    ListViewResult.Enabled := True;
+    LayoutItemGrid.Enabled := True;
 
     // Move focus to the list
-    ListViewResult.SetFocus;
+    GridResult.SetFocus;
 
     // Select first item
     SelectNextResult;
   end else
-    ListViewResult.Enabled := False;
+    LayoutItemGrid.Enabled := False;
 end;
 
 procedure TFormSearch.ActionSearchUpdate(Sender: TObject);
@@ -695,7 +756,7 @@ procedure TFormSearch.FormShortCut(var Msg: TWMKey; var Handled: Boolean);
 begin
   if (ShortCutFromMessage(Msg) = ShortCut(Ord('A'), [ssCtrl])) then
   begin
-    ListViewResult.SelectAll;
+    GridResultTableView.Controller.SelectAll;
     Handled := True;
   end;
   if (not Handled) then
@@ -704,26 +765,30 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormSearch.ListViewResultDblClick(Sender: TObject);
-begin
-  if (ActionGoTo.Enabled) then
-    ActionGoTo.Execute;
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TFormSearch.ListViewResultEnter(Sender: TObject);
+procedure TFormSearch.GridResultEnter(Sender: TObject);
 begin
   // Make Goto button default so the user can just press [Enter] to view the item
   ButtonSearch.Default := False;
   ButtonGoto.Default := True;
 end;
 
-procedure TFormSearch.ListViewResultExit(Sender: TObject);
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.GridResultExit(Sender: TObject);
 begin
   // Make Search button default so the user can just press [Enter] to search
   ButtonSearch.Default := True;
   ButtonGoto.Default := False;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.GridResultTableViewCellDblClick(
+  Sender: TcxCustomGridTableView; ACellViewInfo: TcxGridTableDataCellViewInfo;
+  AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
+begin
+  if (ActionGoTo.Enabled) then
+    ActionGoTo.Execute;
 end;
 
 // -----------------------------------------------------------------------------
@@ -846,5 +911,90 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+{ TLocalizerSearchResultDataSource }
+
+constructor TLocalizerSearchResultDataSource.Create(const ASearchHost: ILocalizerSearchHost; AList: TLocalizerSearchResultList);
+begin
+  inherited Create;
+  FSearchHost := ASearchHost;
+  FList := AList;
+end;
+
+procedure TLocalizerSearchResultDataSource.DataChanged;
+begin
+  inherited;
+
+end;
+
+function TLocalizerSearchResultDataSource.GetItemHandle(AItemIndex: Integer): TcxDataItemHandle;
+begin
+  // Contrary to documentation and posts by DevExpress support, it seems we do not
+  // need to translate the ItemIndex.
+  // var GridColumn := TcxCustomGridTableItem(DataController.GetItem(AItemIndex));
+  // Result := TcxDataItemHandle(GridColumn.ID);
+
+  Result := TcxDataItemHandle(AItemIndex);
+end;
+
+function TLocalizerSearchResultDataSource.GetRecordCount: Integer;
+begin
+  Result := FList.Count;
+end;
+
+function TLocalizerSearchResultDataSource.GetValue(ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
+var
+  Translation: TLocalizerTranslation;
+begin
+  var Prop := FList[NativeInt(ARecordHandle)].Prop;
+  var ItemIndex := TLocalizerSearchResultColumn(AItemHandle);
+
+  case ItemIndex of
+    rcModule:
+      Result := Prop.Item.Module.Name;
+
+    rcItemName:
+      Result := Prop.Item.Name;
+
+    rcType:
+      Result := Prop.Item.TypeName;
+
+    rcValueName:
+      Result := Prop.Name;
+
+    rcID:
+      Result := Prop.Item.ResourceID.ToString;
+
+    rcStatus:
+      Result := Ord(Prop.Status);
+
+    rcState:
+      if (Prop.Translations.TryGetTranslation(FSearchHost.TranslationLanguage, Translation)) then
+        Result := Ord(Translation.Status)
+      else
+        Result := Ord(tStatusPending);
+
+    rcSource:
+      Result := Prop.Value;
+
+    rcTarget:
+      // Don't use Prop.TranslatedValue[] here. We need to get "obsolete" values too
+      if (Prop.Translations.TryGetTranslation(FSearchHost.TranslationLanguage, Translation)) then
+        Result := Translation.Value
+      else
+        Result := Prop.Value;
+
+    rcFoundIn:
+      Result := FList[NativeInt(ARecordHandle)].FoundIn;
+  else
+    Result := Format('Invalid column: %d', [Ord(ItemIndex)]);
+  end;
+end;
+
+function TLocalizerSearchResultDataSource.IsMultiThreadingSupported: Boolean;
+begin
+  // We're assuming that DataChanged will never get called while another thread is fetching data
+  Result := True;
+end;
 
 end.

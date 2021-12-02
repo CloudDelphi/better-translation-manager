@@ -4913,6 +4913,7 @@ procedure TFormMain.SetSourceLanguageID(const Value: Word);
 var
   LocaleItem: TLocaleItem;
 begin
+  // TODO : Should broadcast notification
   LocaleItem := TLocaleItems.FindLCID(Value);
   if (LocaleItem = nil) then
     raise Exception.CreateFmt('Invalid source language ID: %.4X', [Value]);
@@ -4989,6 +4990,8 @@ var
   FilenameDic, FilenameAff: string;
   SpellCheckerDictionaryItem: TdxSpellCheckerDictionaryItem;
 begin
+  // TODO : Should broadcast notification
+
   // Note: Always process setting the target regardless of current value.
   // We need to have the dependents refreshed.
 
