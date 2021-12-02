@@ -59,6 +59,7 @@ type
       var Error: Boolean);
     procedure ActionImportExecute(Sender: TObject);
     procedure ActionExportExecute(Sender: TObject);
+    procedure TreeListStopListColumnGroupPropertiesInitPopup(Sender: TObject);
   private
     FStopList: TStopListItemList;
     FStopListLocked: boolean;
@@ -374,22 +375,31 @@ end;
 
 procedure TFormStopList.TreeListStopListColumnGroupGetEditingProperties(Sender: TcxTreeListColumn; ANode: TcxTreeListNode;
   var EditProperties: TcxCustomEditProperties);
-var
-  i: integer;
-  s: string;
 begin
   if (ANode.Level = 0) then
   begin
     EditProperties := EditRepositoryTextItem.Properties;
     Exit;
   end;
+end;
 
-  TcxComboBoxProperties(EditProperties).Items.Clear;
-  for i := 0 to TreeListStopList.Root.Count-1 do
-  begin
-    s := VarToStr(TreeListStopList.Root.Items[i].Values[TreeListStopListColumnGroup.ItemIndex]);
-    if (TcxComboBoxProperties(EditProperties).Items.IndexOf(s) = -1) then
-      TcxComboBoxProperties(EditProperties).Items.Add(s);
+procedure TFormStopList.TreeListStopListColumnGroupPropertiesInitPopup(
+  Sender: TObject);
+var
+  i: integer;
+  s: string;
+begin
+  TcxComboBox(Sender).Properties.Items.BeginUpdate;
+  try
+    TcxComboBox(Sender).Properties.Items.Clear;
+    for i := 0 to TreeListStopList.Root.Count-1 do
+    begin
+      s := VarToStr(TreeListStopList.Root.Items[i].Values[TreeListStopListColumnGroup.ItemIndex]);
+      if (TcxComboBox(Sender).Properties.Items.IndexOf(s) = -1) then
+        TcxComboBox(Sender).Properties.Items.Add(s);
+    end;
+  finally
+    TcxComboBox(Sender).Properties.Items.EndUpdate;
   end;
 end;
 

@@ -123,6 +123,7 @@ inherited FormStopList: TFormStopList
         OnNodeCheckChanged = TreeListStopListNodeCheckChanged
         object TreeListStopListColumnGroup: TcxTreeListColumn
           PropertiesClassName = 'TcxComboBoxProperties'
+          Properties.OnInitPopup = TreeListStopListColumnGroupPropertiesInitPopup
           Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
           Caption.Text = 'Group'
           DataBinding.ValueType = 'String'
