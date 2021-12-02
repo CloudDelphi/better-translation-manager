@@ -1929,6 +1929,7 @@ object FormMain: TFormMain
     end
     object ActionStatusTranslate: TAction
       Category = 'Translation'
+      AutoCheck = True
       Caption = 'Translate'
       ImageIndex = 10
       OnExecute = ActionStatusTranslateExecute
@@ -1936,6 +1937,7 @@ object FormMain: TFormMain
     end
     object ActionStatusDontTranslate: TAction
       Category = 'Translation'
+      AutoCheck = True
       Caption = '&Don'#39't translate'
       ImageIndex = 12
       ShortCut = 32836
@@ -1944,6 +1946,7 @@ object FormMain: TFormMain
     end
     object ActionStatusHold: TAction
       Category = 'Translation'
+      AutoCheck = True
       Caption = '&Hold'
       ImageIndex = 11
       ShortCut = 32840
