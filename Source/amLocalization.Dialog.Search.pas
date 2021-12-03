@@ -276,11 +276,15 @@ begin
   GridResultTableView.DataController.CustomDataSource := FSearchResultDataSource;
 
   EditSearchText.Properties.LookupItems.Assign(TranslationManagerSettings.Search.History);
+  ComboBoxSearchScope.EditValue := TranslationManagerSettings.Search.Scope;
+  GridResultTableView.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, [gsoUseFilter], TranslationManagerSettings.Layout.SearchResult.Name);
 end;
 
 destructor TFormSearch.Destroy;
 begin
   TranslationManagerSettings.Search.History.Assign(EditSearchText.Properties.LookupItems);
+  TranslationManagerSettings.Search.Scope := ComboBoxSearchScope.EditValue;
+  GridResultTableView.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, [gsoUseFilter], TranslationManagerSettings.Layout.SearchResult.Name);
 
   FSearchResultDataSource.Free;
   FSearchResult.Free;

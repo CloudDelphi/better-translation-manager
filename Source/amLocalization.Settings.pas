@@ -259,6 +259,7 @@ type
     FItemGrid: TTranslationManagerLayoutGridSettings;
     FTranslationMemory: TTranslationManagerLayoutGridSettings;
     FBlackList: TTranslationManagerLayoutGridSettings;
+    FSearchResult: TTranslationManagerLayoutGridSettings;
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
@@ -267,6 +268,7 @@ type
     property ItemGrid: TTranslationManagerLayoutGridSettings read FItemGrid;
     property TranslationMemory: TTranslationManagerLayoutGridSettings read FTranslationMemory;
     property StopList: TTranslationManagerLayoutGridSettings read FBlackList;
+    property SearchResult: TTranslationManagerLayoutGridSettings read FSearchResult;
   end;
 
 
@@ -368,13 +370,15 @@ type
 
   TTranslationManagerSearchSettings = class(TConfigurationSection)
   private
-    FHistory: TConfigurationStringList; // TConfigurationStringList
+    FHistory: TConfigurationStringList;
+    FScope: integer; // TConfigurationStringList
   protected
   public
     constructor Create(AOwner: TConfigurationSection); override;
     destructor Destroy; override;
   published
     property History: TConfigurationStringList read FHistory;
+    property Scope: integer read FScope write FScope default 8; // Translation
   end;
 
   TTranslationManagerStopListGroupSettings = class(TConfigurationStringList)
@@ -1021,6 +1025,7 @@ begin
   FItemGrid := TTranslationManagerLayoutGridSettings.Create(Self);
   FTranslationMemory := TTranslationManagerLayoutGridSettings.Create(Self);
   FBlackList := TTranslationManagerLayoutGridSettings.Create(Self);
+  FSearchResult := TTranslationManagerLayoutGridSettings.Create(Self);
 end;
 
 destructor TTranslationManagerLayoutSettings.Destroy;
@@ -1028,7 +1033,8 @@ begin
   FModuleTree.Free;
   FItemGrid.Free;
   FTranslationMemory.Free;
-  StopList.Free;
+  FBlackList.Free;
+  FSearchResult.Free;
 
   inherited;
 end;
