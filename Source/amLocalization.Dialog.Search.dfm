@@ -390,12 +390,14 @@ inherited FormSearch: TFormSearch
           OptionsData.Inserting = False
           OptionsSelection.CellSelect = False
           OptionsSelection.MultiSelect = True
+          OptionsSelection.UnselectFocusedRecordOnExit = False
           OptionsView.CellEndEllipsis = True
           OptionsView.NoDataToDisplayInfoText = '<No result>'
           OptionsView.ColumnAutoWidth = True
           OptionsView.GroupByBox = False
           OptionsView.Indicator = True
           OptionsView.ShowColumnFilterButtons = sfbWhenSelected
+          Styles.Inactive = DataModuleMain.StyleSelected
           Styles.Selection = DataModuleMain.StyleSelected
           object GridResultTableViewColumnModule: TcxGridColumn
             Caption = 'Module'
@@ -720,21 +722,24 @@ inherited FormSearch: TFormSearch
       Category = 'Mark'
       Caption = 'Translate'
       ImageIndex = 10
-      OnExecute = ActionMarkSetExecute
+      OnExecute = ActionMarkSetStatusExecute
+      OnUpdate = ActionMarkUpdate
     end
     object ActionMarkHold: TAction
       Tag = 1
       Category = 'Mark'
       Caption = 'Hold'
       ImageIndex = 11
-      OnExecute = ActionMarkSetExecute
+      OnExecute = ActionMarkSetStatusExecute
+      OnUpdate = ActionMarkUpdate
     end
     object ActionMarkDontTranslate: TAction
       Tag = 2
       Category = 'Mark'
       Caption = 'Don'#39't translate'
       ImageIndex = 12
-      OnExecute = ActionMarkSetExecute
+      OnExecute = ActionMarkSetStatusExecute
+      OnUpdate = ActionMarkUpdate
     end
     object ActionOptionExact: TAction
       Category = 'Options'
@@ -742,6 +747,27 @@ inherited FormSearch: TFormSearch
       Caption = 'Exact match'
       OnExecute = ActionDummyExecute
       OnUpdate = ActionOptionExactUpdate
+    end
+    object ActionMarkProposed: TAction
+      Category = 'Mark'
+      Caption = 'Proposed'
+      ImageIndex = 7
+      OnExecute = ActionMarkProposedExecute
+      OnUpdate = ActionMarkUpdate
+    end
+    object ActionMarkTranslated: TAction
+      Category = 'Mark'
+      Caption = 'Translated'
+      ImageIndex = 8
+      OnExecute = ActionMarkTranslatedExecute
+      OnUpdate = ActionMarkUpdate
+    end
+    object ActionMarkNotTranslated: TAction
+      Category = 'Mark'
+      Caption = 'Not translated'
+      ImageIndex = 9
+      OnExecute = ActionMarkNotTranslatedExecute
+      OnUpdate = ActionMarkUpdate
     end
   end
   object PopupMenuMark: TdxBarPopupMenu
@@ -758,10 +784,26 @@ inherited FormSearch: TFormSearch
       item
         Visible = True
         ItemName = 'dxBarButton3'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarSeparator1'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton6'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton5'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarButton4'
       end>
     UseOwnFont = False
-    Left = 152
-    Top = 195
+    Left = 156
+    Top = 219
     PixelsPerInch = 96
   end
   object BarManagerSearch: TdxBarManager
@@ -795,5 +837,34 @@ inherited FormSearch: TFormSearch
       Action = ActionMarkDontTranslate
       Category = 0
     end
+    object dxBarButton4: TdxBarButton
+      Action = ActionMarkNotTranslated
+      Category = 0
+    end
+    object dxBarButton5: TdxBarButton
+      Action = ActionMarkTranslated
+      Category = 0
+    end
+    object dxBarButton6: TdxBarButton
+      Action = ActionMarkProposed
+      Category = 0
+    end
+    object dxBarSeparator1: TdxBarSeparator
+      Category = 0
+      Visible = ivAlways
+      ShowCaption = False
+    end
+  end
+  object GridPopupMenu: TcxGridPopupMenu
+    Grid = GridResult
+    PopupMenus = <
+      item
+        GridView = GridResultTableView
+        HitTypes = [gvhtCell, gvhtRecord, gvhtRowIndicator]
+        Index = 0
+        PopupMenu = PopupMenuMark
+      end>
+    Left = 128
+    Top = 171
   end
 end

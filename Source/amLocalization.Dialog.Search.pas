@@ -23,7 +23,7 @@ uses
   cxLabel, dxBar, cxStyles, cxCustomData,
   cxFilter, cxData, cxDataStorage, cxNavigator, dxDateRanges,
   dxScrollbarAnnotations, cxGridCustomView, cxGridCustomTableView,
-  cxGridTableView, cxGridLevel, cxGrid, cxMRUEdit,
+  cxGridTableView, cxGridLevel, cxGrid, cxMRUEdit, dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu,
 
   amLocalization.Dialog,
   amLocalization.Model;
@@ -157,6 +157,14 @@ type
     GridResultTableViewColumnStatus: TcxGridColumn;
     GridResultTableViewColumnState: TcxGridColumn;
     GridResultTableViewColumnID: TcxGridColumn;
+    GridPopupMenu: TcxGridPopupMenu;
+    ActionMarkProposed: TAction;
+    ActionMarkTranslated: TAction;
+    ActionMarkNotTranslated: TAction;
+    dxBarButton4: TdxBarButton;
+    dxBarButton5: TdxBarButton;
+    dxBarButton6: TdxBarButton;
+    dxBarSeparator1: TdxBarSeparator;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -173,7 +181,7 @@ type
     procedure ActionAbortExecute(Sender: TObject);
     procedure ActionMarkExecute(Sender: TObject);
     procedure ActionMarkUpdate(Sender: TObject);
-    procedure ActionMarkSetExecute(Sender: TObject);
+    procedure ActionMarkSetStatusExecute(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
     procedure ActionOptionExactUpdate(Sender: TObject);
     procedure GridResultTableViewCellDblClick(Sender: TcxCustomGridTableView;
@@ -181,6 +189,9 @@ type
       AShift: TShiftState; var AHandled: Boolean);
     procedure GridResultEnter(Sender: TObject);
     procedure GridResultExit(Sender: TObject);
+    procedure ActionMarkProposedExecute(Sender: TObject);
+    procedure ActionMarkTranslatedExecute(Sender: TObject);
+    procedure ActionMarkNotTranslatedExecute(Sender: TObject);
   private type
     TLocalizerItemStatusSet = set of TLocalizerItemStatus;
     TTranslationStatusSet = set of TTranslationStatus;
@@ -203,6 +214,7 @@ type
     procedure DoSearch(const SearchString: string);
     procedure SetStatusText(const Msg: string);
     procedure ProcessMessages;
+    procedure SetTranslationStatus(Prop: TLocalizerProperty; Status: TTranslationStatus);
 
     // ILocalizerSearchProvider
     procedure Show;
@@ -326,6 +338,36 @@ procedure TFormSearch.SetStatusText(const Msg: string);
 begin
   LayoutItemStatus.CaptionOptions.Text := Msg;
   Update;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.SetTranslationStatus(Prop: TLocalizerProperty; Status: TTranslationStatus);
+var
+  Translation: TLocalizerTranslation;
+begin
+  if (FSearchHost = nil) then
+    Exit;
+
+  if (Status in [tStatusProposed, tStatusTranslated]) then
+  begin
+    if (Prop.Translations.TryGetTranslation(FSearchHost.TranslationLanguage, Translation)) then
+    begin
+      if (Translation.Status = Status) then
+        Exit;
+      Translation.Status := Status;
+    end else
+      Translation := Prop.Translations.AddOrUpdateTranslation(FSearchHost.TranslationLanguage, Prop.Value, Status);
+
+  end else
+  if (Status = tStatusPending) then
+  begin
+    if (Prop.Translations.FindTranslation(FSearchHost.TranslationLanguage) = nil) then
+      Exit;
+    Prop.Translations.Remove(FSearchHost.TranslationLanguage);
+  end;
+
+  FSearchHost.InvalidateItem(Prop);
 end;
 
 // -----------------------------------------------------------------------------
@@ -571,7 +613,7 @@ begin
   if (not ActionOptionCaseSensitive.Checked) then
     FSearchText := AnsiUpperCase(FSearchText);
 
-  GridResultTableView.BeginUpdate;
+  GridResultTableView.BeginUpdate(lsimImmediate);
   try
 
     FAbort := False;
@@ -642,25 +684,61 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormSearch.ActionMarkExecute(Sender: TObject);
+procedure TFormSearch.ActionMarkNotTranslatedExecute(Sender: TObject);
 begin
-  PostMessage(ButtonMark.Handle, DXM_DROPDOWNPOPUPMENU, 0, 0);
+  for var i := 0 to GridResultTableView.Controller.SelectedRowCount-1 do
+  begin
+    var Prop := FSearchResult[GridResultTableView.Controller.SelectedRows[i].RecordIndex].Prop;
+    SetTranslationStatus(Prop, tStatusPending);
+    GridResultTableView.Controller.SelectedRows[i].Invalidate;
+  end;
 end;
 
-procedure TFormSearch.ActionMarkSetExecute(Sender: TObject);
+procedure TFormSearch.ActionMarkProposedExecute(Sender: TObject);
+begin
+  for var i := 0 to GridResultTableView.Controller.SelectedRowCount-1 do
+  begin
+    var Prop := FSearchResult[GridResultTableView.Controller.SelectedRows[i].RecordIndex].Prop;
+    SetTranslationStatus(Prop, tStatusProposed);
+    GridResultTableView.Controller.SelectedRows[i].Invalidate;
+  end;
+end;
+
+procedure TFormSearch.ActionMarkTranslatedExecute(Sender: TObject);
+begin
+  for var i := 0 to GridResultTableView.Controller.SelectedRowCount-1 do
+  begin
+    var Prop := FSearchResult[GridResultTableView.Controller.SelectedRows[i].RecordIndex].Prop;
+    SetTranslationStatus(Prop, tStatusTranslated);
+    GridResultTableView.Controller.SelectedRows[i].Invalidate;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ActionMarkSetStatusExecute(Sender: TObject);
 var
   i: integer;
   Prop: TLocalizerProperty;
 begin
   for i := 0 to GridResultTableView.Controller.SelectedRowCount-1 do
   begin
-    Prop := FSearchResult[GridResultTableView.Controller.FocusedRowIndex].Prop;
+    Prop := FSearchResult[GridResultTableView.Controller.SelectedRows[i].RecordIndex].Prop;
 
     Prop.Status := TLocalizerItemStatus(TAction(Sender).Tag);
 
     if (FSearchHost <> nil) then
       FSearchHost.InvalidateItem(Prop);
+
+    GridResultTableView.Controller.SelectedRows[i].Invalidate;
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.ActionMarkExecute(Sender: TObject);
+begin
+  PostMessage(ButtonMark.Handle, DXM_DROPDOWNPOPUPMENU, 0, 0);
 end;
 
 procedure TFormSearch.ActionMarkUpdate(Sender: TObject);
