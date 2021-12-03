@@ -301,10 +301,6 @@ type
     ActionEditStatusHint: TAction;
     dxLayoutItem54: TdxLayoutItem;
     CheckBoxEditBiDiMode: TcxCheckBox;
-    dxLayoutItem55: TdxLayoutItem;
-    CheckBoxEditAutoApplyTranslations: TcxCheckBox;
-    dxLayoutItem56: TdxLayoutItem;
-    CheckBoxEditAutoApplyTranslationsSimilar: TcxCheckBox;
     dxLayoutItem57: TdxLayoutItem;
     cxCheckBox1: TcxCheckBox;
     dxLayoutItem58: TdxLayoutItem;
@@ -335,6 +331,13 @@ type
     ComboBoxNormalization: TcxCheckComboBox;
     EditTranslatorMSAPIRegion: TcxComboBox;
     dxLayoutItem67: TdxLayoutItem;
+    ComboBoxAutoApplyTranslations: TcxComboBox;
+    dxLayoutItem68: TdxLayoutItem;
+    ComboBoxAutoApplyTranslationsSimilar: TcxComboBox;
+    dxLayoutItem69: TdxLayoutItem;
+    LayoutGroupAutoApplyTranslations: TdxLayoutGroup;
+    CheckBoxAutoApplyTranslationsExisting: TcxCheckBox;
+    dxLayoutItem55: TdxLayoutItem;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -387,6 +390,7 @@ type
     procedure ActionEditStatusHintUpdate(Sender: TObject);
     procedure CheckBoxPortableClick(Sender: TObject);
     procedure ActionProviderTMFilenameExecute(Sender: TObject);
+    procedure ComboBoxAutoApplyTranslationsPropertiesChange(Sender: TObject);
   private
     type
       TSkinDetails = record
@@ -593,8 +597,9 @@ begin
   CheckBoxProjectAutoApplyStopList.Checked := TranslationManagerSettings.System.AutoApplyStopList;
 
   CheckBoxEditUseProposed.Checked := TranslationManagerSettings.Editor.UseProposedStatus;
-  CheckBoxEditAutoApplyTranslations.Checked := TranslationManagerSettings.Editor.AutoApplyTranslations;
-  CheckBoxEditAutoApplyTranslationsSimilar.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+  ComboBoxAutoApplyTranslations.ItemIndex := Ord(TranslationManagerSettings.Editor.AutoApplyTranslations);
+  ComboBoxAutoApplyTranslationsSimilar.ItemIndex := Ord(TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar);
+  CheckBoxAutoApplyTranslationsExisting.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsExisting;
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
   ComboBoxNormalization.EditValue := Byte(TranslationManagerSettings.Editor.SanitizeRules);
   ComboBoxEqualization.EditValue := Byte(TranslationManagerSettings.Editor.EqualizerRules);
@@ -665,8 +670,9 @@ begin
   TranslationManagerSettings.System.AutoApplyStopList := CheckBoxProjectAutoApplyStopList.Checked;
 
   TranslationManagerSettings.Editor.UseProposedStatus := CheckBoxEditUseProposed.Checked;
-  TranslationManagerSettings.Editor.AutoApplyTranslations := CheckBoxEditAutoApplyTranslations.Checked;
-  TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar := CheckBoxEditAutoApplyTranslationsSimilar.Checked;
+  TranslationManagerSettings.Editor.AutoApplyTranslations := TTranslationAutoApply(ComboBoxAutoApplyTranslations.ItemIndex);
+  TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar := TTranslationAutoApply(ComboBoxAutoApplyTranslationsSimilar.ItemIndex);
+  TranslationManagerSettings.Editor.AutoApplyTranslationsExisting := CheckBoxAutoApplyTranslationsExisting.Checked;
   if (TranslationManagerSettings.Editor.UseProposedStatus) then
     TLocalizerTranslations.DefaultStatus := tStatusProposed
   else
@@ -1476,6 +1482,11 @@ end;
 procedure TFormSettings.ComboBoxApplicationLanguagePropertiesEditValueChanged(Sender: TObject);
 begin
   RequireRestart;
+end;
+
+procedure TFormSettings.ComboBoxAutoApplyTranslationsPropertiesChange(Sender: TObject);
+begin
+  LayoutGroupAutoApplyTranslations.Enabled := (TTranslationAutoApply(ComboBoxAutoApplyTranslations.ItemIndex) <> aaNever);
 end;
 
 procedure TFormSettings.EditProofingAutoCorrectReplacementFromPropertiesChange(Sender: TObject);

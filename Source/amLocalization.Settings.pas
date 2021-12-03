@@ -333,6 +333,8 @@ type
     property StyleDontTranslate: TTranslationManagerListStyleSettings index ListStyleDontTranslate read GetStyle;
   end;
 
+  TTranslationAutoApply = (aaNever, aaAlways, aaPrompt);
+
   TTranslationManagerEditorSettings = class(TConfigurationSection)
   private
     FStyle: TTranslationManagerStyleSettings;
@@ -340,10 +342,11 @@ type
     FStatusGlyphHints: boolean;
     FUseProposedStatus: boolean;
     FEditBiDiMode: boolean;
-    FAutoApplyTranslations: boolean;
-    FAutoApplyTranslationsSimilar: boolean;
+    FAutoApplyTranslations: TTranslationAutoApply;
+    FAutoApplyTranslationsSimilar: TTranslationAutoApply;
     FEqualizerRules: TMakeAlikeRules;
     FSanitizeRules: TSanitizeRules;
+    FAutoApplyTranslationsExisting: boolean;
   protected
     procedure ApplyDefault; override;
   public
@@ -356,8 +359,9 @@ type
 
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
     property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
-    property AutoApplyTranslations: boolean read FAutoApplyTranslations write FAutoApplyTranslations default True;
-    property AutoApplyTranslationsSimilar: boolean read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default True;
+    property AutoApplyTranslations: TTranslationAutoApply read FAutoApplyTranslations write FAutoApplyTranslations default aaAlways;
+    property AutoApplyTranslationsSimilar: TTranslationAutoApply read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default aaAlways;
+    property AutoApplyTranslationsExisting: boolean read FAutoApplyTranslationsExisting write FAutoApplyTranslationsExisting default False;
     property EqualizerRules: TMakeAlikeRules read FEqualizerRules write FEqualizerRules;
     property SanitizeRules: TSanitizeRules read FSanitizeRules write FSanitizeRules;
   end;

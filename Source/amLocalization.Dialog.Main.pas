@@ -1884,7 +1884,6 @@ end;
 procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
 var
   SourceValue, TranslatedValue: string;
-  Count: integer;
   PropertyList: TLocalizerPropertyList;
   Prop: TLocalizerProperty;
 begin
@@ -1899,7 +1898,10 @@ begin
   **     so it can be reused for future translations."
   **
   *)
-  if (not TranslationManagerSettings.Editor.AutoApplyTranslations) or (not AProp.HasTranslation(TranslationLanguage)) then
+  var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+  var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+
+  if (AutoApplyTranslations = aaNever) or (not AProp.HasTranslation(TranslationLanguage)) then
     Exit;
 
   SourceValue := AProp.Value;
@@ -1909,39 +1911,141 @@ begin
   if (SourceValue.Trim.IsEmpty) or (TranslatedValue.Trim.IsEmpty) then
     Exit;
 
-  Count := 0;
   SaveCursor(crAppStart);
 
   // Get a list of properties with "similar" source values
   PropertyList := FProjectIndex.Lookup(AProp);
 
-  if (PropertyList <> nil) then
+  if (PropertyList = nil) then
+    Exit;
+
+  // Count props so we can prompt
+  var CountSame := 0;
+  var CountSimilar := 0;
+  for Prop in PropertyList do
   begin
-    for Prop in PropertyList do
+    if (Prop = AProp) then
+      continue;
+
+    if (Prop.EffectiveStatus <> ItemStatusTranslate) then
+      continue;
+
+    if (TranslationManagerSettings.Editor.AutoApplyTranslationsExisting) or (not Prop.HasTranslation(TranslationLanguage)) then
     begin
-      if (Prop = AProp) then
-        continue;
-
-      // TODO : Prompt to translate those that already has a (maybe incorrect) translation
-      if (Prop.EffectiveStatus = ItemStatusTranslate) and (not Prop.HasTranslation(TranslationLanguage)) then
-      begin
-        if (SourceValue = Prop.Value) then
-          Prop.TranslatedValue[TranslationLanguage] := TranslatedValue
-        else
-        if (TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar) then
-          Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue)
-        else
-          continue;
-
-        ReloadProperty(Prop);
-
-        Inc(Count);
-      end;
+      if (SourceValue = Prop.Value) then
+        Inc(CountSame)
+      else
+        Inc(CountSimilar);
     end;
   end;
 
-  if (Count > 0) then
-    QueueToast(Format('Applied translation to %.0n properties', [Count*1.0])); // TODO : Localization
+  var IndexSame := 0;
+  var IndexSimilar := 0;
+  var UpdatedSame := 0;
+  var UpdatedSimilar := 0;
+
+  for Prop in PropertyList do
+  begin
+    if (Prop = AProp) then
+      continue;
+
+    if (Prop.EffectiveStatus <> ItemStatusTranslate) then
+      continue;
+
+    var HasTranslation := Prop.HasTranslation(TranslationLanguage);
+    if (TranslationManagerSettings.Editor.AutoApplyTranslationsExisting) or (not HasTranslation) then
+    begin
+      if (SourceValue = Prop.Value) then
+      begin
+        Inc(IndexSame);
+        var Apply := True;
+        // Prompt to translate those that already has a (maybe incorrect) translation
+        if (AutoApplyTranslations = aaPrompt) then
+        begin
+          var OldTranslation := '';
+          if (HasTranslation) then
+            OldTranslation := Prop.TranslatedValue[TranslationLanguage];
+          var Msg := Format('Apply the same translation to the following identical value?'#13#13+
+            '  Module: %s'#13+
+            '  Element: %s'#13+
+            '  Property: %s'#13+
+            '  Value: %s'#13+
+            '  Old translation: %s'#13+
+            '  New translation: %s'#13#13+
+            '(%.0n of %.0n)', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, TranslatedValue, IndexSame*1.0, CountSame*1.0]);
+          var Res := TaskMessageDlg('Apply translation?', Msg, mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbCancel], 0, mbYes);
+          if (Res in [mrNoToAll, mrCancel]) then
+            break;
+          if (Res = mrYesToAll) then
+            AutoApplyTranslations := aaAlways
+          else
+          if (Res = mrNo) then
+            Apply := False;
+        end;
+
+        if (Apply) then
+        begin
+          Prop.TranslatedValue[TranslationLanguage] := TranslatedValue;
+          Inc(UpdatedSame);
+        end;
+      end else
+      if (AutoApplyTranslationsSimilar <> aaNever) then
+      begin
+        Inc(IndexSimilar);
+        var Apply := True;
+        // Prompt to translate those that already has a (maybe incorrect) translation
+        if (AutoApplyTranslationsSimilar = aaPrompt) then
+        begin
+          var OldTranslation := '';
+          if (HasTranslation) then
+            OldTranslation := Prop.TranslatedValue[TranslationLanguage];
+          var NewTranslation := MakeAlike(Prop.Value, TranslatedValue);
+          var Msg := Format('Apply the same translation to the following similar value?'#13#13+
+            '  Module: %s'#13+
+            '  Element: %s'#13+
+            '  Property: %s'#13+
+            '  Value: %s'#13+
+            '  Old translation: %s'#13+
+            '  New translation: %s'#13#13+
+            '(%.0n of %.0n)', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, NewTranslation, IndexSimilar*1.0, CountSimilar*1.0]);
+          var Res := TaskMessageDlg('Apply similar translation?', Msg, mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbCancel], 0, mbYes);
+          if (Res = mrCancel) then
+            break;
+          if (Res = mrNoToAll) then
+            AutoApplyTranslationsSimilar := aaNever
+          else
+          if (Res = mrYesToAll) then
+            AutoApplyTranslationsSimilar := aaAlways
+          else
+          if (Res = mrNo) then
+            Apply := False;
+        end;
+
+        if (Apply) then
+        begin
+          Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue);
+          Inc(UpdatedSimilar);
+        end;
+      end else
+        continue;
+
+      ReloadProperty(Prop);
+    end;
+  end;
+
+  if (CountSame > 0) or (CountSimilar > 0) then
+  begin
+    var Msg: string;
+    if (CountSame > 0) and (CountSimilar = 0) then
+      Msg := Format('Applied translation to %.0n identical values', [CountSame*1.0])
+    else
+    if (CountSame = 0) and (CountSimilar > 0) then
+      Msg := Format('Applied translation to %.0n similar values', [CountSimilar*1.0])
+    else
+      Msg := Format('Applied translation to %.0n identical and %.0n similar values', [CountSame*1.0, CountSimilar*1.0]);
+
+    QueueToast(Msg); // TODO : Localization
+  end;
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
