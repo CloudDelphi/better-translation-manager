@@ -4295,8 +4295,6 @@ begin
 
       Translation.Status := tStatusTranslated;
 
-      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
-
       LoadItem(Prop);
 
       TranslationAdded(Prop);
@@ -4326,8 +4324,6 @@ begin
 
       Translation.Status := tStatusProposed;
 
-      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
-
       LoadItem(Prop);
 
       TranslationAdded(Prop);
@@ -4353,11 +4349,9 @@ begin
 
       Prop.Translations.Remove(TranslationLanguage);
 
-      FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
-
       LoadItem(Prop);
 
-      // Prop is now tranlatable again - check for match in TM
+      // Prop is now translatable again - check for match in TM
       QueueTranslationMemoryPeek(Prop, True);
     end;
   finally
@@ -6746,6 +6740,7 @@ end;
 procedure TFormMain.ReloadProperty(Prop: TLocalizerProperty);
 var
   RecordIndex, RowIndex: integer;
+  Translation: TLocalizerTranslation;
 begin
   if (Prop.Item.Module <> FocusedModule) then
     Exit;
@@ -6753,6 +6748,13 @@ begin
   RecordIndex := FModuleItemsDataSource.IndexOfProperty(Prop);
   if (RecordIndex <> -1) then
   begin
+    // Discard old TM lookup result if property should be translated
+    if (Prop.Status = ItemStatusTranslate) and (FModuleItemsDataSource.PeekResult[RecordIndex] <> TTranslationMemoryPeekResult.prNone) then
+    begin
+      if (not Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) or (not Translation.IsTranslated) then
+        FModuleItemsDataSource.PeekResult[RecordIndex] := TTranslationMemoryPeekResult.prNone;
+    end;
+
     RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, False);
     if (RowIndex <> -1) then
       GridItemsTableView.ViewData.Rows[RowIndex].Invalidate;
