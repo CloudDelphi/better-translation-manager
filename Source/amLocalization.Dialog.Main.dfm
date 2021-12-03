@@ -1706,6 +1706,10 @@ object FormMain: TFormMain
           Action = ActionStopListAddValue
           ActionIndex = nil
         end
+        object RibbonGalleryItemGroupItem7: TdxRibbonGalleryGroupItem
+          Action = ActionStopListAddTypeNameValue
+          ActionIndex = nil
+        end
       end
     end
     object ButtonBuildAll: TdxBarButton
@@ -2358,6 +2362,14 @@ object FormMain: TFormMain
       ShortCut = 16424
       OnExecute = ActionTextEditNextExecute
       OnUpdate = ActionTextEditNextUpdate
+    end
+    object ActionStopListAddTypeNameValue: TAction
+      Tag = 6
+      Category = 'StopList'
+      Caption = 'Type, Name and Value'
+      ShortCut = 24631
+      OnExecute = ActionStopListAddExecute
+      OnUpdate = ActionHasActivePropertyUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

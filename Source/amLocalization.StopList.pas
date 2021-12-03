@@ -26,7 +26,7 @@ const
   cStopListVersion = cStopListVersionSlashEncoded;
 
 type
-  TStopListField = (slFieldModule, slFieldElement, slFieldType, slFieldName, slFieldTypeAndName, slFieldText);
+  TStopListField = (slFieldModule, slFieldElement, slFieldType, slFieldName, slFieldTypeAndName, slFieldText, slFieldTypeNameAndText);
   TStopListOperator = (slOpEquals, slOpStarts, slOpEnds, slOpContains, slOpRegExp);
 
   TStopListItem = class
@@ -89,6 +89,7 @@ resourcestring
 const
   sStopListGroupGeneral = 'General';
   sStopListTypeNameSeparator = '.';
+  sStopListNameValueSeparator = '=';
 
 implementation
 
@@ -303,6 +304,9 @@ begin
 
     slFieldText:
       Result := Prop.Value;
+
+    slFieldTypeNameAndText:
+      Result := Prop.Item.TypeName + sStopListTypeNameSeparator + Prop.Name + sStopListNameValueSeparator + Prop.Value;
   else
     Result := '';
   end;

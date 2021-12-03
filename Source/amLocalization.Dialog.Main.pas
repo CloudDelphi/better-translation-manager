@@ -319,6 +319,8 @@ type
     LayoutGroupStatsPending: TdxLayoutGroup;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
+    RibbonGalleryItemGroupItem7: TdxRibbonGalleryGroupItem;
+    ActionStopListAddTypeNameValue: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -2036,13 +2038,13 @@ begin
   if (CountSame > 0) or (CountSimilar > 0) then
   begin
     var Msg: string;
-    if (CountSame > 0) and (CountSimilar = 0) then
-      Msg := Format('Applied translation to %.0n identical values', [CountSame*1.0])
+    if (UpdatedSame > 0) and (UpdatedSimilar = 0) then
+      Msg := Format('Applied translation to %.0n identical values', [UpdatedSame*1.0])
     else
-    if (CountSame = 0) and (CountSimilar > 0) then
-      Msg := Format('Applied translation to %.0n similar values', [CountSimilar*1.0])
+    if (UpdatedSame = 0) and (UpdatedSimilar > 0) then
+      Msg := Format('Applied translation to %.0n similar values', [UpdatedSimilar*1.0])
     else
-      Msg := Format('Applied translation to %.0n identical and %.0n similar values', [CountSame*1.0, CountSimilar*1.0]);
+      Msg := Format('Applied translation to %.0n identical and %.0n similar values', [UpdatedSame*1.0, UpdatedSimilar*1.0]);
 
     QueueToast(Msg); // TODO : Localization
   end;

@@ -164,6 +164,10 @@ inherited FormStopList: TFormStopList
             item
               Description = 'Value'
               Value = 5
+            end
+            item
+              Description = 'Type, Name and Value'
+              Value = 6
             end>
           BestFitMaxWidth = 200
           Caption.Text = 'Field'
