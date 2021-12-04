@@ -2658,10 +2658,10 @@ begin
   // If we are posting because the focus has moved to another module, then we will not find
   // the property in the data source and will have to update it directly.
   if (RecordIndex <> -1) then
-    GridItemsTableView.DataController.Values[RecordIndex, GridItemsTableViewColumnTarget.Index] := EditTargetText.Text
+    GridItemsTableView.DataController.Values[RecordIndex, GridItemsTableViewColumnTarget.Index] := EditTargetText.Lines.Text
   else
   begin
-    FTextEditProperty.TranslatedValue[TranslationLanguage] := EditTargetText.Text;
+    FTextEditProperty.TranslatedValue[TranslationLanguage] := EditTargetText.Lines.Text;
     TranslationAdded(FTextEditProperty);
   end;
 end;
@@ -2707,7 +2707,7 @@ begin
       // Save current edit text and then cancel edit. We will continue the edit in the text editor instead.
       // The modified state is transferred to the text editor.
       // This enables the user to cancel the edit even if they invoke the text editor.
-      EditTargetText.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
+      EditTargetText.Lines.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
       FTextEditModified := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).ModifiedAfterEnter;
       GridItemsTableView.Controller.EditingController.HideEdit(False);
     end;
@@ -2737,7 +2737,7 @@ begin
     // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
     // Note that the following three methods must be called in this exact order.
     GridItemsTableView.Controller.EditingController.Edit.DoEditing;
-    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Text;
+    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Lines.Text;
     GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
 
     // Restore caret position
@@ -2783,7 +2783,7 @@ begin
   if (FTextEditModified) then
   begin
     // Restore original value and clear modified flag
-    EditTargetText.Text := GridItemsTableView.DataController.Values[GridItemsTableView.DataController.FocusedRecordIndex, GridItemsTableViewColumnTarget.Index];
+    EditTargetText.Lines.Text := GridItemsTableView.DataController.Values[GridItemsTableView.DataController.FocusedRecordIndex, GridItemsTableViewColumnTarget.Index];
     FTextEditModified := False;
   end else
     // Escape with no modifications closes the editor
@@ -6094,9 +6094,9 @@ begin
 
   // Update text edit in case change was made via in-place edit or Record.Values
   s := VarToStr(ADataController.Values[ARecordIndex, AItemIndex]);
-  if (EditTargetText.Text <> s) then
+  if (EditTargetText.Lines.Text <> s) then
   begin
-    EditTargetText.Text := s;
+    EditTargetText.Lines.Text := s;
     EditTargetText.SelStart := MaxInt;
     FTextEditModified := False;
   end;
@@ -6119,8 +6119,8 @@ begin
   // Load text edit values
   if (AFocusedRecord <> nil) and (FTextEditProperty <> nil) then
   begin
-    EditSourceText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnSource.Index]);
-    EditTargetText.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnTarget.Index]);
+    EditSourceText.Lines.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnSource.Index]);
+    EditTargetText.Lines.Text := VarToStr(AFocusedRecord.Values[GridItemsTableViewColumnTarget.Index]);
     EditTargetText.SelStart := MaxInt;
     FTextEditModified := False;
     EditTargetText.Properties.ReadOnly := False;

@@ -670,7 +670,6 @@ object FormMain: TFormMain
           Top = 13
           TabStop = False
           Align = alClient
-          Properties.MemoMode = True
           Properties.PlainText = True
           Properties.ReadOnly = True
           Properties.ScrollBars = ssVertical
@@ -707,7 +706,6 @@ object FormMain: TFormMain
           Left = 0
           Top = 13
           Align = alClient
-          Properties.MemoMode = True
           Properties.PlainText = True
           Properties.ReadOnly = True
           Properties.ScrollBars = ssVertical
