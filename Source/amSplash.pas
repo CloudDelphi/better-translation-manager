@@ -95,6 +95,13 @@ type
     property Disco: boolean read FDisco;
     property Version: string read FVersion write FVersion;
     property Animate: TSplashAnimate read FAnimate write FAnimate;
+    // Vertical banner offset (from default centered position) in sbStatic and sbStaticFade mode.
+    // In sbAnimate mode the value is modified by the animation.
+    property BannerOffset: integer read FBannerOffset write FBannerOffset;
+    // Vertical banner scroll speed in sbAnimate mode.
+    property BannerScroll: integer read FBannerScroll write FBannerScroll;
+    // Distance from edge of splash image where banner text fadeout begins.
+    property BannerFadeZone: integer read FBannerFadeZone write FBannerFadeZone;
   end;
 
 implementation
@@ -447,7 +454,8 @@ procedure TFormSplash.DisplayBanner(const Value: string; Kind: TSplashBannerKind
 begin
   FBanner := Value;
   FBanner := StringReplace(FBanner, '<version>', FVersion, [rfReplaceAll, rfIgnoreCase]);
-  FBannerOffset := 0;
+  if (FBannerKind = sbAnimate) then
+    FBannerOffset := 0;
   FBannerKind := Kind;
 
   if (Visible) then
@@ -516,9 +524,7 @@ begin
     FBannerBitmap.SetSize(FSplashBitmap.Width, FSplashBitmap.Height);
 
     if (FBannerKind = sbAnimate) then
-      FBannerOffset := FBannerBitmap.Height
-    else
-      FBannerOffset := 0;
+      FBannerOffset := FBannerBitmap.Height;
   end;
 
   // Clear back buffer
@@ -774,6 +780,7 @@ end;
 
 procedure TFormSplash.TimerBannerTimer(Sender: TObject);
 begin
+  Assert(FBannerKind = sbAnimate);
   // Scroll banner
   if (FBannerBitmap <> nil) then
     Dec(FBannerOffset, FBannerScroll);

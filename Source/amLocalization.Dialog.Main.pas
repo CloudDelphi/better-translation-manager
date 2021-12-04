@@ -730,6 +730,7 @@ uses
   dxHunspellDictionary,
   dxSpellCheckerDialogs,
   cxDrawTextUtils,
+  dxBarExtItems,
 
   DelphiDabbler.SingleInstance,
 
@@ -1426,7 +1427,8 @@ begin
   FormSplash := TFormSplash.Create(nil);
   try
     FormSplash.Version := TVersionInfo.FileVersionString(Application.ExeName);
-    FormSplash.DisplayBannerResource('CREDITS', 'TEXT');
+    FormSplash.DisplayBannerResource('CREDITS', 'TEXT', sbStaticFade);
+    FormSplash.BannerOffset := Abs(FormSplash.Font.Height);
 
     FormSplash.Execute(False);
   except
