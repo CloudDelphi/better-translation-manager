@@ -273,7 +273,6 @@ type
     ActionImportPO: TAction;
     dxBarButton5: TdxBarButton;
     TaskDialogImportUpdate: TTaskDialog;
-    RibbonMiniToolbarValidationWarning: TdxRibbonMiniToolbar;
     ActionValidationWarningDismiss: TAction;
     dxBarButton6: TdxBarButton;
     ActionValidationWarningResolve: TAction;
@@ -321,6 +320,9 @@ type
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
     RibbonGalleryItemGroupItem7: TdxRibbonGalleryGroupItem;
     ActionStopListAddTypeNameValue: TAction;
+    PopupMenuValidationWarning: TdxRibbonPopupMenu;
+    BarSeparatorValidationWarningHeader: TdxBarSeparator;
+    dxBarSeparator2: TdxBarSeparator;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -467,6 +469,7 @@ type
     procedure GridItemsTableViewColumnStatusStateGetFilterValues(Sender: TcxCustomGridTableItem; AValueList: TcxDataFilterValueList);
     procedure GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
     procedure ActionImportCSVExecute(Sender: TObject);
+    procedure PopupMenuValidationWarningPopup(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -2187,6 +2190,25 @@ begin
     TdxBarButton(ItemLink.Item).Caption := Provider.ProviderName;
     TdxBarButton(ItemLink.Item).Tag := Provider.Handle;
     TdxBarButton(ItemLink.Item).OnClick := OnTranslationProviderHandler;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.PopupMenuValidationWarningPopup(Sender: TObject);
+begin
+  for var i := PopupMenuValidationWarning.ItemLinks.Count-1 downto 0 do
+    if (PopupMenuValidationWarning.ItemLinks[i].Item is TdxBarStatic) then
+      PopupMenuValidationWarning.ItemLinks[i].Item.Free;
+
+  var Index := 1;
+  for var Warning in FocusedProperty.Translations[TranslationLanguage].Warnings do
+  begin
+    var ItemLink := PopupMenuValidationWarning.ItemLinks.AddItem(TdxBarStatic);
+    var Item := ItemLink.Item as TdxBarStatic;
+    Item.Caption := LoadResString(sTranslationValidationWarnings[Warning]);
+    ItemLink.Index := Index;
+    Inc(Index);
   end;
 end;
 
@@ -6222,16 +6244,12 @@ begin
   *)
   if (HitTest.Item.FocusedCellViewInfo <> nil) and (TcxEditViewInfoCracker(HitTest.Item.FocusedCellViewInfo.EditViewInfo).GetPart(HitTest.Pos) = ecpErrorIcon) then
   begin
-    RibbonMiniToolbarValidationWarning.Popup;
-
-    // Work around for TdxRibbonMiniToolbar not updating actions
-    // https://supportcenter.devexpress.com/ticket/details/t1034109
-    for var i := 0 to RibbonMiniToolbarValidationWarning.ItemLinks.Count-1 do
-    begin
-      var Action := RibbonMiniToolbarValidationWarning.ItemLinks[i].Item.Action;
-      if (Action <> nil) then
-        Action.Update;
-    end;
+    p := GridItems.ClientToScreen(Point(HitTest.Item.FocusedCellViewInfo.Bounds.Left, HitTest.Item.FocusedCellViewInfo.Bounds.Bottom));
+    r := HitTest.Item.FocusedCellViewInfo.Bounds;
+    PopupMenuValidationWarning.PopupEx(
+      p.X, p.Y,
+      0, HitTest.Item.FocusedCellViewInfo.Bounds.Height, // Horizontal non-overlap band
+      True, @r);
 
     HitTest.Item.Focused := False; // Prevent click from starting edit mode
     Exit;

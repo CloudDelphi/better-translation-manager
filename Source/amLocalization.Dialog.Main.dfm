@@ -1748,6 +1748,17 @@ object FormMain: TFormMain
       Action = ActionValidationWarningResolve
       Category = 0
     end
+    object BarSeparatorValidationWarningHeader: TdxBarSeparator
+      Caption = 'Warnings:'
+      Category = 0
+      Hint = 'Warnings:'
+      Visible = ivAlways
+    end
+    object dxBarSeparator2: TdxBarSeparator
+      Category = 0
+      Visible = ivAlways
+      ShowCaption = False
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
@@ -2626,8 +2637,17 @@ object FormMain: TFormMain
     Left = 716
     Top = 220
   end
-  object RibbonMiniToolbarValidationWarning: TdxRibbonMiniToolbar
+  object PopupMenuValidationWarning: TdxRibbonPopupMenu
+    BarManager = BarManager
     ItemLinks = <
+      item
+        Visible = True
+        ItemName = 'BarSeparatorValidationWarningHeader'
+      end
+      item
+        Visible = True
+        ItemName = 'dxBarSeparator2'
+      end
       item
         Visible = True
         ItemName = 'dxBarButton8'
@@ -2635,10 +2655,17 @@ object FormMain: TFormMain
       item
         Visible = True
         ItemName = 'dxBarButton6'
+      end
+      item
+        BeginGroup = True
+        Visible = True
+        ItemName = 'dxBarButton27'
       end>
     Ribbon = RibbonMain
-    Left = 708
-    Top = 340
+    UseOwnFont = False
+    OnPopup = PopupMenuValidationWarningPopup
+    Left = 80
+    Top = 442
     PixelsPerInch = 96
   end
 end
