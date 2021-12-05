@@ -548,7 +548,7 @@ begin
   else
     Item := Module.FindItem(Name, True);
 
-  if (Item <> nil) then
+  if (Item <> nil) and ((Action <> liaUpdateSource) or (Item.Status <> ItemStatusDontTranslate)) then
   begin
     // TReader.ReadDataInner
     while (not FReader.EndOfList) do
@@ -1108,6 +1108,9 @@ begin
           for Module in Project.Modules.Values.ToArray do // ToArray for stability since we delete from the list
           begin
             if (Action = liaUpdateTarget) and (Module.IsUnused) then
+              continue;
+
+            if (Action = liaUpdateSource) and (Module.Status = ItemStatusDontTranslate) then
               continue;
 
             if (Module.Kind = mkForm) then

@@ -478,6 +478,14 @@ type
     property StringListSplit: boolean read FStringListSplit write FStringListSplit default False;
   end;
 
+type
+  TTranslationManagerProjectSettings = class(TConfigurationSection)
+  private
+    FSaveDontTranslate: boolean;
+  published
+    property SaveDontTranslate: boolean read FSaveDontTranslate write FSaveDontTranslate default True;
+  end;
+
 
 type
   TTranslationManagerSettings = class;
@@ -500,6 +508,7 @@ type
     FEditor: TTranslationManagerEditorSettings;
     FSearch: TTranslationManagerSearchSettings;
     FStopList: TTranslationManagerStopListSettings;
+    FProject: TTranslationManagerProjectSettings;
   private
     class function GetFolderInstall: string; static;
   protected
@@ -527,6 +536,7 @@ type
     property Editor: TTranslationManagerEditorSettings read FEditor;
     property Search: TTranslationManagerSearchSettings read FSearch;
     property StopList: TTranslationManagerStopListSettings read FStopList;
+    property Project: TTranslationManagerProjectSettings read FProject;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -801,6 +811,7 @@ begin
   FEditor := TTranslationManagerEditorSettings.Create(Self);
   FSearch := TTranslationManagerSearchSettings.Create(Self);
   FStopList := TTranslationManagerStopListSettings.Create(Self);
+  FProject := TTranslationManagerProjectSettings.Create(Self);
 
   if (Assigned(FOnSettingsCreating)) then
     FOnSettingsCreating(Self);
@@ -821,6 +832,7 @@ begin
   FEditor.Free;
   FSearch.Free;
   FStopList.Free;
+  FProject.Free;
 
   inherited;
 end;

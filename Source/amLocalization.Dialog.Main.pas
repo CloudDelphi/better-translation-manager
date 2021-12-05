@@ -3964,7 +3964,12 @@ begin
       if (not SafeReplaceFile(ProjectFilename,
         function(const Filename: string): boolean
         begin
-          TLocalizationProjectFiler.SaveToFile(FProject, Filename, Progress);
+          var Options: TLocalizationSaveOptions := [];
+          if (not TranslationManagerSettings.Project.SaveDontTranslate) then
+            Include(Options, soOmitDontTranslateItems);
+
+          TLocalizationProjectFiler.SaveToFile(FProject, Filename, Options, Progress);
+
           Result := True;
         end, TranslationManagerSettings.Backup.SaveBackups)) then
       begin

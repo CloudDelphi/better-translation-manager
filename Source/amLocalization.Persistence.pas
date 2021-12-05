@@ -24,6 +24,9 @@ uses
 // Save and load project.
 // -----------------------------------------------------------------------------
 type
+  TLocalizationSaveOption = (soOmitDontTranslateItems);
+  TLocalizationSaveOptions = set of TLocalizationSaveOption;
+
   TLocalizationProjectFiler = class
   private
     const
@@ -39,8 +42,8 @@ type
     class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
     class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress = nil);
 
-    class procedure SaveToStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
-    class procedure SaveToFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress = nil);
+    class procedure SaveToStream(Project: TLocalizerProject; Stream: TStream; AOptions: TLocalizationSaveOptions = []; const Progress: IProgress = nil);
+    class procedure SaveToFile(Project: TLocalizerProject; const Filename: string; AOptions: TLocalizationSaveOptions = []; const Progress: IProgress = nil);
   end;
 
 type
@@ -407,13 +410,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.SaveToFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress);
+class procedure TLocalizationProjectFiler.SaveToFile(Project: TLocalizerProject; const Filename: string; AOptions: TLocalizationSaveOptions; const Progress: IProgress);
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmCreate);
   try
-    SaveToStream(Project, Stream, Progress);
+    SaveToStream(Project, Stream, AOptions, Progress);
   finally
     Stream.Free;
   end;
@@ -421,7 +424,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress);
+class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProject; Stream: TStream; AOptions: TLocalizationSaveOptions; const Progress: IProgress);
 
   procedure WriteItemState(const Node: IXMLNode; Item: TCustomLocalizerItem);
   var
@@ -521,6 +524,8 @@ begin
   Node := RootNode.AddChild('options');
   // Store the stringlist handling setting that was used with the project
   Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
+  // Indicate if "Don't Translate" items were included
+  Node.AddChild('junksaved').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
 
   ModulesNode := ProjectNode.AddChild('modules');
 
@@ -532,12 +537,18 @@ begin
     WriteItemState(ModuleNode, Module);
     WriteItemStatus(ModuleNode, Module);
 
-    ItemsNode := ModuleNode.AddChild('items');
+    if (soOmitDontTranslateItems in AOptions) and (Module.Status = ItemStatusDontTranslate) then
+      continue;
+
+    ItemsNode := nil;
 
     for Item in Module.Items.Values do
     begin
       if (Progress <> nil) then
         Progress.AdvanceProgress;
+
+      if (ItemsNode = nil) then
+        ItemsNode := ModuleNode.AddChild('items');
 
       ItemNode := ItemsNode.AddChild('item');
       WriteItemName(ItemNode, Item);
@@ -547,15 +558,24 @@ begin
       WriteItemState(ItemNode, Item);
       WriteItemStatus(ItemNode, Item);
 
-      PropsNode := ItemNode.AddChild('properties');
+      if (soOmitDontTranslateItems in AOptions) and (Item.Status = ItemStatusDontTranslate) then
+        continue;
+
+      PropsNode := nil;
 
       for Prop in Item.Properties.Values do
       begin
+        if (PropsNode = nil) then
+          PropsNode := ItemNode.AddChild('properties');
+
         PropNode := PropsNode.AddChild('property');
         WriteItemName(PropNode, Prop);
         WriteItemState(PropNode, Prop);
         WriteItemStatus(PropNode, Prop);
         WritePropFlags(PropNode, Prop);
+
+        if (soOmitDontTranslateItems in AOptions) and (Prop.Status = ItemStatusDontTranslate) then
+          continue;
 
         PropNode.AddChild('value').NodeValue := EncodeString(Prop.Value);
 
@@ -563,6 +583,10 @@ begin
         Prop.Traverse(
           function(Prop: TLocalizerProperty; Translation: TLocalizerTranslation): boolean
           begin
+            // No need to save pending translations
+            if (Translation.Status = tStatusPending) then
+              Exit(True);
+
             if (XlatsNode = nil) then
               XlatsNode :=  PropNode.AddChild('translations');
 

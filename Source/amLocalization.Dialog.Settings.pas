@@ -338,6 +338,12 @@ type
     LayoutGroupAutoApplyTranslations: TdxLayoutGroup;
     CheckBoxAutoApplyTranslationsExisting: TcxCheckBox;
     dxLayoutItem55: TdxLayoutItem;
+    dxLayoutGroup25: TdxLayoutGroup;
+    dxLayoutItem56: TdxLayoutItem;
+    cxLabel7: TcxLabel;
+    dxLayoutGroup26: TdxLayoutGroup;
+    dxLayoutItem70: TdxLayoutItem;
+    CheckBoxFileProjectOmitDontTranslate: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -638,6 +644,7 @@ begin
   *)
   LoadFolders;
   CheckBoxSaveBackup.Checked := TranslationManagerSettings.Backup.SaveBackups;
+  CheckBoxFileProjectOmitDontTranslate.Checked := not TranslationManagerSettings.Project.SaveDontTranslate;
 
   (*
   ** Proofing section
@@ -714,6 +721,7 @@ begin
   *)
   ApplyFolders;
   TranslationManagerSettings.Backup.SaveBackups := CheckBoxSaveBackup.Checked;
+  TranslationManagerSettings.Project.SaveDontTranslate := not CheckBoxFileProjectOmitDontTranslate.Checked;
 
   (*
   ** Proofing section
