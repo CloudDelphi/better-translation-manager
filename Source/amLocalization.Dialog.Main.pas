@@ -323,6 +323,8 @@ type
     PopupMenuValidationWarning: TdxRibbonPopupMenu;
     BarSeparatorValidationWarningHeader: TdxBarSeparator;
     dxBarSeparator2: TdxBarSeparator;
+    dxBarButton15: TdxBarButton;
+    ActionGotoAgain: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -470,6 +472,8 @@ type
     procedure GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
     procedure ActionImportCSVExecute(Sender: TObject);
     procedure PopupMenuValidationWarningPopup(Sender: TObject);
+    procedure ActionGotoAgainUpdate(Sender: TObject);
+    procedure ActionGotoAgainExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -481,6 +485,7 @@ type
     FRefreshModuleStatsQueued: boolean;
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
+    FLastGotoAction: TAction;
   private
     // Language selection
     FSourceLanguage: TLocaleItem;
@@ -2224,6 +2229,8 @@ var
   i: integer;
   DoSet: boolean;
 begin
+  FLastGotoAction := TAction(Sender);
+
   Flag := TPropertyFlag(TAction(Sender).Tag);
 
   FLastBookmark := Ord(Flag);
@@ -2967,8 +2974,19 @@ begin
   ButtonItemBookmark.Down := TAction(Sender).Checked;
 end;
 
+procedure TFormMain.ActionGotoAgainExecute(Sender: TObject);
+begin
+  FLastGotoAction.Execute;
+end;
+
+procedure TFormMain.ActionGotoAgainUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := (FLastGotoAction <> nil) and (FLastGotoAction.Enabled);
+end;
+
 procedure TFormMain.ActionGotoBookmarkAnyExecute(Sender: TObject);
 begin
+  FLastGotoAction := TAction(Sender);
   FLastBookmark := -1;
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
@@ -3001,6 +3019,7 @@ end;
 
 procedure TFormMain.ActionGotoNextStateExecute(Sender: TObject);
 begin
+  FLastGotoAction := TAction(Sender);
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
@@ -3010,6 +3029,7 @@ end;
 
 procedure TFormMain.ActionGotoNextStatusExecute(Sender: TObject);
 begin
+  FLastGotoAction := TAction(Sender);
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
@@ -3019,6 +3039,7 @@ end;
 
 procedure TFormMain.ActionGotoNextUntranslatedExecute(Sender: TObject);
 begin
+  FLastGotoAction := TAction(Sender);
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
     var
@@ -3033,6 +3054,7 @@ end;
 
 procedure TFormMain.ActionGotoNextWarningExecute(Sender: TObject);
 begin
+  FLastGotoAction := TAction(Sender);
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
     var

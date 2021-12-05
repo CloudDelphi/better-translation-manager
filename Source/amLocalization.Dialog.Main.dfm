@@ -1436,6 +1436,11 @@ object FormMain: TFormMain
       ItemLinks = <
         item
           Visible = True
+          ItemName = 'dxBarButton15'
+        end
+        item
+          BeginGroup = True
+          Visible = True
           ItemName = 'dxBarButton16'
         end
         item
@@ -1508,6 +1513,7 @@ object FormMain: TFormMain
     object dxBarButton25: TdxBarButton
       Action = ActionFindNext
       Category = 0
+      ShortCut = 16460
     end
     object dxBarButton26: TdxBarButton
       Action = ActionValidate
@@ -1756,6 +1762,11 @@ object FormMain: TFormMain
       Category = 0
       Visible = ivAlways
       ShowCaption = False
+    end
+    object dxBarButton15: TdxBarButton
+      Action = ActionGotoAgain
+      Category = 0
+      ShortCut = 114
     end
   end
   object SkinController: TdxSkinController
@@ -2036,6 +2047,13 @@ object FormMain: TFormMain
       ShortCut = 16455
       OnExecute = ActionDummyExecute
       OnUpdate = ActionHasModulesUpdate
+    end
+    object ActionGotoAgain: TAction
+      Category = 'Find'
+      Caption = 'Same again'
+      ShortCut = 16460
+      OnExecute = ActionGotoAgainExecute
+      OnUpdate = ActionGotoAgainUpdate
     end
     object ActionGotoNextUntranslated: TAction
       Category = 'Find'
