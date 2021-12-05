@@ -968,8 +968,9 @@ end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetInheritParentState: boolean;
 begin
-  //  If the parent is unused, the children are also unused
-  Result := (ItemStateUnused in Parent.State);
+  //  If the parent is unused, the children are also unused.
+  //  If the parent is new, the children are also new.
+  Result := ([ItemStateUnused, ItemStateNew] * Parent.State <> []);
 end;
 
 function TCustomLocalizerChildItem<TParentClass>.GetParent: TParentClass;
