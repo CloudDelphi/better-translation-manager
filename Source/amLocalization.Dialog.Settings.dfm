@@ -1721,6 +1721,18 @@ inherited FormSettings: TFormSettings
               TabOrder = 5
               Transparent = True
             end
+            object CheckBoxFileProjectSort: TcxCheckBox
+              Left = 0
+              Top = 273
+              Hint = 
+                'Sort items when they are saved. This makes it easier to compare ' +
+                'two project files - For example for use in version control.'
+              Caption = 'Save items sorted'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 6
+              Transparent = True
+            end
             object LayoutControlFilesGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
               AlignVert = avTop
@@ -1961,6 +1973,15 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalWidth = 188
               ControlOptions.ShowBorder = False
               Index = 0
+            end
+            object dxLayoutItem71: TdxLayoutItem
+              Parent = dxLayoutGroup26
+              CaptionOptions.Visible = False
+              Control = CheckBoxFileProjectSort
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 239
+              ControlOptions.ShowBorder = False
+              Index = 1
             end
           end
         end

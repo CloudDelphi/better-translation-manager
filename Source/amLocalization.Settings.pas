@@ -482,8 +482,10 @@ type
   TTranslationManagerProjectSettings = class(TConfigurationSection)
   private
     FSaveDontTranslate: boolean;
+    FSaveSorted: boolean;
   published
     property SaveDontTranslate: boolean read FSaveDontTranslate write FSaveDontTranslate default True;
+    property SaveSorted: boolean read FSaveSorted write FSaveSorted default False;
   end;
 
 

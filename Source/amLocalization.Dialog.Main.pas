@@ -3989,6 +3989,8 @@ begin
           var Options: TLocalizationSaveOptions := [];
           if (not TranslationManagerSettings.Project.SaveDontTranslate) then
             Include(Options, soOmitDontTranslateItems);
+          if (TranslationManagerSettings.Project.SaveSorted) then
+            Include(Options, soSort);
 
           TLocalizationProjectFiler.SaveToFile(FProject, Filename, Options, Progress);
 
@@ -5392,9 +5394,9 @@ begin
     TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
       function(const Left, Right: TLocalizerModule): Integer
       begin
-        Result := (Ord(Left.Kind) - Ord(Right.Kind));
+        Result := (Ord(Right.Kind) - Ord(Left.Kind)); // Reversed to order resourcestrings before forms (doesn't really matter here)
         if (Result = 0) then
-          Result := CompareText(Left.Name, Right.Name);
+          Result := AnsiCompareText(Left.Name, Right.Name);
       end));
 
     SelectedModuleFound := False;

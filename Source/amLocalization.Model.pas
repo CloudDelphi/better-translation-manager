@@ -1368,7 +1368,7 @@ begin
     TArray.Sort<TLocalizerModule>(SortedModules, TComparer<TLocalizerModule>.Construct(
       function(const Left, Right: TLocalizerModule): Integer
       begin
-        Result := (Ord(Left.Kind) - Ord(Right.Kind));
+        Result := (Ord(Right.Kind) - Ord(Left.Kind)); // Reversed to order resourcestrings before forms
         if (Result = 0) then
           Result := AnsiCompareText(Left.Name, Right.Name);
       end));
@@ -1592,7 +1592,7 @@ begin
         if (Result = 0) then
         begin
           if (Left.Module.Kind = mkForm) or ((Left.ResourceID = 0) and  (Right.ResourceID = 0)) then
-            Result := CompareText(Left.Name, Right.Name)
+            Result := AnsiCompareText(Left.Name, Right.Name)
           else
           begin
             if (Left.ResourceID = 0) then

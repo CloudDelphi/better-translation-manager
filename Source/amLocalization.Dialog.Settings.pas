@@ -344,6 +344,8 @@ type
     dxLayoutGroup26: TdxLayoutGroup;
     dxLayoutItem70: TdxLayoutItem;
     CheckBoxFileProjectOmitDontTranslate: TcxCheckBox;
+    dxLayoutItem71: TdxLayoutItem;
+    CheckBoxFileProjectSort: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -645,6 +647,7 @@ begin
   LoadFolders;
   CheckBoxSaveBackup.Checked := TranslationManagerSettings.Backup.SaveBackups;
   CheckBoxFileProjectOmitDontTranslate.Checked := not TranslationManagerSettings.Project.SaveDontTranslate;
+  CheckBoxFileProjectSort.Checked := TranslationManagerSettings.Project.SaveSorted;
 
   (*
   ** Proofing section
@@ -722,6 +725,7 @@ begin
   ApplyFolders;
   TranslationManagerSettings.Backup.SaveBackups := CheckBoxSaveBackup.Checked;
   TranslationManagerSettings.Project.SaveDontTranslate := not CheckBoxFileProjectOmitDontTranslate.Checked;
+  TranslationManagerSettings.Project.SaveSorted := CheckBoxFileProjectSort.Checked;
 
   (*
   ** Proofing section

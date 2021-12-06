@@ -24,7 +24,7 @@ uses
 // Save and load project.
 // -----------------------------------------------------------------------------
 type
-  TLocalizationSaveOption = (soOmitDontTranslateItems);
+  TLocalizationSaveOption = (soOmitDontTranslateItems, soSort);
   TLocalizationSaveOptions = set of TLocalizationSaveOption;
 
   TLocalizationProjectFiler = class
@@ -69,6 +69,8 @@ resourcestring
 implementation
 
 uses
+  Generics.Collections,
+  Generics.Defaults,
   DateUtils,
   IOUtils,
   Windows,
@@ -512,6 +514,7 @@ begin
   ProjectNode.Attributes['sourcefile'] := Project.SourceFilename;
   ProjectNode.Attributes['stringsymbolfile'] := Project.StringSymbolFilename;
   ProjectNode.Attributes['language'] := Project.SourceLanguageID;
+  ProjectNode.Attributes['properties'] := Project.StatusCount[ItemStatusTranslate];
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');
   for i := 0 to Project.TranslationLanguages.Count-1 do
@@ -526,10 +529,22 @@ begin
   Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
   // Indicate if "Don't Translate" items were included
   Node.AddChild('junksaved').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
+  // Indicate if nodes are sorted
+  Node.AddChild('sorted').Text := (soSort in AOptions).ToString(TUseBoolStrs.True);
 
   ModulesNode := ProjectNode.AddChild('modules');
 
-  for Module in Project.Modules.Values do
+  var Modules := Project.Modules.Values.ToArray;
+  if (soSort in AOptions) then
+    TArray.Sort<TLocalizerModule>(Modules, TComparer<TLocalizerModule>.Construct(
+      function(const Left, Right: TLocalizerModule): Integer
+      begin
+        Result := (Ord(Right.Kind) - Ord(Left.Kind)); // Reversed to order resourcestrings before forms
+        if (Result = 0) then
+          Result := AnsiCompareText(Left.Name, Right.Name);
+      end));
+
+  for Module in Modules do
   begin
     ModuleNode := ModulesNode.AddChild('module');
     WriteItemName(ModuleNode, Module);
@@ -540,9 +555,19 @@ begin
     if (soOmitDontTranslateItems in AOptions) and (Module.Status = ItemStatusDontTranslate) then
       continue;
 
+    ModuleNode.Attributes['properties'] := Module.StatusCount[ItemStatusTranslate];
+
     ItemsNode := nil;
 
-    for Item in Module.Items.Values do
+    var Items := Module.Items.Values.ToArray;
+    if (soSort in AOptions) then
+      TArray.Sort<TLocalizerItem>(Items, TComparer<TLocalizerItem>.Construct(
+        function(const Left, Right: TLocalizerItem): Integer
+        begin
+          Result := AnsiCompareText(Left.Name, Right.Name);
+        end));
+
+    for Item in Items do
     begin
       if (Progress <> nil) then
         Progress.AdvanceProgress;
@@ -563,7 +588,15 @@ begin
 
       PropsNode := nil;
 
-      for Prop in Item.Properties.Values do
+      var Properties := Item.Properties.Values.ToArray;
+      if (soSort in AOptions) then
+        TArray.Sort<TLocalizerProperty>(Properties, TComparer<TLocalizerProperty>.Construct(
+          function(const Left, Right: TLocalizerProperty): Integer
+          begin
+            Result := AnsiCompareText(Left.Name, Right.Name);
+          end));
+
+      for Prop in Properties do
       begin
         if (PropsNode = nil) then
           PropsNode := ItemNode.AddChild('properties');
