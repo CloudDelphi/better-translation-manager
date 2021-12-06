@@ -395,6 +395,23 @@ begin
                   end;
                   PropNode := PropNode.NextSibling;
                 end;
+              end else
+              if (Module.Kind = mkString) and (Item.Status = ItemStatusDontTranslate) then
+              begin
+                // If a resourcestring was saved without the single property it should contains then it must be because
+                // the property was marked "Don't translate". We restore the original state here so the property will
+                // appear again. We must do this as there is no way to directly modify the status of an Item in the UI.
+
+                // Restore status
+                Item.Status := ItemStatusTranslate;
+
+                // Add the resourcestring property.
+                // We don't have the value anymore, so we just add an empty string. The user must recover the value by
+                // doing a refresh.
+                Prop := Item.AddProperty('', '');
+
+                // Mark the property "Don't translate"
+                Prop.Status := ItemStatusDontTranslate;
               end;
             end;
             ItemNode := ItemNode.NextSibling;
@@ -445,10 +462,15 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
     Node.Attributes['state'] := s;
   end;
 
-  procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem);
+  procedure WriteItemStatus(const Node: IXMLNode; ItemStatus: TLocalizerItemStatus); overload;
   begin
-    if (Item.Status <> ItemStatusTranslate) then
-      Node.Attributes['status'] := sItemStatus[Item.Status];
+    if (ItemStatus <> ItemStatusTranslate) then
+      Node.Attributes['status'] := sItemStatus[ItemStatus];
+  end;
+
+  procedure WriteItemStatus(const Node: IXMLNode; Item: TCustomLocalizerItem); overload;
+  begin
+    WriteItemStatus(Node, Item.Status);
   end;
 
   procedure WriteItemName(const Node: IXMLNode; Item: TCustomLocalizerItem);
@@ -581,9 +603,20 @@ begin
       if (Item.TypeName <> '') then
         ItemNode.Attributes['type'] := Item.TypeName;
       WriteItemState(ItemNode, Item);
-      WriteItemStatus(ItemNode, Item);
 
-      if (soOmitDontTranslateItems in AOptions) and (Item.Status = ItemStatusDontTranslate) then
+      var ItemStatus := Item.Status;
+      // For resourcestrings there's only one property per item. If the property is marked "Don't translate"
+      // then we don't want to save an empty item. We avoid this by applying the "Don't translate" status to
+      // the item.
+      if (soOmitDontTranslateItems in AOptions) and (ItemStatus <> ItemStatusDontTranslate) then
+      begin
+        if (Module.Kind = mkString) and (Item.Properties.Count = 1) and (Item.Properties.Values.ToArray[0].Status = ItemStatusDontTranslate) then
+          ItemStatus := ItemStatusDontTranslate;
+      end;
+
+      WriteItemStatus(ItemNode, ItemStatus);
+
+      if (soOmitDontTranslateItems in AOptions) and (ItemStatus = ItemStatusDontTranslate) then
         continue;
 
       PropsNode := nil;
