@@ -5841,11 +5841,10 @@ begin
 end;
 
 procedure TFormMain.GridItemsTableViewColumnStatusStateGetFilterValues(Sender: TcxCustomGridTableItem; AValueList: TcxDataFilterValueList);
-var
-  i: integer;
 begin
-  for i := 0 to TcxImageComboBoxProperties(Sender.Properties).Items.Count-1 do
-    AValueList.Add(fviValue, TcxImageComboBoxProperties(Sender.Properties).Items[i].Value, TcxImageComboBoxProperties(Sender.Properties).Items[i].Description, True);
+  var Properties := TcxImageComboBoxProperties(Sender.GetProperties);
+  for var i := 0 to Properties.Items.Count-1 do
+    AValueList.Add(fviValue, Properties.Items[i].Value, Properties.Items[i].Description, True);
 end;
 
 procedure TFormMain.GridItemsTableViewColumnTargetValidateDrawValue(Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
