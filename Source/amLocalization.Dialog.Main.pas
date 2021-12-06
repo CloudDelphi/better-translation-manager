@@ -3064,7 +3064,7 @@ begin
         Exit(False);
 
       Result := (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Warnings <> []);
-    end);
+    end, True, (Sender = nil)); // Goto first if we're invoked from the status bar
 end;
 
 // -----------------------------------------------------------------------------
@@ -5614,17 +5614,7 @@ end;
 procedure TFormMain.StatusBarPanels1Click(Sender: TObject);
 begin
   // TODO : Display validation warning overview
-
-  GotoNext(
-    function(Prop: TLocalizerProperty): boolean
-    var
-      Translation: TLocalizerTranslation;
-    begin
-      if (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
-        Exit(False);
-
-      Result := (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Warnings <> []);
-    end, True, True);
+  ActionGotoNextWarningExecute(nil); // The nil parameter signals that the status bar button is the caller
 end;
 
 procedure TFormMain.StatusBarPanels2Click(Sender: TObject);
@@ -5686,8 +5676,11 @@ begin
   end;
   TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelModified].PanelStyle).ImageIndex := ImageIndex;
 
-  StatusBar.Panels[StatusBarPanelStats].Text := Format(sLocalizerStatusCount,
+  var s := Format(sLocalizerStatusCount,
     [1.0*FProject.StatusCount[ItemStatusTranslate], 1.0*FProject.StatusCount[ItemStatusDontTranslate], 1.0*FProject.StatusCount[ItemStatusHold]]);
+
+  StatusBar.Panels[StatusBarPanelStats].Width := (StatusBar.Canvas.TextWidth(s) + 15) and $FFFFFFF8; // 8 pixels extra and round up to 8 pixels
+  StatusBar.Panels[StatusBarPanelStats].Text := s;
 
   StatusBar.Update;
 end;
