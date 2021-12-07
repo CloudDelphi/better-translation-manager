@@ -1989,7 +1989,7 @@ begin
             '(%.0n of %.0n)', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, TranslatedValue, IndexSame*1.0, CountSame*1.0]);
           var Res := TaskMessageDlg('Apply translation?', Msg, mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbCancel], 0, mbYes);
           if (Res in [mrNoToAll, mrCancel]) then
-            break;
+            Abort;
           if (Res = mrYesToAll) then
             AutoApplyTranslations := aaAlways
           else
