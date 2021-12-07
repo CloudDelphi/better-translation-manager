@@ -891,6 +891,10 @@ object FormMain: TFormMain
         item
           Visible = True
           ItemName = 'dxBarButton1'
+        end
+        item
+          Visible = True
+          ItemName = 'ButtonProjectLocateSource'
         end>
       OneOnRow = False
       Row = 0
@@ -1776,6 +1780,11 @@ object FormMain: TFormMain
       Action = ActionTranslationMemoryUpdate
       Category = 0
     end
+    object ButtonProjectLocateSource: TdxBarButton
+      Action = ActionProjectLocateSource
+      Category = 0
+      OnClick = ButtonProjectLocateSourceClick
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic
@@ -2413,6 +2422,13 @@ object FormMain: TFormMain
       ImageIndex = 85
       OnExecute = ActionTranslationMemoryUpdateExecute
       OnUpdate = ActionTranslationMemoryUpdateUpdate
+    end
+    object ActionProjectLocateSource: TAction
+      Category = 'Project'
+      Caption = 'Locate source...'
+      Hint = 'Locate the source application file'
+      ImageIndex = 86
+      OnUpdate = ActionHasProjectUpdate
     end
   end
   object OpenDialogProject: TOpenDialog

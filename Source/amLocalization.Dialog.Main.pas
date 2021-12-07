@@ -328,6 +328,8 @@ type
     ActionGotoAgain: TAction;
     ButtonTranslationMemoryUpdate: TdxBarButton;
     ActionTranslationMemoryUpdate: TAction;
+    ActionProjectLocateSource: TAction;
+    ButtonProjectLocateSource: TdxBarButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -481,6 +483,7 @@ type
     procedure ActionGotoNextStateUnusedExecute(Sender: TObject);
     procedure ActionTranslationMemoryUpdateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryUpdateExecute(Sender: TObject);
+    procedure ButtonProjectLocateSourceClick(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -655,6 +658,8 @@ type
     procedure ClearDependents;
     function GotoNext(Predicate: TLocalizerPropertyDelegate; DisplayNotFound: boolean = True; FromStart: boolean = False; AutoWrap: boolean = True): boolean;
     procedure UpdateProjectModifiedIndicator;
+    function LocateSourceFile(ForcePrompt: boolean): boolean;
+    function LocateStringsSymbolFile(CheckForOutOfDate, ForcePrompt: boolean): boolean;
     function CheckSourceFile: boolean;
     function CheckStringsSymbolFile(CheckForOutOfDate: boolean): boolean;
   protected
@@ -3518,7 +3523,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.CheckStringsSymbolFile(CheckForOutOfDate: boolean): boolean;
+function TFormMain.LocateStringsSymbolFile(CheckForOutOfDate, ForcePrompt: boolean): boolean;
 var
   SymbolFilename: string;
 resourcestring
@@ -3550,19 +3555,22 @@ begin
     // Path might be relative - Get absolute path
     SymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
-  while (not TFile.Exists(SymbolFilename)) do
+  while (ForcePrompt) or (not TFile.Exists(SymbolFilename)) do
   begin
     UpdateFilename := True;
 
-    // Symbol file does not exist. Try to locate it.
-    var Res := TaskMessageDlg(sStringSymbolsNotFoundTitle,
-      Format(sStringSymbolsNotFound, [FProject.StringSymbolFilename]),
-      mtWarning, [mbYes, mbNo, mbCancel], 0, mbYes);
-
-    if (Res <> mrYes) then
+    if (not ForcePrompt) then
     begin
-      Result := (Res <> mrCancel);
-      Exit;
+      // Symbol file does not exist. Try to locate it.
+      var Res := TaskMessageDlg(sStringSymbolsNotFoundTitle,
+        Format(sStringSymbolsNotFound, [FProject.StringSymbolFilename]),
+        mtWarning, [mbYes, mbNo, mbCancel], 0, mbYes);
+
+      if (Res <> mrYes) then
+      begin
+        Result := (Res <> mrCancel);
+        Exit;
+      end;
     end;
 
     if (SymbolFilename <> '') then
@@ -3570,6 +3578,8 @@ begin
       OpenDialogDRC.InitialDir := TPath.GetDirectoryName(SymbolFilename);
       OpenDialogDRC.Filename := TPath.GetFileName(SymbolFilename);
     end;
+
+    ForcePrompt := False;
 
     if (not OpenDialogDRC.Execute(Handle)) then
       continue;
@@ -3603,32 +3613,31 @@ begin
   end;
 end;
 
-function TFormMain.CheckSourceFile: boolean;
-var
-  Res: Word;
-  SourceFilename: string;
+function TFormMain.CheckStringsSymbolFile(CheckForOutOfDate: boolean): boolean;
+begin
+  Result := LocateStringsSymbolFile(CheckForOutOfDate, False);
+end;
+
+function TFormMain.LocateSourceFile(ForcePrompt: boolean): boolean;
 resourcestring
   sSourceFileNotFoundTitle = 'Source file not found';
   sSourceFileNotFound = 'The source application file specified in the project does not exist.'+#13#13+
     'Filename: %s'+#13#13+
     'Do you want to locate the file now?';
 begin
-  Result := True;
+  var WarnIfNotFound := not ForcePrompt;
+  var SourceFilename := FProject.SourceFilename;
 
-  SaveCursor(crAppStart);
-
-  SourceFilename := FProject.SourceFilename;
-
-  while (not TFile.Exists(SourceFilename)) do
+  while (ForcePrompt) or (not TFile.Exists(SourceFilename)) do
   begin
-    Result := False;
+    // Source file does not exist - Try to locate it.
+    if (WarnIfNotFound) then
+    begin
+      var Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [SourceFilename]), mtWarning, [mbYes, mbNo], 0, mbYes);
 
-    // Source file does not exist. Try to locate it.
-    Res := TaskMessageDlg(sSourceFileNotFoundTitle, Format(sSourceFileNotFound, [SourceFilename]),
-      mtWarning, [mbYes, mbNo], 0, mbYes);
-
-    if (Res <> mrYes) then
-      Exit(False);
+      if (Res <> mrYes) then
+        Exit(False);
+    end;
 
     if (SourceFilename <> '') then
     begin
@@ -3640,24 +3649,35 @@ begin
       Exit(False);
 
     SourceFilename := OpenDialogEXE.FileName;
+
+    ForcePrompt := False;
   end;
 
-  if (not Result) then
+  if (FProject.SourceFilename <> SourceFilename) then
   begin
     FProject.SourceFilename := SourceFilename;
-
-    // If symbol file also doesn't exist we try to fix that without involving the user
-    // but only if the file is found at the expected location.
-    if (not TFile.Exists(FProject.StringSymbolFilename)) then
-    begin
-      SourceFilename := TPath.ChangeExtension(SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
-      if (TFile.Exists(SourceFilename)) then
-        FProject.StringSymbolFilename := SourceFilename;
-    end;
     FProject.Modified := True;
   end;
 
+  // If symbol file also doesn't exist we try to fix that without involving the user
+  // but only if the file is found at the expected location.
+  if (not TFile.Exists(FProject.StringSymbolFilename)) then
+  begin
+    SourceFilename := TPath.ChangeExtension(SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
+    if (TFile.Exists(SourceFilename)) then
+    begin
+      FProject.StringSymbolFilename := SourceFilename;
+      FProject.Modified := True;
+    end;
+  end;
+
   Result := True;
+end;
+
+function TFormMain.CheckSourceFile: boolean;
+begin
+  SaveCursor(crAppStart);
+  Result := LocateSourceFile(False);
 end;
 
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
@@ -3844,8 +3864,10 @@ begin
 
   AddRecentFile(FProjectFilename);
 
+  (* This must be optional or not done at all. We don't need access to the EXE in order to edit translations.
   if (CheckSourceFile) then
     CheckStringsSymbolFile(False);
+  *)
 end;
 
 procedure TFormMain.LoadFromSingleInstance(const Param: string);
@@ -4971,6 +4993,14 @@ begin
       TranslationManagerSettings.Folders.RecentFiles.Delete(n);
     Sender.Free;
   end;
+end;
+
+procedure TFormMain.ButtonProjectLocateSourceClick(Sender: TObject);
+begin
+  SaveCursor(crAppStart);
+  if (LocateSourceFile(True)) then
+    // Also verify DRC file if we got a valid source file
+    LocateStringsSymbolFile(True, False);
 end;
 
 // -----------------------------------------------------------------------------
