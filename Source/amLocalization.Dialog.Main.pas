@@ -4074,6 +4074,29 @@ begin
 
   CountBefore := CountStuff;
 
+  // Clear New state
+  FProject.Traverse(
+    function(Module: TLocalizerModule): boolean
+    begin
+      Module.ClearState(ItemStateNew);
+
+      Module.Traverse(
+        function(Item: TLocalizerItem): boolean
+        begin
+          Item.ClearState(ItemStateNew);
+
+          Item.Traverse(
+            function(Prop: TLocalizerProperty): boolean
+            begin
+              Prop.ClearState(ItemStateNew);
+              Result := True;
+            end);
+          Result := True;
+        end);
+      Result := True;
+    end);
+
+
   SaveModified := FProject.Modified;
   FProject.Modified := False;
 
