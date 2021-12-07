@@ -38,6 +38,7 @@ uses
   amLocalization.TranslationMemory,
   amLocalization.StopList,
   amLocalization.Index,
+  amLocalization.Settings,
   amLocalization.Data.ModuleItemsDataSource,
   amLocalization.ExceptionHandler.API;
 
@@ -639,7 +640,9 @@ type
     procedure RefreshModuleStats;
     procedure DoRefreshModuleStats;
     procedure ViewProperty(Prop: TLocalizerProperty);
-    procedure TranslationAdded(AProp: TLocalizerProperty);
+    procedure TranslationAdded(AProp: TLocalizerProperty); overload;
+    procedure TranslationAdded(AProp: TLocalizerProperty; var AutoApplyTranslations, AutoApplyTranslationsSimilar: TTranslationAutoApply; var UpdatedSame, UpdatedSimilar: integer); overload;
+    procedure DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar: integer);
     function ApplyStopList(const Progress: IProgress = nil): TStopListItemList.TStopListStats;
     function RecoverUnusedTranslations(OnlyNew: boolean): integer;
   protected
@@ -761,7 +764,6 @@ uses
   amLocalization.Skin,
   amLocalization.Normalization,
   amLocalization.Shell,
-  amLocalization.Settings,
   amLocalization.Environment,
   amLocalization.Common,
   amLocalization.Export.CSV,
@@ -1753,6 +1755,11 @@ begin
       FProject.BeginUpdate;
       try
 
+        var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+        var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+        var UpdatedSame := 0;
+        var UpdatedSimilar := 0;
+
         for i := 0 to SelectionCount-1 do
         begin
           Item := Selection[i];
@@ -1793,13 +1800,14 @@ begin
                 Translation.UpdateWarnings;
 
                 // Optionally apply translation to rest of project, reload property
-                TranslationAdded(Prop);
+                TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
               end;
               Result := True;
             end);
         end;
 
         Progress.Progress(psEnd, Counts.Count, Counts.ElegibleCount);
+        DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
 
       finally
         FProject.EndUpdate;
@@ -1845,15 +1853,7 @@ end;
 
 procedure TFormMain.ActionTranslationMemoryUpdateExecute(Sender: TObject);
 var
-  i: integer;
-  Item: TCustomLocalizerItem;
-  Count, ElegibleCount: integer;
   ElegibleWarning: string;
-  Stats, OneStats: TTranslationMemoryMergeStats;
-  DuplicateAction: TTranslationMemoryDuplicateAction;
-  Progress: IProgress;
-  TargetValues: TDictionary<string, TLocalizerProperty>;
-  TargetValue: TPair<string, TLocalizerProperty>;
 resourcestring
   sUpdateDictionaryPromptTitle = 'Update Translation Memory?';
   sUpdateDictionaryPrompt = 'Do you want to update the Translation Memory with the selected %.0n values?%s';
@@ -1864,10 +1864,11 @@ begin
     Exit;
 
   // Count eligible values so we can prompt the user
-  Count := 0;
-  for i := 0 to SelectionCount-1 do
+  var Count := 0;
+  var ElegibleCount := 0;
+  for var i := 0 to SelectionCount-1 do
   begin
-    Item := Selection[i];
+    var Item := Selection[i];
     Item.Traverse(
       function(Prop: TLocalizerProperty): boolean
       begin
@@ -1890,25 +1891,26 @@ begin
     mtConfirmation, [mbYes, mbNo], 0, mbYes) <> mrYes) then
     Exit;
 
+  var Stats := Default(TTranslationMemoryMergeStats);
+  var DuplicateAction: TTranslationMemoryDuplicateAction := tmDupActionPrompt;
 
-  // Create list of sanitized target values
-  TargetValues := TDictionary<string, TLocalizerProperty>.Create(ElegibleCount);
+  // Create list of unique translated values
+  var Translations := TDictionary<string, TLocalizerProperty>.Create(ElegibleCount);
   try
-    Stats := Default(TTranslationMemoryMergeStats);
 
-    for i := 0 to SelectionCount-1 do
+    for var i := 0 to SelectionCount-1 do
     begin
-      Item := Selection[i];
+      var Item := Selection[i];
       Item.Traverse(
         function(Prop: TLocalizerProperty): boolean
         var
-          TargetValue: string;
+          Translation: string;
         begin
           Inc(Count);
           if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
           begin
-            TargetValue := SanitizeText(Prop.TranslatedValue[TranslationLanguage]);
-            if (not TargetValues.TryAdd(TargetValue, Prop)) then // Ignore duplicates
+            Translation := Prop.TranslatedValue[TranslationLanguage];
+            if (not Translations.TryAdd(Translation, Prop)) then // Ignore duplicates
               Inc(Stats.Duplicate);
           end;
           Result := True;
@@ -1918,36 +1920,55 @@ begin
     if (FTranslationMemoryPeek <> nil) then
       FTranslationMemoryPeek.Cancel;
 
-    Progress := ShowProgress(sProgressUpdateTranslationMemory);
+    var Progress := ShowProgress(sProgressUpdateTranslationMemory);
     Progress.EnableAbort := True;
-    Progress.Progress(psProgress, 0, TargetValues.Count);
-    DuplicateAction := tmDupActionPrompt;
+    Progress.Progress(psProgress, 0, Translations.Count);
 
 
-    // Add target values to TM
-    for TargetValue in TargetValues do
-    begin
-      Progress.AdvanceProgress;
-
-      if (FTranslationMemory.HasSourceTerm(TargetValue.Value, SourceLanguage)) then
+    var LookupResult := TTranslationLookupResult.Create;
+    try
+      // Find source values in TM
+      for var Translation in Translations do
       begin
-        DuplicateAction := FTranslationMemory.Add(SourceLanguage, TargetValue.Value.Value, TargetLanguage, TargetValue.Key, OneStats, DuplicateAction);
 
-        Inc(Stats.Added, OneStats.Added);
-        Inc(Stats.Merged, OneStats.Merged);
-        Inc(Stats.Skipped, OneStats.Skipped);
-        Inc(Stats.Duplicate, OneStats.Duplicate);
-      end else
-        Inc(Stats.Skipped);
+        Progress.AdvanceProgress;
 
-      if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
-        break;
+        // Search TM for source terms
+        LookupResult.Clear;
+        if (not FTranslationMemory.FindTerms(SourceLanguage, Translation.Value.Value, LookupResult, True)) then
+        begin
+          Inc(Stats.Skipped);
+          continue;
+        end;
+
+        // Add best match
+        for var Result in LookupResult do
+        begin
+          var OneStats: TTranslationMemoryMergeStats;
+          DuplicateAction := FTranslationMemory.Add(SourceLanguage, Result.SourceValue, TargetLanguage, Translation.Key, OneStats, DuplicateAction);
+
+          Inc(Stats.Added, OneStats.Added);
+          Inc(Stats.Merged, OneStats.Merged);
+          Inc(Stats.Skipped, OneStats.Skipped);
+          Inc(Stats.Duplicate, OneStats.Duplicate);
+
+          // We're only interested in the first match
+          break;
+        end;
+
+        if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
+          break;
+      end;
+
+    finally
+      LookupResult.Free;
     end;
+
+    Progress.Hide;
   finally
-    TargetValues.Free;
+    Translations.Free;
   end;
 
-  Progress.Hide;
 
   QueueTranslationMemoryPeek;
 
@@ -2020,11 +2041,57 @@ begin
   end;
 end;
 
+procedure TFormMain.DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar: integer);
+resourcestring
+  sApplyTranslationResultIdentical = 'Applied translation to %.0n identical values';
+  sApplyTranslationResultSimilar = 'Applied translation to %.0n similar values';
+  sApplyTranslationResultBoth = 'Applied translation to %.0n identical and %.0n similar values';
+begin
+  if (UpdatedSame > 0) or (UpdatedSimilar > 0) then
+  begin
+    var Msg: string;
+    if (UpdatedSame > 0) and (UpdatedSimilar = 0) then
+      Msg := Format(sApplyTranslationResultIdentical, [UpdatedSame*1.0])
+    else
+    if (UpdatedSame = 0) and (UpdatedSimilar > 0) then
+      Msg := Format(sApplyTranslationResultSimilar, [UpdatedSimilar*1.0])
+    else
+      Msg := Format(sApplyTranslationResultBoth, [UpdatedSame*1.0, UpdatedSimilar*1.0]);
+
+    QueueToast(Msg); // TODO : Localization
+  end;
+end;
+
 procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty);
+begin
+  var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+  var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+  var UpdatedSame := 0;
+  var UpdatedSimilar := 0;
+
+  TranslationAdded(AProp, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
+
+  DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
+end;
+
+procedure TFormMain.TranslationAdded(AProp: TLocalizerProperty; var AutoApplyTranslations, AutoApplyTranslationsSimilar: TTranslationAutoApply; var UpdatedSame, UpdatedSimilar: integer);
 var
   SourceValue, TranslatedValue: string;
   PropertyList: TLocalizerPropertyList;
   Prop: TLocalizerProperty;
+resourcestring
+  sApplyTranslationCaption = 'Apply translation?';
+  sApplyTranslationTitle = 'Apply the same translation to the following identical value?';
+  sApplySimilarTranslationTitle = 'Apply the same translation to the following similar value?';
+  sApplyTranslationText =
+    '  Module: %s'#13+
+    '  Element: %s'#13+
+    '  Property: %s'#13+
+    '  Value: %s'#13#13+
+    '  Old translation: %s'#13+
+    '  New translation: %s'#13#13+
+    '(%.0n of %.0n)';
+  sApplyTranslationButtonAll = 'Use this choice for all';
 begin
   (*
   ** TODO :
@@ -2037,8 +2104,6 @@ begin
   **     so it can be reused for future translations."
   **
   *)
-  var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
-  var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
 
   if (AutoApplyTranslations = aaNever) or (not AProp.HasTranslation(TranslationLanguage)) then
     Exit;
@@ -2080,8 +2145,6 @@ begin
 
   var IndexSame := 0;
   var IndexSimilar := 0;
-  var UpdatedSame := 0;
-  var UpdatedSimilar := 0;
 
   for Prop in PropertyList do
   begin
@@ -2104,22 +2167,39 @@ begin
           var OldTranslation := '';
           if (HasTranslation) then
             OldTranslation := Prop.TranslatedValue[TranslationLanguage];
-          var Msg := Format('Apply the same translation to the following identical value?'#13#13+
-            '  Module: %s'#13+
-            '  Element: %s'#13+
-            '  Property: %s'#13+
-            '  Value: %s'#13+
-            '  Old translation: %s'#13+
-            '  New translation: %s'#13#13+
-            '(%.0n of %.0n)', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, TranslatedValue, IndexSame*1.0, CountSame*1.0]);
-          var Res := TaskMessageDlg('Apply translation?', Msg, mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbCancel], 0, mbYes);
-          if (Res in [mrNoToAll, mrCancel]) then
-            Abort;
-          if (Res = mrYesToAll) then
-            AutoApplyTranslations := aaAlways
-          else
-          if (Res = mrNo) then
-            Apply := False;
+
+          var TaskDialog := TTaskDialog.Create(nil);
+          try
+            TaskDialog.Title := sApplyTranslationCaption;
+            TaskDialog.Caption := sApplyTranslationTitle;
+            TaskDialog.Text := Format(sApplyTranslationText, [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, TranslatedValue, IndexSame*1.0, CountSame*1.0]);
+            TaskDialog.CommonButtons := [tcbYes, tcbNo, tcbCancel];
+            TaskDialog.VerificationText := sApplyTranslationButtonAll;
+
+            TaskDialog.Execute;
+
+            case TaskDialog.ModalResult of
+              mrYes:
+                begin
+                  Apply := True;
+                  if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                    AutoApplyTranslations := aaAlways
+                end;
+
+              mrNo:
+                begin
+                  Apply := False;
+                  if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                    AutoApplyTranslations := aaNever;
+                end;
+            else
+              AutoApplyTranslations := aaNever;
+              AutoApplyTranslationsSimilar := aaNever;
+              break;
+            end;
+          finally
+            TaskDialog.Free;
+          end;
         end;
 
         if (Apply) then
@@ -2139,25 +2219,39 @@ begin
           if (HasTranslation) then
             OldTranslation := Prop.TranslatedValue[TranslationLanguage];
           var NewTranslation := MakeAlike(Prop.Value, TranslatedValue);
-          var Msg := Format('Apply the same translation to the following similar value?'#13#13+
-            '  Module: %s'#13+
-            '  Element: %s'#13+
-            '  Property: %s'#13+
-            '  Value: %s'#13+
-            '  Old translation: %s'#13+
-            '  New translation: %s'#13#13+
-            '(%.0n of %.0n)', [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, NewTranslation, IndexSimilar*1.0, CountSimilar*1.0]);
-          var Res := TaskMessageDlg('Apply similar translation?', Msg, mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbCancel], 0, mbYes);
-          if (Res = mrCancel) then
-            break;
-          if (Res = mrNoToAll) then
-            AutoApplyTranslationsSimilar := aaNever
-          else
-          if (Res = mrYesToAll) then
-            AutoApplyTranslationsSimilar := aaAlways
-          else
-          if (Res = mrNo) then
-            Apply := False;
+
+          var TaskDialog := TTaskDialog.Create(nil);
+          try
+            TaskDialog.Title := sApplyTranslationCaption;
+            TaskDialog.Caption := sApplySimilarTranslationTitle;
+            TaskDialog.Text := Format(sApplyTranslationText, [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, NewTranslation, IndexSimilar*1.0, CountSimilar*1.0]);
+            TaskDialog.CommonButtons := [tcbYes, tcbNo, tcbCancel];
+            TaskDialog.VerificationText := sApplyTranslationButtonAll;
+
+            TaskDialog.Execute;
+
+            case TaskDialog.ModalResult of
+              mrYes:
+                begin
+                  Apply := True;
+                  if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                    AutoApplyTranslationsSimilar := aaAlways
+                end;
+
+              mrNo:
+                begin
+                  Apply := False;
+                  if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                    AutoApplyTranslationsSimilar := aaNever;
+                end;
+            else
+              AutoApplyTranslations := aaNever;
+              AutoApplyTranslationsSimilar := aaNever;
+              break;
+            end;
+          finally
+            TaskDialog.Free;
+          end;
         end;
 
         if (Apply) then
@@ -2172,19 +2266,7 @@ begin
     end;
   end;
 
-  if (CountSame > 0) or (CountSimilar > 0) then
-  begin
-    var Msg: string;
-    if (UpdatedSame > 0) and (UpdatedSimilar = 0) then
-      Msg := Format('Applied translation to %.0n identical values', [UpdatedSame*1.0])
-    else
-    if (UpdatedSame = 0) and (UpdatedSimilar > 0) then
-      Msg := Format('Applied translation to %.0n similar values', [UpdatedSimilar*1.0])
-    else
-      Msg := Format('Applied translation to %.0n identical and %.0n similar values', [UpdatedSame*1.0, UpdatedSimilar*1.0]);
-
-    QueueToast(Msg); // TODO : Localization
-  end;
+  ReloadProperty(AProp);
 end;
 
 procedure TFormMain.TranslationMemoryPeekHandler(Sender: TObject);
@@ -4614,6 +4696,11 @@ begin
   SaveCursor(crAppStart);
   GridItemsTableView.BeginUpdate;
   try
+    var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+    var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+    var UpdatedSame := 0;
+    var UpdatedSimilar := 0;
+
     for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
     begin
       RecordIndex := GridItemsTableView.Controller.SelectedRecords[i].RecordIndex;
@@ -4626,8 +4713,10 @@ begin
 
       LoadItem(Prop);
 
-      TranslationAdded(Prop);
+      TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
     end;
+
+    DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
   finally
     GridItemsTableView.EndUpdate;
   end;
@@ -4643,6 +4732,11 @@ begin
   SaveCursor(crAppStart);
   GridItemsTableView.BeginUpdate;
   try
+    var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+    var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+    var UpdatedSame := 0;
+    var UpdatedSimilar := 0;
+
     for i := 0 to GridItemsTableView.Controller.SelectedRecordCount-1 do
     begin
       RecordIndex := GridItemsTableView.Controller.SelectedRecords[i].RecordIndex;
@@ -4653,10 +4747,10 @@ begin
 
       Translation.Status := tStatusProposed;
 
-      LoadItem(Prop);
-
-      TranslationAdded(Prop);
+      TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
     end;
+
+    DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
   finally
     GridItemsTableView.EndUpdate;
   end;

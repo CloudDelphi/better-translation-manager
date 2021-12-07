@@ -31,7 +31,7 @@ type
   TTranslationMemoryDuplicateAction = (
     tmDupActionPrompt,          // Prompt to select action
     tmDupActionAbort,           // Abort import
-    tmDupActionAcceptAll,       // Accept all duplicates
+    tmDupActionAddAll,          // Add all duplicates
     tmDupActionRejectAll        // Reject all duplicates
   );
 
@@ -95,6 +95,7 @@ type
     function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
+    function FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 

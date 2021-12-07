@@ -137,17 +137,21 @@ type
       SourceValue: string;
       TargetValue: string;
     end;
+    TTranslationList = TList<TTranslation>;
   strict private
-    FItems: TList<TTranslation>;
+    FItems: TTranslationList;
   public
     constructor Create(ACapacity: integer = 0);
     destructor Destroy; override;
 
+    procedure Clear;
     procedure Add(const SourceValue, TargetValue: string);
 
     procedure RankTranslations(const SourceValue: string);
 
     procedure AddToStrings(Strings: TStrings);
+
+    function GetEnumerator: TEnumerator<TTranslation>;
   end;
 
 
@@ -434,7 +438,7 @@ constructor TTranslationLookupResult.Create(ACapacity: integer);
 begin
   inherited Create;
 
-  FItems := TList<TTranslation>.Create;
+  FItems := TTranslationList.Create;
   FItems.Capacity := ACapacity;
 end;
 
@@ -442,6 +446,20 @@ destructor TTranslationLookupResult.Destroy;
 begin
   FItems.Free;
   inherited;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TTranslationLookupResult.Clear;
+begin
+  FItems.Clear;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TTranslationLookupResult.GetEnumerator: TEnumerator<TTranslation>;
+begin
+  Result := FItems.GetEnumerator;
 end;
 
 // -----------------------------------------------------------------------------

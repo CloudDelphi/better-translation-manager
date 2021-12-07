@@ -73,6 +73,9 @@ function MakeAlike(const SourceValue, Value: string; Rules: TMakeAlikeRules): st
 function EqualizeLeadingSpace(const Source, Target: string): string;
 function EqualizeTrailingSpace(const Source, Target: string): string;
 
+// Rank value against a reference value. Rank goes from 0 (exact match) to 1000 (no match).
+function RankSimilarity(const ReferenceValue, Value: string): integer;
+
 
 // -----------------------------------------------------------------------------
 //
@@ -754,6 +757,43 @@ begin
     if (StartsWithUppercase(SourceValue)) then
       Result := MakeStartWithUppercase(Result);
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+function RankSimilarity(const ReferenceValue, Value: string): integer;
+begin
+  // Exact match
+  if (ReferenceValue = Value) then
+    Exit(0);
+
+  // Case mismatch
+  if (AnsiSameText(ReferenceValue, Value)) then
+    Exit(10);
+
+  // Case and/or space mismatch
+  if (AnsiSameText(ReferenceValue.Trim, Value.Trim)) then
+    Exit(20);
+
+  // Both have surrounds
+  var SurroundIndex := GetTextSurroundIndex(ReferenceValue);
+  if (SurroundIndex <> -1) and (SurroundIndex = GetTextSurroundIndex(Value)) then
+    Exit(30);
+
+  // Both have ending
+  var TextEnding := GetTextEnding(ReferenceValue);
+  if (TextEnding <> '') and (TextEnding = GetTextEnding(Value)) then
+    Exit(40);
+
+  // Both have accelerators
+  if (HasAccelerator(ReferenceValue)) and (HasAccelerator(Value)) then
+    Exit(50);
+
+  // Both have Format() specifiers
+  if (SanitizeText(ReferenceValue, [skFormat]) <> ReferenceValue) and (SanitizeText(Value, [skFormat]) <> Value) then
+    Exit(60);
+
+  Result := 1000;
 end;
 
 // -----------------------------------------------------------------------------

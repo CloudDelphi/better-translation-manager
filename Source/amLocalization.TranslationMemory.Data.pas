@@ -93,6 +93,7 @@ type
     function CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
     function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
     function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
+    function FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
     function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
@@ -135,6 +136,7 @@ implementation
 {$R *.dfm}
 
 uses
+  Generics.Defaults,
   UITypes,
   Dialogs,
   Controls,
@@ -845,33 +847,41 @@ function TDataModuleTranslationMemory.AddTerm(SourceField: TField; const SourceV
     Result := cxGetStringAdjustedToWidth(0, 0, Result, 250, mstEndEllipsis);
   end;
 
+type
+  TDuplicateChoice = (ChoiceAbort, ChoiceAdd, ChoiceSkip);
+type
+  TRankedDuplicate = record
+    Rank: integer;
+    Duplicate: integer;
+  end;
+  TRankedDuplicates = array of TRankedDuplicate;
 var
   DuplicateTerms: TDuplicateTerms;
   DuplicateValues: TDuplicateValues;
   Duplicate: TDuplicate;
   i: integer;
   s: string;
-  Res: Word;
   DuplicateFound: boolean;
   DuplicateTermPair: TPair<TField, TDuplicateTerms>;
   SourceLanguage, TargetLanguage: TLocaleItem;
   SourceLanguageName, TargetLanguageName: string;
-  ActualDuplicateCount, DuplicateCount: integer;
+  DuplicateCount: integer;
+  DuplicateChoice: TDuplicateChoice;
 const
   MaxDuplicateCount = 5;
 resourcestring
   sTranslationMemoryAddDuplicateTitle = 'Duplicates found';
   sTranslationMemoryAddDuplicate = 'You are adding a term that already has %d translation(s) in the dictionary:'+#13#13+
     '%s:'#13+                   // Source language
-    '  "%s"'+#13#13+            // Source value
+    #$25CF+'"%s"'+#13#13+              // Source value
     '%s:'+                      // Target language
-    '%s'+#13#13+                // Existing values. No quotes here. They're added in code.
+    '%s'+#13#13+                // Existing values. No bullet or quotes here. They're added in code.
     'New translation:'#13+
-    '  "%s"'+#13#13+            // New value
+    #$25CF+'"%s"'+#13#13+              // New value
     'Do you want to add the translation anyway?';
+  sTranslationMemoryAddDuplicateBullet = #$25CF;
   sTranslationMemoryAddDuplicateMore = '   ...and %d more.';
-const
-  cBullet: char = #$25CF;
+  sTranslationMemoryDuplicateButtonAll = 'Use this choice for all';
 begin
   Assert(SourceField <> TargetField);
   Assert(SourceField <> nil);
@@ -887,19 +897,26 @@ begin
     Exit;
   end;
 
+  // Get a list of duplicate source terms
   DuplicateTerms := nil;
   if (not Duplicates.TryGetValue(TargetField, DuplicateTerms)) or (not DuplicateTerms.TryGetValue(SanitizedSourceValue, DuplicateValues)) then
     DuplicateValues := nil;
 
-  ActualDuplicateCount := 0;
+  // Count of source value diplicates with non-empty target values
+  var ActualDuplicateCount := 0;
+
   if (DuplicateValues <> nil) then
     for i := 0 to DuplicateValues.Count-1 do
     begin
       if (AnsiSameText(SourceValue, DuplicateValues[i].SourceValue)) and (AnsiSameText(TargetValue, DuplicateValues[i].Value)) then
       begin
+        // We have an exact duplicate. Keep it and do nothing else.
         Inc(Stats.Duplicate);
         Exit;
       end;
+
+      // We have a match on the source value.
+      // If the target values isn't empty then we will need to resolve the duplicate.
       if (not DuplicateValues[i].Value.IsEmpty) then
         Inc(ActualDuplicateCount);
     end;
@@ -907,6 +924,18 @@ begin
   // Do not prompt for duplicate with only empty target values - just merge it
   if (ActualDuplicateCount > 0) then
   begin
+    DuplicateChoice := ChoiceAbort;
+    case DuplicateAction of
+      tmDupActionAbort:
+        Abort;
+
+      tmDupActionAddAll:
+        DuplicateChoice := ChoiceAdd;
+
+      tmDupActionRejectAll:
+        DuplicateChoice := ChoiceSkip;
+    end;
+
     if (DuplicateAction = tmDupActionPrompt) then
     begin
       s := '';
@@ -917,9 +946,9 @@ begin
         if (DuplicateValues[i].Value.IsEmpty) then
           continue;
 
-        s := s + #13 + '   '+cBullet+' "'+Truncate(DuplicateValues[i].Value)+'"';
+        s := s + #13 + sTranslationMemoryAddDuplicateBullet + ' "' + Truncate(DuplicateValues[i].Value) + '"';
         Inc(DuplicateCount);
-        // If there's room for one more but potentially two or more to add, then we display "and then some" message instead
+        // If there's room for one more, but potentially two or more to add, then we display "and then some" message instead
         if (ActualDuplicateCount > MaxDuplicateCount) and (DuplicateCount = MaxDuplicateCount-1) then
         begin
           s := s + #13 + Format(sTranslationMemoryAddDuplicateMore, [ActualDuplicateCount-DuplicateCount]);
@@ -939,65 +968,74 @@ begin
       else
         TargetLanguageName := TargetField.FieldName;
 
-      Res := TaskMessageDlg(sTranslationMemoryAddDuplicateTitle,
-        Format(sTranslationMemoryAddDuplicate, [ActualDuplicateCount, SourceLanguageName, Truncate(SourceValue), TargetLanguageName, s, Truncate(TargetValue)]),
-        mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll, mbAbort], 0, mbNo);
+      var TaskDialog := TTaskDialog.Create(nil);
+      try
+        TaskDialog.Title := '';
+        TaskDialog.Caption := sTranslationMemoryAddDuplicateTitle;
+        TaskDialog.Text := Format(sTranslationMemoryAddDuplicate, [ActualDuplicateCount, SourceLanguageName, Truncate(SourceValue), TargetLanguageName, s, Truncate(TargetValue)]);
+        TaskDialog.CommonButtons := [tcbYes, tcbNo, tcbCancel];
+        TaskDialog.DefaultButton := tcbNo;
+        TaskDialog.VerificationText := sTranslationMemoryDuplicateButtonAll;
 
-      case Res of
-        mrAbort:
+        TaskDialog.Execute;
+
+        case TaskDialog.ModalResult of
+          mrYes:
+            begin
+              if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                Result := tmDupActionAddAll;
+              DuplicateChoice := ChoiceAdd;
+            end;
+
+          mrNo:
+            begin
+              if (tfVerificationFlagChecked in TaskDialog.Flags) then
+                Result := tmDupActionRejectAll;
+              DuplicateChoice := ChoiceSkip;
+            end;
+        else
           Result := tmDupActionAbort;
+        end;
 
-        mrNo:
-          begin
-            Inc(Stats.Skipped);
-            Exit;
-          end;
-
-        mrNoToAll:
-          Result := tmDupActionRejectAll;
-
-        mrYesToAll:
-          Result := tmDupActionAcceptAll;
+      finally
+        TaskDialog.Free;
       end;
+
     end;
 
-    if (Result in [tmDupActionAbort, tmDupActionRejectAll]) then
+    if (DuplicateChoice = ChoiceSkip) or (Result in [tmDupActionAbort, tmDupActionRejectAll]) then
     begin
       Inc(Stats.Skipped);
       Exit;
     end;
   end;
 
+  // If we have a duplicate source with an empty target value, then we fill out
+  // that empty value with the new target value.
   if (DuplicateValues <> nil) and (DuplicateValues.EmptyCount > 0) then
   begin
-    // Find first empty entry.
-    // First look for exact source match
-    DuplicateFound := False;
+    // Create a list of empty entries and rank them
+    var EmptyEntries: TRankedDuplicates;
+    SetLength(EmptyEntries, DuplicateValues.EmptyCount);
+    var Index := 0;
     for i := 0 to DuplicateValues.Count-1 do
     begin
-      if (AnsiSameText(DuplicateValues[i].SourceValue, SourceValue)) and (DuplicateValues[i].Value.IsEmpty) then
-      begin
-        DuplicateFound := True;
-        Duplicate := DuplicateValues[i];
-        Duplicate.Value := TargetValue;
-        DuplicateValues[i] := Duplicate;
-        break;
-      end;
+      if (not DuplicateValues[i].Value.IsEmpty) then
+        continue;
+      EmptyEntries[Index].Duplicate := i;
+      EmptyEntries[Index].Rank := RankSimilarity(SourceValue, DuplicateValues[i].SourceValue);
     end;
-    // Then just for an empty entry
-    if (not DuplicateFound) then
-      for i := 0 to DuplicateValues.Count-1 do
+    // Sort to get best ranked entry - or I could just have picked it up during the loop above...
+    TArray.Sort<TRankedDuplicate>(EmptyEntries, TComparer<TRankedDuplicate>.Construct(
+      function(const Left, Right: TRankedDuplicate): Integer
       begin
-        if (DuplicateValues[i].Value.IsEmpty) then
-        begin
-          DuplicateFound := True;
-          Duplicate := DuplicateValues[i];
-          Duplicate.Value := TargetValue;
-          DuplicateValues[i] := Duplicate;
-          break;
-        end;
-      end;
-    Assert(DuplicateFound);
+        Result := Right.Rank - Left.Rank;
+      end));
+
+    // Fill out best ranked empty entry
+    Duplicate := DuplicateValues[EmptyEntries[0].Duplicate];
+    Duplicate.Value := MakeAlike(Duplicate.SourceValue, TargetValue);
+    DuplicateValues[EmptyEntries[0].Duplicate] := Duplicate;
     Dec(DuplicateValues.EmptyCount);
 
     // Edit existing entry
@@ -1010,7 +1048,7 @@ begin
         // Source field already has the desired value
         // SourceField.AsString := SourceValue;
 
-        TargetField.AsString := TargetValue;
+        TargetField.AsString := Duplicate.Value;
 
         TableTranslationMemory.Post;
 
@@ -1618,6 +1656,50 @@ begin
   end;
 
   Result := False;
+end;
+
+// -----------------------------------------------------------------------------
+
+function TDataModuleTranslationMemory.FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult;
+  RankResult: boolean): boolean;
+begin
+  if (not CheckLoaded) then
+    Exit(False);
+
+  // Do nothing if there is no data
+  if (not HasData) then
+    Exit(False);
+
+  var Field := FindField(Language);
+
+  if (Field = nil) then
+    // Language doesn't exist in TM
+    Exit(False);
+
+  var SanitizedValue := SanitizeText(Value);
+  Result := False;
+
+  // Populate list of matching target terms
+  TableTranslationMemory.First;
+
+  while (not TableTranslationMemory.EOF) do
+  begin
+    if (not Field.IsNull) then
+    begin
+      if (AnsiSameText(SanitizedValue, SanitizeText(Field.AsString))) then
+      begin
+        // Match found
+        LookupResult.Add(Field.AsString, '');
+        Result := True;
+      end;
+    end;
+
+    TableTranslationMemory.Next;
+  end;
+
+  // Rank result by source value similarity
+  if (RankResult) then
+    LookupResult.RankTranslations(Value);
 end;
 
 // -----------------------------------------------------------------------------

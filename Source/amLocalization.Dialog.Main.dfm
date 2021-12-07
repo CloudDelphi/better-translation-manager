@@ -1156,7 +1156,7 @@ object FormMain: TFormMain
         end
         item
           Visible = True
-          ItemName = 'dxBarButton15'
+          ItemName = 'ButtonTranslationMemoryUpdate'
         end>
       OneOnRow = False
       Row = 0
