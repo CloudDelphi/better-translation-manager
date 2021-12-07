@@ -862,11 +862,16 @@ const
 resourcestring
   sTranslationMemoryAddDuplicateTitle = 'Duplicates found';
   sTranslationMemoryAddDuplicate = 'You are adding a term that already has %d translation(s) in the dictionary:'+#13#13+
-    '  %s: "%s"'+#13+
-    '  %s: "%s"'+#13#13+
-    'New translation: "%s"'+#13#13+
+    '%s:'#13+                   // Source language
+    '  "%s"'+#13#13+            // Source value
+    '%s:'+                      // Target language
+    '%s'+#13#13+                // Existing values. No quotes here. They're added in code.
+    'New translation:'#13+
+    '  "%s"'+#13#13+            // New value
     'Do you want to add the translation anyway?';
   sTranslationMemoryAddDuplicateMore = '   ...and %d more.';
+const
+  cBullet: char = #$25CF;
 begin
   Assert(SourceField <> TargetField);
   Assert(SourceField <> nil);
@@ -906,16 +911,13 @@ begin
     begin
       s := '';
       DuplicateCount := 0;
-      // Target value on single line if only one, otherwise bullet list
+      // Bullet list of target values
       for i := 0 to DuplicateValues.Count-1 do
       begin
         if (DuplicateValues[i].Value.IsEmpty) then
           continue;
-        if (DuplicateCount = 1) then
-          s := #13 + '   - ' + s;
-        if (DuplicateCount >= 1) then
-          s := s + #13 + '   - ';
-        s := s + '"'+Truncate(DuplicateValues[i].Value)+'"';
+
+        s := s + #13 + '   '+cBullet+' "'+Truncate(DuplicateValues[i].Value)+'"';
         Inc(DuplicateCount);
         // If there's room for one more but potentially two or more to add, then we display "and then some" message instead
         if (ActualDuplicateCount > MaxDuplicateCount) and (DuplicateCount = MaxDuplicateCount-1) then
