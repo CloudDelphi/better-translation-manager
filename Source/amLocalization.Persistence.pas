@@ -339,6 +339,7 @@ begin
       if (ModuleNode.NodeName = 'module') then
       begin
         Module := Project.AddModule(VarToStr(ModuleNode.Attributes['name']));
+        Module.ClearState(ItemStateNew);
         Module.Kind := StringToModuleKind(VarToStr(ModuleNode.Attributes['type']));
         StringToItemState(Module, VarToStr(ModuleNode.Attributes['state']));
         Module.Status := StringToItemStatus(VarToStr(ModuleNode.Attributes['status']));
@@ -352,6 +353,7 @@ begin
             if (ItemNode.NodeName = 'item') then
             begin
               Item := Module.AddItem(VarToStr(ItemNode.Attributes['name']), VarToStr(ItemNode.Attributes['type']));
+              Item.ClearState(ItemStateNew);
               Item.ResourceID := StrToIntDef(VarToStr(ItemNode.Attributes['id']), 0);
               StringToItemState(Item, VarToStr(ItemNode.Attributes['state']));
               Item.Status := StringToItemStatus(VarToStr(ItemNode.Attributes['status']));
@@ -368,6 +370,7 @@ begin
                     // s := s.Replace(#10, #13);
                     s := TextDecoder(s);
                     Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
+                    Prop.ClearState(ItemStateNew);
                     StringToItemState(Prop, VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
                     Prop.Flags := StringToPropFlags(VarToStr(PropNode.Attributes['flags']));
@@ -398,7 +401,7 @@ begin
               end else
               if (Module.Kind = mkString) and (Item.Status = ItemStatusDontTranslate) then
               begin
-                // If a resourcestring was saved without the single property it should contains then it must be because
+                // If a resourcestring was saved without the single property it /should/ contain then it must be because
                 // the property was marked "Don't translate". We restore the original state here so the property will
                 // appear again. We must do this as there is no way to directly modify the status of an Item in the UI.
 
@@ -409,6 +412,7 @@ begin
                 // We don't have the value anymore, so we just add an empty string. The user must recover the value by
                 // doing a refresh.
                 Prop := Item.AddProperty('', '');
+                Prop.ClearState(ItemStateNew);
 
                 // Mark the property "Don't translate"
                 Prop.Status := ItemStatusDontTranslate;
