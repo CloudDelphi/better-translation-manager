@@ -392,7 +392,7 @@ type
     procedure ActionHasActivePropertyUpdate(Sender: TObject);
     procedure ActionTranslationMemoryTranslateExecute(Sender: TObject);
     procedure ActionGotoNextStatusExecute(Sender: TObject);
-    procedure ActionGotoNextStateExecute(Sender: TObject);
+    procedure ActionGotoNextStateNewExecute(Sender: TObject);
     procedure ActionTranslationMemoryTranslateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryAddUpdate(Sender: TObject);
     procedure ButtonOpenRecentClick(Sender: TObject);
@@ -474,6 +474,8 @@ type
     procedure PopupMenuValidationWarningPopup(Sender: TObject);
     procedure ActionGotoAgainUpdate(Sender: TObject);
     procedure ActionGotoAgainExecute(Sender: TObject);
+    procedure ActionGotoNextStateExistingExecute(Sender: TObject);
+    procedure ActionGotoNextStateUnusedExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -3017,13 +3019,33 @@ begin
   end;
 end;
 
-procedure TFormMain.ActionGotoNextStateExecute(Sender: TObject);
+procedure TFormMain.ActionGotoNextStateExistingExecute(Sender: TObject);
 begin
   FLastGotoAction := TAction(Sender);
   GotoNext(
     function(Prop: TLocalizerProperty): boolean
     begin
-      Result := (TLocalizerItemState(TAction(Sender).Tag) in Prop.State);
+      Result := (Prop.State * [ItemStateNew, ItemStateUnused] = []);
+    end);
+end;
+
+procedure TFormMain.ActionGotoNextStateNewExecute(Sender: TObject);
+begin
+  FLastGotoAction := TAction(Sender);
+  GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := (ItemStateNew in Prop.State);
+    end);
+end;
+
+procedure TFormMain.ActionGotoNextStateUnusedExecute(Sender: TObject);
+begin
+  FLastGotoAction := TAction(Sender);
+  GotoNext(
+    function(Prop: TLocalizerProperty): boolean
+    begin
+      Result := (ItemStateUnused in Prop.State);
     end);
 end;
 

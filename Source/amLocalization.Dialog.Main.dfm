@@ -2144,21 +2144,21 @@ object FormMain: TFormMain
       Category = 'Find'
       Caption = 'New'
       ImageIndex = 50
-      OnExecute = ActionGotoNextStateExecute
+      OnExecute = ActionGotoNextStateNewExecute
     end
     object ActionGotoNextStateExisting: TAction
       Tag = 1
       Category = 'Find'
       Caption = 'Existing'
       ImageIndex = 10
-      OnExecute = ActionGotoNextStateExecute
+      OnExecute = ActionGotoNextStateExistingExecute
     end
     object ActionGotoNextStateUnused: TAction
       Tag = 2
       Category = 'Find'
       Caption = 'Unused'
       ImageIndex = 51
-      OnExecute = ActionGotoNextStateExecute
+      OnExecute = ActionGotoNextStateUnusedExecute
     end
     object ActionSettings: TAction
       Category = 'File'
