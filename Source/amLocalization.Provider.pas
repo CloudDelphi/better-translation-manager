@@ -555,14 +555,18 @@ begin
     FItems[i] := Translation;
   end;
 
-  // Eliminate duplicate target values
-  for i := FItems.Count-1 downto 0 do
-    for j := i-1 downto 0 do
+  // Eliminate duplicate target values, worst matches first
+  i := 0;
+  while (i <= FItems.Count-2) do
+  begin
+    for j := FItems.Count-1 downto i+1 do
       if (FItems[i].TargetValue = FItems[j].TargetValue) then
       begin
-        FItems.Delete(i);
+        FItems.Delete(j);
         break;
       end;
+    Inc(i);
+  end;
 end;
 
 // -----------------------------------------------------------------------------
