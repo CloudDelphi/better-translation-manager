@@ -34,10 +34,10 @@ type
     procedure Error(const Msg: string);
     procedure Warning(const Msg: string);
 
-    procedure DoBuild(const AProjectFilename: string; TranslationLanguage: TTranslationLanguage);
+    procedure DoBuild(TranslationLanguage: TTranslationLanguage);
 
     procedure LoadFromFile(const Filename: string);
-    procedure Build(const AProjectFilename: string; const Language: string);
+    procedure Build(const Language: string);
     procedure Help;
     procedure Header;
   public
@@ -48,7 +48,12 @@ type
 
     class function ProjectFilename: string;
     class function OptionBuild: boolean;
+    class function OptionSource(var Filename: string): boolean;
+    class function OptionSymbols(var Filename: string): boolean;
     class function OptionHelp: boolean;
+    class function OptionVerbose: boolean;
+    class function OptionName(ADefault: TModuleNameScheme): TModuleNameScheme;
+    class function OptionLanguage(ADefault: string = ''): string;
   end;
 
 type
@@ -64,11 +69,13 @@ resourcestring
   sCommandLineTitle = 'amTranslationManager resource module builder version %s';
   sCommandLineHelp = 'Usage: %s <projectfile> [options]'+#13#13+
     'Options:'+#13+
-    '  -?               Display help (this message)'+#13+
-    '  -t language      Only build for specified language'+#13+
-    '  -b               Build resource module(s)'+#13+
-    '  -v               Display verbose messages'+#13+
-    '  -n scheme        File name scheme:'+#13+
+    '  -?                 Display help (this message)'+#13+
+    '  -t:<language>      Only build for specified language'+#13+
+    '  -b                 Build resource module(s)'+#13+
+    '  -s:<source file>]  Specify source file'+#13+
+    '  -y:<symbol file>]  Specify string symbols file'+#13+
+    '  -v                 Display verbose messages'+#13+
+    '  -n:<scheme>        File name scheme:'+#13+
     '                     0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)'+#13+
     '                     1: ISO 639-1 (e.g. EN, DA, DE, etc)'+#13+
     '                     2: RFC 4646 (e.g. en-US, da-DK, de-DE, etc)';
@@ -131,6 +138,52 @@ begin
   Result := (FindCmdLineSwitch('h')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('help'));
 end;
 
+class function TLocalizationCommandLineTool.OptionLanguage(
+  ADefault: string): string;
+begin
+  if (not FindCmdLineSwitch('t', Result, True, [clstValueAppended])) and (not FindCmdLineSwitch('target', Result, True, [clstValueAppended])) then
+    Result := ADefault;
+end;
+
+class function TLocalizationCommandLineTool.OptionName(ADefault: TModuleNameScheme): TModuleNameScheme;
+begin
+  var s: string;
+  if (FindCmdLineSwitch('n', s, True, [clstValueAppended])) or (FindCmdLineSwitch('name', s, True, [clstValueAppended])) then
+  begin
+    var n := StrToIntDef(s, Ord(ADefault));
+    if (n >= Ord(Low(TModuleNameScheme))) and (n <= Ord(High(TModuleNameScheme))) then
+      Result := ADefault
+    else
+      Result := TModuleNameScheme(n);
+  end else
+    Result := ADefault;
+end;
+
+class function TLocalizationCommandLineTool.OptionSource(var Filename: string): boolean;
+begin
+  Result := ((FindCmdLineSwitch('s', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('source', Filename, True, [clstValueAppended]))) and
+    (Filename <> '');
+
+  // If command line specified a relative path then it must be relative to the "current folder"
+  if (Result) then
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+end;
+
+class function TLocalizationCommandLineTool.OptionSymbols(var Filename: string): boolean;
+begin
+  Result := ((FindCmdLineSwitch('y', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('symbols', Filename, True, [clstValueAppended]))) and
+    (Filename <> '');
+
+  // If command line specified a relative path then it must be relative to the "current folder"
+  if (Result) then
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+end;
+
+class function TLocalizationCommandLineTool.OptionVerbose: boolean;
+begin
+  Result := (FindCmdLineSwitch('v')) or (FindCmdLineSwitch('verbose'));
+end;
+
 class function TLocalizationCommandLineTool.ProjectFilename: string;
 var
   i: integer;
@@ -143,14 +196,16 @@ begin
       Result := ParamStr(i);
       break;
     end;
+
+  // If command line specified a relative path then it must be relative to the "current folder"
+  if (Result <> '') then
+    Result := PathUtil.PathCombinePath(GetCurrentDir, Result);
 end;
 
 procedure TLocalizationCommandLineTool.Execute;
 var
   Filename: string;
   Language: string;
-  s: string;
-  n: integer;
 begin
   Header;
 
@@ -165,27 +220,27 @@ begin
   if (not TFile.Exists(Filename)) then
     Error(Format('Project file not found: %s', [Filename]));
 
-  FVerbose := (FindCmdLineSwitch('v')) or (FindCmdLineSwitch('verbose'));
-
-  // If command line specified a relative path then it must be relative to the "current folder"
-  Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+  FVerbose := OptionVerbose;
 
   LoadFromFile(Filename);
 
-  if (not FindCmdLineSwitch('t', Language)) and (not FindCmdLineSwitch('target', Language)) then
-    Language := '';
+  Language := OptionLanguage;
+  FModuleNameScheme := OptionName(Low(TModuleNameScheme));
 
-  if (FindCmdLineSwitch('n', s)) or (not FindCmdLineSwitch('name', s)) then
-  begin
-    n := StrToIntDef(s, 0);
-    if (n < 0) or (n > Ord(High(TModuleNameScheme))) then
-      n := 0;
-    FModuleNameScheme := TModuleNameScheme(n);
-  end else
-    FModuleNameScheme := Low(TModuleNameScheme);
+  Filename := FProject.SourceFilename;
+  if (OptionSource(Filename)) then
+    FProject.SourceFilename := Filename;
+  if (not TFile.Exists(Filename)) then
+    Error(Format('Source file not found: %s', [Filename]));
+
+  Filename := FProject.StringSymbolFilename;
+  if (OptionSymbols(Filename)) then
+    FProject.StringSymbolFilename := Filename;
+  if (not TFile.Exists(Filename)) then
+    Error(Format('String symbols file not found: %s', [Filename]));
 
   if (OptionBuild) then
-    Build(Filename, Language);
+    Build(Language);
 
   Message('Done');
 end;
@@ -200,7 +255,7 @@ begin
   Message(Format(sCommandLineHelp, [TPath.GetFileNameWithoutExtension(ParamStr(0))]));
 end;
 
-procedure TLocalizationCommandLineTool.Build(const AProjectFilename: string; const Language: string);
+procedure TLocalizationCommandLineTool.Build(const Language: string);
 var
   LocaleID: integer;
   LocaleItem: TLocaleItem;
@@ -230,16 +285,16 @@ begin
     if (TranslationLanguage = nil) then
       Error(Format('Project does not contain any translations for the language: %s (%s)', [Language, LocaleItem.LanguageName]));
 
-    DoBuild(AProjectFilename, TranslationLanguage);
+    DoBuild(TranslationLanguage);
   end else
   begin
     for i := 0 to FProject.TranslationLanguages.Count-1 do
       if (FProject.TranslationLanguages[i].LanguageID <> FProject.SourceLanguageID) then
-        DoBuild(AProjectFilename, FProject.TranslationLanguages[i]);
+        DoBuild(FProject.TranslationLanguages[i]);
   end;
 end;
 
-procedure TLocalizationCommandLineTool.DoBuild(const AProjectFilename: string; TranslationLanguage: TTranslationLanguage);
+procedure TLocalizationCommandLineTool.DoBuild(TranslationLanguage: TTranslationLanguage);
 var
   ProjectProcessor: TProjectResourceProcessor;
   ResourceWriter: IResourceWriter;
