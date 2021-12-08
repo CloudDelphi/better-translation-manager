@@ -72,11 +72,11 @@
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
         <SanitizedProjectName>amTranslationManager</SanitizedProjectName>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.2.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Anders Melander;FileDescription=Better Translation Manager;FileVersion=1.3.0.0;InternalName=$(MSBuildProjectName);LegalCopyright=Anders Melander;LegalTrademarks=;OriginalFilename=$(MSBuildProjectName);ProgramID=dk.melander.$(MSBuildProjectName);ProductName=Better Translation Manager;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_OutputDRCFile>true</DCC_OutputDRCFile>
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
