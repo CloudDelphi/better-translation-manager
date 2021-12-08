@@ -181,7 +181,7 @@ uses
   cxDrawTextUtils,
   dxCore,
   amCursorService,
-  amProgress,
+  amProgress.API,
   amLocalization.Settings,
   amLocalization.Data.Main,
   amLocalization.Dialog.TranslationMemory.SelectFileFormat,

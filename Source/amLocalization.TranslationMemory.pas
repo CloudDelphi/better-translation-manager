@@ -15,7 +15,7 @@ uses
   System.SysUtils, System.Classes, Data.DB, Windows,
 
   amLocale,
-  amProgress,
+  amProgress.API,
   amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider;

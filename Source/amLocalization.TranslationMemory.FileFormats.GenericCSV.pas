@@ -12,7 +12,7 @@ interface
 
 uses
   Classes,
-  amProgress,
+  amProgress.API,
   amLocalization.TranslationMemory.FileFormats;
 
 // -----------------------------------------------------------------------------
@@ -55,6 +55,7 @@ uses
   amDataCsvReader,
   amCursorService,
   amLocale,
+  amProgress.Stream,
   amLocalization.TranslationMemory,
   amLocalization.Dialog.TargetLanguage;
 

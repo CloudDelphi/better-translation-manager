@@ -14,7 +14,7 @@ uses
   Classes,
   SysUtils,
   Types,
-  amProgress;
+  amProgress.API;
 
 
 // -----------------------------------------------------------------------------
@@ -178,6 +178,7 @@ uses
   StrUtils,
   Windows,
   Controls,
+  amProgress.Stream,
   amCursorService;
 
 const

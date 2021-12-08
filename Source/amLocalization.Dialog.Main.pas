@@ -31,7 +31,7 @@ uses
   dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons,
 
   amLocale,
-  amProgress,
+  amProgress.API,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
@@ -759,6 +759,7 @@ uses
   amPath,
   amSplash,
   amFileUtils,
+  amProgress.Stream,
 
   amLocalization.System.Restart,
   amLocalization.Engine,
@@ -773,6 +774,8 @@ uses
   amLocalization.Common,
   amLocalization.Export.CSV,
   amLocalization.Import.PO,
+  amLocalization.Settings.SpellChecker,
+  amLocalization.Settings.Layout.Tree,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -1132,7 +1135,7 @@ begin
   (*
   ** Settings that can NOT be modified via GUI or which require restart
   *)
-  TranslationManagerSettings.Proofing.ApplyTo(SpellChecker);
+  TranslationManagerProofingSettingsAdapter.ApplyTo(TranslationManagerSettings.Proofing, SpellChecker);
   SpellChecker.UseThreadedLoad := (not TranslationManagerSettings.System.SafeMode);
   SpellChecker.CheckAsYouTypeOptions.Active := SpellChecker.CheckAsYouTypeOptions.Active and (not TranslationManagerSettings.System.SafeMode);
 
@@ -1145,7 +1148,7 @@ begin
   begin
     // Tree.RestoreFromRegistry fails if data doesn't exist
     TreeListModules.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, TranslationManagerSettings.Layout.ModuleTree.Name);
-    TranslationManagerSettings.Layout.ModuleTree.ReadFilter(TreeListModules.Filter);
+    TranslationManagerLayoutTreeSettingsAdapter.ReadFilter(TranslationManagerSettings.Layout.ModuleTree, TreeListModules.Filter);
   end;
 
   if (TranslationManagerSettings.Layout.ItemGrid.Valid) then
@@ -1200,14 +1203,14 @@ begin
 
   // TreeList layout and filters
   TreeListModules.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, TranslationManagerSettings.Layout.ModuleTree.Name);
-  TranslationManagerSettings.Layout.ModuleTree.WriteFilter(TreeListModules.Filter);
+  TranslationManagerLayoutTreeSettingsAdapter.WriteFilter(TranslationManagerSettings.Layout.ModuleTree, TreeListModules.Filter);
   TranslationManagerSettings.Layout.ModuleTree.Valid := True;
 
   GridItemsTableView.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, [gsoUseFilter], TranslationManagerSettings.Layout.ItemGrid.Name);
   TranslationManagerSettings.Layout.ItemGrid.Valid := True;
 
   if (not TranslationManagerSettings.System.SafeMode) then // Spell checker setting are not complete in safe mode
-    TranslationManagerSettings.Proofing.SaveFrom(SpellChecker);
+    TranslationManagerProofingSettingsAdapter.SaveFrom(TranslationManagerSettings.Proofing, SpellChecker);
 
   TranslationManagerSettings.System.HideFeedback := (BarButtonFeedback.Visible <> ivAlways);
 

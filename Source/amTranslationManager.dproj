@@ -240,6 +240,9 @@
         </DCCReference>
         <DCCReference Include="amLocalization.Common.pas"/>
         <DCCReference Include="amLocalization.ExceptionHandler.Prompt.pas"/>
+        <DCCReference Include="amLocalization.Settings.SpellChecker.pas"/>
+        <DCCReference Include="amLocalization.Settings.Layout.Tree.pas"/>
+        <DCCReference Include="amLocalization.TranslationMemory.Data.API.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

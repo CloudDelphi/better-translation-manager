@@ -484,6 +484,7 @@ uses
   amCursorService,
   amLocalization.Model,
   amLocalization.Settings,
+  amLocalization.Settings.SpellChecker,
   amLocalization.Persistence,
   amLocalization.Skin,
   amLocalization.Normalization,
@@ -731,7 +732,7 @@ begin
   ** Proofing section
   *)
   ApplyProofing(FSpellChecker);
-  TranslationManagerSettings.Proofing.SaveFrom(FSpellChecker);
+  TranslationManagerProofingSettingsAdapter.SaveFrom(TranslationManagerSettings.Proofing, FSpellChecker);
 
   (*
   ** Advanced section

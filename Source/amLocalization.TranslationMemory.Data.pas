@@ -22,7 +22,7 @@ uses
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
   amLocale,
-  amProgress,
+  amProgress.API,
   amLocalization.Normalization,
   amLocalization.Model,
   amLocalization.Provider,
@@ -121,11 +121,6 @@ type
   end;
 
 // -----------------------------------------------------------------------------
-
-const
-  sTranslationMemoryFilename = 'TranslationMemory.dat';
-
-// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -152,6 +147,7 @@ uses
   amVersionInfo,
   amFileUtils,
   amPath,
+  amProgress.Stream,
   amLocalization.Settings,
   amLocalization.Environment,
   amLocalization.Provider.TranslationMemory;

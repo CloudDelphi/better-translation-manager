@@ -25,8 +25,6 @@ uses
   Classes,
   Forms,
   Graphics,
-  dxSpellChecker, // TODO : Get rid of this dependency
-  cxCustomData,
   amRegConfig,
   amFileUtils,
   amLocalization.ResourceWriter,
@@ -230,9 +228,6 @@ type
   TTranslationManagerProofingSettings = class(TConfigurationSection)
   private
     FValid: boolean;
-  public
-    procedure SaveFrom(SpellChecker: TdxSpellChecker);
-    procedure ApplyTo(SpellChecker: TdxSpellChecker);
   published
     property Valid: boolean read FValid write FValid;
   end;
@@ -245,13 +240,7 @@ type
     property Valid: boolean read FValid write FValid;
   end;
 
-  TTranslationManagerLayoutTreeSettings = class(TTranslationManagerLayoutGridSettings)
-  private
-  public
-    procedure WriteFilter(Filter: TcxDataFilterCriteria);
-    procedure ReadFilter(Filter: TcxDataFilterCriteria);
-  published
-  end;
+  TTranslationManagerLayoutTreeSettings = class(TTranslationManagerLayoutGridSettings);
 
   TTranslationManagerLayoutSettings = class(TConfigurationSection)
   private
@@ -553,10 +542,9 @@ uses
   Math,
   Types,
   Registry,
-  cxPropertiesStore, // TODO : Get rid of this dependency
   amVersionInfo,
   amLocalization.Environment,
-  amLocalization.TranslationMemory.Data;
+  amLocalization.TranslationMemory.Data.API;
 
 //------------------------------------------------------------------------------
 //
@@ -941,94 +929,6 @@ begin
   FFilename := '%DATA%\' + sTranslationMemoryFilename;
 end;
 
-{ TTranslationManagerProofingSettings }
-
-procedure TTranslationManagerProofingSettings.ApplyTo(SpellChecker: TdxSpellChecker);
-var
-  PropertiesStore: TcxPropertiesStore;
-  PropertiesStoreComponent: TcxPropertiesStoreComponent;
-  Stream: TMemoryStream;
-begin
-  PropertiesStore := TcxPropertiesStore.Create(nil);
-  try
-    PropertiesStoreComponent := PropertiesStore.Components.Add;
-    PropertiesStoreComponent.Component := SpellChecker;
-
-    PropertiesStoreComponent.Properties.Add('AutoCorrectOptions');
-    PropertiesStoreComponent.Properties.Add('CheckAsYouTypeOptions');
-    PropertiesStoreComponent.Properties.Add('SpellingOptions');
-
-    PropertiesStoreComponent.RestoreFromRegistry(KeyPath);
-  finally
-    PropertiesStore.Free;
-  end;
-
-
-  if (not Valid) then
-    Exit;
-  Stream := TMemoryStream.Create;
-  try
-    ReadStream(KeyPath+'AutoCorrectOptions', 'FirstLetterExceptions', Stream);
-    Stream.Position := 0;
-    SpellChecker.AutoCorrectOptions.FirstLetterExceptions.LoadFromStream(Stream);
-    Stream.Size := 0;
-
-    ReadStream(KeyPath+'AutoCorrectOptions', 'InitialCapsExceptions', Stream);
-    Stream.Position := 0;
-    SpellChecker.AutoCorrectOptions.InitialCapsExceptions.LoadFromStream(Stream);
-    Stream.Size := 0;
-
-    ReadStream(KeyPath+'AutoCorrectOptions', 'Replacements', Stream);
-    Stream.Position := 0;
-    SpellChecker.AutoCorrectOptions.Replacements.LoadFromStream(Stream);
-  finally
-    Stream.Free;
-  end;
-end;
-
-procedure TTranslationManagerProofingSettings.SaveFrom(SpellChecker: TdxSpellChecker);
-var
-  PropertiesStore: TcxPropertiesStore;
-  PropertiesStoreComponent: TcxPropertiesStoreComponent;
-  Stream: TMemoryStream;
-begin
-  PropertiesStore := TcxPropertiesStore.Create(nil);
-  try
-    PropertiesStoreComponent := PropertiesStore.Components.Add;
-    PropertiesStoreComponent.Component := SpellChecker;
-
-    PropertiesStoreComponent.Properties.Add('AutoCorrectOptions');
-    PropertiesStoreComponent.Properties.Add('CheckAsYouTypeOptions');
-    PropertiesStoreComponent.Properties.Add('SpellingOptions');
-
-    PropertiesStoreComponent.StoreToRegistry(KeyPath, False);
-  finally
-    PropertiesStore.Free;
-  end;
-
-  Stream := TMemoryStream.Create;
-  try
-    SpellChecker.AutoCorrectOptions.FirstLetterExceptions.SaveToStream(Stream);
-    Stream.Position := 0;
-    WriteStream(KeyPath+'AutoCorrectOptions', 'FirstLetterExceptions', Stream);
-    Stream.Size := 0;
-
-    SpellChecker.AutoCorrectOptions.InitialCapsExceptions.SaveToStream(Stream);
-    Stream.Position := 0;
-    WriteStream(KeyPath+'AutoCorrectOptions', 'InitialCapsExceptions', Stream);
-    Stream.Size := 0;
-
-    SpellChecker.AutoCorrectOptions.Replacements.SaveToStream(Stream);
-    Stream.Position := 0;
-    WriteStream(KeyPath+'AutoCorrectOptions', 'Replacements', Stream);
-    Stream.Size := 0;
-  finally
-    Stream.Free;
-  end;
-
-  Valid := True;
-end;
-
 { TTranslationManagerLayoutSettings }
 
 constructor TTranslationManagerLayoutSettings.Create(AOwner: TConfigurationSection);
@@ -1051,37 +951,6 @@ begin
   FSearchResult.Free;
 
   inherited;
-end;
-
-{ TTranslationManagerLayoutTreeSettings }
-
-procedure TTranslationManagerLayoutTreeSettings.ReadFilter(Filter: TcxDataFilterCriteria);
-var
-  Stream: TMemoryStream;
-begin
-  Stream := TMemoryStream.Create;
-  try
-    ReadStream(KeyPath+'Filter', '', Stream);
-    Stream.Position := 0;
-    if (Stream.Size > 0) then
-      Filter.LoadFromStream(Stream);
-  finally
-    Stream.Free;
-  end;
-end;
-
-procedure TTranslationManagerLayoutTreeSettings.WriteFilter(Filter: TcxDataFilterCriteria);
-var
-  Stream: TMemoryStream;
-begin
-  Stream := TMemoryStream.Create;
-  try
-    Filter.SaveToStream(Stream);
-    Stream.Position := 0;
-    WriteStream(KeyPath+'Filter', '', Stream);
-  finally
-    Stream.Free;
-  end;
 end;
 
 { TTranslationManagerSystemSettings }

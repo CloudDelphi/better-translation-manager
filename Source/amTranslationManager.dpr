@@ -23,6 +23,7 @@ uses
   amVersionInfo,
   amSplash,
   amCursorService,
+  amProgress,
   DelphiDabbler.SingleInstance,
   amLocalization.ExceptionHandler.API in 'amLocalization.ExceptionHandler.API.pas',
   amLocalization.ExceptionHandler.MadExcept in 'amLocalization.ExceptionHandler.MadExcept.pas',
@@ -75,7 +76,10 @@ uses
   amLocalization.Data.ModuleItemsDataSource in 'amLocalization.Data.ModuleItemsDataSource.pas',
   amLocalization.Dialog.Import.CSV in 'amLocalization.Dialog.Import.CSV.pas' {FormCSVImport},
   amLocalization.Common in 'amLocalization.Common.pas',
-  amLocalization.ExceptionHandler.Prompt in 'amLocalization.ExceptionHandler.Prompt.pas';
+  amLocalization.ExceptionHandler.Prompt in 'amLocalization.ExceptionHandler.Prompt.pas',
+  amLocalization.Settings.SpellChecker in 'amLocalization.Settings.SpellChecker.pas',
+  amLocalization.Settings.Layout.Tree in 'amLocalization.Settings.Layout.Tree.pas',
+  amLocalization.TranslationMemory.Data.API in 'amLocalization.TranslationMemory.Data.API.pas';
 
 {$R *.res}
 

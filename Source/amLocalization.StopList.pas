@@ -13,7 +13,7 @@ interface
 uses
   Generics.Collections,
   RegularExpressions,
-  amProgress,
+  amProgress.API,
   amLocalization.Model;
 
 const

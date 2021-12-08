@@ -23,7 +23,8 @@ uses
   ComCtrls,
   ExtCtrls,
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxContainer, cxEdit, dxSkinsCore, cxLabel,
-  Diagnostics;
+  Diagnostics,
+  amProgress.API;
 
 // The reason I'm not using a DevExpress progress bar is that their control lacks means to manually request
 // an update of the animation (required for marquee style). The DevExpress control relies solely on timer
@@ -74,85 +75,13 @@ type
 
 //------------------------------------------------------------------------------
 //
-//      IProgress
+//      ForceShowProgress()
 //
 //------------------------------------------------------------------------------
-type
-  TProgressStage = (psBegin, psProgress, psEnd);
-
-  IProgress = interface
-    ['{2D83C35C-72CF-4894-884D-FB1A776F136A}']
-    procedure Progress(Stage: TProgressStage; CurrentProgress, MaxProgress: integer; const Msg: string; ProgressContext: pointer = nil); overload;
-    procedure Progress(Stage: TProgressStage; CurrentProgress, MaxProgress: integer; ProgressContext: pointer = nil); overload;
-    procedure AdvanceProgress(DeltaProgress: integer = 1; ProgressContext: pointer = nil);
-    procedure UpdateMessage(const Msg: string);
-    procedure Show;
-    procedure Hide;
-    procedure ProcessMessages;
-
-    procedure AbortProgress;
-    function GetEnableAbort: boolean;
-    procedure SetEnableAbort(Value: boolean);
-    property EnableAbort: boolean read GetEnableAbort write SetEnableAbort;
-    procedure SuspendAbort;
-    procedure ResumeAbort;
-    function GetRaiseOnAbort: boolean;
-    procedure SetRaiseOnAbort(Value: boolean);
-    property RaiseOnAbort: boolean read GetRaiseOnAbort write SetRaiseOnAbort;
-    function GetAborted: boolean;
-    property Aborted: boolean read GetAborted;
-    function GetMarquee: boolean;
-    procedure SetMarquee(Value: boolean);
-    property Marquee: boolean read GetMarquee write SetMarquee;
-    function GetEnabled: boolean;
-    procedure SetEnabled(Value: boolean);
-    property Enabled: boolean read GetEnabled write SetEnabled; // Enabled=False prevents progress from being displayed
-  end;
-
-//------------------------------------------------------------------------------
-//
-//      ShowProgress()
-//
-//------------------------------------------------------------------------------
-type
-  TProgressFactory = function(const Title: string = ''; Defer: boolean = True): IProgress;
-
-function ShowProgress(const Title: string = ''; Defer: boolean = True): IProgress; overload;
-// Same as above but will always use the real progress form (i.e. never the splash progress).
+// Same as ShowProgress but will always use the real progress form (i.e. never the splash progress).
 // For use in Script
 function ForceShowProgress(const Title: string = ''; Defer: boolean = True): IProgress; overload;
 
-
-//------------------------------------------------------------------------------
-//
-//      Progress redirection
-//
-//------------------------------------------------------------------------------
-function RegisterProgressHandler(const Factory: TProgressFactory): TProgressFactory;
-function UnregisterProgressHandler(const Factory: TProgressFactory): TProgressFactory;
-
-
-//------------------------------------------------------------------------------
-//
-//      TProgressStream
-//
-//------------------------------------------------------------------------------
-type
-  TProgressStream = class(TStream)
-  private
-    FStream: TStream;
-    FProgress: IProgress;
-    FMaxProgress: Int64;
-    FLastProgress: int64;
-  protected
-    procedure UpdateProgress;
-  public
-    constructor Create(Stream: TStream; const Progress: IProgress); reintroduce; overload;
-    constructor Create(Stream: TStream; const Progress: IProgress; AMaxProgress: Int64); reintroduce; overload;
-    function Read(var Buffer; Count: Longint): Longint; override;
-    function Write(const Buffer; Count: Longint): Longint; override;
-    function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; overload; override;
-  end;
 
 
 //------------------------------------------------------------------------------
@@ -196,60 +125,6 @@ begin
   // Indicate to MadExcept freeze detection that we're not frozen
   MadExcept.ImNotFrozen;
 {$endif MADEXCEPT}
-end;
-
-//------------------------------------------------------------------------------
-//
-//      TProgressStream
-//
-//------------------------------------------------------------------------------
-constructor TProgressStream.Create(Stream: TStream; const Progress: IProgress);
-begin
-  Create(Stream, Progress, Stream.Size);
-end;
-
-constructor TProgressStream.Create(Stream: TStream; const Progress: IProgress; AMaxProgress: Int64);
-begin
-  inherited Create;
-  FStream := Stream;
-  FProgress := Progress;
-  FMaxProgress := AMaxProgress;
-  FLastProgress := 0;
-end;
-
-function TProgressStream.Read(var Buffer; Count: Longint): Longint;
-begin
-  UpdateProgress;
-  Result := FStream.Read(Buffer, Count);
-  UpdateProgress;
-end;
-
-function TProgressStream.Write(const Buffer; Count: Longint): Longint;
-begin
-  UpdateProgress;
-  Result := FStream.Write(Buffer, Count);
-  UpdateProgress;
-end;
-
-function TProgressStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
-begin
-  Result := FStream.Seek(Offset, Origin);
-  UpdateProgress;
-end;
-
-procedure TProgressStream.UpdateProgress;
-var
-  CurrentPosition: Int64;
-begin
-  CurrentPosition := FStream.Position;
-  if (CurrentPosition = FLastProgress) then //or (FMaxProgress div 100 > Abs(CurrentPosition-FLastProgress)) then
-    exit;
-
-  FLastProgress := CurrentPosition;
-  if (FLastProgress < FMaxProgress) then
-    FProgress.Progress(psProgress, FLastProgress, FMaxProgress)
-  else
-    FProgress.Progress(psEnd, FLastProgress, FMaxProgress);
 end;
 
 //------------------------------------------------------------------------------
@@ -985,7 +860,7 @@ end;
 //      ShowProgress()
 //
 //------------------------------------------------------------------------------
-function DoShowProgress(const Title: string; Defer: boolean): IProgress;
+function ForceShowProgress(const Title: string; Defer: boolean): IProgress;
 var
   ProgressForm: TProgressForm;
 begin
@@ -998,47 +873,6 @@ begin
   if (not Defer) then
     Result.Show;
 end;
-
-var
-  FProgressFactory: TProgressFactory = nil;
-
-function ShowProgress(const Title: string; Defer: boolean): IProgress;
-begin
-  if (not Assigned(FProgressFactory)) then
-    FProgressFactory := @DoShowProgress;
-
-  Result := FProgressFactory(Title, Defer);
-end;
-
-function ForceShowProgress(const Title: string; Defer: boolean): IProgress;
-begin
-  Result := DoShowProgress(Title, Defer);
-end;
-
-//------------------------------------------------------------------------------
-//
-//      RegisterProgressHandler
-//
-//------------------------------------------------------------------------------
-function RegisterProgressHandler(const Factory: TProgressFactory): TProgressFactory;
-begin
-  if (not Assigned(FProgressFactory)) then
-    FProgressFactory := @DoShowProgress;
-
-  Result := @FProgressFactory;
-
-  FProgressFactory := Factory;
-end;
-
-
-function UnregisterProgressHandler(const Factory: TProgressFactory): TProgressFactory;
-begin
-  if (@FProgressFactory = @Factory) then
-    FProgressFactory := @DoShowProgress;
-
-  Result := @FProgressFactory;
-end;
-
 
 //------------------------------------------------------------------------------
 //
@@ -1231,6 +1065,7 @@ end;
 //------------------------------------------------------------------------------
 
 initialization
+  RegisterDefaultProgressHandler(ForceShowProgress);
 finalization
   TProgressForm.Finalize;
 end.
