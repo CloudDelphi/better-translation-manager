@@ -149,53 +149,6 @@ begin
   FHasWarnings := True;
 end;
 
-procedure LoadResourceModule;
-var
-  LocaleItem: TLocaleItem;
-  Module: HModule;
-  ModuleFilename: string;
-  ApplicationVersion, ModuleVersion: string;
-const
-  // Do not localize - localizations has not yet been loaded
-  sResourceModuleUnknownLanguage = 'Unknown language ID: %d'+#13#13+
-    'The default language will be used instead.';
-
-  sResourceModuleOutOfSync = 'The resource module for the current language (%s) appears to be out of sync with the application.'+#13#13+
-    'Application version: %s'+#13+
-    'Resource module version: %s'+#13#13+
-    'The default language will be used instead.';
-begin
-  if (TranslationManagerSettings.System.SafeMode) then
-    Exit;
-
-  if (TranslationManagerSettings.System.ApplicationLanguage = 0) then
-    Exit;
-
-  LocaleItem := TLocaleItems.FindLCID(TranslationManagerSettings.System.ApplicationLanguage);
-  if (LocaleItem = nil) then
-  begin
-    MessageDlg(Format(sResourceModuleUnknownLanguage, [TranslationManagerSettings.System.ApplicationLanguage]), mtWarning, [mbOK], 0);
-    Exit;
-  end;
-
-  Module := LoadNewResourceModule(LocaleItem, ModuleFilename);
-
-  if (Module <> 0) and (ModuleFilename <> '') then
-  begin
-    ApplicationVersion := TVersionInfo.FileVersionString(Application.ExeName);
-    // Note: GetModuleFileName (used by GetModuleName) can not be used with modules loaded with LOAD_LIBRARY_AS_DATAFILE
-    ModuleVersion := TVersionInfo.FileVersionString(ModuleFilename);
-
-    if (ApplicationVersion <> ModuleVersion) then
-    begin
-      LoadNewResourceModule(nil, ModuleFilename);
-      MessageDlg(Format(sResourceModuleOutOfSync, [LocaleItem.LanguageName, ApplicationVersion, ModuleVersion]), mtWarning, [mbOK], 0);
-    end;
-  end else
-    // Use default application language if we failed to load a resource module
-    LoadNewResourceModule(nil, ModuleFilename);
-end;
-
 procedure InitializeFonts;
 begin
   if (CheckWin32Version(6, 0)) then
@@ -359,7 +312,8 @@ begin
   TranslationManagerSettings.System.BeginBoot; // Final EndBoot is performed in FormMain.OnAfterShow. Do not put this in try...finally
   CheckLastBootCompleted;
 
-  LoadResourceModule;
+  if (not TranslationManagerSettings.System.SafeMode) then
+    LocalizationTools.LoadResourceModule(TranslationManagerSettings.System.ApplicationLanguage);
 
   InitializeFonts;
 
