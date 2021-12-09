@@ -179,6 +179,8 @@ object FormMain: TFormMain
       OptionsBehavior.CellHints = True
       OptionsBehavior.ImmediateEditor = False
       OptionsBehavior.ExpandOnDblClick = False
+      OptionsBehavior.IncSearch = True
+      OptionsBehavior.IncSearchItem = TreeListColumnModuleName
       OptionsBehavior.RecordScrollMode = rsmByRecord
       OptionsBehavior.ShowHourGlass = False
       OptionsCustomizing.BandCustomizing = False
@@ -199,6 +201,7 @@ object FormMain: TFormMain
       OptionsView.ShowRoot = False
       OptionsView.TreeLineStyle = tllsNone
       PopupMenu = PopupMenuTree
+      ScrollbarAnnotations.CustomAnnotations = <>
       Styles.Background = DataModuleMain.StyleDefault
       Styles.Inactive = DataModuleMain.StyleInactive
       Styles.Selection = DataModuleMain.StyleSelected
@@ -206,6 +209,7 @@ object FormMain: TFormMain
       Styles.Indicator = DataModuleMain.StyleDefault
       Styles.UseOddEvenStyles = bFalse
       TabOrder = 0
+      OnFocusedColumnChanged = TreeListModulesFocusedColumnChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
       OnSelectionChanged = TreeListModulesSelectionChanged
       ExplicitHeight = 436
@@ -215,7 +219,6 @@ object FormMain: TFormMain
         Caption.Text = 'Module'
         Options.Editing = False
         Options.Filtering = False
-        Options.Focusing = False
         Width = 160
         Position.ColIndex = 0
         Position.RowIndex = 0
@@ -477,6 +480,7 @@ object FormMain: TFormMain
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
         OnEditing = GridItemsTableViewEditing
+        OnFocusedItemChanged = GridItemsTableViewFocusedItemChanged
         OnFocusedRecordChanged = GridItemsTableViewFocusedRecordChanged
         OnInitEdit = GridItemsTableViewInitEdit
         DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
@@ -486,6 +490,8 @@ object FormMain: TFormMain
         DataController.OnRecordChanged = GridItemsTableViewDataControllerRecordChanged
         OptionsBehavior.CellHints = True
         OptionsBehavior.FocusCellOnTab = True
+        OptionsBehavior.IncSearch = True
+        OptionsBehavior.IncSearchItem = GridItemsTableViewColumnItemName
         OptionsBehavior.FocusCellOnCycle = True
         OptionsBehavior.ImmediateEditor = False
         OptionsBehavior.RecordScrollMode = rsmByRecord
@@ -514,7 +520,6 @@ object FormMain: TFormMain
           Caption = 'Element'
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           Options.Editing = False
-          Options.Focusing = False
           Options.FilteringAddValueItems = False
           SortIndex = 0
           SortOrder = soAscending
@@ -534,7 +539,6 @@ object FormMain: TFormMain
           Caption = 'Name'
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           Options.Editing = False
-          Options.Focusing = False
           Options.FilteringAddValueItems = False
           SortIndex = 1
           SortOrder = soAscending
@@ -594,7 +598,6 @@ object FormMain: TFormMain
           PropertiesClassName = 'TcxMemoProperties'
           OnGetCellHint = GridItemsTableViewColumnGetCellHint
           Options.Editing = False
-          Options.Focusing = False
           Options.FilteringAddValueItems = False
           Width = 120
         end
@@ -1783,7 +1786,6 @@ object FormMain: TFormMain
     object ButtonProjectLocateSource: TdxBarButton
       Action = ActionProjectLocateSource
       Category = 0
-      OnClick = ButtonProjectLocateSourceClick
     end
   end
   object SkinController: TdxSkinController

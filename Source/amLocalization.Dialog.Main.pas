@@ -484,6 +484,11 @@ type
     procedure ActionTranslationMemoryUpdateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryUpdateExecute(Sender: TObject);
     procedure ButtonProjectLocateSourceClick(Sender: TObject);
+    procedure TreeListModulesFocusedColumnChanged(Sender: TcxCustomTreeList;
+      APrevFocusedColumn, AFocusedColumn: TcxTreeListColumn);
+    procedure GridItemsTableViewFocusedItemChanged(
+      Sender: TcxCustomGridTableView; APrevFocusedItem,
+      AFocusedItem: TcxCustomGridTableItem);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -6427,6 +6432,18 @@ begin
   // This behavior should be controlled by an option..
 end;
 
+procedure TFormMain.GridItemsTableViewFocusedItemChanged(
+  Sender: TcxCustomGridTableView; APrevFocusedItem,
+  AFocusedItem: TcxCustomGridTableItem);
+begin
+  // Only enable incremental search when Element, Name or Value column is focused
+  Sender.OptionsBehavior.IncSearchItem := AFocusedItem;
+  Sender.OptionsBehavior.IncSearch :=
+    (AFocusedItem = GridItemsTableViewColumnItemName) or
+    (AFocusedItem = GridItemsTableViewColumnValueName) or
+    (AFocusedItem = GridItemsTableViewColumnSource);
+end;
+
 procedure TFormMain.GridItemsTableViewFocusedRecordChanged(Sender: TcxCustomGridTableView; APrevFocusedRecord,
   AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
 begin
@@ -7465,6 +7482,14 @@ begin
   finally
     FRefreshModuleStatsQueued := False;
   end;
+end;
+
+procedure TFormMain.TreeListModulesFocusedColumnChanged(
+  Sender: TcxCustomTreeList; APrevFocusedColumn,
+  AFocusedColumn: TcxTreeListColumn);
+begin
+  // Only enable incremental search when Module Name column has focus
+  Sender.OptionsBehavior.IncSearch := (AFocusedColumn = TreeListColumnModuleName);
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
