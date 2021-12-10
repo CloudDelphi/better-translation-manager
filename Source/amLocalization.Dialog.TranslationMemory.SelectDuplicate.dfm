@@ -99,9 +99,9 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         OnDblClick = ListViewDuplicatesDblClick
       end
       object CheckBoxAll: TcxCheckBox [2]
-        Left = 287
-        Top = 6
-        Caption = '&Do this for all conflicts'
+        Left = 296
+        Top = 7
+        Caption = '&Do this for all ambiguities'
         Enabled = False
         Properties.OnChange = CheckBoxAllPropertiesChange
         Style.HotTrack = False
@@ -135,9 +135,9 @@ inherited FormSelectDuplicate: TFormSelectDuplicate
         Layout = tlCenter
       end
       object CheckBoxApplyToIdentical: TcxCheckBox [5]
-        Left = 73
-        Top = 231
-        Caption = '&Use this translation for identical conflicts'
+        Left = 80
+        Top = 230
+        Caption = '&Use this translation for identical ambiguities'
         Style.HotTrack = False
         TabOrder = 3
         Transparent = True
