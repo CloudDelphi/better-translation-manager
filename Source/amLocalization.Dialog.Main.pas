@@ -1770,52 +1770,52 @@ begin
         var TranslatedProps := TList<TLocalizerProperty>.Create;
         try
 
-        for i := 0 to SelectionCount-1 do
-        begin
-          Item := Selection[i];
+          for i := 0 to SelectionCount-1 do
+          begin
+            Item := Selection[i];
 
-          Item.Traverse(
-            function(Prop: TLocalizerProperty): boolean
-            var
-              Value: string;
-            begin
-              if (Prop.Value.Trim.IsEmpty) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
-                Exit(True);
-
-              if (not TranslateTranslated) and (Prop.HasTranslation(TranslationLanguage)) then
-                Exit(True);
-
-              Inc(Counts.Count);
-
-              Progress.Progress(psProgress, Counts.Count, Counts.ElegibleCount, Prop.Value);
-              if (Progress.Aborted) then
-                Exit(False);
-
-              // Perform translation
-              // Note: It is the responsibility of the translation service to return True/False to indicate
-              // if SourceValue=TargetValue is in fact a translation.
-              if (TranslationService.Lookup(Prop, SourceLanguage, TargetLanguage, Value)) then
+            Item.Traverse(
+              function(Prop: TLocalizerProperty): boolean
+              var
+                Value: string;
               begin
-                Inc(Counts.TranslatedCount);
+                if (Prop.Value.Trim.IsEmpty) or (Prop.EffectiveStatus <> ItemStatusTranslate) or (Prop.IsUnused) then
+                  Exit(True);
 
-                if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Value <> Value) then
-                  Inc(Counts.UpdatedCount);
+                if (not TranslateTranslated) and (Prop.HasTranslation(TranslationLanguage)) then
+                  Exit(True);
 
-                // Set value regardless of current value so we get the correct Status set
-                if (Translation <> nil) then
-                  Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
-                else
-                  Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Value);
+                Inc(Counts.Count);
 
-                Translation.UpdateWarnings;
+                Progress.Progress(psProgress, Counts.Count, Counts.ElegibleCount, Prop.Value);
+                if (Progress.Aborted) then
+                  Exit(False);
+
+                // Perform translation
+                // Note: It is the responsibility of the translation service to return True/False to indicate
+                // if SourceValue=TargetValue is in fact a translation.
+                if (TranslationService.Lookup(Prop, SourceLanguage, TargetLanguage, Value)) then
+                begin
+                  Inc(Counts.TranslatedCount);
+
+                  if (Prop.Translations.TryGetTranslation(TranslationLanguage, Translation)) and (Translation.Value <> Value) then
+                    Inc(Counts.UpdatedCount);
+
+                  // Set value regardless of current value so we get the correct Status set
+                  if (Translation <> nil) then
+                    Translation.Update(Value, TLocalizerTranslations.DefaultStatus)
+                  else
+                    Translation := Prop.Translations.AddOrUpdateTranslation(TranslationLanguage, Value);
+
+                  Translation.UpdateWarnings;
 
                   // Defer calling TranslationAdded() to after we have translated all properties
                   // so user isn't interrupted with prompts to auto-apply.
                   TranslatedProps.Add(Prop);
-              end;
-              Result := True;
-            end);
-        end;
+                end;
+                Result := True;
+              end);
+          end;
 
           // Call TranslationAdded() for all properties that were translated
           var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
@@ -1826,7 +1826,7 @@ begin
             // Optionally apply translation to rest of project, reload property
             TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
 
-        DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
+          DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
 
         finally
           TranslatedProps.Free;
@@ -2185,14 +2185,16 @@ begin
       if (SourceValue = Prop.Value) then
       begin
         Inc(IndexSame);
-        var Apply := True;
-        // Prompt to translate those that already has a (maybe incorrect) translation
-        if (AutoApplyTranslations = aaPrompt) then
-        begin
-          var OldTranslation := '';
-          if (HasTranslation) then
-            OldTranslation := Prop.TranslatedValue[TranslationLanguage];
 
+        var OldTranslation := '';
+        if (HasTranslation) then
+          OldTranslation := Prop.TranslatedValue[TranslationLanguage];
+
+        var Apply := (not HasTranslation) or (OldTranslation <> TranslatedValue);
+
+        // Prompt to translate those that already has a (maybe incorrect) translation
+        if (Apply) and (AutoApplyTranslations = aaPrompt) then
+        begin
           var TaskDialog := TTaskDialog.Create(nil);
           try
             TaskDialog.Caption := sApplyTranslationCaption;
@@ -2236,14 +2238,17 @@ begin
       if (AutoApplyTranslationsSimilar <> aaNever) then
       begin
         Inc(IndexSimilar);
-        var Apply := True;
+
+        var OldTranslation := '';
+        if (HasTranslation) then
+          OldTranslation := Prop.TranslatedValue[TranslationLanguage];
+        var NewTranslation := MakeAlike(Prop.Value, TranslatedValue);
+
+        var Apply := (not HasTranslation) or (OldTranslation <> NewTranslation);
+
         // Prompt to translate those that already has a (maybe incorrect) translation
-        if (AutoApplyTranslationsSimilar = aaPrompt) then
+        if (Apply) and (AutoApplyTranslationsSimilar = aaPrompt) then
         begin
-          var OldTranslation := '';
-          if (HasTranslation) then
-            OldTranslation := Prop.TranslatedValue[TranslationLanguage];
-          var NewTranslation := MakeAlike(Prop.Value, TranslatedValue);
 
           var TaskDialog := TTaskDialog.Create(nil);
           try
@@ -2281,7 +2286,7 @@ begin
 
         if (Apply) then
         begin
-          Prop.TranslatedValue[TranslationLanguage] := MakeAlike(Prop.Value, TranslatedValue);
+          Prop.TranslatedValue[TranslationLanguage] := NewTranslation;
           Inc(UpdatedSimilar);
         end;
       end else
