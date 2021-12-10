@@ -579,10 +579,7 @@ begin
   begin
     for j := FItems.Count-1 downto i+1 do
       if (FItems[i].TargetValue = FItems[j].TargetValue) then
-      begin
         FItems.Delete(j);
-        break;
-      end;
     Inc(i);
   end;
 end;
