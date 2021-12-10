@@ -6515,11 +6515,11 @@ begin
 
     PropertyList := FProjectIndex.Lookup(FocusedProperty);
 
-    // Add existing translations
+    // Add existing translations - disregard current property
     if (PropertyList <> nil) then
     begin
       for Prop in PropertyList do
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+        if (Prop <> FocusedProperty) and (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
           LookupResult.Add(Prop.Value, Prop.TranslatedValue[TranslationLanguage]);
     end;
 
@@ -6527,8 +6527,8 @@ begin
     if (FModuleItemsDataSource.PeekResult[GridItemsTableView.Controller.FocusedRecord.RecordIndex] = TTranslationMemoryPeekResult.prFound) then
       FTranslationMemory.FindTranslations(FocusedProperty, SourceLanguage, TargetLanguage, LookupResult);
 
-    // Rank by source value similarity
-    LookupResult.RankTranslations(FocusedProperty.Value);
+    // Rank by source value similarity - this also eliminates duplicates
+    LookupResult.RankTranslations(SourceValue);
 
     LookupResult.AddToStrings(TcxCustomComboBox(AEdit).Properties.Items);
 
