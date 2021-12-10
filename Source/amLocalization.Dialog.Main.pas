@@ -2183,8 +2183,8 @@ begin
 
           var TaskDialog := TTaskDialog.Create(nil);
           try
-            TaskDialog.Title := sApplyTranslationCaption;
-            TaskDialog.Caption := sApplyTranslationTitle;
+            TaskDialog.Caption := sApplyTranslationCaption;
+            TaskDialog.Title := sApplyTranslationTitle;
             TaskDialog.Text := Format(sApplyTranslationText, [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, TranslatedValue, IndexSame*1.0, CountSame*1.0]);
             TaskDialog.CommonButtons := [tcbYes, tcbNo, tcbCancel];
             TaskDialog.VerificationText := sApplyTranslationButtonAll;
@@ -2235,8 +2235,8 @@ begin
 
           var TaskDialog := TTaskDialog.Create(nil);
           try
-            TaskDialog.Title := sApplyTranslationCaption;
-            TaskDialog.Caption := sApplySimilarTranslationTitle;
+            TaskDialog.Caption := sApplyTranslationCaption;
+            TaskDialog.Title := sApplySimilarTranslationTitle;
             TaskDialog.Text := Format(sApplyTranslationText, [Prop.Item.Module.Name, Prop.Item.Name, Prop.Name, Prop.Value, OldTranslation, NewTranslation, IndexSimilar*1.0, CountSimilar*1.0]);
             TaskDialog.CommonButtons := [tcbYes, tcbNo, tcbCancel];
             TaskDialog.VerificationText := sApplyTranslationButtonAll;

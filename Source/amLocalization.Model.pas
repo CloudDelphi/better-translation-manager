@@ -381,7 +381,7 @@ type
     // See GetIsTranslated and SetStatus.
 
   TTranslationWarning = (
-    tWarningEmptyness,          // Source or translation is empty and the other is not
+    tWarningEmptiness,          // Source or translation is empty and the other is not
     tWarningAccelerator,        // Accelerator count mismatch
     tWarningFormatSpecifier,    // Format specifier count mismatch
     tWarningLineBreak,          // Linebreak count mismatch
@@ -2354,7 +2354,7 @@ begin
 
   if (Value.IsEmpty <> Owner.Value.IsEmpty) then
   begin
-    Include(FWarnings, tWarningEmptyness);
+    Include(FWarnings, tWarningEmptiness);
     // None of the other tests makes sense
     Exit;
   end;
