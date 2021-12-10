@@ -1767,11 +1767,8 @@ begin
 
       FProject.BeginUpdate;
       try
-
-        var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
-        var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
-        var UpdatedSame := 0;
-        var UpdatedSimilar := 0;
+        var TranslatedProps := TList<TLocalizerProperty>.Create;
+        try
 
         for i := 0 to SelectionCount-1 do
         begin
@@ -1812,15 +1809,30 @@ begin
 
                 Translation.UpdateWarnings;
 
-                // Optionally apply translation to rest of project, reload property
-                TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
+                  // Defer calling TranslationAdded() to after we have translated all properties
+                  // so user isn't interrupted with prompts to auto-apply.
+                  TranslatedProps.Add(Prop);
               end;
               Result := True;
             end);
         end;
 
-        Progress.Progress(psEnd, Counts.Count, Counts.ElegibleCount);
+          // Call TranslationAdded() for all properties that were translated
+          var AutoApplyTranslations := TranslationManagerSettings.Editor.AutoApplyTranslations;
+          var AutoApplyTranslationsSimilar := TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar;
+          var UpdatedSame := 0;
+          var UpdatedSimilar := 0;
+          for var Prop in TranslatedProps do
+            // Optionally apply translation to rest of project, reload property
+            TranslationAdded(Prop, AutoApplyTranslations, AutoApplyTranslationsSimilar, UpdatedSame, UpdatedSimilar);
+
         DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar);
+
+        finally
+          TranslatedProps.Free;
+        end;
+
+        Progress.Progress(psEnd, Counts.Count, Counts.ElegibleCount);
 
       finally
         FProject.EndUpdate;
