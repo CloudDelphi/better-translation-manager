@@ -12,6 +12,7 @@ interface
 
 uses
   Classes,
+  amLocalization.Utils,
   amLocalization.ResourceWriter,
   amLocalization.Model;
 
@@ -303,7 +304,7 @@ var
 begin
   LocaleItem := TLocaleItems.FindLCID(TranslationLanguage.LanguageID);
 
-  TargetFilename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, FModuleNameScheme);
+  TargetFilename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, FModuleNameScheme);
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(TargetFilename)]));
 
   ProjectProcessor := TProjectResourceProcessor.Create;

@@ -56,8 +56,6 @@ type
 // -----------------------------------------------------------------------------
 // Update resource module with localized data.
 // -----------------------------------------------------------------------------
-  TModuleNameScheme = (mnsISO639_2, mnsISO639_1, mnsRFC4646);
-
   TResourceModuleWriter = class(TInterfacedObject, IResourceWriter)
   private
     FFilename: string;
@@ -72,8 +70,6 @@ type
     procedure EndWrite(Commit: boolean);
     procedure WriteModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
     procedure CopyVersionInfo(Stream: TMemoryStream);
-
-    class function BuildModuleFilename(const BaseFilename: string; LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string;
   end;
 
 
@@ -198,27 +194,6 @@ constructor TResourceModuleWriter.Create(const AFilename: string);
 begin
   inherited Create;
   FFilename := AFilename;
-end;
-
-// -----------------------------------------------------------------------------
-
-class function TResourceModuleWriter.BuildModuleFilename(const BaseFilename: string; LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string;
-var
-  LocaleItem: TLocaleItem;
-begin
-  LocaleItem := TLocaleItems.FindLCID(LocaleID);
-  case ModuleNameScheme of
-
-    mnsISO639_2:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LanguageShortName);
-
-    mnsISO639_1:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.ISO639_1Name);
-
-    mnsRFC4646:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LocaleName);
-
-  end;
 end;
 
 // -----------------------------------------------------------------------------

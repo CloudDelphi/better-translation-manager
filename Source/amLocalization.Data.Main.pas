@@ -164,7 +164,7 @@ uses
   cxButtonEdit,
   amLocale,
   amLocalization.Settings,
-  amLocalization.ResourceWriter,
+  amLocalization.Utils,
   amLocalization.Dialog.TextEdit;
 
 type
@@ -349,7 +349,7 @@ begin
   // Accept row if resource module exist with any of the supportted file names.
   for var ModuleNameScheme := Low(TModuleNameScheme) to High(TModuleNameScheme) do
   begin
-    var Filename := TResourceModuleWriter.BuildModuleFilename(ParamStr(0), LocaleID, ModuleNameScheme);
+    var Filename := LocalizationTools.BuildModuleFilename(ParamStr(0), LocaleID, ModuleNameScheme);
     if (TFile.Exists(Filename)) then
     begin
       Accept := True;

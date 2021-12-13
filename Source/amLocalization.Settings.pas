@@ -27,7 +27,7 @@ uses
   Graphics,
   amRegConfig,
   amFileUtils,
-  amLocalization.ResourceWriter,
+  amLocalization.Utils,
   amLocalization.StopList,
   amLocalization.Normalization;
 

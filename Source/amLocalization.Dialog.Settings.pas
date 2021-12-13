@@ -482,6 +482,7 @@ uses
   amShell,
   amPath,
   amCursorService,
+  amLocalization.Utils,
   amLocalization.Model,
   amLocalization.Settings,
   amLocalization.Settings.SpellChecker,
@@ -490,7 +491,6 @@ uses
   amLocalization.Normalization,
   amLocalization.Shell,
   amLocalization.Data.Main,
-  amLocalization.ResourceWriter,
   amLocalization.Environment,
   amLocalization.Provider.Microsoft.Version3;
 

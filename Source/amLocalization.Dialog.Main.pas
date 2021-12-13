@@ -767,6 +767,7 @@ uses
   amProgress.Stream,
 
   amLocalization.System.Restart,
+  amLocalization.Utils,
   amLocalization.Engine,
   amLocalization.ResourceWriter,
   amLocalization.Persistence,
@@ -2710,7 +2711,7 @@ begin
     if (Filename <> '') then
     begin
       OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
-      OpenDialogEXE.FileName := TResourceModuleWriter.BuildModuleFilename(TPath.GetFileName(Filename), TargetLanguage.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+      OpenDialogEXE.FileName := LocalizationTools.BuildModuleFilename(TPath.GetFileName(Filename), TargetLanguage.Locale, TranslationManagerSettings.System.ModuleNameScheme);
     end;
 
     if (not OpenDialogEXE.Execute(Handle)) then
@@ -7030,7 +7031,7 @@ begin
     for i := 0 to FProject.TranslationLanguages.Count-1 do
     begin
       LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
-      Filename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+      Filename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
 
       if (not BuildLanguageModule(LocaleItem, Filename)) then
         break;
@@ -7065,7 +7066,7 @@ begin
 
   LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
 
-  TargetFilename := TResourceModuleWriter.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+  TargetFilename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
 
   Path := TPath.GetDirectoryName(TargetFilename);
   TargetFilename := TPath.GetFileName(TargetFilename);

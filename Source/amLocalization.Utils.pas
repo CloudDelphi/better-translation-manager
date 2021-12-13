@@ -14,9 +14,17 @@ uses
   Windows;
 
 type
+  TModuleNameScheme = (mnsISO639_2, mnsISO639_1, mnsRFC4646);
+
+type
   LocalizationTools = record
     class function LoadResourceModule(ALanguage: LCID): boolean; static;
+    class function BuildModuleFilename(const BaseFilename: string; LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string; static;
   end;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 implementation
 
@@ -25,8 +33,33 @@ uses
   Dialogs,
   Controls,
   SysUtils,
+  IOUtils,
   amLocale,
   amVersionInfo;
+
+// -----------------------------------------------------------------------------
+
+class function LocalizationTools.BuildModuleFilename(const BaseFilename: string;
+  LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string;
+var
+  LocaleItem: TLocaleItem;
+begin
+  LocaleItem := TLocaleItems.FindLCID(LocaleID);
+  case ModuleNameScheme of
+
+    mnsISO639_2:
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LanguageShortName);
+
+    mnsISO639_1:
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.ISO639_1Name);
+
+    mnsRFC4646:
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LocaleName);
+
+  end;
+end;
+
+// -----------------------------------------------------------------------------
 
 class function LocalizationTools.LoadResourceModule(ALanguage: LCID): boolean;
 var
