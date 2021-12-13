@@ -803,7 +803,7 @@ begin
     FLocaleItems.Sort(TComparer<TLocaleItem>.Construct(
       function(const A, B: TLocaleItem): integer
       begin
-        Result := A.Locale - B.Locale;
+        Result := integer(A.Locale) - integer(B.Locale);
       end));
   end;
 
@@ -900,7 +900,7 @@ begin
     while (Lo <= Hi) do
     begin
       Mid := Lo + (Hi - Lo) shr 1;
-      Compare := FLocaleItems[Mid].Locale - AID;
+      Compare := integer(FLocaleItems[Mid].Locale) - integer(AID);
       if (Compare = 0) then
         Exit(Mid);
       if (Compare < 0) then
