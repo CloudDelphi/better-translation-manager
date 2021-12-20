@@ -34,42 +34,76 @@ WizardImageStretch=False
 SolidCompression=True
 VersionInfoVersion={#MyAppVersion}
 AlwaysShowDirOnReadyPage=True
+Uninstallable=not IsPortable
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; Check: not IsPortable
 
 [Files]
 Source: "{#MyAppSourceFolder}\amTranslationManager.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#MyAppSourceFolder}\amResourceModuleBuilder.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: buildtool
+Source: "Files\portable"; DestDir: "{app}"; Check: IsPortable
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: ".\Files\Dictionaries\*.*"; DestDir: "{app}\Dictionaries"; Components: spellcheck
-Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite; Components: tm
-Source: ".\Files\Examples\*.*"; DestDir: "{userdocs}\Translation Examples\"; Flags: recursesubdirs createallsubdirs; Components: examples
+Source: ".\Files\Translation Memory\TranslationMemory.dat"; DestDir: "{userappdata}\TranslationManager\"; Flags: confirmoverwrite; Components: tm; Check: not IsPortable
+Source: ".\Files\Examples\*.*"; DestDir: "{userdocs}\Translation Examples\"; Flags: recursesubdirs createallsubdirs; Components: examples; Check: not IsPortable
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{group}\Translation Examples"; Filename: "{userdocs}\Translation Examples"; Components: examples
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Check: not IsPortable
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; Check: not IsPortable
+Name: "{group}\Translation Examples"; Filename: "{userdocs}\Translation Examples"; Components: examples; Check: not IsPortable
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Types]
+Name: "full"; Description: "Full installation"
+;Name: "compact"; Description: "Compact installation"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
+Name: "portable"; Description: "Portable installation"
 
 [ThirdParty]
 UseRelativePaths=True
 
 [Components]
-Name: "examples"; Description: "Examples"; Types: full custom
-Name: "spellcheck"; Description: "Spell Check dictionaries"; Types: full custom
-Name: "tm"; Description: "Sample Translation Memory"; Types: full custom
-Name: "buildtool"; Description: "Command line tool"
+Name: "examples"; Description: "Examples"; Types: full custom; Check: not IsPortable
+Name: "spellcheck"; Description: "Spell Check dictionaries"; Types: full custom portable
+Name: "tm"; Description: "Sample Translation Memory"; Types: full custom portable
+Name: "buildtool"; Description: "Command line tool"; Types: portable
 
 [Registry]
 Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: dword; ValueName: "Installed"; ValueData: "1"; Flags: createvalueifdoesntexist uninsdeletevalue
 Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: string; ValueName: "InstalledVersion"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
 Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: string; ValueName: "InstallRoot"; ValueData: "{app}"; Flags: createvalueifdoesntexist
+Root: "HKCU"; Subkey: "Software\Melander\TranslationManager\System"; ValueType: dword; ValueName: "Portable"; ValueData: "1"; Check: IsPortable
 
 [Dirs]
-Name: "{userappdata}\TranslationManager\Dictionaries\Custom spell check dictionaries"
+Name: "{userappdata}\TranslationManager\Dictionaries\Custom spell check dictionaries"; Check: not IsPortable
+
+[Code]
+var
+  FIsPortable: boolean;
+
+function IsPortable(): boolean;
+begin
+  Result := FIsPortable;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  if (CurPageID = wpSelectComponents) then
+    FIsPortable := (WizardSetupType(False) = 'portable');
+
+  Result := True;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+
+  if (PageID = wpSelectProgramGroup) then
+    Result := IsPortable;
+end;
