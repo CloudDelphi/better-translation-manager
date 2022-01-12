@@ -30,6 +30,7 @@ type
     FProject: TLocalizerProject;
     FVerbose: boolean;
     FModuleNameScheme: TModuleNameScheme;
+    FOutputFolder: string;
   protected
     procedure Message(const Msg: string);
     procedure Error(const Msg: string);
@@ -50,6 +51,7 @@ type
     class function ProjectFilename: string;
     class function OptionBuild: boolean;
     class function OptionSource(var Filename: string): boolean;
+    class function OptionOutput(var Filename: string): boolean;
     class function OptionSymbols(var Filename: string): boolean;
     class function OptionHelp: boolean;
     class function OptionVerbose: boolean;
@@ -73,8 +75,9 @@ resourcestring
     '  -?                 Display help (this message)'+#13+
     '  -t:<language>      Only build for specified language'+#13+
     '  -b                 Build resource module(s)'+#13+
-    '  -s:<source file>]  Specify source file'+#13+
-    '  -y:<symbol file>]  Specify string symbols file'+#13+
+    '  -s:<source file>   Specify source file'+#13+
+    '  -y:<symbol file>   Specify string symbols file'+#13+
+    '  -o:<output folder> Specify resource module output folder'+#13+
     '  -v                 Display verbose messages'+#13+
     '  -n:<scheme>        File name scheme:'+#13+
     '                     0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)'+#13+
@@ -160,6 +163,16 @@ begin
     Result := ADefault;
 end;
 
+class function TLocalizationCommandLineTool.OptionOutput(var Filename: string): boolean;
+begin
+  Result := ((FindCmdLineSwitch('o', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('output', Filename, True, [clstValueAppended]))) and
+    (Filename <> '');
+
+  // If command line specified a relative path then it must be relative to the "current folder"
+  if (Result) then
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+end;
+
 class function TLocalizationCommandLineTool.OptionSource(var Filename: string): boolean;
 begin
   Result := ((FindCmdLineSwitch('s', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('source', Filename, True, [clstValueAppended]))) and
@@ -230,15 +243,36 @@ begin
 
   Filename := FProject.SourceFilename;
   if (OptionSource(Filename)) then
+  begin
+    if (FVerbose) then
+      Message(Format('Custom source file: %s', [Filename]));
     FProject.SourceFilename := Filename;
+  end;
   if (not TFile.Exists(Filename)) then
     Error(Format('Source file not found: %s', [Filename]));
 
+  // Make symbol file absolute
+  FProject.StringSymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
+
   Filename := FProject.StringSymbolFilename;
   if (OptionSymbols(Filename)) then
+  begin
+    if (FVerbose) then
+      Message(Format('Custom symbols file: %s', [Filename]));
     FProject.StringSymbolFilename := Filename;
+  end;
   if (not TFile.Exists(Filename)) then
-    Error(Format('String symbols file not found: %s', [Filename]));
+    Warning(Format('String symbols file not found: %s', [Filename]));
+
+  FOutputFolder := TPath.GetDirectoryName(FProject.SourceFilename);
+  if (OptionOutput(FOutputFolder)) then
+  begin
+    if (FVerbose) then
+      Message(Format('Output folder: %s', [FOutputFolder]));
+  end;
+  if (not TDirectory.Exists(FOutputFolder)) then
+    Warning(Format('Output folder does not exist: %s', [FOutputFolder]));
+
 
   if (OptionBuild) then
     Build(Language);
@@ -304,8 +338,16 @@ var
 begin
   LocaleItem := TLocaleItems.FindLCID(TranslationLanguage.LanguageID);
 
-  TargetFilename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, FModuleNameScheme);
+  TargetFilename := TPath.Combine(FOutputFolder, TPath.GetFileName(FProject.SourceFilename));
+  TargetFilename := LocalizationTools.BuildModuleFilename(TargetFilename, LocaleItem.Locale, FModuleNameScheme);
   Message(Format('Building resource module for %s: %s...', [LocaleItem.LanguageName, TPath.GetFileName(TargetFilename)]));
+
+  if (not TDirectory.Exists(FOutputFolder)) then
+  begin
+    if (FVerbose) then
+      Message('Creating output folder...');
+    TDirectory.CreateDirectory(FOutputFolder);
+  end;
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -342,9 +384,8 @@ begin
     FProject.EndUpdate;
   end;
 
-  // Make filenames absolute
+  // Make source filename absolute
   FProject.SourceFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(Filename), FProject.SourceFilename);
-  FProject.StringSymbolFilename := PathUtil.PathCombinePath(TPath.GetDirectoryName(FProject.SourceFilename), FProject.StringSymbolFilename);
 
   if (FVerbose) then
   begin
@@ -376,12 +417,6 @@ begin
     Message(Format('  Items          : %6.0n', [CountItem*1.0]));
     Message(Format('  Properties     : %6.0n', [CountProperty*1.0]));
   end;
-
-  if (not TFile.Exists(FProject.StringSymbolFilename)) then
-    Warning(Format('String symbol file not found: %s', [FProject.StringSymbolFilename]));
-
-  if (not TFile.Exists(FProject.SourceFilename)) then
-    Error(Format('Source file not found: %s', [FProject.SourceFilename]));
 end;
 
 { TCommandLineLogger }
