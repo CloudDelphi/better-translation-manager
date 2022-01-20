@@ -142,8 +142,7 @@ begin
   Result := (FindCmdLineSwitch('h')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('help'));
 end;
 
-class function TLocalizationCommandLineTool.OptionLanguage(
-  ADefault: string): string;
+class function TLocalizationCommandLineTool.OptionLanguage(ADefault: string): string;
 begin
   if (not FindCmdLineSwitch('t', Result, True, [clstValueAppended])) and (not FindCmdLineSwitch('target', Result, True, [clstValueAppended])) then
     Result := ADefault;
@@ -165,32 +164,41 @@ end;
 
 class function TLocalizationCommandLineTool.OptionOutput(var Filename: string): boolean;
 begin
-  Result := ((FindCmdLineSwitch('o', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('output', Filename, True, [clstValueAppended]))) and
-    (Filename <> '');
-
-  // If command line specified a relative path then it must be relative to the "current folder"
-  if (Result) then
-    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+  Result := False;
+  var Value := '';
+  if (FindCmdLineSwitch('o', Value, True, [clstValueAppended]) or FindCmdLineSwitch('output', Value, True, [clstValueAppended])) and
+    (Value <> '') then
+  begin
+    // If command line specified a relative path then it must be relative to the "current folder"
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Value);
+    Result := True;
+  end;
 end;
 
 class function TLocalizationCommandLineTool.OptionSource(var Filename: string): boolean;
 begin
-  Result := ((FindCmdLineSwitch('s', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('source', Filename, True, [clstValueAppended]))) and
-    (Filename <> '');
-
-  // If command line specified a relative path then it must be relative to the "current folder"
-  if (Result) then
-    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+  Result := False;
+  var Value := '';
+  if (FindCmdLineSwitch('s', Value, True, [clstValueAppended]) or FindCmdLineSwitch('source', Value, True, [clstValueAppended])) and
+    (Value <> '') then
+  begin
+    // If command line specified a relative path then it must be relative to the "current folder"
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Value);
+    Result := True;
+  end;
 end;
 
 class function TLocalizationCommandLineTool.OptionSymbols(var Filename: string): boolean;
 begin
-  Result := ((FindCmdLineSwitch('y', Filename, True, [clstValueAppended])) or (FindCmdLineSwitch('symbols', Filename, True, [clstValueAppended]))) and
-    (Filename <> '');
-
-  // If command line specified a relative path then it must be relative to the "current folder"
-  if (Result) then
-    Filename := PathUtil.PathCombinePath(GetCurrentDir, Filename);
+  Result := False;
+  var Value := '';
+  if (FindCmdLineSwitch('y', Value, True, [clstValueAppended]) or FindCmdLineSwitch('symbols', Value, True, [clstValueAppended])) and
+    (Value <> '') then
+  begin
+    // If command line specified a relative path then it must be relative to the "current folder"
+    Filename := PathUtil.PathCombinePath(GetCurrentDir, Value);
+    Result := True;
+  end;
 end;
 
 class function TLocalizationCommandLineTool.OptionVerbose: boolean;
