@@ -116,20 +116,20 @@ end;
 procedure TLocalizationCommandLineTool.Message(const Msg: string);
 begin
   if (FLogger <> nil) then
-    FLogger.Message(Msg+#13);
+    FLogger.Message(Msg);
 end;
 
 procedure TLocalizationCommandLineTool.Error(const Msg: string);
 begin
   if (FLogger <> nil) then
-    FLogger.Error(Msg+#13);
+    FLogger.Error(Msg);
   Halt(1);
 end;
 
 procedure TLocalizationCommandLineTool.Warning(const Msg: string);
 begin
   if (FLogger <> nil) then
-    FLogger.Warning(Msg+#13);
+    FLogger.Warning(Msg);
 end;
 
 class function TLocalizationCommandLineTool.OptionBuild: boolean;
