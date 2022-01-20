@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Better Translation Manager"
-#define MyAppFolderName "Melander\Translation Manager"
+#define MyAppFolderName "Melander\Better Translation Manager"
 #define MyAppExeName "amTranslationManager.exe"
 ;#define MyAppSourceFolder "..\Bin\Win32\Debug\"
 #define MyAppSourceFolder "..\Bin\Win32\Release\"
@@ -28,13 +28,15 @@ DisableProgramGroupPage=yes
 OutputBaseFilename=amTranslationManagerInstall-{#MyAppVersion}
 SetupIconFile=..\Source\resources\amTranslationManager.ico
 UninstallDisplayIcon={app}\amTranslationManager.exe
-MinVersion=0,6.0
+MinVersion=0,6.1
 WizardSmallImageFile=.\Resources\logo 55x55.bmp
 WizardImageStretch=False
 SolidCompression=True
 VersionInfoVersion={#MyAppVersion}
 AlwaysShowDirOnReadyPage=True
 Uninstallable=not IsPortable
+PrivilegesRequired=none
+UsePreviousPrivileges=False
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
