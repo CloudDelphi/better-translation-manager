@@ -105,7 +105,7 @@ type
     ActionOptionGlobal: TAction;
     dxLayoutItem11: TdxLayoutItem;
     CheckBoxOptionIgnoreAccelerator: TcxCheckBox;
-    ActionOptionIgnoreAccelerator: TAction;
+    ActionOptionNormalize: TAction;
     dxLayoutGroup1: TdxLayoutGroup;
     dxLayoutGroup6: TdxLayoutGroup;
     dxLayoutGroup7: TdxLayoutGroup;
@@ -457,20 +457,21 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
 
   function Match(Value: string): boolean;
   begin
+    if (not ActionOptionCaseSensitive.Checked) then
+      Value := AnsiUpperCase(Value);
+
+    if (ActionOptionNormalize.Checked) then
+      Value := SanitizeText(Value);
+
     if (ActionOptionRegExp.Checked) then
     begin
-      Result := FRegExp.IsMatch(Value);
+      // RegEx is a dummy in case the search string is empty
+      Result := (FSearchText = '') or (FRegExp.IsMatch(Value));
       Exit;
     end;
 
     if (Value = '') then
-      Exit(False);
-
-    if (not ActionOptionCaseSensitive.Checked) then
-      Value := AnsiUpperCase(Value);
-
-    if (ActionOptionIgnoreAccelerator.Checked) then
-      Value := StripAccelerator(Value);
+      Exit(FSearchText = '');
 
     if (ActionOptionFuzzy.Checked) then
       Result := FuzzyMatch(Value)
@@ -478,7 +479,7 @@ function TFormSearch.SearchItem(Prop: TLocalizerProperty): boolean;
     if (ActionOptionExact.Checked) then
       Result := (Value = FSearchText)
     else
-      Result := Value.Contains(FSearchText);
+      Result := (FSearchText = '') or (Value.Contains(FSearchText));
   end;
 
 var
@@ -603,7 +604,12 @@ begin
 
     try
 
-      FRegExp := TRegEx.Create(SearchString, RegExOptions);
+      if (SearchString <> '') then
+        FRegExp := TRegEx.Create(SearchString, RegExOptions)
+      else
+        // Empty regex raises exception so we need to handle an empty search string explicitly.
+        // The regex we create here is a dummy as we test for empty search string again in SearchItem.Match()
+        FRegExp := TRegEx.Create('.*', RegExOptions);
 
     except
       on E: ERegularExpressionError do
@@ -677,8 +683,8 @@ end;
 
 procedure TFormSearch.ActionGoToExecute(Sender: TObject);
 begin
-  if (GridResultTableView.Controller.FocusedRowIndex <> -1) then
-    ViewItem(FSearchResult[GridResultTableView.Controller.FocusedRowIndex].Prop);
+  if (GridResultTableView.Controller.FocusedRecordIndex <> -1) then
+    ViewItem(FSearchResult[GridResultTableView.Controller.FocusedRecordIndex].Prop);
 end;
 
 procedure TFormSearch.ActionGoToUpdate(Sender: TObject);
@@ -795,7 +801,7 @@ end;
 
 procedure TFormSearch.ActionSearchUpdate(Sender: TObject);
 begin
-  TAction(Sender).Enabled := (EditSearchText.Text <> '') and (FSearchScope <> []) and (FSearchHost.Project <> nil);
+  TAction(Sender).Enabled := (FSearchHost.Project <> nil) and ((EditSearchText.Text <> '') or (FSearchScope <> []));
 end;
 
 // -----------------------------------------------------------------------------

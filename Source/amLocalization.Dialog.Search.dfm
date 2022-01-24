@@ -286,7 +286,7 @@ inherited FormSearch: TFormSearch
       object CheckBoxOptionIgnoreAccelerator: TcxCheckBox [6]
         Left = 559
         Top = 7
-        Action = ActionOptionIgnoreAccelerator
+        Action = ActionOptionNormalize
         Style.HotTrack = False
         Style.TransparentBorder = True
         TabOrder = 8
@@ -667,7 +667,7 @@ inherited FormSearch: TFormSearch
     end
     object ActionGoTo: TAction
       Category = 'Buttons'
-      Caption = 'Go to'
+      Caption = '&Go to'
       OnExecute = ActionGoToExecute
       OnUpdate = ActionGoToUpdate
     end
@@ -691,17 +691,18 @@ inherited FormSearch: TFormSearch
       Checked = True
       OnExecute = ActionDummyExecute
     end
-    object ActionOptionIgnoreAccelerator: TAction
+    object ActionOptionNormalize: TAction
       Category = 'Options'
       AutoCheck = True
-      Caption = 'Strip accelerators'
+      Caption = '&Normalize'
       Checked = True
+      Hint = 'Search normalized values'
       OnExecute = ActionDummyExecute
     end
     object ActionOptionFuzzy: TAction
       Category = 'Options'
       AutoCheck = True
-      Caption = 'Fuzzy match:'
+      Caption = 'F&uzzy match:'
       OnExecute = ActionDummyExecute
       OnUpdate = ActionOptionFuzzyUpdate
     end
@@ -714,7 +715,7 @@ inherited FormSearch: TFormSearch
     end
     object ActionMark: TAction
       Category = 'Buttons'
-      Caption = 'Mark...'
+      Caption = '&Mark...'
       OnExecute = ActionMarkExecute
       OnUpdate = ActionMarkUpdate
     end
@@ -744,7 +745,7 @@ inherited FormSearch: TFormSearch
     object ActionOptionExact: TAction
       Category = 'Options'
       AutoCheck = True
-      Caption = 'Exact match'
+      Caption = 'E&xact match'
       OnExecute = ActionDummyExecute
       OnUpdate = ActionOptionExactUpdate
     end
