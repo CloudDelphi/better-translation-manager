@@ -483,12 +483,12 @@ type
     procedure ActionGotoNextStateUnusedExecute(Sender: TObject);
     procedure ActionTranslationMemoryUpdateUpdate(Sender: TObject);
     procedure ActionTranslationMemoryUpdateExecute(Sender: TObject);
-    procedure ButtonProjectLocateSourceClick(Sender: TObject);
     procedure TreeListModulesFocusedColumnChanged(Sender: TcxCustomTreeList;
       APrevFocusedColumn, AFocusedColumn: TcxTreeListColumn);
     procedure GridItemsTableViewFocusedItemChanged(
       Sender: TcxCustomGridTableView; APrevFocusedItem,
       AFocusedItem: TcxCustomGridTableItem);
+    procedure ActionProjectLocateSourceExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -3708,6 +3708,14 @@ begin
   Result := LocateSourceFile(False);
 end;
 
+procedure TFormMain.ActionProjectLocateSourceExecute(Sender: TObject);
+begin
+  SaveCursor(crAppStart);
+  if (LocateSourceFile(True)) then
+    // Also verify DRC file if we got a valid source file
+    LocateStringsSymbolFile(True, False);
+end;
+
 procedure TFormMain.ActionProjectNewExecute(Sender: TObject);
 var
   FormNewProject: TFormNewProject;
@@ -5022,14 +5030,6 @@ begin
       TranslationManagerSettings.Folders.RecentFiles.Delete(n);
     Sender.Free;
   end;
-end;
-
-procedure TFormMain.ButtonProjectLocateSourceClick(Sender: TObject);
-begin
-  SaveCursor(crAppStart);
-  if (LocateSourceFile(True)) then
-    // Also verify DRC file if we got a valid source file
-    LocateStringsSymbolFile(True, False);
 end;
 
 // -----------------------------------------------------------------------------

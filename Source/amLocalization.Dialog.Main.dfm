@@ -2430,6 +2430,7 @@ object FormMain: TFormMain
       Caption = 'Locate source...'
       Hint = 'Locate the source application file'
       ImageIndex = 86
+      OnExecute = ActionProjectLocateSourceExecute
       OnUpdate = ActionHasProjectUpdate
     end
   end
