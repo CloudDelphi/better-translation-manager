@@ -4379,6 +4379,11 @@ begin
         TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
         Exit;
       end;
+      on E: EOSError do
+      begin
+        TaskMessageDlg(sErrorLoadingModuleTitle, E.Message, mtWarning, [mbOK], 0);
+        Exit;
+      end;
     end;
   finally
     ProjectProcessor.Free;
