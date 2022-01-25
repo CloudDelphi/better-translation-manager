@@ -62,7 +62,11 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TLocalizerImportAction = (liaUpdateSource, liaUpdateTarget, liaTranslate);
+  TLocalizerImportAction = (
+    liaUpdateSource,            // Update project from source
+    liaUpdateTarget,            // Update translation from a target module
+    liaTranslate                // Build target module
+  );
 
 type
   TTranslationCounts = record
@@ -611,11 +615,11 @@ begin
   while (not FReader.EndOfList) do
     ReadProperty(Action, Language, Translator, Item, Name);
 
-  if (Action <> liaUpdateTarget) then
+  if (Action = liaUpdateSource) then
   begin
+    // Post processing to apply "required properties" rules.
 
-    // Apply "required properties" rules.
-    // If a required property is missing we create it and mark it "Synthesized"
+    // If a required property is missing from the element we create it and mark it "Synthesized"
     for var i := 0 to High(FRequiredPropertyRules) do
     begin
       if (not FRequiredPropertyRules[i].HasRegEx) then
@@ -651,17 +655,20 @@ begin
     end;
 
   end else
-  if (FWriter <> nil) and (Language <> nil) then
+  if (Action = liaTranslate) and (FWriter <> nil) and (Language <> nil) then
   begin
     // If we're updating the target then we must inject any synthesized properties
     // into the output stream.
+
+    // Flush deferred writes to writer
+    CopyToHere(FReader.Position);
 
     for var Prop in Item.Properties.Values do
       if (Prop.Synthesized) and (Prop.HasTranslation(Language)) then
       begin
         // Property name
-        FWriter.WriteString(Prop.Name);
-        // Translated value
+        FWriter.WriteStr(AnsiString(Prop.Name));
+        // Translated value (typed as string)
         FWriter.WriteString(Prop.TranslatedValue[Language]);
       end;
   end;
