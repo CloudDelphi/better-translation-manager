@@ -114,7 +114,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetFileLocations
+        Properties.ActivePage = TabSheetGeneral
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -412,7 +412,6 @@ inherited FormSettings: TFormSettings
               AlignHorz = ahParentManaged
               AlignVert = avParentManaged
               Hidden = True
-              ItemIndex = 1
               ShowBorder = False
               Index = -1
             end
@@ -1233,7 +1232,6 @@ inherited FormSettings: TFormSettings
               AlignHorz = ahClient
               AlignVert = avTop
               Hidden = True
-              ItemIndex = 2
               ShowBorder = False
               Index = -1
             end
@@ -1444,6 +1442,184 @@ inherited FormSettings: TFormSettings
             end
           end
         end
+        object TabSheetParser: TcxTabSheet
+          AlignWithMargins = True
+          Margins.Left = 12
+          Margins.Top = 12
+          Margins.Right = 12
+          Margins.Bottom = 8
+          Caption = 'Parser'
+          ExplicitLeft = 1
+          ExplicitTop = 26
+          ExplicitWidth = 434
+          ExplicitHeight = 466
+          object LayoutControlParser: TdxLayoutControl
+            Left = 0
+            Top = 0
+            Width = 410
+            Height = 446
+            Align = alClient
+            ParentBackground = True
+            TabOrder = 0
+            Transparent = True
+            LayoutLookAndFeel = LayoutSkinLookAndFeel
+            ExplicitLeft = -2
+            ExplicitWidth = 434
+            ExplicitHeight = 466
+            object cxLabel8: TcxLabel
+              Left = 0
+              Top = 0
+              AutoSize = False
+              Caption = 'Delphi form parser'
+              Style.HotTrack = False
+              Style.TextStyle = [fsBold]
+              Style.TransparentBorder = False
+              Properties.LineOptions.Visible = True
+              Transparent = True
+              Height = 17
+              Width = 410
+            end
+            object ComboBoxStringListHandling: TcxComboBox
+              Left = 126
+              Top = 24
+              Enabled = False
+              Properties.DropDownListStyle = lsFixedList
+              Properties.Items.Strings = (
+                'Ignore'
+                'Treat list text as a single property'
+                'Treat each line as an individual property')
+              Properties.ValidationOptions = [evoAllowLoseFocus]
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Text = 'Treat each line as an individual property'
+              Width = 284
+            end
+            object GridSynthesize: TcxGrid
+              Left = 32
+              Top = 95
+              Width = 378
+              Height = 200
+              Enabled = False
+              TabOrder = 2
+              object GridSynthesizeTableView: TcxGridTableView
+                Navigator.Buttons.CustomButtons = <>
+                ScrollbarAnnotations.CustomAnnotations = <>
+                DataController.Summary.DefaultGroupSummaryItems = <>
+                DataController.Summary.FooterSummaryItems = <>
+                DataController.Summary.SummaryGroups = <>
+                DataController.OnBeforePost = GridSynthesizeTableViewDataControllerBeforePost
+                OptionsBehavior.CellHints = True
+                OptionsBehavior.FocusFirstCellOnNewRecord = True
+                OptionsBehavior.GoToNextCellOnEnter = True
+                OptionsCustomize.ColumnFiltering = False
+                OptionsCustomize.ColumnGrouping = False
+                OptionsCustomize.ColumnMoving = False
+                OptionsCustomize.ColumnsQuickCustomizationShowCommands = False
+                OptionsData.Appending = True
+                OptionsView.ColumnAutoWidth = True
+                OptionsView.GroupByBox = False
+                object GridSynthesizeTableViewColumnMask: TcxGridColumn
+                  Caption = 'Type mask'
+                  PropertiesClassName = 'TcxTextEditProperties'
+                  Properties.ValidateOnEnter = True
+                  Properties.ValidationOptions = [evoShowErrorIcon]
+                  Properties.OnValidate = GridSynthesizeTableViewColumnValidate
+                  OnValidateDrawValue = GridSynthesizeTableViewColumnValidateDrawValue
+                end
+                object GridSynthesizeTableViewColumnName: TcxGridColumn
+                  Caption = 'Property name'
+                  PropertiesClassName = 'TcxTextEditProperties'
+                  Properties.ValidateOnEnter = True
+                  Properties.ValidationOptions = [evoShowErrorIcon]
+                  Properties.OnValidate = GridSynthesizeTableViewColumnValidate
+                  OnValidateDrawValue = GridSynthesizeTableViewColumnValidateDrawValue
+                end
+                object GridSynthesizeTableViewColumnValue: TcxGridColumn
+                  Caption = 'Property value'
+                  PropertiesClassName = 'TcxTextEditProperties'
+                  Properties.ValidateOnEnter = True
+                  Properties.ValidationOptions = [evoShowErrorIcon]
+                  Properties.OnValidate = GridSynthesizeTableViewColumnValidate
+                  OnValidateDrawValue = GridSynthesizeTableViewColumnValidateDrawValue
+                end
+              end
+              object GridSynthesizeLevel: TcxGridLevel
+                GridView = GridSynthesizeTableView
+              end
+            end
+            object LayoutControlParserGroup_Root: TdxLayoutGroup
+              AlignHorz = ahLeft
+              AlignVert = avTop
+              Hidden = True
+              ShowBorder = False
+              Index = -1
+            end
+            object dxLayoutItem72: TdxLayoutItem
+              Parent = LayoutGroupInputParser
+              CaptionOptions.Visible = False
+              Control = cxLabel8
+              ControlOptions.OriginalHeight = 17
+              ControlOptions.OriginalWidth = 410
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupInputParser: TdxLayoutGroup
+              Parent = LayoutControlParserGroup_Root
+              CaptionOptions.Text = 'New Group'
+              ItemIndex = 1
+              ShowBorder = False
+              Index = 0
+            end
+            object dxLayoutGroup27: TdxLayoutGroup
+              Parent = LayoutGroupInputParser
+              CaptionOptions.Text = 'New Group'
+              LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ItemIndex = 3
+              ShowBorder = False
+              Index = 1
+            end
+            object dxLayoutItem73: TdxLayoutItem
+              Parent = dxLayoutGroup27
+              CaptionOptions.Text = 'String list properties:'
+              Control = ComboBoxStringListHandling
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 121
+              ControlOptions.ShowBorder = False
+              Enabled = False
+              Index = 0
+            end
+            object LayoutCheckBoxItemSynthesize: TdxLayoutCheckBoxItem
+              Parent = dxLayoutGroup27
+              CaptionOptions.Text = 'Synthesize missing properties'
+              OnClick = LayoutCheckBoxItemSynthesizeClick
+              Index = 2
+            end
+            object dxLayoutEmptySpaceItem3: TdxLayoutEmptySpaceItem
+              Parent = dxLayoutGroup27
+              SizeOptions.Height = 10
+              SizeOptions.Width = 10
+              CaptionOptions.Text = 'Empty Space Item'
+              Index = 1
+            end
+            object dxLayoutItem74: TdxLayoutItem
+              Parent = LayoutGroupSynthesize
+              Offsets.Left = 20
+              Control = GridSynthesize
+              ControlOptions.OriginalHeight = 200
+              ControlOptions.OriginalWidth = 250
+              ControlOptions.ShowBorder = False
+              Index = 0
+            end
+            object LayoutGroupSynthesize: TdxLayoutGroup
+              Parent = dxLayoutGroup27
+              CaptionOptions.Text = 'New Group'
+              Enabled = False
+              ShowBorder = False
+              Index = 3
+            end
+          end
+        end
         object TabSheetFileLocations: TcxTabSheet
           AlignWithMargins = True
           Margins.Left = 12
@@ -1600,7 +1776,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel6: TcxLabel
               Left = 0
-              Top = 281
+              Top = 307
               AutoSize = False
               Caption = 'Document file recovery'
               Style.HotTrack = False
@@ -1613,29 +1789,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoRecovery: TcxCheckBox
               Left = 12
-              Top = 305
+              Top = 331
               Caption = 'Save auto-recovery information'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 7
+              TabOrder = 8
               Transparent = True
             end
             object EditAutoRecoveryInterval: TcxSpinEdit
               Left = 163
-              Top = 331
+              Top = 357
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 60.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 8
+              TabOrder = 9
               Value = 1
               Width = 53
             end
             object cxLabel10: TcxLabel
               Left = 0
-              Top = 369
+              Top = 395
               Anchors = [akLeft, akTop, akRight]
               AutoSize = False
               Caption = 'Backup files'
@@ -1649,29 +1825,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 419
+              Top = 445
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 11
+              TabOrder = 12
               Transparent = True
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 163
-              Top = 445
+              Top = 471
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 12
+              TabOrder = 13
               Value = 1
               Width = 53
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 339
-              Top = 445
+              Top = 471
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -1680,20 +1856,20 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 13
+              TabOrder = 14
               Value = 100
               Width = 78
             end
             object CheckBoxSaveBackup: TcxCheckBox
               Left = 12
-              Top = 393
+              Top = 419
               Hint = 
                 'Save a backup of existing files when they are replaced with newe' +
                 'r files'
               Caption = 'Create backup of saved files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 10
+              TabOrder = 11
               Transparent = True
             end
             object cxLabel7: TcxLabel
@@ -1722,7 +1898,7 @@ inherited FormSettings: TFormSettings
               Transparent = True
             end
             object CheckBoxFileProjectSort: TcxCheckBox
-              Left = 0
+              Left = 12
               Top = 273
               Hint = 
                 'Sort items when they are saved. This makes it easier to compare ' +
@@ -1942,6 +2118,7 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutGroup25: TdxLayoutGroup
               Parent = dxLayoutGroup11
+              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Hidden = True
               ItemIndex = 1
@@ -1959,6 +2136,7 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutGroup26: TdxLayoutGroup
               Parent = dxLayoutGroup25
+              CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Left = 12
               Hidden = True
@@ -2876,6 +3054,7 @@ inherited FormSettings: TFormSettings
         BevelOuter = bvNone
         Color = 16053234
         FullRepaint = False
+        ParentBackground = False
         ShowCaption = False
         TabOrder = 0
         object ButtonCategoryGeneral: TcxButton
@@ -2900,7 +3079,7 @@ inherited FormSettings: TFormSettings
         object ButtonCategoryFiles: TcxButton
           AlignWithMargins = True
           Left = 0
-          Top = 93
+          Top = 124
           Width = 120
           Height = 25
           Margins.Left = 0
@@ -2912,14 +3091,15 @@ inherited FormSettings: TFormSettings
           OptionsImage.Margin = 8
           SpeedButtonOptions.Flat = True
           SpeedButtonOptions.Transparent = True
-          TabOrder = 3
+          TabOrder = 4
           TabStop = False
           OnEnter = ButtonCategoryEnter
+          ExplicitTop = 93
         end
         object ButtonCategoryAdvanced: TcxButton
           AlignWithMargins = True
           Left = 0
-          Top = 155
+          Top = 186
           Width = 120
           Height = 25
           Margins.Left = 0
@@ -2931,14 +3111,15 @@ inherited FormSettings: TFormSettings
           OptionsImage.Margin = 8
           SpeedButtonOptions.Flat = True
           SpeedButtonOptions.Transparent = True
-          TabOrder = 5
+          TabOrder = 6
           TabStop = False
           OnEnter = ButtonCategoryEnter
+          ExplicitTop = 155
         end
         object ButtonCategoryProofing: TcxButton
           AlignWithMargins = True
           Left = 0
-          Top = 124
+          Top = 155
           Width = 120
           Height = 25
           Margins.Left = 0
@@ -2950,9 +3131,10 @@ inherited FormSettings: TFormSettings
           OptionsImage.Margin = 8
           SpeedButtonOptions.Flat = True
           SpeedButtonOptions.Transparent = True
-          TabOrder = 4
+          TabOrder = 5
           TabStop = False
           OnEnter = ButtonCategoryEnter
+          ExplicitTop = 124
         end
         object ButtonCategoryTranslators: TcxButton
           AlignWithMargins = True
@@ -2989,6 +3171,25 @@ inherited FormSettings: TFormSettings
           SpeedButtonOptions.Flat = True
           SpeedButtonOptions.Transparent = True
           TabOrder = 1
+          TabStop = False
+          OnEnter = ButtonCategoryEnter
+        end
+        object cxButton1: TcxButton
+          AlignWithMargins = True
+          Left = 0
+          Top = 93
+          Width = 120
+          Height = 25
+          Margins.Left = 0
+          Margins.Top = 0
+          Margins.Right = 2
+          Margins.Bottom = 6
+          Align = alTop
+          Action = ActionCategoryParser
+          OptionsImage.Margin = 8
+          SpeedButtonOptions.Flat = True
+          SpeedButtonOptions.Transparent = True
+          TabOrder = 3
           TabStop = False
           OnEnter = ButtonCategoryEnter
         end
@@ -3043,6 +3244,13 @@ inherited FormSettings: TFormSettings
     object ActionCategoryTranslators: TAction
       Category = 'Category'
       Caption = 'Providers'
+      GroupIndex = 1
+      OnExecute = ActionCategoryExecute
+      OnUpdate = ActionCategoryUpdate
+    end
+    object ActionCategoryParser: TAction
+      Category = 'Category'
+      Caption = 'Parser'
       GroupIndex = 1
       OnExecute = ActionCategoryExecute
       OnUpdate = ActionCategoryUpdate

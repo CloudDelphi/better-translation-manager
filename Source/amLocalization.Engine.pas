@@ -103,7 +103,9 @@ implementation
 uses
   Classes,
   IOUtils,
-  amPath;
+  RegularExpressions,
+  amPath,
+  amLocalization.Settings;
 
 
 // -----------------------------------------------------------------------------
@@ -335,15 +337,25 @@ end;
 // -----------------------------------------------------------------------------
 type
   TModuleDFMResourceProcessor = class(TModuleResourceProcessor)
+  strict private type
+    TRequiredPropertyRule = record
+      RegExp: TRegEx;
+      HasRegEx: boolean;
+      TypeMask: string;
+      PropertyName: string;
+      PropertyValue: string;
+    end;
   private
     FStream: TStream;
     FReader: TReader;
     FWriter: TWriter;
     FLastCopied: integer;
+    FRequiredPropertyRules: array of TRequiredPropertyRule;
   protected
     procedure ReadCollection(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
     procedure ReadPropertyValue(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path, PropertyName: string);
     procedure ReadProperty(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
+    procedure ReadProperties(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Name: string);
     procedure ReadComponent(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; const Path: string);
 
     procedure CopyToHere(CopyPos: int64);
@@ -405,6 +417,25 @@ begin
 end;
 
 function TModuleDFMResourceProcessor.Execute(Action: TLocalizerImportAction; ResourceWriter: IResourceWriter; Language: TTranslationLanguage; Translator: TTranslateProc): boolean;
+
+  procedure SetupRequiredPropertyRules;
+  begin
+    if (not TranslationManagerSettings.Parser.Synthesize.Enabled) then
+    begin
+      SetLength(FRequiredPropertyRules, 0);
+      exit;
+    end;
+
+    SetLength(FRequiredPropertyRules, TranslationManagerSettings.Parser.Synthesize.Count);
+    for var i := 0 to TranslationManagerSettings.Parser.Synthesize.Count-1 do
+    begin
+      var Rule := TranslationManagerSettings.Parser.Synthesize.Rules[i];
+      FRequiredPropertyRules[i].TypeMask := Rule.TypeMask;
+      FRequiredPropertyRules[i].PropertyName := Rule.PropertyName;
+      FRequiredPropertyRules[i].PropertyValue := Rule.PropertyValue;
+    end;
+  end;
+
 const
   FilerSignature: UInt32 = $30465054; // ($54, $50, $46, $30) 'TPF0'
 var
@@ -436,6 +467,8 @@ begin
     end;
 
     SourceStream.Position := 0;
+
+    SetupRequiredPropertyRules;
 
     if (ResourceWriter <> nil) then
       TargetStream := TMemoryStream.Create
@@ -513,8 +546,7 @@ begin
       ChildItem := nil;
 
     FReader.ReadListBegin;
-    while (not FReader.EndOfList) do
-      ReadProperty(Action, Language, Translator, ChildItem, Name);
+    ReadProperties(Action, Language, Translator, ChildItem, Name);
     FReader.ReadListEnd;
 
     if (ChildItem <> nil) and (ItemStateNew in ChildItem.State) and (ChildItem.Properties.Count = 0) then
@@ -551,8 +583,7 @@ begin
   if (Item <> nil) and ((Action <> liaUpdateSource) or (Item.Status <> ItemStatusDontTranslate)) then
   begin
     // TReader.ReadDataInner
-    while (not FReader.EndOfList) do
-      ReadProperty(Action, Language, Translator, Item, Name);
+    ReadProperties(Action, Language, Translator, Item, Name);
     FReader.ReadListEnd;
 
     // Remove empty item
@@ -574,6 +605,67 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TModuleDFMResourceProcessor.ReadProperties(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Name: string);
+begin
+  while (not FReader.EndOfList) do
+    ReadProperty(Action, Language, Translator, Item, Name);
+
+  if (Action <> liaUpdateTarget) then
+  begin
+
+    // Apply "required properties" rules.
+    // If a required property is missing we create it and mark it "Synthesized"
+    for var i := 0 to High(FRequiredPropertyRules) do
+    begin
+      if (not FRequiredPropertyRules[i].HasRegEx) then
+      begin
+        FRequiredPropertyRules[i].RegExp := TRegEx.Create(FRequiredPropertyRules[i].TypeMask, [roCompiled, roSingleLine]);
+        FRequiredPropertyRules[i].HasRegEx := True;
+      end;
+
+      // Look for required property element type
+      if (not FRequiredPropertyRules[i].RegExp.IsMatch(Item.TypeName)) then
+        continue;
+
+      // Look for required property name
+      if (Item.FindProperty(FRequiredPropertyRules[i].PropertyName) <> nil) then
+        continue;
+
+      // Property not found. Get the value the new property should have.
+      var Value: string;
+      if (FRequiredPropertyRules[i].PropertyValue.StartsWith('@')) then
+      begin
+        // Get value from another named property
+        var SourceProp := Item.FindProperty(Copy(FRequiredPropertyRules[i].PropertyValue, 2, MaxInt));
+        if (SourceProp = nil) then
+          continue;
+        Value := SourceProp.Value;
+      end else
+        // Get literal value
+        Value := FRequiredPropertyRules[i].PropertyValue;
+
+      // Create new property (or find existing one)
+      var Prop := Item.AddProperty(FRequiredPropertyRules[i].PropertyName, Value);
+      Prop.Synthesized := True;
+    end;
+
+  end else
+  if (FWriter <> nil) and (Language <> nil) then
+  begin
+    // If we're updating the target then we must inject any synthesized properties
+    // into the output stream.
+
+    for var Prop in Item.Properties.Values do
+      if (Prop.Synthesized) and (Prop.HasTranslation(Language)) then
+      begin
+        // Property name
+        FWriter.WriteString(Prop.Name);
+        // Translated value
+        FWriter.WriteString(Prop.TranslatedValue[Language]);
+      end;
+  end;
+end;
 
 procedure TModuleDFMResourceProcessor.ReadProperty(Action: TLocalizerImportAction; Language: TTranslationLanguage; Translator: TTranslateProc; Item: TLocalizerItem; const Path: string);
 var

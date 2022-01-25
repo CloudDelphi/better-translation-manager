@@ -81,6 +81,7 @@ type
     StyleNeedAction: TcxStyle;
     EditRepositoryComboBoxItemStatus: TcxEditRepositoryImageComboBoxItem;
     EditRepositoryComboBoxItemState: TcxEditRepositoryImageComboBoxItem;
+    StyleSynthesized: TcxStyle;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
@@ -269,6 +270,11 @@ begin
       AStyle := StyleProposed
     else
       AStyle := StyleComplete;
+  end else
+  if (Prop.Synthesized) then
+  begin
+    AStyle := StyleSynthesized;
+    Exit;
   end else
     AStyle := StyleNeedTranslation;
 end;

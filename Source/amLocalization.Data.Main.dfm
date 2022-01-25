@@ -1,8 +1,8 @@
 object DataModuleMain: TDataModuleMain
-  OldCreateOrder = False
   OnCreate = DataModuleCreate
   Height = 408
   Width = 441
+  PixelsPerInch = 96
   object DataSetLanguages: TFDMemTable
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -4951,6 +4951,10 @@ object DataModuleMain: TDataModuleMain
     object StyleNeedAction: TcxStyle
       AssignedValues = [svColor]
       Color = 15132415
+    end
+    object StyleSynthesized: TcxStyle
+      AssignedValues = [svColor]
+      Color = 15532012
     end
   end
 end

@@ -374,6 +374,7 @@ begin
                     StringToItemState(Prop, VarToStr(PropNode.Attributes['state']));
                     Prop.Status := StringToItemStatus(VarToStr(PropNode.Attributes['status']));
                     Prop.Flags := StringToPropFlags(VarToStr(PropNode.Attributes['flags']));
+                    Prop.Synthesized := AnsiSameText(VarToStr(PropNode.Attributes['synthesized']), 'true');
 
                     XlatsNode := PropNode.ChildNodes.FindNode('translations');
                     if (XlatsNode <> nil) then
@@ -506,6 +507,12 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
       else
         s := s + Char(Ord('A') + Ord(Flag) - Ord(FlagBookmarkA));
     Node.Attributes['flags'] := s;
+  end;
+
+  procedure WritePropOptions(const Node: IXMLNode; Prop: TLocalizerProperty);
+  begin
+    if (Prop.Synthesized) then
+      Node.Attributes['synthesized'] := 'true';
   end;
 
 var
@@ -643,6 +650,7 @@ begin
         WriteItemState(PropNode, Prop);
         WriteItemStatus(PropNode, Prop);
         WritePropFlags(PropNode, Prop);
+        WritePropOptions(PropNode, Prop);
 
         if (soOmitDontTranslateItems in AOptions) and (Prop.Status = ItemStatusDontTranslate) then
           continue;

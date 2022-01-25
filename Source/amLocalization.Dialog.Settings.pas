@@ -26,12 +26,12 @@ uses
   dxGDIPlusClasses, cxGridViewLayoutContainer,
   cxGridLayoutView, cxGridCustomLayoutView, cxTextEdit, cxListView, cxCheckComboBox, cxSpinEdit, cxGridLevel, cxGridCustomTableView,
   cxGridTableView, cxGridCustomView, cxGrid, cxDropDownEdit, Vcl.StdCtrls, cxButtons, cxMaskEdit, cxImageComboBox, dxLayoutControl,
-  cxPC, dxColorEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
+  cxPC, dxColorEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox, dxColorDialog, dxScrollbarAnnotations,
 
   dxRibbonSkins,
   dxSpellChecker,
 
-  amLocalization.Dialog, dxColorDialog;
+  amLocalization.Dialog;
 
 type
   TFormSettings = class(TFormDialog)
@@ -346,6 +346,27 @@ type
     CheckBoxFileProjectOmitDontTranslate: TcxCheckBox;
     dxLayoutItem71: TdxLayoutItem;
     CheckBoxFileProjectSort: TcxCheckBox;
+    TabSheetParser: TcxTabSheet;
+    LayoutControlParserGroup_Root: TdxLayoutGroup;
+    LayoutControlParser: TdxLayoutControl;
+    dxLayoutItem72: TdxLayoutItem;
+    cxLabel8: TcxLabel;
+    LayoutGroupInputParser: TdxLayoutGroup;
+    dxLayoutGroup27: TdxLayoutGroup;
+    dxLayoutItem73: TdxLayoutItem;
+    ComboBoxStringListHandling: TcxComboBox;
+    LayoutCheckBoxItemSynthesize: TdxLayoutCheckBoxItem;
+    dxLayoutEmptySpaceItem3: TdxLayoutEmptySpaceItem;
+    GridSynthesizeLevel: TcxGridLevel;
+    GridSynthesize: TcxGrid;
+    dxLayoutItem74: TdxLayoutItem;
+    LayoutGroupSynthesize: TdxLayoutGroup;
+    GridSynthesizeTableView: TcxGridTableView;
+    GridSynthesizeTableViewColumnMask: TcxGridColumn;
+    GridSynthesizeTableViewColumnName: TcxGridColumn;
+    GridSynthesizeTableViewColumnValue: TcxGridColumn;
+    cxButton1: TcxButton;
+    ActionCategoryParser: TAction;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -399,6 +420,15 @@ type
     procedure CheckBoxPortableClick(Sender: TObject);
     procedure ActionProviderTMFilenameExecute(Sender: TObject);
     procedure ComboBoxAutoApplyTranslationsPropertiesChange(Sender: TObject);
+    procedure GridSynthesizeTableViewColumnValidate(
+      Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
+      var Error: Boolean);
+    procedure LayoutCheckBoxItemSynthesizeClick(Sender: TObject);
+    procedure GridSynthesizeTableViewDataControllerBeforePost(
+      ADataController: TcxCustomDataController);
+    procedure GridSynthesizeTableViewColumnValidateDrawValue(
+      Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+      const AValue: Variant; AData: TcxEditValidateInfo);
   private
     type
       TSkinDetails = record
@@ -437,6 +467,9 @@ type
 
     procedure LoadStyles;
     procedure ApplyStyles;
+
+    procedure LoadSynthesizeRules;
+    procedure ApplySynthesizeRules;
   protected
     procedure LoadSettings;
     procedure ApplySettings;
@@ -493,6 +526,9 @@ uses
   amLocalization.Data.Main,
   amLocalization.Environment,
   amLocalization.Provider.Microsoft.Version3;
+
+resourcestring
+  sValueRequired = 'Value required';
 
 const
   FolderOrder: array[Ord(Low(TTranslationManagerFolder))..Ord(High(TTranslationManagerFolder))] of TTranslationManagerFolder =
@@ -656,6 +692,13 @@ begin
   LoadProofing(FSpellChecker);
 
   (*
+  ** Parser section
+  *)
+  ComboBoxStringListHandling.ItemIndex := Ord(TranslationManagerSettings.Parser.StringListHandling);
+  LayoutCheckBoxItemSynthesize.Checked := TranslationManagerSettings.Parser.Synthesize.Enabled;
+  LoadSynthesizeRules;
+
+  (*
   ** Advanced section
   *)
   CheckBoxSingleInstance.Checked := TranslationManagerSettings.System.SingleInstance;
@@ -733,6 +776,13 @@ begin
   *)
   ApplyProofing(FSpellChecker);
   TranslationManagerProofingSettingsAdapter.SaveFrom(TranslationManagerSettings.Proofing, FSpellChecker);
+
+  (*
+  ** Parser section
+  *)
+  TranslationManagerSettings.Parser.StringListHandling := TStringListHandling(ComboBoxStringListHandling.ItemIndex);
+  TranslationManagerSettings.Parser.Synthesize.Enabled := LayoutCheckBoxItemSynthesize.Checked;
+  ApplySynthesizeRules;
 
   (*
   ** Advanced section
@@ -848,6 +898,32 @@ procedure TFormSettings.ButtonStyleResetClick(Sender: TObject);
 begin
   TranslationManagerSettings.Editor.Style.ResetSettings;
   LoadStyles;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSettings.ApplySynthesizeRules;
+begin
+  TranslationManagerSettings.Parser.Synthesize.Rules.Clear;
+  for var i := 0 to GridSynthesizeTableView.DataController.RecordCount-1 do
+    TranslationManagerSettings.Parser.Synthesize.AddRule(
+      GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnMask.Index],
+      GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnName.Index],
+      GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnValue.Index]);
+end;
+
+procedure TFormSettings.LoadSynthesizeRules;
+begin
+  GridSynthesizeTableView.DataController.RecordCount := TranslationManagerSettings.Parser.Synthesize.Rules.Count;
+  for var i := 0 to TranslationManagerSettings.Parser.Synthesize.Rules.Count-1 do
+  begin
+    GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnMask.Index] :=
+      TranslationManagerSettings.Parser.Synthesize.Rules[i].TypeMask;
+    GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnName.Index] :=
+      TranslationManagerSettings.Parser.Synthesize.Rules[i].PropertyName;
+    GridSynthesizeTableView.DataController.Values[i, GridSynthesizeTableViewColumnValue.Index] :=
+      TranslationManagerSettings.Parser.Synthesize.Rules[i].PropertyValue;
+  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1170,6 +1246,34 @@ begin
     AStyle := StyleDisabled;
 end;
 
+procedure TFormSettings.GridSynthesizeTableViewColumnValidateDrawValue(
+  Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
+  const AValue: Variant; AData: TcxEditValidateInfo);
+begin
+  if (VarToStr(AValue) = '') then
+  begin
+    AData.ErrorType := eetError;
+    AData.ErrorText := sValueRequired;
+  end;
+end;
+
+procedure TFormSettings.GridSynthesizeTableViewColumnValidate(
+  Sender: TObject; var DisplayValue: Variant; var ErrorText: TCaption;
+  var Error: Boolean);
+begin
+  if (VarToStr(DisplayValue) = '') then
+    Error := True;
+end;
+
+procedure TFormSettings.GridSynthesizeTableViewDataControllerBeforePost(
+  ADataController: TcxCustomDataController);
+begin
+  // All columns must have a value
+  for var i := 0 to ADataController.ItemCount-1 do
+    if (VarToStr(ADataController.Values[ADataController.FocusedRecordIndex, i]) = '') then
+      Abort;
+end;
+
 // -----------------------------------------------------------------------------
 
 procedure TFormSettings.ActionCategoryExecute(Sender: TObject);
@@ -1438,6 +1542,11 @@ begin
 
   Filename := EnvironmentVars.TokenizeString(Filename);
   EditProviderTMFilename.Text := Filename;
+end;
+
+procedure TFormSettings.LayoutCheckBoxItemSynthesizeClick(Sender: TObject);
+begin
+  LayoutGroupSynthesize.Enabled := LayoutCheckBoxItemSynthesize.Checked;
 end;
 
 procedure TFormSettings.ListViewProofingAutoCorrectReplacementsClick(Sender: TObject);

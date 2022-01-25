@@ -493,6 +493,7 @@ type
     FValue: string;
     FTranslations: TLocalizerTranslations;
     FFlags: TPropertyFlags;
+    FSynthesized: boolean;
   strict protected
     procedure SetValue(const Value: string);
     procedure SetFlags(const Value: TPropertyFlags);
@@ -519,6 +520,8 @@ type
     procedure SetFlag(const Value: TPropertyFlag);
     procedure ClearFlag(const Value: TPropertyFlag);
     property Flags: TPropertyFlags read FFlags write SetFlags;
+
+    property Synthesized: boolean read FSynthesized write FSynthesized;
   end;
 
 

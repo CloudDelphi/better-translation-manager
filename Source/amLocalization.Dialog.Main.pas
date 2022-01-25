@@ -679,7 +679,7 @@ type
     procedure OnTranslationProviderHandler(Sender: TObject);
   private type
     TCounts = record
-      CountModule, CountItem, CountProperty: integer;
+      CountModule, CountItem, CountProperty, CountSynthesized: integer;
       UnusedModule, UnusedItem, UnusedProperty, UnusedTranslation: integer;
       Translated: integer;
       ObsoleteTranslation: integer;
@@ -803,7 +803,7 @@ resourcestring
   sProjectUpdated = 'Update completed with the following changes:'#13#13+
     'Modules: %.0n added, %.0n unused'#13+
     'Items: %.0n added, %.0n unused'#13+
-    'Properties: %.0n added, %.0n unused'#13+
+    'Properties: %.0n added, %.0n unused, %.0n synthesized'#13+
     'Translations obsoleted: %.0n';
   sProjectUpdatedNothing = 'Update completed without any changes.';
 
@@ -1134,6 +1134,7 @@ begin
   ApplyListStyle(ListStyleTranslated, DataModuleMain.StyleComplete);
   ApplyListStyle(ListStyleHold, DataModuleMain.StyleHold);
   ApplyListStyle(ListStyleDontTranslate, DataModuleMain.StyleDontTranslate);
+  ApplyListStyle(ListStyleSynthesized, DataModuleMain.StyleSynthesized);
 end;
 
 procedure TFormMain.ApplySettings;
@@ -2670,6 +2671,7 @@ begin
       1.0*(CountAfter.CountModule-CountBefore.CountModule), 1.0*(CountAfter.UnusedModule-CountBefore.UnusedModule),
       1.0*(CountAfter.CountItem-CountBefore.CountItem), 1.0*(CountAfter.UnusedItem-CountBefore.UnusedItem),
       1.0*(CountAfter.CountProperty-CountBefore.CountProperty), 1.0*(CountAfter.UnusedProperty-CountBefore.UnusedProperty),
+      1.0*(CountAfter.CountSynthesized-CountBefore.CountSynthesized),
       1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
       ])
   else
@@ -4398,6 +4400,7 @@ begin
       1.0*(CountAfter.CountModule-CountBefore.CountModule), 1.0*(CountAfter.UnusedModule-CountBefore.UnusedModule),
       1.0*(CountAfter.CountItem-CountBefore.CountItem), 1.0*(CountAfter.UnusedItem-CountBefore.UnusedItem),
       1.0*(CountAfter.CountProperty-CountBefore.CountProperty), 1.0*(CountAfter.UnusedProperty-CountBefore.UnusedProperty),
+      1.0*(CountAfter.CountSynthesized-CountBefore.CountSynthesized),
       1.0*(CountAfter.ObsoleteTranslation-CountBefore.ObsoleteTranslation)
       ]);
     TaskMessageDlg(sProjectUpdatedTitle, Msg, mtInformation, [mbOK], 0);
@@ -5583,7 +5586,7 @@ function TFormMain.CountStuff: TCounts;
 var
   Counts: TCounts;
 begin
-  ZeroMemory(@Counts, SizeOf(Counts));
+  Counts := Default(TCounts);
 
   FProject.Traverse(
     function(Module: TLocalizerModule): boolean
@@ -5608,6 +5611,8 @@ begin
               HasTranslations: boolean;
             begin
               Inc(Counts.CountProperty);
+              if (Prop.Synthesized) then
+                Inc(Counts.CountSynthesized);
 
               HasTranslations := False;
               for i := 0 to Prop.Translations.Count-1 do

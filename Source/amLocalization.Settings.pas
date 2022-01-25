@@ -28,6 +28,7 @@ uses
   amRegConfig,
   amFileUtils,
   amLocalization.Utils,
+  amLocalization.Model,
   amLocalization.StopList,
   amLocalization.Normalization;
 
@@ -277,7 +278,7 @@ type
     property AutoRecoverInterval: integer read FAutoRecoverInterval write FAutoRecoverInterval;
   end;
 
-  TListStyle = (ListStyleDefault, ListStyleSelected, ListStyleInactive, ListStyleFocused, ListStyleNotTranslated, ListStyleProposed, ListStyleTranslated, ListStyleHold, ListStyleDontTranslate);
+  TListStyle = (ListStyleDefault, ListStyleSelected, ListStyleInactive, ListStyleFocused, ListStyleNotTranslated, ListStyleProposed, ListStyleTranslated, ListStyleHold, ListStyleDontTranslate, ListStyleSynthesized);
 
   TTranslationManagerListStyleSettings = class(TConfigurationSection)
   private
@@ -322,6 +323,7 @@ type
     property StyleTranslated: TTranslationManagerListStyleSettings index ListStyleTranslated read GetStyle;
     property StyleHold: TTranslationManagerListStyleSettings index ListStyleHold read GetStyle;
     property StyleDontTranslate: TTranslationManagerListStyleSettings index ListStyleDontTranslate read GetStyle;
+    property StyleSynthesized: TTranslationManagerListStyleSettings index ListStyleSynthesized read GetStyle;
   end;
 
   TTranslationAutoApply = (aaNever, aaAlways, aaPrompt);
@@ -420,8 +422,6 @@ type
     FAutoApplyStopList: boolean;
     FPortable: boolean;
     FPortablePurge: boolean;
-    FStringListSplit: boolean;
-    FStringListSupport: boolean;
   protected
     procedure WriteSection(const Key: string); override;
     procedure ReadSection(const Key: string); override;
@@ -462,9 +462,6 @@ type
     property DefaultTargetLanguage: LCID read FDefaultTargetLanguage write FDefaultTargetLanguage;
 
     property PortablePurge: boolean read FPortablePurge write FPortablePurge;
-
-    property StringListSupport: boolean read FStringListSupport write FStringListSupport default False;
-    property StringListSplit: boolean read FStringListSplit write FStringListSplit default False;
   end;
 
 type
@@ -477,6 +474,48 @@ type
     property SaveSorted: boolean read FSaveSorted write FSaveSorted default False;
   end;
 
+type
+  TTranslationManagerParserSynthesizeSettings = class(TConfigurationStringList)
+  strict private type
+    TRequiredPropertyRule = record
+      TypeMask: string;
+      PropertyName: string;
+      PropertyValue: string;
+    end;
+    TRules = TList<TRequiredPropertyRule>;
+  private
+    FValid: boolean;
+    FVersion: integer;
+    FEnabled: boolean;
+    FRules: TRules;
+  protected
+    procedure WriteSection(const Key: string); override;
+    procedure ReadSection(const Key: string); override;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+
+    property Rules: TRules read FRules;
+    procedure AddRule(const TypeMask, PropertyName, PropertyValue: string);
+  published
+    property Valid: boolean read FValid write FValid;
+    property Version: integer read FVersion write FVersion;
+
+    property Enabled: boolean read FEnabled write FEnabled;
+  end;
+
+  TTranslationManagerParserSettings = class(TConfigurationSection)
+  private
+    FSynthesize: TTranslationManagerParserSynthesizeSettings;
+    FStringListHandling: TStringListHandling;
+    function GetStringListHandling: TStringListHandling;
+  public
+    constructor Create(AOwner: TConfigurationSection); override;
+    destructor Destroy; override;
+  published
+    property StringListHandling: TStringListHandling read GetStringListHandling write FStringListHandling stored False default slSplit;
+    property Synthesize: TTranslationManagerParserSynthesizeSettings read FSynthesize;
+  end;
 
 type
   TTranslationManagerSettings = class;
@@ -500,6 +539,7 @@ type
     FSearch: TTranslationManagerSearchSettings;
     FStopList: TTranslationManagerStopListSettings;
     FProject: TTranslationManagerProjectSettings;
+    FParser: TTranslationManagerParserSettings;
   private
     class function GetFolderInstall: string; static;
   protected
@@ -528,6 +568,7 @@ type
     property Search: TTranslationManagerSearchSettings read FSearch;
     property StopList: TTranslationManagerStopListSettings read FStopList;
     property Project: TTranslationManagerProjectSettings read FProject;
+    property Parser: TTranslationManagerParserSettings read FParser;
   end;
 
 function TranslationManagerSettings: TTranslationManagerSettings;
@@ -802,6 +843,7 @@ begin
   FSearch := TTranslationManagerSearchSettings.Create(Self);
   FStopList := TTranslationManagerStopListSettings.Create(Self);
   FProject := TTranslationManagerProjectSettings.Create(Self);
+  FParser := TTranslationManagerParserSettings.Create(Self);
 
   if (Assigned(FOnSettingsCreating)) then
     FOnSettingsCreating(Self);
@@ -823,6 +865,7 @@ begin
   FSearch.Free;
   FStopList.Free;
   FProject.Free;
+  FParser.Free;
 
   inherited;
 end;
@@ -1072,6 +1115,10 @@ begin
   StyleDontTranslate.ColorText := clGray;
   StyleDontTranslate.ColorBackground := $00F4F4FF;
   StyleDontTranslate.Bold := -1;
+
+  StyleDontTranslate.ColorText := clDefault;
+  StyleDontTranslate.ColorBackground := $00ECFFEC;
+  StyleDontTranslate.Bold := -1;
 end;
 
 constructor TTranslationManagerStyleSettings.Create(AOwner: TConfigurationSection);
@@ -1156,7 +1203,8 @@ const
     'Proposed',
     'Translated',
     'Hold',
-    'Don''t translate'
+    'Don''t translate',
+    'Synthesized'
   );
 begin
   Result := sStyleNames[FListStyle];
@@ -1324,6 +1372,97 @@ destructor TTranslationManagerSearchSettings.Destroy;
 begin
   FHistory.Free;
   inherited;
+end;
+
+{ TTranslationManagerParserSettings }
+
+constructor TTranslationManagerParserSettings.Create(AOwner: TConfigurationSection);
+begin
+  inherited;
+  FSynthesize := TTranslationManagerParserSynthesizeSettings.Create(Self);
+end;
+
+destructor TTranslationManagerParserSettings.Destroy;
+begin
+  FSynthesize.Free;
+  inherited;
+end;
+
+function TTranslationManagerParserSettings.GetStringListHandling: TStringListHandling;
+begin
+  Result := amLocalization.Model.StringListHandling;
+end;
+
+{ TTranslationManagerParserSynthesizeSettings }
+
+procedure TTranslationManagerParserSynthesizeSettings.AddRule(const TypeMask, PropertyName, PropertyValue: string);
+begin
+  var Rule: TRequiredPropertyRule;
+  Rule.TypeMask := TypeMask;
+  Rule.PropertyName := PropertyName;
+  Rule.PropertyValue := PropertyValue;
+  FRules.Add(Rule);
+end;
+
+constructor TTranslationManagerParserSynthesizeSettings.Create( AOwner: TConfigurationSection);
+begin
+  inherited;
+  FRules := TList<TRequiredPropertyRule>.Create;
+end;
+
+destructor TTranslationManagerParserSynthesizeSettings.Destroy;
+begin
+  FRules.Free;
+  inherited;
+end;
+
+procedure TTranslationManagerParserSynthesizeSettings.ReadSection(const Key: string);
+const
+  DefaultRules: array[0..0] of TRequiredPropertyRule = (
+    (TypeMask: '^T([A-Z][a-z]+)+Field$'; PropertyName: 'DisplayLabel'; PropertyValue: '@FieldName')
+  );
+begin
+  FRules.Clear;
+
+  inherited ReadSection(Key);
+
+  if (not Valid) then
+  begin
+    for var Rule in DefaultRules do
+      FRules.Add(Rule);
+    exit;
+  end;
+
+  if (FVersion < 0) then
+    {upgrade};
+
+  for var RuleString in Strings do
+  begin
+    var SplitRule := RuleString.Split(['/']);
+    if (Length(SplitRule) <> 3) then
+      continue;
+    var Rule: TRequiredPropertyRule;
+    Rule.TypeMask := SplitRule[0];
+    Rule.PropertyName := SplitRule[1];
+    Rule.PropertyValue := SplitRule[2];
+    FRules.Add(Rule);
+  end;
+end;
+
+procedure TTranslationManagerParserSynthesizeSettings.WriteSection(const Key: string);
+begin
+  Clear;
+
+  FValid := True;
+  FVersion := 0;
+
+  for var Rule in FRules do
+  begin
+    var RuleString := Rule.TypeMask + '/' + Rule.PropertyName + '/' + Rule.PropertyValue;
+    Strings.Add(RuleString);
+  end;
+
+  inherited WriteSection(Key);
 end;
 
 initialization
