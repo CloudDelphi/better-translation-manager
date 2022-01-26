@@ -2956,7 +2956,7 @@ begin
       // Save current edit text and then cancel edit. We will continue the edit in the text editor instead.
       // The modified state is transferred to the text editor.
       // This enables the user to cancel the edit even if they invoke the text editor.
-      EditTargetText.Lines.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
+      EditTargetText.Text := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).EditingText;
       FTextEditModified := TcxCustomTextEdit(GridItemsTableView.Controller.EditingController.Edit).ModifiedAfterEnter;
       GridItemsTableView.Controller.EditingController.HideEdit(False);
     end;
@@ -2986,7 +2986,7 @@ begin
     // Write new value back to inner edit control. The OnChange event will occur as normally when the user exits the cell.
     // Note that the following three methods must be called in this exact order.
     GridItemsTableView.Controller.EditingController.Edit.DoEditing;
-    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Lines.Text;
+    TcxCustomEditCracker(GridItemsTableView.Controller.EditingController.Edit).InnerEdit.EditValue := EditTargetText.Text;
     GridItemsTableView.Controller.EditingController.Edit.ModifiedAfterEnter := True;
 
     // Restore caret position

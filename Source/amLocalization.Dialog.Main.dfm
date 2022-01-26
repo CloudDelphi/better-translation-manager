@@ -676,7 +676,8 @@ object FormMain: TFormMain
           Align = alClient
           Properties.PlainText = True
           Properties.ReadOnly = True
-          Properties.ScrollBars = ssVertical
+          Properties.ScrollBars = ssBoth
+          Properties.WordWrap = False
           Style.HotTrack = False
           Style.TextColor = clGrayText
           TabOrder = 0
@@ -712,7 +713,8 @@ object FormMain: TFormMain
           Align = alClient
           Properties.PlainText = True
           Properties.ReadOnly = True
-          Properties.ScrollBars = ssVertical
+          Properties.ScrollBars = ssBoth
+          Properties.WordWrap = False
           Properties.OnEditValueChanged = EditTargetTextPropertiesEditValueChanged
           Style.HotTrack = False
           TabOrder = 0
@@ -2396,7 +2398,7 @@ object FormMain: TFormMain
     end
     object ActionTextEditPrevious: TAction
       Category = 'Edit'
-      Hint = 'Move to previous'
+      Hint = 'Go to previous'
       ImageIndex = 82
       ShortCut = 16422
       OnExecute = ActionTextEditPreviousExecute
@@ -2404,7 +2406,7 @@ object FormMain: TFormMain
     end
     object ActionTextEditNext: TAction
       Category = 'Edit'
-      Hint = 'Move to next'
+      Hint = 'Go to next'
       ImageIndex = 83
       ShortCut = 16424
       OnExecute = ActionTextEditNextExecute
