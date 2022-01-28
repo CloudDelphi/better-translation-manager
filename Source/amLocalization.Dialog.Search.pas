@@ -626,6 +626,7 @@ begin
   GridResultTableView.BeginUpdate(lsimImmediate);
   try
 
+    Update;
     FAbort := False;
 
     LayoutItemSearch.Visible := False;
@@ -683,8 +684,12 @@ end;
 
 procedure TFormSearch.ActionGoToExecute(Sender: TObject);
 begin
-  if (GridResultTableView.Controller.FocusedRecordIndex <> -1) then
-    ViewItem(FSearchResult[GridResultTableView.Controller.FocusedRecordIndex].Prop);
+  if (GridResultTableView.DataController.FocusedRecordIndex = -1) then
+    exit;
+
+  var Index: integer := GridResultTableView.DataController.FocusedRecordIndex;
+
+  ViewItem(FSearchResult[Index].Prop);
 end;
 
 procedure TFormSearch.ActionGoToUpdate(Sender: TObject);
