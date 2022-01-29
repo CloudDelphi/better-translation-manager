@@ -183,7 +183,9 @@ object DataModuleMain: TDataModuleMain
           Hint = 'Open in text editor'
           Kind = bkEllipsis
         end>
+      Properties.CaseInsensitive = False
       Properties.ClearKey = 16392
+      Properties.HideSelection = False
       Properties.UseLeftAlignmentOnEditing = False
       Properties.OnButtonClick = EditRepositoryTextItemPropertiesButtonClick
     end

@@ -945,7 +945,10 @@ end;
 procedure TFormTranslationMemory.GridTMDBTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView;
   ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
 begin
-  if (ARecord.Focused) and (AItem.Focused) then
+  if (ARecord.Focused) and (AItem <> nil) and (AItem.Editing) then
+    AStyle := DataModuleMain.StyleDefault
+  else
+  if (ARecord.Focused) and (AItem <> nil) and (AItem.Focused) then
     AStyle := DataModuleMain.StyleFocused
   else
   if (FViewDuplicates) and (FDuplicateColumn <> nil) then
