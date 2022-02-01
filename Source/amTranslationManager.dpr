@@ -79,7 +79,8 @@ uses
   amLocalization.ExceptionHandler.Prompt in 'amLocalization.ExceptionHandler.Prompt.pas',
   amLocalization.Settings.SpellChecker in 'amLocalization.Settings.SpellChecker.pas',
   amLocalization.Settings.Layout.Tree in 'amLocalization.Settings.Layout.Tree.pas',
-  amLocalization.TranslationMemory.Data.API in 'amLocalization.TranslationMemory.Data.API.pas';
+  amLocalization.TranslationMemory.Data.API in 'amLocalization.TranslationMemory.Data.API.pas',
+  amLocalization.Dialog.Tracker in 'amLocalization.Dialog.Tracker.pas' {ranslationManagerTracker};
 
 {$R *.res}
 

@@ -96,6 +96,9 @@ object FormMain: TFormMain
         end
         item
           ToolbarName = 'BarManagerBarExport'
+        end
+        item
+          ToolbarName = 'BarManagerBarIntegration'
         end>
       Index = 3
     end
@@ -1306,6 +1309,26 @@ object FormMain: TFormMain
       Visible = True
       WholeRow = False
     end
+    object BarManagerBarIntegration: TdxBar
+      Caption = 'Integration'
+      CaptionButtons = <>
+      DockedLeft = 433
+      DockedTop = 0
+      FloatLeft = 992
+      FloatTop = 2
+      FloatClientWidth = 0
+      FloatClientHeight = 0
+      ItemLinks = <
+        item
+          Visible = True
+          ItemName = 'dxBarButton23'
+        end>
+      OneOnRow = True
+      Row = 0
+      UseOwnFont = False
+      Visible = True
+      WholeRow = False
+    end
     object BarButtonOpenProject: TdxBarLargeButton
       Action = ActionProjectOpen
       Category = 0
@@ -1789,6 +1812,11 @@ object FormMain: TFormMain
     object ButtonProjectLocateSource: TdxBarButton
       Action = ActionProjectLocateSource
       Category = 0
+    end
+    object dxBarButton23: TdxBarButton
+      Action = ActionIntegrationTracking
+      Category = 0
+      ButtonStyle = bsChecked
     end
   end
   object SkinController: TdxSkinController
@@ -2435,6 +2463,15 @@ object FormMain: TFormMain
       ImageIndex = 86
       OnExecute = ActionProjectLocateSourceExecute
       OnUpdate = ActionHasProjectUpdate
+    end
+    object ActionIntegrationTracking: TAction
+      Category = 'Integration'
+      AutoCheck = True
+      Caption = 'Track focus'
+      Hint = 
+        'Enable focus synchronization between application being translate' +
+        'd and translation manager'
+      OnExecute = ActionIntegrationTrackingExecute
     end
   end
   object OpenDialogProject: TOpenDialog

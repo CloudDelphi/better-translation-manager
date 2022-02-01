@@ -65,6 +65,7 @@ type
 
     procedure DataChanged; override;
 
+    function IndexOfItem(Item: TLocalizerItem): integer;
     function IndexOfProperty(Prop: TLocalizerProperty): integer;
     procedure Clear;
     procedure Refresh;
@@ -183,6 +184,13 @@ begin
   else
     Result := Null;
   end;
+end;
+
+function TLocalizerModuleItemsDataSource.IndexOfItem(Item: TLocalizerItem): integer;
+begin
+  Result := Length(FItems)-1;
+  while (Result >= 0) and (FItems[Result].Prop.Item <> Item) do
+    Dec(Result);
 end;
 
 function TLocalizerModuleItemsDataSource.IndexOfProperty(Prop: TLocalizerProperty): integer;

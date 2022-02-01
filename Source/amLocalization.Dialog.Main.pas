@@ -35,6 +35,7 @@ uses
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
+  amLocalization.Dialog.Tracker,
   amLocalization.TranslationMemory,
   amLocalization.StopList,
   amLocalization.Index,
@@ -330,6 +331,9 @@ type
     ActionTranslationMemoryUpdate: TAction;
     ActionProjectLocateSource: TAction;
     ButtonProjectLocateSource: TdxBarButton;
+    BarManagerBarIntegration: TdxBar;
+    dxBarButton23: TdxBarButton;
+    ActionIntegrationTracking: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -489,6 +493,7 @@ type
       Sender: TcxCustomGridTableView; APrevFocusedItem,
       AFocusedItem: TcxCustomGridTableItem);
     procedure ActionProjectLocateSourceExecute(Sender: TObject);
+    procedure ActionIntegrationTrackingExecute(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -501,6 +506,8 @@ type
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
     FLastGotoAction: TAction;
+    FTracker: TranslationManagerTracker;
+    FTrackingDismissed: boolean;
   private
     // Language selection
     FSourceLanguage: TLocaleItem;
@@ -592,6 +599,7 @@ type
     procedure MsgAfterShow(var Msg: TMessage); message MSG_AFTER_SHOW;
     procedure MsgFileOpen(var Msg: TMsgFileOpen); message MSG_FILE_OPEN;
     procedure MsgRefreshModuleStats(var Msg: TMessage); message MSG_REFRESH_MODULE_STATS;
+    procedure MsgCopyData(var Msg: TWMCopyData); message WM_COPYDATA;
   private
     // Translation project event handlers
     procedure OnProjectChanged(Sender: TObject);
@@ -647,7 +655,9 @@ type
     procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure RefreshModuleStats;
     procedure DoRefreshModuleStats;
-    procedure ViewProperty(Prop: TLocalizerProperty);
+    function ViewProperty(Prop: TLocalizerProperty): boolean;
+    function ViewItem(Item: TLocalizerItem): boolean;
+    function ViewModule(Module: TLocalizerModule): boolean;
     procedure TranslationAdded(AProp: TLocalizerProperty); overload;
     procedure TranslationAdded(AProp: TLocalizerProperty; var AutoApplyTranslations, AutoApplyTranslationsSimilar: TTranslationAutoApply; var UpdatedSame, UpdatedSimilar: integer); overload;
     procedure DisplayAutoApplyTranslationsStats(UpdatedSame, UpdatedSimilar: integer);
@@ -695,7 +705,7 @@ type
     function ILocalizerSearchHost.GetProject = GetProject;
     function ILocalizerSearchHost.GetSelectedModule = GetFocusedModule;
     function ILocalizerSearchHost.GetTranslationLanguage = GetTranslationLanguage;
-    procedure ILocalizerSearchHost.ViewItem = ViewProperty;
+    function ILocalizerSearchHost.ViewItem = ViewProperty;
     procedure ILocalizerSearchHost.InvalidateItem = ReloadProperty;
   protected
     // IExceptionInfoProvider
@@ -886,6 +896,8 @@ begin
   TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
   TcxSplitterCracker(SplitterMainEditors).LookAndFeel.SkinName := '';
   TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
+
+  FTracker := TranslationManagerTracker.Create(Self);
 end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);
@@ -2687,6 +2699,8 @@ begin
       FProject.StringSymbolFilename := SymbolFilename;
 
       RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(Filename);
+      FTracker.Caption := RibbonMain.DocumentName;
+      FTrackingDismissed := False;
 
       FProject.Changed;
     end;
@@ -3551,6 +3565,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormMain.ActionIntegrationTrackingExecute(Sender: TObject);
+begin
+  FTrackingDismissed := False;
+end;
+
+// -----------------------------------------------------------------------------
+
 function TFormMain.LocateStringsSymbolFile(CheckForOutOfDate, ForcePrompt: boolean): boolean;
 var
   SymbolFilename: string;
@@ -3874,6 +3895,8 @@ begin
     UpdateProjectModifiedIndicator;
 
     RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
+    FTracker.Caption := RibbonMain.DocumentName;
+    FTrackingDismissed := False;
 
     // Find language with most translations
     BestLanguage := nil;
@@ -3982,6 +4005,67 @@ begin
     finally
       FPendingFileOpenLock.Leave;
     end;
+  end;
+end;
+
+procedure TFormMain.MsgCopyData(var Msg: TWMCopyData);
+type
+  TTranslationManagerTrackKind = (tkForm, tkControl);
+begin
+  if (not ActionIntegrationTracking.Checked) then
+  begin
+    if (not FTrackingDismissed) then
+    begin
+      FTrackingDismissed := True;
+      var Res := TaskMessageDlg('Focus tracking requested', 'The application being translated has requested that focus tracking be enabled.'#13#13+
+        'When focus tracking is enabled the translation manager will automatically select the module and item corresponding to the '+
+        'control currently focused in the application being translated.'#13#13+
+        'Do you want to enable focus tracking now?', mtConfirmation, [mbYes, mbNo], 0, mbNo);
+      if (Res <> mrYes) then
+        exit;
+      ActionIntegrationTracking.Checked := True;
+    end else
+      exit;
+  end;
+
+  case TTranslationManagerTrackKind(Msg.CopyDataStruct.dwData) of
+    tkForm:
+      begin
+        var Name: string := PChar(Msg.CopyDataStruct.lpData);
+        for var Module in FProject.Modules.Values do
+          if (AnsiSameText(Name, Module.Name)) then
+          begin
+            ViewModule(Module);
+            break;
+          end;
+      end;
+
+    tkControl:
+      begin
+        if (FocusedModule = nil) then
+          exit;
+
+        var Name: string := PChar(Msg.CopyDataStruct.lpData);
+
+        var BestMatchItem: TLocalizerItem := nil;
+        var OverSize := MaxInt;
+        for var Item in FocusedModule.Items.Values do
+          if (Item.Name.StartsWith(Name, True)) then
+          begin
+            var NewOverSize := Length(Item.Name) - Length(Name);
+            if (NewOverSize < OverSize) then
+            begin
+              OverSize := NewOverSize;
+              BestMatchItem := Item;
+
+              if (OverSize = 0) then
+                break;
+            end;
+          end;
+
+        if (BestMatchItem <> nil) then
+          ViewItem(BestMatchItem);
+      end;
   end;
 end;
 
@@ -5693,6 +5777,8 @@ begin
   UpdateProjectModifiedIndicator;
 
   RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
+  FTracker.Caption := RibbonMain.DocumentName;
+  FTrackingDismissed := False;
 
   SourceLanguageID := FProject.SourceLanguageID;
   TargetLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultTargetLanguage);
@@ -7177,16 +7263,16 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.ViewProperty(Prop: TLocalizerProperty);
+function TFormMain.ViewModule(Module: TLocalizerModule): boolean;
 var
   Node: TcxTreeListNode;
-  RowIndex, RecordIndex: integer;
 resourcestring
   sNodeModuleHidden = 'Module has been hidden by a filter and can not be selected';
-  sNodeItemHidden = 'Item has been hidden by a filter and can not be selected';
 begin
+  Result := False;
+
   // Find and select module
-  Node := TreeListModules.Find(Prop.Item.Module, nil, False, True, TreeListFindFilter);
+  Node := TreeListModules.Find(Module, nil, False, True, TreeListFindFilter);
 
   if (Node = nil) then
     Exit;
@@ -7200,6 +7286,54 @@ begin
   Node.MakeVisible;
   Node.Focused := True;
 
+  Result := True;
+end;
+
+function TFormMain.ViewItem(Item: TLocalizerItem): boolean;
+var
+  RowIndex, RecordIndex: integer;
+resourcestring
+  sNodeItemHidden = 'Item has been hidden by a filter and can not be selected';
+begin
+  Result := False;
+
+  if (not ViewModule(Item.Module)) then
+    Exit;
+
+  // Find and select item row - or any row.
+  // Note: The following assumes that IndexOfItem does a backward search.
+  RecordIndex := FModuleItemsDataSource.IndexOfItem(Item);
+  while (RecordIndex >= 0) do
+  begin
+    RowIndex := GridItemsTableView.DataController.GetRowIndexByRecordIndex(RecordIndex, True);
+
+    if (RowIndex <> -1) then
+    begin
+      GridItemsTableView.Controller.ClearSelection;
+      GridItemsTableView.ViewData.Rows[RowIndex].Selected := True;
+      GridItemsTableView.ViewData.Rows[RowIndex].Focused := True;
+      GridItemsTableView.Control.SetFocus;
+
+      Result := True;
+      Exit;
+    end;
+
+    Dec(RecordIndex);
+  end;
+  QueueToast(sNodeItemHidden);
+end;
+
+function TFormMain.ViewProperty(Prop: TLocalizerProperty): boolean;
+var
+  RowIndex, RecordIndex: integer;
+resourcestring
+  sNodePropHidden = 'Property has been hidden by a filter and can not be selected';
+begin
+  Result := False;
+
+  if (not ViewModule(Prop.Item.Module)) then
+    Exit;
+
   // Find and select property row
   RecordIndex := FModuleItemsDataSource.IndexOfProperty(Prop);
   if (RecordIndex <> -1) then
@@ -7212,8 +7346,10 @@ begin
       GridItemsTableView.ViewData.Rows[RowIndex].Selected := True;
       GridItemsTableView.ViewData.Rows[RowIndex].Focused := True;
       GridItemsTableView.Control.SetFocus;
+
+      Result := True;
     end else
-      QueueToast(sNodeItemHidden);
+      QueueToast(sNodePropHidden);
   end;
 end;
 

@@ -38,7 +38,7 @@ type
     function GetTranslationLanguage: TTranslationLanguage;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
 
-    procedure ViewItem(Item: TLocalizerProperty);
+    function ViewItem(Item: TLocalizerProperty): boolean;
     procedure InvalidateItem(Item: TLocalizerProperty);
   end;
 
