@@ -243,10 +243,8 @@
         <DCCReference Include="amLocalization.Settings.SpellChecker.pas"/>
         <DCCReference Include="amLocalization.Settings.Layout.Tree.pas"/>
         <DCCReference Include="amLocalization.TranslationMemory.Data.API.pas"/>
-        <DCCReference Include="amLocalization.Dialog.Tracker.pas">
-            <Form>ranslationManagerTracker</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
+        <DCCReference Include="amLocalization.Integration.Tracker.API.pas"/>
+        <DCCReference Include="amLocalization.Integration.Tracker.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

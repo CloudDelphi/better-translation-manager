@@ -35,13 +35,13 @@ uses
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
-  amLocalization.Dialog.Tracker,
+  amLocalization.Integration.Tracker,
   amLocalization.TranslationMemory,
   amLocalization.StopList,
   amLocalization.Index,
   amLocalization.Settings,
   amLocalization.Data.ModuleItemsDataSource,
-  amLocalization.ExceptionHandler.API;
+  amLocalization.ExceptionHandler.API, dxCore, dxScrollbarAnnotations;
 
 
 const
@@ -506,8 +506,11 @@ type
     FSearchProvider: ILocalizerSearchProvider;
     FLastBookmark: integer;
     FLastGotoAction: TAction;
-    FTracker: TranslationManagerTracker;
+  private
+    // Focus tracking
+    FTracker: ITranslationManagerTracker;
     FTrackingDismissed: boolean;
+    procedure ResetTracker;
   private
     // Language selection
     FSourceLanguage: TLocaleItem;
@@ -792,6 +795,7 @@ uses
   amLocalization.Import.PO,
   amLocalization.Settings.SpellChecker,
   amLocalization.Settings.Layout.Tree,
+  amLocalization.Integration.Tracker.API,
   amLocalization.Dialog.TextEdit,
   amLocalization.Dialog.NewProject,
   amLocalization.Dialog.TranslationMemory,
@@ -896,8 +900,6 @@ begin
   TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
   TcxSplitterCracker(SplitterMainEditors).LookAndFeel.SkinName := '';
   TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
-
-  FTracker := TranslationManagerTracker.Create(Self);
 end;
 
 procedure TFormMain.CreateParams(var Params: TCreateParams);
@@ -2699,8 +2701,7 @@ begin
       FProject.StringSymbolFilename := SymbolFilename;
 
       RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(Filename);
-      FTracker.Caption := RibbonMain.DocumentName;
-      FTrackingDismissed := False;
+      ResetTracker;
 
       FProject.Changed;
     end;
@@ -3567,7 +3568,8 @@ end;
 
 procedure TFormMain.ActionIntegrationTrackingExecute(Sender: TObject);
 begin
-  FTrackingDismissed := False;
+  ResetTracker;
+  FTrackingDismissed := True;
 end;
 
 // -----------------------------------------------------------------------------
@@ -3895,8 +3897,7 @@ begin
     UpdateProjectModifiedIndicator;
 
     RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
-    FTracker.Caption := RibbonMain.DocumentName;
-    FTrackingDismissed := False;
+    ResetTracker;
 
     // Find language with most translations
     BestLanguage := nil;
@@ -4009,18 +4010,19 @@ begin
 end;
 
 procedure TFormMain.MsgCopyData(var Msg: TWMCopyData);
-type
-  TTranslationManagerTrackKind = (tkForm, tkControl);
+resourcestring
+  sFocusTrackTitle = 'Focus tracking requested';
+  sFocusTrackMsg = 'The application being translated has requested that focus tracking be enabled.'#13#13+
+    'When focus tracking is enabled the translation manager will automatically select the module and item corresponding to the '+
+    'control currently focused in the application being translated.'#13#13+
+    'Do you want to enable focus tracking now?';
 begin
   if (not ActionIntegrationTracking.Checked) then
   begin
     if (not FTrackingDismissed) then
     begin
       FTrackingDismissed := True;
-      var Res := TaskMessageDlg('Focus tracking requested', 'The application being translated has requested that focus tracking be enabled.'#13#13+
-        'When focus tracking is enabled the translation manager will automatically select the module and item corresponding to the '+
-        'control currently focused in the application being translated.'#13#13+
-        'Do you want to enable focus tracking now?', mtConfirmation, [mbYes, mbNo], 0, mbNo);
+      var Res := TaskMessageDlg(sFocusTrackTitle, sFocusTrackMsg, mtConfirmation, [mbYes, mbNo], 0, mbNo);
       if (Res <> mrYes) then
         exit;
       ActionIntegrationTracking.Checked := True;
@@ -4036,6 +4038,7 @@ begin
           if (AnsiSameText(Name, Module.Name)) then
           begin
             ViewModule(Module);
+            Msg.Result := 1;
             break;
           end;
       end;
@@ -4064,7 +4067,10 @@ begin
           end;
 
         if (BestMatchItem <> nil) then
+        begin
           ViewItem(BestMatchItem);
+          Msg.Result := 1;
+        end;
       end;
   end;
 end;
@@ -5777,8 +5783,7 @@ begin
   UpdateProjectModifiedIndicator;
 
   RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
-  FTracker.Caption := RibbonMain.DocumentName;
-  FTrackingDismissed := False;
+  ResetTracker;
 
   SourceLanguageID := FProject.SourceLanguageID;
   TargetLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultTargetLanguage);
@@ -7384,6 +7389,17 @@ begin
     if (RowIndex <> -1) then
       GridItemsTableView.ViewData.Rows[RowIndex].Invalidate;
   end;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.ResetTracker;
+begin
+  if (RibbonMain.DocumentName <> '') then
+    FTracker := CreateTranslationManagerTracker(Self, RibbonMain.DocumentName)
+  else
+    FTracker := nil;
+  FTrackingDismissed := False;
 end;
 
 // -----------------------------------------------------------------------------
