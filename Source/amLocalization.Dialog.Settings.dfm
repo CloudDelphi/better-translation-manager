@@ -167,7 +167,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAtstart: TcxCheckBox
               Left = 12
-              Top = 531
+              Top = 514
               Caption = 'Display guide dialog when the application starts'
               ParentBackground = False
               ParentColor = False
@@ -178,7 +178,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel2: TcxLabel
               Left = 0
-              Top = 507
+              Top = 490
               AutoSize = False
               Caption = 'Dialogs'
               Style.HotTrack = False
@@ -191,7 +191,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonDialogsSuppressReset: TcxButton
               Left = 12
-              Top = 557
+              Top = 540
               Width = 197
               Height = 23
               Caption = 'Reset suppressed dialogs'
@@ -199,7 +199,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelLanguage: TcxLabel
               Left = 0
-              Top = 372
+              Top = 398
               AutoSize = False
               Caption = 'Language'
               Style.HotTrack = False
@@ -240,18 +240,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxSourceLanguage: TcxExtLookupComboBox
               Left = 149
-              Top = 396
-              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
-              Properties.ClearKey = 46
-              Properties.DropDownAutoSize = True
-              Properties.DropDownSizeable = True
-              Style.HotTrack = False
-              TabOrder = 14
-              Width = 145
-            end
-            object ComboBoxTargetLanguage: TcxExtLookupComboBox
-              Left = 149
-              Top = 426
+              Top = 422
               RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
@@ -260,14 +249,13 @@ inherited FormSettings: TFormSettings
               TabOrder = 15
               Width = 145
             end
-            object ComboBoxApplicationLanguage: TcxExtLookupComboBox
+            object ComboBoxTargetLanguage: TcxExtLookupComboBox
               Left = 149
-              Top = 469
-              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemFilteredApplicationLanguage
+              Top = 452
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
               Properties.DropDownSizeable = True
-              Properties.OnEditValueChanged = ComboBoxApplicationLanguagePropertiesEditValueChanged
               Style.HotTrack = False
               TabOrder = 16
               Width = 145
@@ -408,15 +396,28 @@ inherited FormSettings: TFormSettings
               Style.TransparentBorder = False
               TabOrder = 8
             end
+            object CheckBoxAutoShowMultiLineEditor: TcxCheckBox
+              Left = 12
+              Top = 364
+              Caption = 'Display multi-line editor when editing multi-line texts'
+              ParentBackground = False
+              ParentColor = False
+              Style.Color = 16053234
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 13
+              Transparent = True
+            end
             object dxLayoutGroup1: TdxLayoutGroup
               AlignHorz = ahParentManaged
               AlignVert = avParentManaged
               Hidden = True
+              ItemIndex = 2
               ShowBorder = False
               Index = -1
             end
             object LayoutControlGeneralItem1: TdxLayoutItem
-              Parent = LayoutControlGroupEditing
+              Parent = LayoutGroupEditing
               CaptionOptions.Visible = False
               Control = LabelEditingHeader
               ControlOptions.OriginalHeight = 17
@@ -434,7 +435,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
-            object LayoutControlGroupEditing: TdxLayoutGroup
+            object LayoutGroupEditing: TdxLayoutGroup
               Parent = dxLayoutGroup1
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
@@ -455,7 +456,7 @@ inherited FormSettings: TFormSettings
               Index = 0
             end
             object LayoutControlGeneralItem13: TdxLayoutItem
-              Parent = LayoutControlGroupStartup
+              Parent = LayoutGroupStartup
               CaptionOptions.Visible = False
               Control = cxLabel2
               ControlOptions.OriginalHeight = 17
@@ -463,7 +464,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
-            object LayoutControlGroupStartup: TdxLayoutGroup
+            object LayoutGroupStartup: TdxLayoutGroup
               Parent = dxLayoutGroup1
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
@@ -475,12 +476,12 @@ inherited FormSettings: TFormSettings
               Index = 4
             end
             object LayoutControlGeneralGroup2: TdxLayoutGroup
-              Parent = LayoutControlGroupEditing
+              Parent = LayoutGroupEditing
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Left = 12
               Hidden = True
-              ItemIndex = 4
+              ItemIndex = 6
               ShowBorder = False
               Index = 1
             end
@@ -496,7 +497,7 @@ inherited FormSettings: TFormSettings
               Index = 1
             end
             object LayoutControlGeneralGroup4: TdxLayoutGroup
-              Parent = LayoutControlGroupStartup
+              Parent = LayoutGroupStartup
               CaptionOptions.Text = 'Hidden Group'
               CaptionOptions.Visible = False
               Offsets.Left = 12
@@ -529,7 +530,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
               Hidden = True
-              ItemIndex = 3
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
@@ -581,11 +582,6 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
-            object dxLayoutSeparatorItem4: TdxLayoutSeparatorItem
-              Parent = dxLayoutGroup10
-              CaptionOptions.Text = 'Separator'
-              Index = 2
-            end
             object dxLayoutItem28: TdxLayoutItem
               Parent = dxLayoutGroup10
               AlignHorz = ahLeft
@@ -595,16 +591,6 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalWidth = 145
               ControlOptions.ShowBorder = False
               Index = 1
-            end
-            object dxLayoutItem30: TdxLayoutItem
-              Parent = dxLayoutGroup10
-              AlignHorz = ahLeft
-              CaptionOptions.Text = 'Application language:'
-              Control = ComboBoxApplicationLanguage
-              ControlOptions.OriginalHeight = 23
-              ControlOptions.OriginalWidth = 145
-              ControlOptions.ShowBorder = False
-              Index = 3
             end
             object dxLayoutItem54: TdxLayoutItem
               Parent = LayoutControlGeneralGroup2
@@ -616,7 +602,7 @@ inherited FormSettings: TFormSettings
               Index = 5
             end
             object dxLayoutItem60: TdxLayoutItem
-              Parent = dxLayoutGroup23
+              Parent = LayoutGroupProject
               CaptionOptions.Visible = False
               Control = cxLabel3
               ControlOptions.OriginalHeight = 17
@@ -633,7 +619,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
-            object dxLayoutGroup23: TdxLayoutGroup
+            object LayoutGroupProject: TdxLayoutGroup
               Parent = dxLayoutGroup1
               CaptionOptions.Visible = False
               Offsets.Bottom = 8
@@ -642,7 +628,7 @@ inherited FormSettings: TFormSettings
               Index = 0
             end
             object dxLayoutGroup24: TdxLayoutGroup
-              Parent = dxLayoutGroup23
+              Parent = LayoutGroupProject
               CaptionOptions.Visible = False
               Offsets.Left = 12
               ShowBorder = False
@@ -712,6 +698,15 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 0
             end
+            object dxLayoutItem30: TdxLayoutItem
+              Parent = LayoutControlGeneralGroup2
+              CaptionOptions.Visible = False
+              Control = CheckBoxAutoShowMultiLineEditor
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 205
+              ControlOptions.ShowBorder = False
+              Index = 6
+            end
           end
         end
         object TabSheetAppearance: TcxTabSheet
@@ -722,7 +717,7 @@ inherited FormSettings: TFormSettings
           Margins.Bottom = 8
           Caption = 'Appearance'
           ImageIndex = 5
-          object LayoutControlColors: TdxLayoutControl
+          object LayoutControlAppearance: TdxLayoutControl
             Left = 0
             Top = 0
             Width = 410
@@ -736,19 +731,19 @@ inherited FormSettings: TFormSettings
               410
               446)
             object ImageComboBoxSkin: TcxImageComboBox
-              Left = 58
-              Top = 24
+              Left = 73
+              Top = 52
               Properties.DefaultDescription = '(none)'
               Properties.Images = ImageListSkin
               Properties.Items = <>
               Properties.LargeImages = ImageListSkinLarge
               Style.HotTrack = False
-              TabOrder = 1
+              TabOrder = 2
               Width = 164
             end
             object LabelListStyles: TcxLabel
               Left = 0
-              Top = 62
+              Top = 90
               AutoSize = False
               Caption = 'Lists'
               Style.HotTrack = False
@@ -761,11 +756,11 @@ inherited FormSettings: TFormSettings
             end
             object GridColors: TcxGrid
               Left = 12
-              Top = 107
+              Top = 135
               Width = 398
               Height = 200
               BorderStyle = cxcbsNone
-              TabOrder = 3
+              TabOrder = 4
               object GridColorsTableView: TcxGridTableView
                 Navigator.Buttons.CustomButtons = <>
                 ScrollbarAnnotations.CustomAnnotations = <>
@@ -841,25 +836,25 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxDisplayStatusGlyphs: TcxCheckBox
               Left = 12
-              Top = 357
+              Top = 385
               Action = ActionEditStatusGlyphs
               ParentBackground = False
               ParentColor = False
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 5
+              TabOrder = 6
               Transparent = True
             end
             object ButtonStyleReset: TcxButton
               Left = 335
-              Top = 314
+              Top = 342
               Width = 75
               Height = 23
               Hint = 'Reset all styles to their default value'
               Anchors = [akTop, akRight]
               Caption = '&Reset'
-              TabOrder = 4
+              TabOrder = 5
               OnClick = ButtonStyleResetClick
             end
             object LabelApperance: TcxLabel
@@ -877,21 +872,33 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxStatusGlyphHint: TcxCheckBox
               Left = 28
-              Top = 383
+              Top = 411
               Action = ActionEditStatusHint
               ParentBackground = False
               ParentColor = False
               Style.Color = 16053234
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 6
+              TabOrder = 7
               Transparent = True
             end
-            object LayoutControlColorsGroup_Root: TdxLayoutGroup
+            object ComboBoxApplicationLanguage: TcxExtLookupComboBox
+              Left = 73
+              Top = 24
+              RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemFilteredApplicationLanguage
+              Properties.ClearKey = 46
+              Properties.DropDownAutoSize = True
+              Properties.DropDownSizeable = True
+              Properties.OnEditValueChanged = ComboBoxApplicationLanguagePropertiesEditValueChanged
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 1
+              Width = 164
+            end
+            object LayoutControlAppearanceGroup_Root: TdxLayoutGroup
               AlignHorz = ahClient
               AlignVert = avTop
               Hidden = True
-              ItemIndex = 1
               ShowBorder = False
               Index = -1
             end
@@ -905,7 +912,7 @@ inherited FormSettings: TFormSettings
               Index = 0
             end
             object dxLayoutGroup18: TdxLayoutGroup
-              Parent = LayoutControlColorsGroup_Root
+              Parent = LayoutControlAppearanceGroup_Root
               CaptionOptions.Visible = False
               Offsets.Top = 8
               ItemIndex = 1
@@ -954,7 +961,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.ShowBorder = False
               Index = 1
             end
-            object dxLayoutItem52: TdxLayoutItem
+            object LayoutItemUIHeader: TdxLayoutItem
               Parent = LayoutGroupUserInterface
               CaptionOptions.Visible = False
               Control = LabelApperance
@@ -964,8 +971,9 @@ inherited FormSettings: TFormSettings
               Index = 0
             end
             object LayoutGroupUserInterface: TdxLayoutGroup
-              Parent = LayoutControlColorsGroup_Root
+              Parent = LayoutControlAppearanceGroup_Root
               CaptionOptions.Visible = False
+              ItemIndex = 1
               ShowBorder = False
               Index = 0
             end
@@ -973,10 +981,11 @@ inherited FormSettings: TFormSettings
               Parent = LayoutGroupUserInterface
               CaptionOptions.Visible = False
               LayoutLookAndFeel = LayoutSkinLookAndFeelGroup
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
-            object LayoutControlGeneralItem15: TdxLayoutItem
+            object LayoutItemUITheme: TdxLayoutItem
               Parent = LayoutGroup3
               CaptionOptions.Text = 'Theme:'
               Control = ImageComboBoxSkin
@@ -984,7 +993,7 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalHeight = 23
               ControlOptions.OriginalWidth = 164
               ControlOptions.ShowBorder = False
-              Index = 0
+              Index = 1
             end
             object dxLayoutItem53: TdxLayoutItem
               Parent = dxLayoutGroup19
@@ -995,6 +1004,16 @@ inherited FormSettings: TFormSettings
               ControlOptions.OriginalWidth = 137
               ControlOptions.ShowBorder = False
               Index = 4
+            end
+            object LayoutItemUILanguage: TdxLayoutItem
+              Parent = LayoutGroup3
+              AlignHorz = ahLeft
+              CaptionOptions.Text = 'Language:'
+              Control = ComboBoxApplicationLanguage
+              ControlOptions.OriginalHeight = 21
+              ControlOptions.OriginalWidth = 164
+              ControlOptions.ShowBorder = False
+              Index = 0
             end
           end
           object cxLabel15: TcxLabel
@@ -1449,10 +1468,6 @@ inherited FormSettings: TFormSettings
           Margins.Right = 12
           Margins.Bottom = 8
           Caption = 'Parser'
-          ExplicitLeft = 1
-          ExplicitTop = 26
-          ExplicitWidth = 434
-          ExplicitHeight = 466
           object LayoutControlParser: TdxLayoutControl
             Left = 0
             Top = 0
@@ -1463,9 +1478,6 @@ inherited FormSettings: TFormSettings
             TabOrder = 0
             Transparent = True
             LayoutLookAndFeel = LayoutSkinLookAndFeel
-            ExplicitLeft = -2
-            ExplicitWidth = 434
-            ExplicitHeight = 466
             object cxLabel8: TcxLabel
               Left = 0
               Top = 0
@@ -1591,6 +1603,9 @@ inherited FormSettings: TFormSettings
             end
             object LayoutCheckBoxItemSynthesize: TdxLayoutCheckBoxItem
               Parent = dxLayoutGroup27
+              CaptionOptions.Hint = 
+                'Synthesize properties that have been omitted from the form resou' +
+                'rce because their current value equals their default value'
               CaptionOptions.Text = 'Synthesize missing properties'
               OnClick = LayoutCheckBoxItemSynthesizeClick
               Index = 2
@@ -3094,7 +3109,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 4
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitTop = 93
         end
         object ButtonCategoryAdvanced: TcxButton
           AlignWithMargins = True
@@ -3114,7 +3128,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 6
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitTop = 155
         end
         object ButtonCategoryProofing: TcxButton
           AlignWithMargins = True
@@ -3134,7 +3147,6 @@ inherited FormSettings: TFormSettings
           TabOrder = 5
           TabStop = False
           OnEnter = ButtonCategoryEnter
-          ExplicitTop = 124
         end
         object ButtonCategoryTranslators: TcxButton
           AlignWithMargins = True

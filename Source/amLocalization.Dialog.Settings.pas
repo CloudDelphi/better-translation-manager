@@ -66,11 +66,11 @@ type
     dxLayoutGroup1: TdxLayoutGroup;
     LayoutControlGeneralItem1: TdxLayoutItem;
     LayoutControlGeneralItem2: TdxLayoutItem;
-    LayoutControlGroupEditing: TdxLayoutGroup;
+    LayoutGroupEditing: TdxLayoutGroup;
     LayoutControlGeneralItem12: TdxLayoutItem;
     LayoutControlGeneralItem13: TdxLayoutItem;
-    LayoutControlGroupStartup: TdxLayoutGroup;
-    LayoutControlGeneralItem15: TdxLayoutItem;
+    LayoutGroupStartup: TdxLayoutGroup;
+    LayoutItemUITheme: TdxLayoutItem;
     LayoutGroupUserInterface: TdxLayoutGroup;
     LayoutControlGeneralGroup2: TdxLayoutGroup;
     LayoutGroup3: TdxLayoutGroup;
@@ -251,11 +251,8 @@ type
     dxLayoutGroup9: TdxLayoutGroup;
     dxLayoutItem43: TdxLayoutItem;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
-    dxLayoutSeparatorItem4: TdxLayoutSeparatorItem;
     dxLayoutItem28: TdxLayoutItem;
     ComboBoxTargetLanguage: TcxExtLookupComboBox;
-    dxLayoutItem30: TdxLayoutItem;
-    ComboBoxApplicationLanguage: TcxExtLookupComboBox;
     dxLayoutItem38: TdxLayoutItem;
     CheckBoxTMBackgroundQuery: TcxCheckBox;
     dxLayoutItem44: TdxLayoutItem;
@@ -271,8 +268,8 @@ type
     TabSheetAppearance: TcxTabSheet;
     ActionCategoryAppearance: TAction;
     ButtonCategoryAppearance: TcxButton;
-    LayoutControlColorsGroup_Root: TdxLayoutGroup;
-    LayoutControlColors: TdxLayoutControl;
+    LayoutControlAppearanceGroup_Root: TdxLayoutGroup;
+    LayoutControlAppearance: TdxLayoutControl;
     dxLayoutItem48: TdxLayoutItem;
     LabelListStyles: TcxLabel;
     dxLayoutGroup18: TdxLayoutGroup;
@@ -293,7 +290,7 @@ type
     dxLayoutSeparatorItem5: TdxLayoutSeparatorItem;
     dxLayoutItem51: TdxLayoutItem;
     ButtonStyleReset: TcxButton;
-    dxLayoutItem52: TdxLayoutItem;
+    LayoutItemUIHeader: TdxLayoutItem;
     LabelApperance: TcxLabel;
     dxLayoutItem53: TdxLayoutItem;
     CheckBoxStatusGlyphHint: TcxCheckBox;
@@ -316,7 +313,7 @@ type
     cxLabel3: TcxLabel;
     dxLayoutItem61: TdxLayoutItem;
     CheckBoxProjectAutoApplyStopList: TcxCheckBox;
-    dxLayoutGroup23: TdxLayoutGroup;
+    LayoutGroupProject: TdxLayoutGroup;
     dxLayoutGroup24: TdxLayoutGroup;
     dxLayoutItem62: TdxLayoutItem;
     ComboBoxModuleNameScheme: TcxImageComboBox;
@@ -367,6 +364,10 @@ type
     GridSynthesizeTableViewColumnValue: TcxGridColumn;
     cxButton1: TcxButton;
     ActionCategoryParser: TAction;
+    LayoutItemUILanguage: TdxLayoutItem;
+    ComboBoxApplicationLanguage: TcxExtLookupComboBox;
+    dxLayoutItem30: TdxLayoutItem;
+    CheckBoxAutoShowMultiLineEditor: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -646,6 +647,7 @@ begin
   ComboBoxAutoApplyTranslationsSimilar.ItemIndex := Ord(TranslationManagerSettings.Editor.AutoApplyTranslationsSimilar);
   CheckBoxAutoApplyTranslationsExisting.Checked := TranslationManagerSettings.Editor.AutoApplyTranslationsExisting;
   CheckBoxEditBiDiMode.Checked := TranslationManagerSettings.Editor.EditBiDiMode;
+  CheckBoxAutoShowMultiLineEditor.Checked := TranslationManagerSettings.Editor.AutoShowMultiLineEditor;
   ComboBoxNormalization.EditValue := Byte(TranslationManagerSettings.Editor.SanitizeRules);
   ComboBoxEqualization.EditValue := Byte(TranslationManagerSettings.Editor.EqualizerRules);
 
@@ -654,7 +656,6 @@ begin
 
   ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
   ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
-  ComboBoxApplicationLanguage.EditValue := TranslationManagerSettings.System.ApplicationLanguage;
 
   (*
   ** Appearance
@@ -662,6 +663,7 @@ begin
   LoadStyles;
   ActionEditStatusGlyphs.Checked := TranslationManagerSettings.Editor.DisplayStatusGlyphs;
   ActionEditStatusHint.Checked := TranslationManagerSettings.Editor.StatusGlyphHints;
+  ComboBoxApplicationLanguage.EditValue := TranslationManagerSettings.System.ApplicationLanguage;
 
   (*
   ** Translators section
@@ -732,6 +734,7 @@ begin
   else
     TLocalizerTranslations.DefaultStatus := tStatusTranslated;
   TranslationManagerSettings.Editor.EditBiDiMode := CheckBoxEditBiDiMode.Checked;
+  TranslationManagerSettings.Editor.AutoShowMultiLineEditor := CheckBoxAutoShowMultiLineEditor.Checked;
   TranslationManagerSettings.Editor.SanitizeRules := TSanitizeRules(Byte(ComboBoxNormalization.EditValue));
   TranslationManagerSettings.Editor.EqualizerRules := TMakeAlikeRules(Byte(ComboBoxEqualization.EditValue));
 
@@ -740,7 +743,6 @@ begin
 
   TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
   TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);
-  TranslationManagerSettings.System.ApplicationLanguage := VarToLCID(ComboBoxApplicationLanguage.EditValue);
 
   (*
   ** Appearance
@@ -748,6 +750,7 @@ begin
   ApplyStyles;
   TranslationManagerSettings.Editor.DisplayStatusGlyphs := ActionEditStatusGlyphs.Checked;
   TranslationManagerSettings.Editor.StatusGlyphHints := ActionEditStatusHint.Checked;
+  TranslationManagerSettings.System.ApplicationLanguage := VarToLCID(ComboBoxApplicationLanguage.EditValue);
 
   (*
   ** Translators section

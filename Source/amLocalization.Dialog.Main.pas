@@ -6546,9 +6546,16 @@ end;
 
 procedure TFormMain.GridItemsTableViewEditing(Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem; var AAllow: Boolean);
 begin
-  // TODO : If *source* text contains CRs and editor is being invoked by user (i.e. not from text editor)
-  // then automatically open and focus text editor instead of in-place editor.
-  // This behavior should be controlled by an option..
+  // Issue #15 : If *source* text contains CRs then automatically open and focus text
+  // editor instead of in-place editor - Unless the text editor is already visible.
+  if (AItem <> GridItemsTableViewColumnTarget) then
+    exit;
+
+  if (TranslationManagerSettings.Editor.AutoShowMultiLineEditor) and (SplitterMainEditors.State = ssClosed) and (FocusedProperty.Value.Contains(#13)) then
+  begin
+    ActionEditTranslationText.Execute;
+    AAllow := False;
+  end;
 end;
 
 procedure TFormMain.GridItemsTableViewFocusedItemChanged(

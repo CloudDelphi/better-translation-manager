@@ -340,6 +340,7 @@ type
     FEqualizerRules: TMakeAlikeRules;
     FSanitizeRules: TSanitizeRules;
     FAutoApplyTranslationsExisting: boolean;
+    FAutoShowMultiLineEditor: boolean;
   protected
     procedure ApplyDefault; override;
   public
@@ -352,6 +353,7 @@ type
 
     property UseProposedStatus: boolean read FUseProposedStatus write FUseProposedStatus default True;
     property EditBiDiMode: boolean read FEditBiDiMode write FEditBiDiMode default True;
+    property AutoShowMultiLineEditor: boolean read FAutoShowMultiLineEditor write FAutoShowMultiLineEditor default True;
     property AutoApplyTranslations: TTranslationAutoApply read FAutoApplyTranslations write FAutoApplyTranslations default aaAlways;
     property AutoApplyTranslationsSimilar: TTranslationAutoApply read FAutoApplyTranslationsSimilar write FAutoApplyTranslationsSimilar default aaAlways;
     property AutoApplyTranslationsExisting: boolean read FAutoApplyTranslationsExisting write FAutoApplyTranslationsExisting default False;
