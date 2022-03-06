@@ -603,6 +603,8 @@ type
     procedure MsgFileOpen(var Msg: TMsgFileOpen); message MSG_FILE_OPEN;
     procedure MsgRefreshModuleStats(var Msg: TMessage); message MSG_REFRESH_MODULE_STATS;
     procedure MsgCopyData(var Msg: TWMCopyData); message WM_COPYDATA;
+  protected
+    procedure ScaleFactorChanged(M: Integer; D: Integer); override;
   private
     // Translation project event handlers
     procedure OnProjectChanged(Sender: TObject);
@@ -1136,6 +1138,10 @@ procedure TFormMain.ApplyListStyles;
       Style.Font.Style := Style.Font.Style + [fsBold]
     else
       Style.Font.Style := Style.Font.Style - [fsBold];
+
+    // Make sure we're using the correct font
+    if (TcxStyleValue.svFont in Style.AssignedValues) then
+      Style.Font.Name := Font.Name;
   end;
 
 begin
@@ -1237,6 +1243,12 @@ begin
 
   TranslationManagerSettings.Valid := True;
   TranslationManagerSettings.WriteConfig;
+end;
+
+procedure TFormMain.ScaleFactorChanged(M, D: Integer);
+begin
+  inherited ScaleFactorChanged(M, D);
+  DataModuleMain.FontSizeChanged(Font.Size);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1470,7 +1482,7 @@ begin
   try
     FormSplash.Version := TVersionInfo.FileVersionString(Application.ExeName);
     FormSplash.DisplayBannerResource('CREDITS', 'TEXT', sbStaticFade);
-    FormSplash.BannerOffset := Abs(FormSplash.Font.Height);
+    FormSplash.BannerOffset := Abs(FormSplash.Font.Height); // TODO : HighDPI
 
     FormSplash.Execute(False);
   except
@@ -6372,21 +6384,22 @@ procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableV
       ACanvas.Brush.Style := bsSolid;
       ACanvas.Brush.Color := clSkyBlue;
 
+      var CornerSize := ScaleFactor.Apply(HintCornerSize);
       if (UseRightToLeftReading) or (TargetLanguage.IsRightToLeft and TranslationManagerSettings.Editor.EditBiDiMode) then
       begin
         // Top left corner
         Triangle[0].X := AViewInfo.Bounds.Left+1;
-        Triangle[1].X := Triangle[0].X + HintCornerSize;
+        Triangle[1].X := Triangle[0].X + CornerSize;
       end else
       begin
         // Top right corner
         Triangle[0].X := AViewInfo.Bounds.Right-2;
-        Triangle[1].X := Triangle[0].X - HintCornerSize;
+        Triangle[1].X := Triangle[0].X - CornerSize;
       end;
       Triangle[0].Y := AViewInfo.Bounds.Top;
       Triangle[1].Y := Triangle[0].Y;
       Triangle[2].X := Triangle[0].X;
-      Triangle[2].Y := Triangle[0].Y + HintCornerSize;
+      Triangle[2].Y := Triangle[0].Y + CornerSize;
 
       ACanvas.Polygon(Triangle);
 
@@ -6448,12 +6461,12 @@ var
   Flag: TPropertyFlag;
   ImageIndex: integer;
   s: string;
-const
-  OffsetNumeric = 10; // Note: Each node can have only one numeric bookmark ATM
-  OffsetFlag = 8;
 begin
   if (not (AViewInfo is TcxGridIndicatorRowItemViewInfo)) then
     Exit;
+
+  var OffsetNumeric := ScaleFactor.Apply(10); // Note: Each node can have only one numeric bookmark ATM
+  var OffsetFlag := ScaleFactor.Apply(8);
 
   if (TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.Focused) or (TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.Selected) then
     ACanvas.FillRect(AViewInfo.Bounds, DataModuleMain.StyleSelected.Color)
@@ -6466,7 +6479,7 @@ begin
   s := string.Create('9', Trunc(Log10(AViewInfo.GridView.ViewData.RowCount)+1));
   r := AViewInfo.Bounds;
   // Draw row number right-aligned
-  r.Right := r.Left+ACanvas.TextWidth(s)+4;
+  r.Right := r.Left+ACanvas.TextWidth(s)+ScaleFactor.Apply(4);
   ACanvas.Font.Color := AViewInfo.Params.TextColor;
   ACanvas.Brush.Style := bsClear;
   s := IntToStr(TcxGridIndicatorRowItemViewInfo(AViewInfo).RowViewInfo.GridRecord.Index + 1);

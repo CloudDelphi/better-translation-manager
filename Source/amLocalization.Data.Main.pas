@@ -99,6 +99,8 @@ type
     function GetImageHint(ImageIndex: integer): string;
 
     procedure GetContentStyle(Active, Focused, Selected, Editing: boolean; TranslationLanguage: TTranslationLanguage; Prop: TLocalizerProperty; var AStyle: TcxStyle);
+
+    procedure FontSizeChanged(Size: Integer);
   end;
 
 var
@@ -162,6 +164,7 @@ implementation
 uses
   IOUtils,
   Windows,
+  Forms,
   cxButtonEdit,
   amLocale,
   amLocalization.Settings,
@@ -202,6 +205,13 @@ begin
   finally
     DataSetLanguages.EnableControls;
   end;
+end;
+
+procedure TDataModuleMain.FontSizeChanged(Size: Integer);
+begin
+  for var i := 0 to StyleRepository.Count-1 do
+    if (TcxStyleValue.svFont in TcxStyle(StyleRepository.Items[i]).AssignedValues) then
+      TcxStyle(StyleRepository.Items[i]).Font.Size := Size;
 end;
 
 type
