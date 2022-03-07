@@ -1118,9 +1118,9 @@ begin
   StyleDontTranslate.ColorBackground := $00F4F4FF;
   StyleDontTranslate.Bold := -1;
 
-  StyleDontTranslate.ColorText := clDefault;
-  StyleDontTranslate.ColorBackground := $00ECFFEC;
-  StyleDontTranslate.Bold := -1;
+  StyleSynthesized.ColorText := clDefault;
+  StyleSynthesized.ColorBackground := $00ECFFEC;
+  StyleSynthesized.Bold := -1;
 end;
 
 constructor TTranslationManagerStyleSettings.Create(AOwner: TConfigurationSection);
