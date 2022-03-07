@@ -2981,6 +2981,10 @@ begin
 
     SplitterMainEditors.OpenSplitter;
     EditTargetText.SetFocus;
+
+    // Ensure that grid row is still visible in case opening the editor scrolled
+    // it out of view
+    GridItemsTableView.Controller.MakeFocusedRecordVisible;
   end else
   if (EditTargetText.Focused) then
   begin
