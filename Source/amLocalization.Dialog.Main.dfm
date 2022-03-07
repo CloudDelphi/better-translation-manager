@@ -213,8 +213,8 @@ object FormMain: TFormMain
       Styles.UseOddEvenStyles = bFalse
       TabOrder = 0
       OnFocusedColumnChanged = TreeListModulesFocusedColumnChanged
+      OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
-      OnSelectionChanged = TreeListModulesSelectionChanged
       ExplicitHeight = 436
       object TreeListColumnModuleName: TcxTreeListColumn
         BestFitMaxWidth = 200

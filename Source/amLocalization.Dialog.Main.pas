@@ -415,7 +415,6 @@ type
     procedure TimerHintTimer(Sender: TObject);
     procedure ActionAboutExecute(Sender: TObject);
     procedure FormShortCut(var Msg: TWMKey; var Handled: Boolean);
-    procedure TreeListModulesSelectionChanged(Sender: TObject);
     procedure StatusBarPanels1Click(Sender: TObject);
     procedure PopupMenuTranslateProvidersPopup(Sender: TObject);
     procedure TimerToastTimer(Sender: TObject);
@@ -494,6 +493,8 @@ type
       AFocusedItem: TcxCustomGridTableItem);
     procedure ActionProjectLocateSourceExecute(Sender: TObject);
     procedure ActionIntegrationTrackingExecute(Sender: TObject);
+    procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList;
+      APrevFocusedNode, AFocusedNode: TcxTreeListNode);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -5860,6 +5861,7 @@ begin
       GridItemsTableView.Controller.TopRowIndex := 0;
       GridItemsTableView.Controller.FocusedRowIndex := -1;
     end;
+
   finally
     UnlockUpdates;
   end;
@@ -7627,26 +7629,20 @@ begin
 end;
 
 procedure TFormMain.DoRefreshModuleStats;
-var
-  i: integer;
-  Module: TLocalizerModule;
-  TranslatedCount: integer;
-  TranslatableCount: integer;
-  PendingCount: integer;
 begin
   try
     LayoutControlModules.BeginUpdate;
     try
       // Module stats
-      TranslatedCount := 0;
-      TranslatableCount := 0;
-      for i := 0 to TreeListModules.SelectionCount-1 do
+      var TranslatedCount := 0;
+      var TranslatableCount := 0;
+      for var i := 0 to TreeListModules.SelectionCount-1 do
       begin
-        Module := TLocalizerModule(TreeListModules.Selections[i].Data);
+        var Module := TLocalizerModule(TreeListModules.Selections[i].Data);
         Inc(TranslatedCount, Module.TranslatedCount[TranslationLanguage]);
         Inc(TranslatableCount, Module.StatusCount[ItemStatusTranslate]);
       end;
-      PendingCount := TranslatableCount - TranslatedCount;
+      var PendingCount := TranslatableCount - TranslatedCount;
 
       LabelCountModuleTranslated.Caption := Format('%.0n', [1.0 * TranslatedCount]);
       LabelCountModulePending.Caption := Format('%.0n', [1.0 * PendingCount]);
@@ -7681,6 +7677,58 @@ procedure TFormMain.TreeListModulesFocusedColumnChanged(
 begin
   // Only enable incremental search when Module Name column has focus
   Sender.OptionsBehavior.IncSearch := (AFocusedColumn = TreeListColumnModuleName);
+end;
+
+procedure TFormMain.TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList;
+  APrevFocusedNode, AFocusedNode: TcxTreeListNode);
+begin
+  if (APrevFocusedNode = AFocusedNode) then
+    // Happens during startup - before we're ready to handle it
+    exit;
+
+  if (FTranslationMemoryPeek <> nil) then
+    FTranslationMemoryPeek.Cancel;
+
+  SaveCursor(crAppStart);
+
+  GridItemsTableView.BeginUpdate;
+  try
+
+    var OldValueNameVisible := GridItemsTableViewColumnValueName.Visible;
+
+    if (AFocusedNode <> nil) then
+      FModuleItemsDataSource.Module := FocusedModule
+    else
+      // Clear item grid if more than one module is selected
+      FModuleItemsDataSource.Module := nil;
+
+    // Hide property name column if module is resourcestrings
+    var NewValueNameVisible := (FModuleItemsDataSource.Module = nil) or (FModuleItemsDataSource.Module.Kind = mkForm);
+
+    if (OldValueNameVisible <> NewValueNameVisible) then
+    begin
+      if (NewValueNameVisible) then
+      begin
+        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width - GridItemsTableViewColumnValueName.Width;
+        GridItemsTableViewColumnValueName.Visible := True;
+      end else
+      begin
+        GridItemsTableViewColumnValueName.Visible := False;
+        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width + GridItemsTableViewColumnValueName.Width;
+      end;
+    end;
+
+  finally
+    GridItemsTableView.EndUpdate;
+  end;
+
+  GridItemsTableView.Controller.ClearSelection;
+  GridItemsTableView.Controller.TopRowIndex := 0;
+  GridItemsTableView.Controller.FocusedRowIndex := 0;
+  if (GridItemsTableView.Controller.FocusedRecordIndex <> -1) then
+    GridItemsTableView.Controller.FocusedRecord.Selected := True;
+
+  RefreshModuleStats;
 end;
 
 procedure TFormMain.TreeListModulesGetNodeImageIndex(Sender: TcxCustomTreeList; ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType; var AIndex: TImageIndex);
@@ -7735,55 +7783,6 @@ begin
     AIndex := NodeImageIndexHold
   else
     AIndex := -1;
-end;
-
-procedure TFormMain.TreeListModulesSelectionChanged(Sender: TObject);
-var
-  OldValueNameVisible, NewValueNameVisible: boolean;
-begin
-  if (FTranslationMemoryPeek <> nil) then
-    FTranslationMemoryPeek.Cancel;
-
-  SaveCursor(crAppStart);
-
-  GridItemsTableView.BeginUpdate;
-  try
-
-    OldValueNameVisible := GridItemsTableViewColumnValueName.Visible;
-
-    if (TreeListModules.SelectionCount = 1) then
-      FModuleItemsDataSource.Module := FocusedModule
-    else
-      // Clear item grid if more than one module is selected
-      FModuleItemsDataSource.Module := nil;
-
-    // Hide property name column if module is resourcestrings
-    NewValueNameVisible := (FModuleItemsDataSource.Module = nil) or (FModuleItemsDataSource.Module.Kind = mkForm);
-
-    if (OldValueNameVisible <> NewValueNameVisible) then
-    begin
-      if (NewValueNameVisible) then
-      begin
-        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width - GridItemsTableViewColumnValueName.Width;
-        GridItemsTableViewColumnValueName.Visible := True;
-      end else
-      begin
-        GridItemsTableViewColumnValueName.Visible := False;
-        GridItemsTableViewColumnItemName.Width := GridItemsTableViewColumnItemName.Width + GridItemsTableViewColumnValueName.Width;
-      end;
-    end;
-
-  finally
-    GridItemsTableView.EndUpdate;
-  end;
-
-  GridItemsTableView.Controller.ClearSelection;
-  GridItemsTableView.Controller.TopRowIndex := 0;
-  GridItemsTableView.Controller.FocusedRowIndex := 0;
-  if (GridItemsTableView.Controller.FocusedRecordIndex <> -1) then
-    GridItemsTableView.Controller.FocusedRecord.Selected := True;
-
-  RefreshModuleStats;
 end;
 
 procedure TFormMain.TreeListModulesStylesGetContentStyle(Sender: TcxCustomTreeList; AColumn: TcxTreeListColumn; ANode: TcxTreeListNode; var AStyle: TcxStyle);
