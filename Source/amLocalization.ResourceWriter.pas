@@ -59,7 +59,7 @@ type
   TResourceModuleWriter = class(TInterfacedObject, IResourceWriter)
   private
     FFilename: string;
-    FResourceHandle: Cardinal;
+    FResourceHandle: THandle;
   protected
     procedure WriteFormModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
     procedure WriteStringModule(Module: TLocalizerModule; ResourceID: PWideChar; Stream: TMemoryStream);
