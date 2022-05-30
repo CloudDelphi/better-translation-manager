@@ -1,7 +1,7 @@
 # Better Translation Manager
 
 https://bitbucket.org/anders_melander/better-translation-manager  
-Installer (no source): http://melander.dk/download/
+Installer (no source): https://bitbucket.org/anders_melander/better-translation-manager/downloads/
 
 The Better Translation Manager (BTM) is a replacement for the Delphi Translation Manager a.k.a. the Integrated Translation Environment (ITE) and External Translation Manager (ETM).
 
@@ -97,9 +97,9 @@ So returning to our example above, in order to make `HelloWorld.ENU` region neut
 
 
 ## The Application
-In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application installer here: http://melander.dk/download/
+In case you just want to use BTM as-is, and don't care to compile it yourself, you can download the application installer here: https://bitbucket.org/anders_melander/better-translation-manager/downloads/
 
-Note that the compiled application will almost always lag behind the source code since it has to go through a bit of QA before I upload it. The application has been virus checked with BitDefender.
+Note that the compiled application will almost always lag behind the source code since it has to go through a bit of QA before I upload it. The application has been virus checked with [VirusTotal](https://www.virustotal.com).
 
 The installer contains the main application, the command line tool, a sample translation memory database and a few spell check dictionaries.
 
@@ -139,9 +139,9 @@ The source code is released under the MPL 2.0 license:
 ### Requirements
 BTM has been tested with the following versions but probably works with older (and newer) versions too:
 
-* Delphi 10.3.x
-* DevExpress VCL version 19.1.4
-* madCollection 2.8.8.9
+* Delphi 11.0
+* DevExpress VCL version 21.2.5
+* madCollection 2.8.11.0
 
 ### Dependencies
 The following commercial 3rd party libraries are required in order to compile the source:
