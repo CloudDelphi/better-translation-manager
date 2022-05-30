@@ -134,24 +134,24 @@ end;
 
 class function TLocalizationCommandLineTool.OptionBuild: boolean;
 begin
-  Result := (FindCmdLineSwitch('b')) or (FindCmdLineSwitch('build'));
+  Result := (FindCmdLineSwitch('build')) or (FindCmdLineSwitch('b'));
 end;
 
 class function TLocalizationCommandLineTool.OptionHelp: boolean;
 begin
-  Result := (FindCmdLineSwitch('h')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('help'));
+  Result := (FindCmdLineSwitch('help')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('h'));
 end;
 
 class function TLocalizationCommandLineTool.OptionLanguage(ADefault: string): string;
 begin
-  if (not FindCmdLineSwitch('t', Result, True, [clstValueAppended])) and (not FindCmdLineSwitch('target', Result, True, [clstValueAppended])) then
+  if (not FindCmdLineSwitch('target', Result, True, [clstValueAppended])) and (not FindCmdLineSwitch('t', Result, True, [clstValueAppended])) then
     Result := ADefault;
 end;
 
 class function TLocalizationCommandLineTool.OptionName(ADefault: TModuleNameScheme): TModuleNameScheme;
 begin
   var s: string;
-  if (FindCmdLineSwitch('n', s, True, [clstValueAppended])) or (FindCmdLineSwitch('name', s, True, [clstValueAppended])) then
+  if (FindCmdLineSwitch('name', s, True, [clstValueAppended])) or (FindCmdLineSwitch('n', s, True, [clstValueAppended])) then
   begin
     var n := StrToIntDef(s, Ord(ADefault));
     if (n >= Ord(Low(TModuleNameScheme))) and (n <= Ord(High(TModuleNameScheme))) then
@@ -166,7 +166,7 @@ class function TLocalizationCommandLineTool.OptionOutput(var Filename: string): 
 begin
   Result := False;
   var Value := '';
-  if (FindCmdLineSwitch('o', Value, True, [clstValueAppended]) or FindCmdLineSwitch('output', Value, True, [clstValueAppended])) and
+  if (FindCmdLineSwitch('output', Value, True, [clstValueAppended]) or FindCmdLineSwitch('o', Value, True, [clstValueAppended])) and
     (Value <> '') then
   begin
     // If command line specified a relative path then it must be relative to the "current folder"
@@ -179,7 +179,7 @@ class function TLocalizationCommandLineTool.OptionSource(var Filename: string): 
 begin
   Result := False;
   var Value := '';
-  if (FindCmdLineSwitch('s', Value, True, [clstValueAppended]) or FindCmdLineSwitch('source', Value, True, [clstValueAppended])) and
+  if (FindCmdLineSwitch('source', Value, True, [clstValueAppended]) or FindCmdLineSwitch('s', Value, True, [clstValueAppended])) and
     (Value <> '') then
   begin
     // If command line specified a relative path then it must be relative to the "current folder"
@@ -192,7 +192,7 @@ class function TLocalizationCommandLineTool.OptionSymbols(var Filename: string):
 begin
   Result := False;
   var Value := '';
-  if (FindCmdLineSwitch('y', Value, True, [clstValueAppended]) or FindCmdLineSwitch('symbols', Value, True, [clstValueAppended])) and
+  if (FindCmdLineSwitch('symbols', Value, True, [clstValueAppended]) or FindCmdLineSwitch('y', Value, True, [clstValueAppended])) and
     (Value <> '') then
   begin
     // If command line specified a relative path then it must be relative to the "current folder"
@@ -203,7 +203,7 @@ end;
 
 class function TLocalizationCommandLineTool.OptionVerbose: boolean;
 begin
-  Result := (FindCmdLineSwitch('v')) or (FindCmdLineSwitch('verbose'));
+  Result := (FindCmdLineSwitch('verbose')) or (FindCmdLineSwitch('v'));
 end;
 
 class function TLocalizationCommandLineTool.ProjectFilename: string;
