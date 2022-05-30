@@ -155,9 +155,9 @@ begin
   begin
     var n := StrToIntDef(s, Ord(ADefault));
     if (n >= Ord(Low(TModuleNameScheme))) and (n <= Ord(High(TModuleNameScheme))) then
-      Result := ADefault
+      Result := TModuleNameScheme(n)
     else
-      Result := TModuleNameScheme(n);
+      Result := ADefault;
   end else
     Result := ADefault;
 end;
