@@ -10,6 +10,11 @@
 
 interface
 
+// Define QUOTED_STRINGS to require source strings to be quoted.
+// The XLIFF produced by Delphi's ETM tool quotes strings but
+// (unsurprisingly) it seems that most other tools doesn't.
+{.$define QUOTED_STRINGS}
+
 uses
   Classes,
   amLocalization.Model,
@@ -379,12 +384,14 @@ var
             s := Child.Text;
 
             // Only quoted strings are translated
+{$ifdef QUOTED_STRINGS}
             if (Localize) then
             begin
               if ((not s.StartsWith('''')) or (not s.EndsWith(''''))) and
                  ((not s.StartsWith('"'))  or (not s.EndsWith('"'))) then
                 Localize := False;
             end;
+{$endif QUOTED_STRINGS}
 
             SourceValue := Unescape(s);
           end else
