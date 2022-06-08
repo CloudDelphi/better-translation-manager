@@ -303,6 +303,26 @@ var
   IgnoreMismatch: boolean;
 
   function ProcessNodes(const BodyNode: IXMLNode; Module: TLocalizerModule; Delegate: TImportDelegate): boolean;
+
+    function GetNodeText(const Node: IXMLNode): string;
+    var
+      ChildNode: IXMLNode;
+    begin
+      // Contrary to the documented behavior, Node.IsTextElement returns False
+      // if the node is a text node...
+      if (Node.NodeType = ntText) or (Node.IsTextElement) then
+        Exit(Node.text);
+
+      Result := '';
+
+      ChildNode := Node.ChildNodes.First;
+      while (ChildNode <> nil) do
+      begin
+        Result := Result + GetNodeText(ChildNode);
+        ChildNode := ChildNode.NextSibling;
+      end;
+    end;
+
   var
     Node, NextNode: IXMLNode;
     Child: IXMLNode;
@@ -381,7 +401,7 @@ var
           Child := Node.ChildNodes.FindNode('source');
           if (Child <> nil) then
           begin
-            s := Child.Text;
+            s := GetNodeText(Child);
 
             // Only quoted strings are translated
 {$ifdef QUOTED_STRINGS}
@@ -402,7 +422,7 @@ var
           TargetNode := Node.ChildNodes.FindNode('target');
           if (TargetNode <> nil) then
           begin
-            s := TargetNode.Text;
+            s := GetNodeText(TargetNode);
             TargetValue := Unescape(s);
 
             Value := TargetNode.Attributes['state'];
