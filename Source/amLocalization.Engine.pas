@@ -540,7 +540,12 @@ begin
 
     Name := Format('%s[%d]', [Path, Index]);
 
-    if (Item <> nil) then
+    // Issue #27: If we are importing a target language then Item can be nil
+    // if the parent didn't have any translatable properties.
+    // We still need to create a child item so we can apply an imported
+    // translation to it. In case there wasn't any then we will delete the item
+    // again below.
+    if (Item <> nil) or (Action = liaUpdateTarget) then
     begin
       if (Action <> liaUpdateTarget) then
         ChildItem := Module.AddItem(Name, Item.TypeName)
@@ -584,14 +589,18 @@ begin
   else
     Item := Module.FindItem(Name, True);
 
-  if (Item <> nil) and ((Action <> liaUpdateSource) or (Item.Status <> ItemStatusDontTranslate)) then
+  // Issue #27: Even if component wasn't found we still need to process its
+  // properties in case we're importing a target language and the component has
+  // children with translatable properties.
+
+  if (Item = nil) or (Action <> liaUpdateSource) or (Item.Status <> ItemStatusDontTranslate) then
   begin
     // TReader.ReadDataInner
     ReadProperties(Action, Language, Translator, Item, Name);
     FReader.ReadListEnd;
 
     // Remove empty item
-    if (ItemStateNew in Item.State) and (Item.Properties.Count = 0) then
+    if (Item <> nil) and (ItemStateNew in Item.State) and (Item.Properties.Count = 0) then
       Item.Free;
   end else
   begin
@@ -617,6 +626,8 @@ begin
 
   if (Action = liaUpdateSource) then
   begin
+    Assert(Item <> nil);
+
     // Post processing to apply "required properties" rules.
 
     // If a required property is missing from the element we create it and mark it "Synthesized"
@@ -657,6 +668,8 @@ begin
   end else
   if (Action = liaTranslate) and (FWriter <> nil) and (Language <> nil) then
   begin
+    Assert(Item <> nil);
+
     // If we're updating the target then we must inject any synthesized properties
     // into the output stream.
 
