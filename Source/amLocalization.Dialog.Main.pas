@@ -1065,7 +1065,6 @@ begin
   FProject.BeginUpdate;
 
   FProjectIndex := nil;
-  FProject.Clear;
 
   FModuleItemsDataSource.Free;
   FProject.Free;
@@ -3794,6 +3793,7 @@ begin
 
   ClearTargetLanguage;
   FProjectIndex := nil;
+  FModuleItemsDataSource.Clear;
   FProject.Clear;
 
   ProjectProcessor := TProjectResourceProcessor.Create;
@@ -5769,6 +5769,7 @@ begin
   FProject.BeginUpdate;
   try
 
+    FModuleItemsDataSource.Clear;
     FProject.Clear;
 
     FProject.SourceFilename := SourceFilename;
