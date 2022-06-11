@@ -1219,22 +1219,27 @@ begin
 
           for Module in Project.Modules.Values.ToArray do // ToArray for stability since we delete from the list
           begin
-            if (Action = liaUpdateTarget) and (Module.IsUnused) then
-              continue;
+            case Action of
+              liaUpdateTarget:
+                if (Module.IsUnused) then
+                  continue;
 
-            if (Action = liaUpdateSource) and (Module.Status = ItemStatusDontTranslate) then
-              continue;
+              liaUpdateSource:
+                if (Module.Status = ItemStatusDontTranslate) then
+                  continue;
+            end;
 
-            if (Module.Kind = mkForm) then
-              ModuleProcessor := TModuleDFMResourceProcessor.Create(Module, Instance)
+            case Module.Kind of
+              mkForm:
+                ModuleProcessor := TModuleDFMResourceProcessor.Create(Module, Instance);
+
+              mkString:
+                ModuleProcessor := TModuleStringResourceProcessor.Create(Module, Instance, ResourceGroups)
             else
-            if (Module.Kind = mkString) then
-              ModuleProcessor := TModuleStringResourceProcessor.Create(Module, Instance, ResourceGroups)
-            else
-            begin
               Module.Free;
               continue;
             end;
+
             try
 
               ModuleProcessor.Execute(Action, ResourceWriter, Language, Translator);
@@ -1247,7 +1252,11 @@ begin
               ModuleProcessor.Free;
             end;
 
-            if (ItemStateNew in Module.State) and ((Module.Kind = mkOther) or (Module.Items.Count = 0)) then
+            // Note: ModuleProcessor.Execute above can change the Kind of a module.
+            // RT_RCDATA resources are created as mkForm by default and changed
+            // in TModuleDFMResourceProcessor.Execute to mkOther if their
+            // signature doesn't match that of a form.
+            if (Module.Kind = mkOther) then
             begin
               Module.Free;
               continue;
