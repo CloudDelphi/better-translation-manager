@@ -151,7 +151,6 @@
             <Form>EmptyResourceModule.res</Form>
         </RcCompile>
         <DCCReference Include="amLocalization.ExceptionHandler.API.pas"/>
-        <DCCReference Include="amLocalization.ExceptionHandler.MadExcept.pas"/>
         <DCCReference Include="amLocalization.Dialog.pas">
             <Form>FormDialog</Form>
         </DCCReference>

@@ -17,7 +17,9 @@
 {$R 'EmptyResourceModule.res' 'resources\EmptyResourceModule.rc'}
 
 uses
+  {$ifdef MADEXCEPT}
   madExcept,
+  {$endif MADEXCEPT}
   System.SysUtils,
   amLocalization.CommandLine;
 

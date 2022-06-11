@@ -11,8 +11,10 @@
 {$R 'EmptyResourceModule.res' 'resources\EmptyResourceModule.rc'}
 
 uses
+  {$ifdef MADEXCEPT}
   madExcept,
   madListModules,
+  {$endif MADEXCEPT}
   SysUtils,
   IOUtils,
   Vcl.Forms,
@@ -25,8 +27,10 @@ uses
   amCursorService,
   amProgress,
   DelphiDabbler.SingleInstance,
+  {$ifdef MADEXCEPT}
+  amLocalization.ExceptionHandler.MadExcept,
+  {$endif MADEXCEPT}
   amLocalization.ExceptionHandler.API in 'amLocalization.ExceptionHandler.API.pas',
-  amLocalization.ExceptionHandler.MadExcept in 'amLocalization.ExceptionHandler.MadExcept.pas',
   amLocalization.Dialog in 'amLocalization.Dialog.pas' {FormDialog},
   amLocalization.Dialog.Main in 'amLocalization.Dialog.Main.pas' {FormMain},
   amLocalization.Model in 'amLocalization.Model.pas',
