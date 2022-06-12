@@ -679,20 +679,37 @@ begin
       break;
     end;
 
-  // An ISO639_1 name can map to many different locales (eg en -> en-us, en-gb, en-au) so attempt to find
-  // the primary one.
+  // An ISO639_1 name can map to many different locales (eg en -> en-us, en-gb, en-au)
+  // so attempt to find the major one (the one with the lowest LCID value).
+  //
+  // This logic fails for the two languages spoken in Norway: Bokmål & Nynorsk.
+  //
+  //   - The PRIMARYLANGID for both "nb" and "nn" is LANG_NORWEGIAN.
+  //
+  //   - nb-NO (Bokmål) is LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+  //
+  //   - nn-NO (Nynorsk) is LANG_NORWEGIAN,SUBLANG_NORWEGIAN_NYNORSK
+  //
+  //   - Since SUBLANG_NORWEGIAN_BOKMAL < SUBLANG_NORWEGIAN_NYNORSK the "major"
+  //     locale for "nn" will become "nb-NO" which is incorrect.
+  //
+  // In order to work around this problem we only consider sub-languages that
+  // also satisfies the test for ISO639-1 name.
   if (Result <> nil) and (Result.SubLanguage <> 1) then
   begin
-    SubLanguage := 0; // We should probably start with 1, but no harm's done
-    BetterLocaleItem := nil;
-    while (BetterLocaleItem = nil) and (SubLanguage < 32) do
+    // We should probably start with 1, but no harm's done
+    for SubLanguage := 0 to Result.SubLanguage-1 do
     begin
       LCID := MAKELANGID(Result.PrimaryLanguage, SubLanguage);
+
       BetterLocaleItem := TLocaleItems.FindLCID(LCID);
-      inc(SubLanguage);
+
+      if (BetterLocaleItem <> nil) and (AnsiSameText(BetterLocaleItem.ISO639_1Name, Value)) then
+      begin
+        Result := BetterLocaleItem;
+        break;
+      end;
     end;
-    if (BetterLocaleItem <> nil) then
-      Result := BetterLocaleItem;
   end;
 end;
 
@@ -745,6 +762,8 @@ var
   Language: string;
 begin
   Result := nil;
+
+  // Search for RFC 4646 match
   for i := 0 to LocaleItems.Count-1 do
     if (AnsiSameText(FLocaleItems[i].LocaleName, Value)) then
       Exit(FLocaleItems[i]);
@@ -752,9 +771,15 @@ begin
   if (Exact) then
     exit;
 
+  // Exact match on language-region (e.g. "en-US") failed.
+  // If value is a two part language-region value (i.e. it contains a "-") then
+  // look for the region invariant ISO639-1 (e.g. "en") part instead.
+  // Note that this logic fails on some languages. For example for
+  // Norwegian (nb-NO & nn-NO) the invariant part is NO.
   Language := Value;
   i := Pos('-', Language);
-  Delete(Language, 1, i);
+  if (i > 0) then
+    Delete(Language, i, MaxInt);
 
   Result := FindISO639_1Name(Language);
 end;
