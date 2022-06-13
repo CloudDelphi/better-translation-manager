@@ -1022,12 +1022,8 @@ end;
 
 function TLocalizerSearchResultDataSource.GetItemHandle(AItemIndex: Integer): TcxDataItemHandle;
 begin
-  // Contrary to documentation and posts by DevExpress support, it seems we do not
-  // need to translate the ItemIndex.
-  // var GridColumn := TcxCustomGridTableItem(DataController.GetItem(AItemIndex));
-  // Result := TcxDataItemHandle(GridColumn.ID);
-
-  Result := TcxDataItemHandle(AItemIndex);
+  var GridColumn := TcxCustomGridTableItem(DataController.GetItem(AItemIndex));
+  Result := TcxDataItemHandle(GridColumn.ID);
 end;
 
 function TLocalizerSearchResultDataSource.GetRecordCount: Integer;
