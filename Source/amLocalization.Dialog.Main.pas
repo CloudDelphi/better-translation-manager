@@ -335,7 +335,6 @@ type
     dxBarButton23: TdxBarButton;
     ActionIntegrationTracking: TAction;
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ActionProjectUpdateExecute(Sender: TObject);
     procedure ActionProjectSaveExecute(Sender: TObject);
@@ -495,6 +494,7 @@ type
     procedure ActionIntegrationTrackingExecute(Sender: TObject);
     procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList;
       APrevFocusedNode, AFocusedNode: TcxTreeListNode);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -723,6 +723,7 @@ type
     property Skin: string read FSkin write SetSkin;
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
 
     property SourceLanguage: TLocaleItem read FSourceLanguage;
     property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
@@ -903,6 +904,34 @@ begin
   TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
 end;
 
+destructor TFormMain.Destroy;
+begin
+  ExceptionHandler.UnregisterExceptionInfoProvider(Self);
+
+  FTranslationMemoryPeek := nil;
+  FTranslationMemory := nil;
+
+  SaveSettings;
+
+  SpellChecker.Dictionaries[0].Unload;
+
+  Application.OnHint := nil;
+  Application.OnShowHint := nil;
+
+  // Block notifications
+  FProject.BeginUpdate;
+
+  FProjectIndex := nil;
+
+  FModuleItemsDataSource.Free;
+  FProject.Free;
+
+  FreeAndNil(FPendingFileOpen);
+  FreeAndNil(FPendingFileOpenLock);
+
+  inherited;
+end;
+
 procedure TFormMain.CreateParams(var Params: TCreateParams);
 begin
   inherited CreateParams(Params);
@@ -1045,32 +1074,6 @@ begin
   ExceptionHandler.RegisterExceptionInfoProvider(Self);
 
   SingleInstance.OnProcessParam := LoadFromSingleInstance;
-end;
-
-procedure TFormMain.FormDestroy(Sender: TObject);
-begin
-  ExceptionHandler.UnregisterExceptionInfoProvider(Self);
-
-  FTranslationMemoryPeek := nil;
-  FTranslationMemory := nil;
-
-  SaveSettings;
-
-  SpellChecker.Dictionaries[0].Unload;
-
-  Application.OnHint := nil;
-  Application.OnShowHint := nil;
-
-  // Block notifications
-  FProject.BeginUpdate;
-
-  FProjectIndex := nil;
-
-  FModuleItemsDataSource.Free;
-  FProject.Free;
-
-  FreeAndNil(FPendingFileOpen);
-  FreeAndNil(FPendingFileOpenLock);
 end;
 
 // -----------------------------------------------------------------------------
@@ -5163,6 +5166,15 @@ begin
 end;
 
 // -----------------------------------------------------------------------------
+
+procedure TFormMain.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  // The Search dialog is owned by the Application and will be destroyed
+  // before the main form. Therefore we need to release the reference to it
+  // here, before the destruction begins, because it's too late to do it in
+  // our destructor.
+  FSearchProvider := nil;
+end;
 
 procedure TFormMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin

@@ -10,9 +10,9 @@ object FormMain: TFormMain
   OldCreateOrder = False
   ShowHint = True
   OnClick = ActionMainExecute
+  OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   OnShortCut = FormShortCut
   OnShow = FormShow
   PixelsPerInch = 96
