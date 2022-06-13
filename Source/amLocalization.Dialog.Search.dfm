@@ -96,7 +96,7 @@ inherited FormSearch: TFormSearch
       Index = 6
     end
     inherited LayoutGroupButtons: TdxLayoutGroup
-      ItemIndex = 1
+      ItemIndex = 7
     end
     object dxLayoutItem8: TdxLayoutItem
       Parent = LayoutGroupButtons
@@ -146,6 +146,13 @@ inherited FormSearch: TFormSearch
       ControlOptions.OriginalWidth = 75
       ControlOptions.ShowBorder = False
       Index = 1
+    end
+    object LayoutItemSynchronize: TdxLayoutCheckBoxItem
+      Parent = LayoutGroupButtons
+      AlignHorz = ahClient
+      AlignVert = avClient
+      Action = ActionSynchronize
+      Index = 7
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -378,6 +385,7 @@ inherited FormSearch: TFormSearch
           Navigator.Buttons.CustomButtons = <>
           ScrollbarAnnotations.CustomAnnotations = <>
           OnCellDblClick = GridResultTableViewCellDblClick
+          OnFocusedRecordChanged = GridResultTableViewFocusedRecordChanged
           DataController.Summary.DefaultGroupSummaryItems = <>
           DataController.Summary.FooterSummaryItems = <>
           DataController.Summary.SummaryGroups = <>
@@ -769,6 +777,13 @@ inherited FormSearch: TFormSearch
       ImageIndex = 9
       OnExecute = ActionMarkNotTranslatedExecute
       OnUpdate = ActionMarkUpdate
+    end
+    object ActionSynchronize: TAction
+      Category = 'Buttons'
+      AutoCheck = True
+      Caption = 'Synchronize'
+      Hint = 'Synchronize search result and editor selection'
+      OnExecute = ActionDummyExecute
     end
   end
   object PopupMenuMark: TdxBarPopupMenu

@@ -38,7 +38,7 @@ type
     function GetTranslationLanguage: TTranslationLanguage;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
 
-    function ViewItem(Item: TLocalizerProperty): boolean;
+    function ViewItem(Item: TLocalizerProperty; Focus: boolean = True): boolean;
     procedure InvalidateItem(Item: TLocalizerProperty);
   end;
 
@@ -165,6 +165,8 @@ type
     dxBarButton5: TdxBarButton;
     dxBarButton6: TdxBarButton;
     dxBarSeparator1: TdxBarSeparator;
+    LayoutItemSynchronize: TdxLayoutCheckBoxItem;
+    ActionSynchronize: TAction;
     procedure ButtonRegExHelpClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -192,6 +194,10 @@ type
     procedure ActionMarkProposedExecute(Sender: TObject);
     procedure ActionMarkTranslatedExecute(Sender: TObject);
     procedure ActionMarkNotTranslatedExecute(Sender: TObject);
+    procedure GridResultTableViewFocusedRecordChanged(
+      Sender: TcxCustomGridTableView; APrevFocusedRecord,
+      AFocusedRecord: TcxCustomGridRecord;
+      ANewItemRecordFocusingChanged: Boolean);
   private type
     TLocalizerItemStatusSet = set of TLocalizerItemStatus;
     TTranslationStatusSet = set of TTranslationStatus;
@@ -208,8 +214,9 @@ type
     FLastMessagePump: TStopwatch;
     FAbort: boolean;
     FSearchInProgress: boolean;
+    FSearchStopWatch: TStopWatch;
   protected
-    procedure ViewItem(Item: TLocalizerProperty);
+    procedure ViewItem(Item: TLocalizerProperty; Focus: boolean = False);
     function SearchItem(Prop: TLocalizerProperty): boolean;
     procedure DoSearch(const SearchString: string);
     procedure SetStatusText(const Msg: string);
@@ -277,6 +284,7 @@ begin
 
   EditSearchText.Properties.LookupItems.Assign(TranslationManagerSettings.Search.History);
   ComboBoxSearchScope.EditValue := TranslationManagerSettings.Search.Scope;
+  ActionSynchronize.Checked := TranslationManagerSettings.Search.Synchronize;
   GridResultTableView.RestoreFromRegistry(TranslationManagerSettings.Layout.KeyPath, False, False, [gsoUseFilter], TranslationManagerSettings.Layout.SearchResult.Name);
 end;
 
@@ -284,6 +292,7 @@ destructor TFormSearch.Destroy;
 begin
   TranslationManagerSettings.Search.History.Assign(EditSearchText.Properties.LookupItems);
   TranslationManagerSettings.Search.Scope := ComboBoxSearchScope.EditValue;
+  TranslationManagerSettings.Search.Synchronize := ActionSynchronize.Checked;
   GridResultTableView.StoreToRegistry(TranslationManagerSettings.Layout.KeyPath, False, [gsoUseFilter], TranslationManagerSettings.Layout.SearchResult.Name);
 
   FSearchResultDataSource.Free;
@@ -402,12 +411,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormSearch.ViewItem(Item: TLocalizerProperty);
+procedure TFormSearch.ViewItem(Item: TLocalizerProperty; Focus: boolean);
 begin
   ASSERT(Item <> nil);
 
   if (FSearchHost <> nil) then
-    FSearchHost.ViewItem(Item);
+    FSearchHost.ViewItem(Item, Focus);
 end;
 
 // -----------------------------------------------------------------------------
@@ -569,10 +578,18 @@ begin
     SearchResult.FoundIn := FoundText;
     FSearchResult.Add(SearchResult);
 
-    SetStatusText(Format(sSearchResultItems, [FSearchResult.Count]));
+    // it takes longer updating the status than doing the search so limit how
+    // often we update.
+    if (FSearchStopWatch.ElapsedMilliseconds > 50) then
+      SetStatusText(Format(sSearchResultItems, [FSearchResult.Count]));
   end;
 
-  ProcessMessages;
+  if (FSearchStopWatch.ElapsedMilliseconds > 50) then
+  begin
+    ProcessMessages;
+    FSearchStopWatch := TStopWatch.StartNew;
+  end;
+
   Result := (not FAbort);
 end;
 
@@ -633,6 +650,7 @@ begin
     LayoutItemAbort.Visible := True;
     ActionAbort.Enabled := True;
     FSearchInProgress := True;
+    FSearchStopWatch := TStopWatch.StartNew;
     try
 
       SearchRoot.Traverse(SearchItem, True);
@@ -689,7 +707,7 @@ begin
 
   var Index: integer := GridResultTableView.DataController.FocusedRecordIndex;
 
-  ViewItem(FSearchResult[Index].Prop);
+  ViewItem(FSearchResult[Index].Prop, True);
 end;
 
 procedure TFormSearch.ActionGoToUpdate(Sender: TObject);
@@ -882,6 +900,23 @@ procedure TFormSearch.GridResultTableViewCellDblClick(
 begin
   if (ActionGoTo.Enabled) then
     ActionGoTo.Execute;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSearch.GridResultTableViewFocusedRecordChanged(
+  Sender: TcxCustomGridTableView; APrevFocusedRecord,
+  AFocusedRecord: TcxCustomGridRecord; ANewItemRecordFocusingChanged: Boolean);
+begin
+  if (ActionSynchronize.Checked) then
+  begin
+    if (AFocusedRecord = nil) then
+      exit;
+
+    var Index: integer := AFocusedRecord.RecordIndex;
+
+    ViewItem(FSearchResult[Index].Prop, False);
+  end;
 end;
 
 // -----------------------------------------------------------------------------

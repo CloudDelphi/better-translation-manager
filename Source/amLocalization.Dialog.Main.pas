@@ -659,7 +659,7 @@ type
     procedure ReloadProperty(Prop: TLocalizerProperty);
     procedure RefreshModuleStats;
     procedure DoRefreshModuleStats;
-    function ViewProperty(Prop: TLocalizerProperty): boolean;
+    function ViewProperty(Prop: TLocalizerProperty; Focus: boolean = True): boolean;
     function ViewItem(Item: TLocalizerItem): boolean;
     function ViewModule(Module: TLocalizerModule): boolean;
     procedure TranslationAdded(AProp: TLocalizerProperty); overload;
@@ -7342,7 +7342,7 @@ begin
   QueueToast(sNodeItemHidden);
 end;
 
-function TFormMain.ViewProperty(Prop: TLocalizerProperty): boolean;
+function TFormMain.ViewProperty(Prop: TLocalizerProperty; Focus: boolean): boolean;
 var
   RowIndex, RecordIndex: integer;
 resourcestring
@@ -7364,7 +7364,8 @@ begin
       GridItemsTableView.Controller.ClearSelection;
       GridItemsTableView.ViewData.Rows[RowIndex].Selected := True;
       GridItemsTableView.ViewData.Rows[RowIndex].Focused := True;
-      GridItemsTableView.Control.SetFocus;
+      if (Focus) then
+        GridItemsTableView.Control.SetFocus;
 
       Result := True;
     end else

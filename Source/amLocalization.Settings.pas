@@ -364,7 +364,8 @@ type
   TTranslationManagerSearchSettings = class(TConfigurationSection)
   private
     FHistory: TConfigurationStringList;
-    FScope: integer; // TConfigurationStringList
+    FScope: integer;
+    FSynchronize: boolean;
   protected
   public
     constructor Create(AOwner: TConfigurationSection); override;
@@ -372,6 +373,7 @@ type
   published
     property History: TConfigurationStringList read FHistory;
     property Scope: integer read FScope write FScope default 8; // Translation
+    property Synchronize: boolean read FSynchronize write FSynchronize;
   end;
 
   TTranslationManagerStopListGroupSettings = class(TConfigurationStringList)
