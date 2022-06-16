@@ -157,15 +157,17 @@ For use in automated build systems the `amResourceModuleBuilder` command line ut
     Usage: amResourceModuleBuilder <projectfile> [options]
     
     Options:
-      -?               Display help (this message)
-      -t language      Only build for specified language
-      -b               Build resource module(s)
-      -v               Display verbose messages
-      -n scheme        File name scheme:
-                         0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)
-                         1: ISO 639-1 (e.g. EN, DA, DE, etc)
-                         2: RFC 4646 (e.g. en-US, da-DK, de-DE, etc)
-
+      -?                 Display help (this message)
+      -t:<language>      Only build for specified language
+      -b                 Build resource module(s)
+      -s:<source file>   Specify source file
+      -y:<symbol file>   Specify string symbols file
+      -o:<output folder> Specify resource module output folder
+      -v                 Display verbose messages
+      -n:<scheme>        File name scheme:
+                           0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)
+                           1: ISO 639-1 (e.g. EN, DA, DE, etc)
+                           2: RFC 4646 (e.g. en-US, da-DK, de-DE, etc)
 
 [^1]: The Delphi help uses an example with resource module files named Test.exe.fr-FR and Test.exe.de-DE. This example is wrong. The correct file names for that example would be Test.fr-FR and Test.de-DE.
 [^2]: One of the recent Delphi versions has unfortunately somewhat broken this logic when support for [Language Culture names](https://en.wikipedia.org/wiki/IETF_language_tag) was added. The current search order is now: #1 [RFC 4646](https://tools.ietf.org/html/rfc4646) with region, #2 RFC 4646 without region, #3 [ISO 639‑2](https://en.wikipedia.org/wiki/ISO_639-2) (includes region), #4 [ISO 639‑1](https://en.wikipedia.org/wiki/ISO_639-1) (no region). Since the language code of RFC 4646 is in fact ISO 639-1, search order  #1 and #3 are identical and region neutral translations now has precedence over region specific ones. [This is clearly a bug](https://quality.embarcadero.com/browse/RSP-26515).

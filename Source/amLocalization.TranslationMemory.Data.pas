@@ -143,6 +143,7 @@ uses
   Forms,
   Diagnostics,
   cxGraphics,
+  dxCoreGraphics, // To avoid inlining hint
   amCursorService,
   amVersionInfo,
   amFileUtils,

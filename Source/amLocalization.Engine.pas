@@ -1253,13 +1253,16 @@ begin
               ModuleProcessor.Free;
             end;
 
-            // Note: ModuleProcessor.Execute above can change the Kind of a module.
+            // Note: ModuleProcessor.Execute above can change the module Kind.
             // RT_RCDATA resources are created as mkForm by default and changed
             // in TModuleDFMResourceProcessor.Execute to mkOther if their
             // signature doesn't match that of a form.
             if (Module.Kind = mkOther) then
             begin
-              Module.Free;
+              if (ItemStateNew in Module.State) then
+                Module.Free
+              else
+                Module.SetState(ItemStateUnused);
               continue;
             end;
           end;
