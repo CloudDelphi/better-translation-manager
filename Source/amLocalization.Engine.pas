@@ -459,8 +459,7 @@ begin
   SourceStream := TResourceStream.Create(Instance, Module.Name, RT_RCDATA);
   try
 
-    SourceStream.Read(Signature, SizeOf(Signature));
-    if (Signature <> FilerSignature) then
+    if (SourceStream.Read(Signature, SizeOf(Signature)) <> SizeOf(Signature)) or (Signature <> FilerSignature) then
     begin
       if (Action = liaUpdateSource) then
       begin
@@ -991,11 +990,13 @@ begin
   begin
     if (ReadStream <> nil) then
     begin
-      ReadStream.Read(Size, SizeOf(Size));
+      if (ReadStream.Read(Size, SizeOf(Size)) <> SizeOf(Size)) then
+        break; // Corrupt resource
       SetLength(Value, Size);
 
       if (Size > 0) then
-        ReadStream.Read(PChar(Value)^, Size*SizeOf(Char));
+        if (ReadStream.Read(PChar(Value)^, Size*SizeOf(Char)) <> Size*SizeOf(Char)) then
+          break; // Corrupt resource
 
       // Skip string if value is empty and ID is unknown
       Name := '';
