@@ -45,7 +45,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; Check: not IsPortable
 
 [Files]
-Source: "{#MyAppSourceFolder}\amTranslationManager.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyAppSourceFolder}\amTranslationManager.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: editor
 Source: "{#MyAppSourceFolder}\amResourceModuleBuilder.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: buildtool
 Source: "Files\portable"; DestDir: "{app}"; Check: IsPortable
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -64,6 +64,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Types]
 Name: "full"; Description: "Full installation"
 ;Name: "compact"; Description: "Compact installation"
+Name: "commandline"; Description: "Build tools"
 Name: "custom"; Description: "Custom installation"; Flags: iscustom
 Name: "portable"; Description: "Portable installation"
 
@@ -71,10 +72,11 @@ Name: "portable"; Description: "Portable installation"
 UseRelativePaths=True
 
 [Components]
+Name: "editor"; Description: "Translation editor"; Types: custom full portable
 Name: "examples"; Description: "Examples"; Types: full custom; Check: not IsPortable
 Name: "spellcheck"; Description: "Spell Check dictionaries"; Types: full custom portable
 Name: "tm"; Description: "Sample Translation Memory"; Types: full custom portable
-Name: "buildtool"; Description: "Command line tool"; Types: portable
+Name: "buildtool"; Description: "Command line tool"; Types: portable commandline full
 
 [Registry]
 Root: "HKCU"; Subkey: "Software\Melander\TranslationManager"; ValueType: dword; ValueName: "Installed"; ValueData: "1"; Flags: createvalueifdoesntexist uninsdeletevalue
