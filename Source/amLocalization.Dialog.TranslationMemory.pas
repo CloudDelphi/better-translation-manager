@@ -114,6 +114,9 @@ type
     procedure GridTMDBTableViewColumnPosChanged(Sender: TcxGridTableView; AColumn: TcxGridColumn);
     procedure GridTMDBTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord;
       AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
+    procedure GridTMDBTableViewCellDblClick(Sender: TcxCustomGridTableView;
+      ACellViewInfo: TcxGridTableDataCellViewInfo; AButton: TMouseButton;
+      AShift: TShiftState; var AHandled: Boolean);
   private
     FTranslationMemory: ITranslationMemory;
     FPoupMenuColumn: TcxGridColumn;
@@ -848,6 +851,21 @@ begin
     PopupMenuHeader.Popup(X, Y);
   end else
     FPoupMenuColumn := nil;
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormTranslationMemory.GridTMDBTableViewCellDblClick(
+  Sender: TcxCustomGridTableView; ACellViewInfo: TcxGridTableDataCellViewInfo;
+  AButton: TMouseButton; AShift: TShiftState; var AHandled: Boolean);
+begin
+  // Double click starts edit mode.
+  // This works around DevExpress' unintuitive "very slow double click to edit"
+  if (ACellViewInfo.Item.Options.Editing) then
+  begin
+    Sender.Controller.EditingController.ShowEdit;
+    AHandled := True;
+  end;
 end;
 
 // -----------------------------------------------------------------------------

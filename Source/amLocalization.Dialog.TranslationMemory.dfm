@@ -125,6 +125,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
         TabOrder = 2
         object GridTMDBTableView: TcxGridDBTableView
           Navigator.Buttons.CustomButtons = <>
+          OnCellDblClick = GridTMDBTableViewCellDblClick
           OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
           OnInitEdit = GridTMDBTableViewInitEdit
           DataController.DataSource = DataSourceTranslationMemory
