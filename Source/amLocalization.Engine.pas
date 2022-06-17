@@ -461,7 +461,7 @@ begin
 
     if (SourceStream.Read(Signature, SizeOf(Signature)) <> SizeOf(Signature)) or (Signature <> FilerSignature) then
     begin
-      if (Action = liaUpdateSource) then
+      if (Action in [liaUpdateSource, liaTranslate]) then
       begin
         Module.Kind := mkOther;
         Module.Status := ItemStatusDontTranslate;
