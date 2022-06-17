@@ -368,6 +368,8 @@ type
     ComboBoxApplicationLanguage: TcxExtLookupComboBox;
     dxLayoutItem30: TdxLayoutItem;
     CheckBoxAutoShowMultiLineEditor: TcxCheckBox;
+    dxLayoutItem52: TdxLayoutItem;
+    CheckBoxFileProjectSaveNewState: TcxCheckBox;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -686,6 +688,7 @@ begin
   LoadFolders;
   CheckBoxSaveBackup.Checked := TranslationManagerSettings.Backup.SaveBackups;
   CheckBoxFileProjectOmitDontTranslate.Checked := not TranslationManagerSettings.Project.SaveDontTranslate;
+  CheckBoxFileProjectSaveNewState.Checked := TranslationManagerSettings.Project.SaveNewState;
   CheckBoxFileProjectSort.Checked := TranslationManagerSettings.Project.SaveSorted;
 
   (*
@@ -772,6 +775,7 @@ begin
   ApplyFolders;
   TranslationManagerSettings.Backup.SaveBackups := CheckBoxSaveBackup.Checked;
   TranslationManagerSettings.Project.SaveDontTranslate := not CheckBoxFileProjectOmitDontTranslate.Checked;
+  TranslationManagerSettings.Project.SaveNewState := CheckBoxFileProjectSaveNewState.Checked;
   TranslationManagerSettings.Project.SaveSorted := CheckBoxFileProjectSort.Checked;
 
   (*

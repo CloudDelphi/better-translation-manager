@@ -114,7 +114,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetGeneral
+        Properties.ActivePage = TabSheetFileLocations
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -1791,7 +1791,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel6: TcxLabel
               Left = 0
-              Top = 307
+              Top = 333
               AutoSize = False
               Caption = 'Document file recovery'
               Style.HotTrack = False
@@ -1804,29 +1804,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoRecovery: TcxCheckBox
               Left = 12
-              Top = 331
+              Top = 357
               Caption = 'Save auto-recovery information'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 8
+              TabOrder = 9
               Transparent = True
             end
             object EditAutoRecoveryInterval: TcxSpinEdit
               Left = 163
-              Top = 357
+              Top = 383
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 60.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 9
+              TabOrder = 10
               Value = 1
               Width = 53
             end
             object cxLabel10: TcxLabel
               Left = 0
-              Top = 395
+              Top = 421
               Anchors = [akLeft, akTop, akRight]
               AutoSize = False
               Caption = 'Backup files'
@@ -1840,29 +1840,29 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxHistoryBackup: TcxCheckBox
               Left = 12
-              Top = 445
+              Top = 471
               Caption = 'Save extra backup files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 12
+              TabOrder = 13
               Transparent = True
             end
             object EditHistoryBackupMaxFiles: TcxSpinEdit
               Left = 163
-              Top = 471
+              Top = 497
               Properties.Alignment.Horz = taRightJustify
               Properties.MaxValue = 100.000000000000000000
               Properties.MinValue = 1.000000000000000000
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 13
+              TabOrder = 14
               Value = 1
               Width = 53
             end
             object EditHistoryBackupMaxSize: TcxSpinEdit
               Left = 339
-              Top = 471
+              Top = 497
               Properties.Alignment.Horz = taRightJustify
               Properties.DisplayFormat = '0,0 Mb'
               Properties.EditFormat = '0,0'
@@ -1871,20 +1871,20 @@ inherited FormSettings: TFormSettings
               Properties.UseLeftAlignmentOnEditing = False
               Properties.ValidationOptions = [evoShowErrorIcon]
               Style.HotTrack = False
-              TabOrder = 14
+              TabOrder = 15
               Value = 100
               Width = 78
             end
             object CheckBoxSaveBackup: TcxCheckBox
               Left = 12
-              Top = 419
+              Top = 445
               Hint = 
                 'Save a backup of existing files when they are replaced with newe' +
                 'r files'
               Caption = 'Create backup of saved files'
               Style.HotTrack = False
               Style.TransparentBorder = False
-              TabOrder = 11
+              TabOrder = 12
               Transparent = True
             end
             object cxLabel7: TcxLabel
@@ -1905,7 +1905,8 @@ inherited FormSettings: TFormSettings
               Top = 247
               Hint = 
                 'Do not save items (modules, properties, etc.) that are marked "D' +
-                'on'#39't translate". This can save considerable space in the file.'
+                'on'#39't translate". This can save considerable space in the file. T' +
+                'he item values can be recreated by updating the project.'
               Caption = 'Omit "Don'#39't translate" items when saving'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -1914,11 +1915,24 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxFileProjectSort: TcxCheckBox
               Left = 12
-              Top = 273
+              Top = 299
               Hint = 
                 'Sort items when they are saved. This makes it easier to compare ' +
                 'two project files - For example for use in version control.'
               Caption = 'Save items sorted'
+              Style.HotTrack = False
+              Style.TransparentBorder = False
+              TabOrder = 7
+              Transparent = True
+            end
+            object CheckBoxFileProjectSaveNewState: TcxCheckBox
+              Left = 12
+              Top = 273
+              Hint = 
+                'Save the "New" state of items (modules, properties, etc.) when s' +
+                'aving. Omitting the "New" state can make it easier to compare tw' +
+                'o project files - For example for use in version control.'
+              Caption = 'Save "New" state'
               Style.HotTrack = False
               Style.TransparentBorder = False
               TabOrder = 6
@@ -2007,6 +2021,7 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutItem36: TdxLayoutItem
               Parent = dxLayoutGroup14
+              AlignHorz = ahLeft
               CaptionOptions.Visible = False
               Control = CheckBoxAutoRecovery
               ControlOptions.OriginalHeight = 19
@@ -2155,11 +2170,13 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               Offsets.Left = 12
               Hidden = True
+              ItemIndex = 1
               ShowBorder = False
               Index = 1
             end
             object dxLayoutItem70: TdxLayoutItem
               Parent = dxLayoutGroup26
+              AlignHorz = ahLeft
               CaptionOptions.Visible = False
               Control = CheckBoxFileProjectOmitDontTranslate
               ControlOptions.OriginalHeight = 19
@@ -2169,10 +2186,21 @@ inherited FormSettings: TFormSettings
             end
             object dxLayoutItem71: TdxLayoutItem
               Parent = dxLayoutGroup26
+              AlignHorz = ahLeft
               CaptionOptions.Visible = False
               Control = CheckBoxFileProjectSort
               ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 239
+              ControlOptions.OriginalWidth = 113
+              ControlOptions.ShowBorder = False
+              Index = 2
+            end
+            object dxLayoutItem52: TdxLayoutItem
+              Parent = dxLayoutGroup26
+              AlignHorz = ahLeft
+              CaptionOptions.Visible = False
+              Control = CheckBoxFileProjectSaveNewState
+              ControlOptions.OriginalHeight = 19
+              ControlOptions.OriginalWidth = 110
               ControlOptions.ShowBorder = False
               Index = 1
             end

@@ -4377,6 +4377,8 @@ begin
             Include(Options, soOmitDontTranslateItems);
           if (TranslationManagerSettings.Project.SaveSorted) then
             Include(Options, soSort);
+          if (not TranslationManagerSettings.Project.SaveNewState) then
+            Include(Options, soOmitNewState);
 
           TLocalizationProjectFiler.SaveToFile(FProject, Filename, Options, Progress);
 

@@ -537,6 +537,10 @@ type
     function Equals(const Left, Right: string): Boolean; override;
   end;
 
+// Locale invariant text comparision. Use when sort order needs to be stable
+// regardless of current user locale.
+function InvariantCompareText(const S1, S2: string): Integer;
+function InvariantSameText(const S1, S2: string): Boolean;
 
 // -----------------------------------------------------------------------------
 //
@@ -623,6 +627,16 @@ uses
   XMLDoc, XMLIntf,
   amLocale,
   amLocalization.Index;
+
+function InvariantCompareText(const S1, S2: string): Integer;
+begin
+  Result := CompareString(LOCALE_INVARIANT, NORM_IGNORECASE, PChar(S1), Length(S1), PChar(S2), Length(S2)) - CSTR_EQUAL;
+end;
+
+function InvariantSameText(const S1, S2: string): Boolean;
+begin
+  Result := InvariantCompareText(S1, S2) = 0;
+end;
 
 // -----------------------------------------------------------------------------
 //
@@ -1373,7 +1387,7 @@ begin
       begin
         Result := (Ord(Right.Kind) - Ord(Left.Kind)); // Reversed to order resourcestrings before forms
         if (Result = 0) then
-          Result := AnsiCompareText(Left.Name, Right.Name);
+          Result := InvariantCompareText(Left.Name, Right.Name);
       end));
 
   for Module in SortedModules do
@@ -1595,7 +1609,7 @@ begin
         if (Result = 0) then
         begin
           if (Left.Module.Kind = mkForm) or ((Left.ResourceID = 0) and  (Right.ResourceID = 0)) then
-            Result := AnsiCompareText(Left.Name, Right.Name)
+            Result := InvariantCompareText(Left.Name, Right.Name)
           else
           begin
             if (Left.ResourceID = 0) then
@@ -1788,7 +1802,7 @@ begin
     TArray.Sort<TLocalizerProperty>(SortedProps, TComparer<TLocalizerProperty>.Construct(
       function(const Left, Right: TLocalizerProperty): Integer
       begin
-        Result := AnsiCompareText(Left.Name, Right.Name);
+        Result := InvariantCompareText(Left.Name, Right.Name);
       end));
 
   for Prop in SortedProps do

@@ -24,7 +24,7 @@ uses
 // Save and load project.
 // -----------------------------------------------------------------------------
 type
-  TLocalizationSaveOption = (soOmitDontTranslateItems, soSort);
+  TLocalizationSaveOption = (soOmitDontTranslateItems, soSort, soOmitNewState);
   TLocalizationSaveOptions = set of TLocalizationSaveOption;
 
   TLocalizationProjectFiler = class
@@ -452,13 +452,17 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
 
   procedure WriteItemState(const Node: IXMLNode; Item: TCustomLocalizerItem);
   var
+    ItemState: TLocalizerItemStates;
     State: TLocalizerItemState;
     s: string;
   begin
     if (Item.InheritParentState) or (Item.State = []) then
       Exit;
     s := '';
-    for State in Item.State do
+    ItemState := Item.State;
+    if (soOmitNewState in AOptions) then
+      Exclude(ItemState, ItemStateNew); // Excluding "New" makes it easier to do version control on a project
+    for State in ItemState do
     begin
       if (s <> '') then
         s := s + ',';
@@ -536,11 +540,24 @@ begin
 
   RootNode := XML.AddChild(sLocalizationFileformatRoot);
 
+
   Node := RootNode.AddChild('meta');
   Node.AddChild('version').Text := IntToStr(LocalizationFileFormatVersionCurrent);
   Node.AddChild('created').Text := DateToISO8601(Now, False);
   Node.AddChild('tool').Text := TPath.GetFileNameWithoutExtension(ParamStr(0));
   Node.AddChild('toolversion').Text := TVersionInfo.FileVersionString(ParamStr(0));
+
+
+  Node := RootNode.AddChild('options');
+  // Store the stringlist handling setting that was used with the project
+  Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
+  // Indicate if "Don't Translate" items were included
+  Node.AddChild('junksaved').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
+  // Indicate if nodes are sorted
+  Node.AddChild('sorted').Text := (soSort in AOptions).ToString(TUseBoolStrs.True);
+  // Indicate if State="New" is saved
+  Node.AddChild('omitnewstate').Text := (soOmitNewState in AOptions).ToString(TUseBoolStrs.True);
+
 
   ProjectNode := RootNode.AddChild('project');
   // Paths are assumed to be absolute or relative to the project file
@@ -557,14 +574,6 @@ begin
     LanguageNode.Attributes['translated'] := Project.TranslationLanguages[i].TranslatedCount;
   end;
 
-  Node := RootNode.AddChild('options');
-  // Store the stringlist handling setting that was used with the project
-  Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
-  // Indicate if "Don't Translate" items were included
-  Node.AddChild('junksaved').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
-  // Indicate if nodes are sorted
-  Node.AddChild('sorted').Text := (soSort in AOptions).ToString(TUseBoolStrs.True);
-
   ModulesNode := ProjectNode.AddChild('modules');
 
   var Modules := Project.Modules.Values.ToArray;
@@ -574,7 +583,7 @@ begin
       begin
         Result := (Ord(Right.Kind) - Ord(Left.Kind)); // Reversed to order resourcestrings before forms
         if (Result = 0) then
-          Result := AnsiCompareText(Left.Name, Right.Name);
+          Result := InvariantCompareText(Left.Name, Right.Name);
       end));
 
   for Module in Modules do
@@ -597,7 +606,7 @@ begin
       TArray.Sort<TLocalizerItem>(Items, TComparer<TLocalizerItem>.Construct(
         function(const Left, Right: TLocalizerItem): Integer
         begin
-          Result := AnsiCompareText(Left.Name, Right.Name);
+          Result := InvariantCompareText(Left.Name, Right.Name);
         end));
 
     for Item in Items do
@@ -637,7 +646,7 @@ begin
         TArray.Sort<TLocalizerProperty>(Properties, TComparer<TLocalizerProperty>.Construct(
           function(const Left, Right: TLocalizerProperty): Integer
           begin
-            Result := AnsiCompareText(Left.Name, Right.Name);
+            Result := InvariantCompareText(Left.Name, Right.Name);
           end));
 
       for Prop in Properties do
