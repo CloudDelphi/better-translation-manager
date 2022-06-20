@@ -2682,10 +2682,10 @@ object FormMain: TFormMain
   end
   object TimerToast: TTimer
     Enabled = False
-    Interval = 3000
+    Interval = 5000
     OnTimer = TimerToastTimer
     Left = 296
-    Top = 200
+    Top = 224
   end
   object PopupMenuBuild: TdxRibbonPopupMenu
     BarManager = BarManager
@@ -2758,5 +2758,12 @@ object FormMain: TFormMain
     Left = 80
     Top = 442
     PixelsPerInch = 96
+  end
+  object TimerBlink: TTimer
+    Enabled = False
+    Interval = 300
+    OnTimer = TimerBlinkTimer
+    Left = 296
+    Top = 174
   end
 end

@@ -110,6 +110,7 @@ var
 //
 // -----------------------------------------------------------------------------
 const
+  ImageIndexEmpty               = 87;
   ImageIndexAbout               = 57;
   ImageIndexInfo                = 58;
   ImageIndexBookmark0           = 27;

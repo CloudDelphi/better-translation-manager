@@ -334,6 +334,7 @@ type
     BarManagerBarIntegration: TdxBar;
     dxBarButton23: TdxBarButton;
     ActionIntegrationTracking: TAction;
+    TimerBlink: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ActionProjectUpdateExecute(Sender: TObject);
@@ -495,6 +496,7 @@ type
     procedure TreeListModulesFocusedNodeChanged(Sender: TcxCustomTreeList;
       APrevFocusedNode, AFocusedNode: TcxTreeListNode);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure TimerBlinkTimer(Sender: TObject);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -549,10 +551,23 @@ type
     FShowHint: boolean;
     FHintProp: TLocalizerProperty;
     procedure HideHint;
+  private type
+    TBlinkDelegate = reference to procedure(Counter: integer);
+    TBlinkHandle = integer;
+  private const
+    NoBLink: TBlinkHandle = 0;
+    // Blink
+  private
+    // Blink
+    FBlinkers: TDictionary<TBlinkHandle, TBlinkDelegate>;
+    FBlinkCounter: integer;
+    function BeginBlink(Blinker: TBlinkDelegate): TBlinkHandle;
+    procedure EndBlink(Handle: TBlinkHandle);
   private
     // Toast messages
     FToastMessage: string;
-    procedure QueueToast(const Msg: string);
+    FToastBlink: TBlinkHandle;
+    procedure QueueToast(const Msg: string; Blink: boolean = False);
     procedure DismissToast; overload;
     procedure DismissToast(const Msg: string); overload;
   private
@@ -929,6 +944,8 @@ begin
 
   FreeAndNil(FPendingFileOpen);
   FreeAndNil(FPendingFileOpenLock);
+
+  FBlinkers.Free;
 
   inherited;
 end;
@@ -2032,13 +2049,67 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.QueueToast(const Msg: string);
+function TFormMain.BeginBlink(Blinker: TBlinkDelegate): TBlinkHandle;
+begin
+  if (FBlinkers = nil) then
+    FBlinkers := TDictionary<TBlinkHandle, TBlinkDelegate>.Create;
+
+  // Find unused handle
+  Result := Random(MaxInt)+1;
+  while (FBlinkers.ContainsKey(Handle)) do
+    Result := Random(MaxInt)+1;
+
+  FBlinkers.Add(Result, Blinker);
+
+  if (FBlinkers.Count = 1) then
+    TimerBlink.Enabled := True;
+end;
+
+procedure TFormMain.EndBlink(Handle: TBlinkHandle);
+begin
+  FBlinkers.Remove(Handle);
+  if (FBlinkers.Count = 0) then
+  begin
+    TimerBlink.Enabled := False;
+    FBlinkCounter := 0;
+  end;
+end;
+
+procedure TFormMain.TimerBlinkTimer(Sender: TObject);
+begin
+  Inc(FBlinkCounter);
+  for var Blinker in FBlinkers.Values.ToArray do
+    Blinker(FBlinkCounter);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.QueueToast(const Msg: string; Blink: boolean);
 begin
   TimerToast.Enabled := False;
   FToastMessage := Msg;
   StatusBar.Panels[StatusBarPanelHint].Text := FToastMessage;
   TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := ImageIndexInfo;
   TimerToast.Enabled := True;
+
+  if ((FToastBlink <> NoBLink) <> Blink) then
+  begin
+    if (Blink) then
+    begin
+      FToastBlink := BeginBlink(
+        procedure(Counter: integer)
+        begin
+          if (Counter and 1 = 0) then
+            TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := ImageIndexInfo
+          else
+            TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := ImageIndexEmpty;
+        end)
+    end else
+    begin
+      EndBlink(FToastBlink);
+      FToastBlink := NoBLink;
+    end;
+  end;
 end;
 
 procedure TFormMain.DismissToast;
@@ -2059,6 +2130,12 @@ begin
     TdxStatusBarTextPanelStyle(StatusBar.Panels[StatusBarPanelHint].PanelStyle).ImageIndex := -1;
     FToastMessage := '';
     TimerToast.Enabled := False;
+  end;
+
+  if (FToastBlink <> 0) then
+  begin
+    EndBlink(FToastBlink);
+    FToastBlink := NoBLink;
   end;
 end;
 

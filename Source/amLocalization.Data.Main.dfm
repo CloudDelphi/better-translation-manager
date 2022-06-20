@@ -487,7 +487,7 @@ object DataModuleMain: TDataModuleMain
   object ImageListSmall: TcxImageList
     SourceDPI = 96
     FormatVersion = 1
-    DesignInfo = 17825856
+    DesignInfo = 18088000
     ImageInfo = <
       item
         Image.Data = {
@@ -2996,6 +2996,17 @@ object DataModuleMain: TDataModuleMain
           F43E641C24A38C41D19DED1DB6F07681050201565A2DB166B355E18DC76B0412
           0E617FEF67C42C9B472F8D8DAD26E20A461C8ED792D4779ED6D760E00F2EF330
           49DA960F6D0000000049454E44AE426082}
+      end
+      item
+        ImageClass = 'TdxSmartImage'
+        Image.Data = {
+          89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+          6100000006624B474400FF00FF00FFA0BDA793000000097048597300000B1300
+          000B1301009A9C180000000774494D4507E2081B0E3B32DECB18C40000001249
+          44415438CB63601805A360148C0208000004100001853FAA720000000049454E
+          44AE426082}
+        FileName = 'Images\Miscellaneous\EmptySpace_16x16.png'
+        Keywords = 'Miscellaneous;EmptySpace'
       end>
   end
   object ImageListLarge: TcxImageList
