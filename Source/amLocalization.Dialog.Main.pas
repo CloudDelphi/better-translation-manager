@@ -660,7 +660,7 @@ type
     procedure RefreshModuleStats;
     procedure DoRefreshModuleStats;
     function ViewProperty(Prop: TLocalizerProperty; Focus: boolean = True): boolean;
-    function ViewItem(Item: TLocalizerItem): boolean;
+    function ViewItem(Item: TLocalizerItem; Exact: boolean): boolean;
     function ViewModule(Module: TLocalizerModule): boolean;
     procedure TranslationAdded(AProp: TLocalizerProperty); overload;
     procedure TranslationAdded(AProp: TLocalizerProperty; var AutoApplyTranslations, AutoApplyTranslationsSimilar: TTranslationAutoApply; var UpdatedSame, UpdatedSimilar: integer); overload;
@@ -4057,29 +4057,61 @@ begin
         if (FocusedModule = nil) then
           exit;
 
+        var Found := False;
         var Name: string := PChar(Msg.CopyDataStruct.lpData);
-
-        var BestMatchItem: TLocalizerItem := nil;
-        var OverSize := MaxInt;
-        for var Item in FocusedModule.Items.Values do
-          if (Item.Name.StartsWith(Name, True)) then
-          begin
-            var NewOverSize := Length(Item.Name) - Length(Name);
-            if (NewOverSize < OverSize) then
-            begin
-              OverSize := NewOverSize;
-              BestMatchItem := Item;
-
-              if (OverSize = 0) then
-                break;
-            end;
-          end;
-
-        if (BestMatchItem <> nil) then
+        if (Name <> '') then
         begin
-          ViewItem(BestMatchItem);
-          Msg.Result := 1;
+          var Items := TList<TLocalizerItem>.Create;
+          try
+            // Find the items that match the requested one, by name
+            for var Item in FocusedModule.Items.Values do
+              if (Item.Name.StartsWith(Name, True)) then
+                Items.Add(Item);
+
+            if (Items.Count > 0) then
+            begin
+              // Order the items so the closest match is first
+              Items.Sort(TComparer<TLocalizerItem>.Construct(
+                function(const A, B: TLocalizerItem): integer
+                begin
+                  Result := Length(A.Name)-Length(B.Name);
+                end));
+
+              // Try to focus item, from best to worst match.
+              for var Item in Items do
+                // If the item has been hidden by a filter (e.g. marked Don't
+                // translate) then ViewItem( ) will return False.
+                if (ViewItem(Item, True)) then
+                begin
+                  Found := True;
+                  break;
+                end;
+
+              if (not Found) then
+                // Do a non-exact match (Select item - or *any* before it)
+                Found := ViewItem(Items[0], False);
+            end;
+
+          finally
+            Items.Free;
+          end;
         end;
+
+        if (not Found) then
+        begin
+          // No candidate items were visible - Focus first row instead
+          GridItemsTableView.BeginUpdate;
+          try
+            GridItemsTableView.Controller.ClearSelection;
+            GridItemsTableView.Controller.TopRowIndex := 0;
+            GridItemsTableView.Controller.FocusedRowIndex := 0;
+            if (GridItemsTableView.Controller.FocusedRecordIndex <> -1) then
+              GridItemsTableView.Controller.FocusedRecord.Selected := True;
+          finally
+            GridItemsTableView.EndUpdate;
+          end;
+        end;
+        Msg.Result := 1;
       end;
   end;
 end;
@@ -7323,7 +7355,7 @@ begin
   Result := True;
 end;
 
-function TFormMain.ViewItem(Item: TLocalizerItem): boolean;
+function TFormMain.ViewItem(Item: TLocalizerItem; Exact: boolean): boolean;
 var
   RowIndex, RecordIndex: integer;
 resourcestring
@@ -7334,7 +7366,7 @@ begin
   if (not ViewModule(Item.Module)) then
     Exit;
 
-  // Find and select item row - or any row.
+  // Find and select item row (or any row if Exact = False).
   // Note: The following assumes that IndexOfItem does a backward search.
   RecordIndex := FModuleItemsDataSource.IndexOfItem(Item);
   while (RecordIndex >= 0) do
@@ -7350,7 +7382,9 @@ begin
 
       Result := True;
       Exit;
-    end;
+    end else
+    if (Exact) then
+      break;
 
     Dec(RecordIndex);
   end;
