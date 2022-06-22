@@ -430,13 +430,14 @@ function TModuleDFMResourceProcessor.Execute(Action: TLocalizerImportAction; Res
       exit;
     end;
 
-    SetLength(FRequiredPropertyRules, TranslationManagerSettings.Parser.Synthesize.Count);
-    for var i := 0 to TranslationManagerSettings.Parser.Synthesize.Count-1 do
+    SetLength(FRequiredPropertyRules, TranslationManagerSettings.Parser.Synthesize.Rules.Count);
+    var i := 0;
+    for var Rule in TranslationManagerSettings.Parser.Synthesize.Rules do
     begin
-      var Rule := TranslationManagerSettings.Parser.Synthesize.Rules[i];
       FRequiredPropertyRules[i].TypeMask := Rule.TypeMask;
       FRequiredPropertyRules[i].PropertyName := Rule.PropertyName;
       FRequiredPropertyRules[i].PropertyValue := Rule.PropertyValue;
+      Inc(i);
     end;
   end;
 
