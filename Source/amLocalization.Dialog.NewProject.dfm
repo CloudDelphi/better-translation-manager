@@ -2,22 +2,22 @@ inherited FormNewProject: TFormNewProject
   Caption = 'New project'
   ClientHeight = 234
   ClientWidth = 471
-  ExplicitWidth = 477
-  ExplicitHeight = 262
+  ExplicitWidth = 487
+  ExplicitHeight = 272
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 186
     Width = 471
     ExplicitTop = 186
     ExplicitWidth = 471
     inherited ButtonOK: TcxButton
-      Left = 304
-      ExplicitLeft = 304
+      Left = 284
+      ExplicitLeft = 284
     end
     inherited ButtonCancel: TcxButton
-      Left = 385
-      ExplicitLeft = 385
+      Left = 366
+      ExplicitLeft = 366
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -25,8 +25,8 @@ inherited FormNewProject: TFormNewProject
     ExplicitWidth = 471
     inherited LabelHeader: TcxLabel
       Caption = 'Create a new translation project'
-      ExplicitWidth = 449
-      Width = 449
+      ExplicitWidth = 428
+      Width = 428
     end
   end
   inherited PanelMain: TPanel
@@ -43,8 +43,8 @@ inherited FormNewProject: TFormNewProject
       ExplicitWidth = 455
       ExplicitHeight = 135
       object EditSourceApplication: TcxMRUEdit [0]
-        Left = 102
-        Top = 6
+        Left = 114
+        Top = 7
         Properties.ButtonGlyph.SourceDPI = 96
         Properties.ButtonGlyph.Data = {
           89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
@@ -74,8 +74,8 @@ inherited FormNewProject: TFormNewProject
         Width = 326
       end
       object ComboBoxSourceLanguage: TcxExtLookupComboBox [1]
-        Left = 102
-        Top = 33
+        Left = 114
+        Top = 37
         RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
         Properties.DropDownAutoSize = True
         Properties.DropDownSizeable = True
@@ -91,7 +91,7 @@ inherited FormNewProject: TFormNewProject
         CaptionOptions.Text = 'Source application:'
         Control = EditSourceApplication
         ControlOptions.AlignHorz = ahLeft
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 326
         ControlOptions.ShowBorder = False
         Index = 0
@@ -101,7 +101,7 @@ inherited FormNewProject: TFormNewProject
         CaptionOptions.Text = 'Source language:'
         Control = ComboBoxSourceLanguage
         ControlOptions.AlignHorz = ahLeft
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 199
         ControlOptions.ShowBorder = False
         Index = 1

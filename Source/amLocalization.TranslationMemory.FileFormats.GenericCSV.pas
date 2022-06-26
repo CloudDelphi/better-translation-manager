@@ -54,7 +54,7 @@ uses
   DB,
   amDataCsvReader,
   amCursorService,
-  amLocale,
+  amLanguageInfo,
   amProgress.Stream,
   amLocalization.TranslationMemory,
   amLocalization.Dialog.TargetLanguage;
@@ -96,18 +96,18 @@ function TTranslationMemoryFileFormatGenericCSV.DoLoadFromStream(Stream: TStream
 
   function GetField(const Language: string): TField;
   var
-    LocaleItem: TLocaleItem;
+    LanguageItem: TLanguageItem;
     LanguageName: string;
   begin
-    LocaleItem := TLocaleItems.FindLocaleName(Language);
-    if (LocaleItem = nil) then
+    LanguageItem := LanguageInfo.FindLocaleName(Language);
+    if (LanguageItem = nil) then
       Exit(nil);
 
-    LanguageName := LocaleItem.LocaleName;
+    LanguageName := LanguageItem.LocaleName;
 
     if (not Languages.TryGetValue(LanguageName, Result)) then
     begin
-      Result := TranslationMemory.CreateField(LocaleItem);
+      Result := TranslationMemory.CreateField(LanguageItem);
       Languages.Add(LanguageName, Result);
     end else
     // If we're merging then source language should be one of the existing languages

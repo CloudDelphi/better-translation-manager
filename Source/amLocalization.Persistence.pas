@@ -52,7 +52,8 @@ type
 const
   LocalizationFileFormatVersionUnknown = 1;             // Old verson that didn't write meta\version value
   LocalizationFileFormatVersionBadTextEncoding = 1;     // Old version with badly designed text encoding
-  LocalizationFileFormatVersionCurrent = 2;             // Current version
+  LocalizationFileFormatVersionLanguageName = 3;        // Language specified with RFC 4646 language-region codes.
+  LocalizationFileFormatVersionCurrent = 3;             // Current version
 
 const
   sLocalizationFileformatRoot = 'xlat';
@@ -78,7 +79,8 @@ uses
   XMLDoc, XMLIntf,
   System.Character,
   System.NetEncoding,
-  amLocale,
+//  amLocale,
+  amLanguageInfo,
   amPath,
   amVersionInfo;
 
@@ -255,8 +257,6 @@ var
   Item: TLocalizerItem;
   Prop: TLocalizerProperty;
   Language: TTranslationLanguage;
-  CachedLanguage: string;
-//  Translation: TLocalizerTranslation;
   TranslationStatus: TTranslationStatus;
   s: string;
   TextDecoder: TTextDecoder;
@@ -288,9 +288,6 @@ begin
   if (ProjectNode = nil) then
     raise ELocalizationPersistence.CreateFmt('Malformed project file. Project element not found: %s', ['project']);
 
-  Language := nil;
-  CachedLanguage := '';
-
   Project.BeginUpdate;
   try
     Project.Clear;
@@ -302,7 +299,13 @@ begin
     // UI will handle if the symbol file doesn't exist
     Project.StringSymbolFilename := VarToStr(ProjectNode.Attributes['stringsymbolfile']);
 
-    Project.SourceLanguageID := StrToIntDef(VarToStr(ProjectNode.Attributes['language']), 0);
+    s := VarToStr(ProjectNode.Attributes['language']);
+    var LanguageItem := LanguageInfo.FindLocale(s);
+
+    if (LanguageItem = nil) then
+      raise ELocalizationPersistence.CreateFmt('Unknown language: %s', [s]);
+
+    Project.SourceLanguage := LanguageItem;
 
     LanguagesNode := ProjectNode.ChildNodes.FindNode('targetlanguages');
     if (LanguagesNode <> nil) then
@@ -310,15 +313,19 @@ begin
     else
       LanguageNode := nil;
 
-    // Precreate target languages.
+    // Pre-create target languages.
     // This ensures that they are present in the language list even if there are no translations for them yet.
     while (LanguageNode <> nil) do
     begin
       if (LanguageNode.NodeName = 'language') then
       begin
         s := VarToStr(LanguageNode.Attributes['language']);
-        if (Language = nil) or (s <> CachedLanguage) then
-          Language := Project.TranslationLanguages.Add(StrToIntDef(s, 0));
+        LanguageItem := LanguageInfo.FindLocale(s);
+
+        if (LanguageItem = nil) then
+          raise ELocalizationPersistence.CreateFmt('Unknown language: %s', [s]);
+
+        Project.TranslationLanguages.Add(LanguageItem);
       end;
       LanguageNode := LanguageNode.NextSibling;
     end;
@@ -367,7 +374,6 @@ begin
                   if (PropNode.NodeName = 'property') then
                   begin
                     s := VarToStr(PropNode.ChildValues['value']);
-                    // s := s.Replace(#10, #13);
                     s := TextDecoder(s);
                     Prop := Item.AddProperty(VarToStr(PropNode.Attributes['name']), s);
                     Prop.ClearState(ItemStateNew);
@@ -385,13 +391,16 @@ begin
                         if (XlatNode.NodeName = 'translation') then
                         begin
                           s := VarToStr(XlatNode.Attributes['language']);
-                          if (Language = nil) or (s <> CachedLanguage) then
-                            Language := Project.TranslationLanguages.Add(StrToIntDef(s, 0));
+                          LanguageItem := LanguageInfo.FindLocale(s);
+
+                          if (LanguageItem = nil) then
+                            raise ELocalizationPersistence.CreateFmt('Unknown language: %s', [s]);
+
+                          Language := Project.TranslationLanguages.Add(LanguageItem);
+
                           TranslationStatus := StringToTranslationStatus(VarToStr(XlatNode.Attributes['status']));
-                          s := XlatNode.Text;
-                          // s := s.Replace(#10, #13);
-                          s := TextDecoder(s);
-                          {Translation :=} Prop.Translations.AddOrUpdateTranslation(Language, s, TranslationStatus);
+                          s := TextDecoder(XlatNode.Text);
+                          Prop.Translations.AddOrUpdateTranslation(Language, s, TranslationStatus);
                         end;
                         XlatNode := XlatNode.NextSibling;
                       end;
@@ -411,7 +420,7 @@ begin
 
                 // Add the resourcestring property.
                 // We don't have the value anymore, so we just add an empty string. The user must recover the value by
-                // doing a refresh.
+                // doing a refresh if they need it.
                 Prop := Item.AddProperty('', '');
                 Prop.ClearState(ItemStateNew);
 
@@ -563,14 +572,14 @@ begin
   // Paths are assumed to be absolute or relative to the project file
   ProjectNode.Attributes['sourcefile'] := Project.SourceFilename;
   ProjectNode.Attributes['stringsymbolfile'] := Project.StringSymbolFilename;
-  ProjectNode.Attributes['language'] := Project.SourceLanguageID;
+  ProjectNode.Attributes['language'] := Project.SourceLanguage.LocaleName;
   ProjectNode.Attributes['properties'] := Project.StatusCount[ItemStatusTranslate];
 
   LanguagesNode := ProjectNode.AddChild('targetlanguages');
   for i := 0 to Project.TranslationLanguages.Count-1 do
   begin
     LanguageNode := LanguagesNode.AddChild('language');
-    LanguageNode.Attributes['language'] := Project.TranslationLanguages[i].LanguageID;
+    LanguageNode.Attributes['language'] := Project.TranslationLanguages[i].Language.LocaleName;
     LanguageNode.Attributes['translated'] := Project.TranslationLanguages[i].TranslatedCount;
   end;
 
@@ -678,7 +687,7 @@ begin
               XlatsNode :=  PropNode.AddChild('translations');
 
             XlatNode := XlatsNode.AddChild('translation');
-            XlatNode.Attributes['language'] := Translation.Language.LanguageID;
+            XlatNode.Attributes['language'] := Translation.Language.Language.LocaleName;
             if (Translation.Status <> tStatusTranslated) then
               XlatNode.Attributes['status'] := sTranslationStatus[Translation.Status];
             XlatNode.Text := EncodeString(Translation.Value);

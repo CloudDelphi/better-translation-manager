@@ -1,7 +1,7 @@
 object DataModuleTranslationMemory: TDataModuleTranslationMemory
-  OldCreateOrder = False
   Height = 179
   Width = 258
+  PixelsPerInch = 96
   object DataSourceTranslationMemory: TDataSource
     DataSet = TableTranslationMemory
     Left = 76

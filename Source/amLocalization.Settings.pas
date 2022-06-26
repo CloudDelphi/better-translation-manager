@@ -419,8 +419,8 @@ type
     FSkin: string;
     FIncludeVersionInfo: boolean;
     FModuleNameScheme: TModuleNameScheme;
-    FDefaultTargetLanguage: LCID;
-    FDefaultSourceLanguage: LCID;
+    FDefaultSourceLocale: string;
+    FDefaultTargetLocale: string;
     FApplicationLanguage: LCID;
     FSafeMode: boolean;
     FAutoApplyStopList: boolean;
@@ -462,8 +462,9 @@ type
     property ModuleNameScheme: TModuleNameScheme read FModuleNameScheme write FModuleNameScheme;
 
     property ApplicationLanguage: LCID read FApplicationLanguage write FApplicationLanguage;
-    property DefaultSourceLanguage: LCID read FDefaultSourceLanguage write FDefaultSourceLanguage;
-    property DefaultTargetLanguage: LCID read FDefaultTargetLanguage write FDefaultTargetLanguage;
+    property DefaultSourceLocale: string read FDefaultSourceLocale write FDefaultSourceLocale;
+    property DefaultTargetLocale: string read FDefaultTargetLocale write FDefaultTargetLocale;
+
 
     property PortablePurge: boolean read FPortablePurge write FPortablePurge;
   end;
@@ -590,6 +591,7 @@ uses
   Types,
   Registry,
   amVersionInfo,
+  amLanguageInfo,
   amLocalization.Environment,
   amLocalization.TranslationMemory.Data.API;
 
@@ -1050,6 +1052,23 @@ var
   ThisVersionMajor: Word;
   VersionInfo: TVersionInfo;
 begin
+  // Import deprecated DefaultSourceLanguage and DefaultTargetLanguage values
+  var LocaleID: DWORD := DWORD(Registry.ReadInteger(Key, 'DefaultSourceLanguage', -1));
+  if (LocaleID <> DWORD(-1)) then
+  begin
+    var Language := LanguageInfo.FindLCID(LocaleID);
+    if (Language <> nil) then
+      FDefaultSourceLocale := Language.LocaleName;
+  end;
+
+  LocaleID := DWORD(Registry.ReadInteger(Key, 'DefaultTargetLanguage', -1));
+  if (LocaleID <> DWORD(-1)) then
+  begin
+    var Language := LanguageInfo.FindLCID(LocaleID);
+    if (Language <> nil) then
+      FDefaultTargetLocale := Language.LocaleName;
+  end;
+
   inherited ReadSection(Key);
 
   FSafeMode := Registry.ReadBoolean(Key, 'SafeMode', FSafeMode);
@@ -1072,6 +1091,10 @@ begin
 
   Registry.WriteBoolean(Key, 'SafeMode', False);
   Registry.WriteBoolean(Key, 'HasBeenRun', True);
+
+  // Remove deprecated settings
+  Registry.DeleteKey(Key, 'DefaultSourceLanguage');
+  Registry.DeleteKey(Key, 'DefaultTargetLanguage');
 end;
 
 procedure TTranslationManagerSystemSettings.SetSafeMode;

@@ -247,7 +247,6 @@ uses
 {$endif MADEXCEPT}
   amCursorService,
   amShell,
-  amLocale,
   amLocalization.Settings,
   amLocalization.Normalization,
   amLocalization.Data.Main;
@@ -266,8 +265,6 @@ var
 // -----------------------------------------------------------------------------
 
 constructor TFormSearch.Create(const ASearchHost: ILocalizerSearchHost);
-var
-  LocaleItem: TLocaleItem;
 begin
   inherited Create(Application);
   FSearchHost := ASearchHost;
@@ -275,8 +272,7 @@ begin
   FFuzzyThreshold := 1;
   FLastMessagePump := TStopwatch.StartNew;
 
-  LocaleItem := TLocaleItems.FindLCID(FSearchHost.Project.SourceLanguageID);
-  GridResultTableViewColumnSource.Caption := LocaleItem.LanguageName;
+  GridResultTableViewColumnSource.Caption := FSearchHost.Project.SourceLanguage.LanguageName;
 
   FSearchResult := TLocalizerSearchResultList.Create;
   FSearchResultDataSource := TLocalizerSearchResultDataSource.Create(FSearchHost, FSearchResult);
@@ -303,11 +299,8 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormSearch.Show;
-var
-  LocaleItem: TLocaleItem;
 begin
-  LocaleItem := TLocaleItems.FindLCID(FSearchHost.TranslationLanguage.LanguageID);
-  GridResultTableViewColumnTarget.Caption := LocaleItem.LanguageName;
+  GridResultTableViewColumnTarget.Caption := FSearchHost.TranslationLanguage.Language.LanguageName;
 
   inherited Show;
   SetFocus;

@@ -13,6 +13,7 @@ interface
 uses
   Classes,
   amProgress.API,
+  amLanguageInfo,
   amLocalization.TranslationMemory.FileFormats;
 
 // -----------------------------------------------------------------------------
@@ -23,7 +24,7 @@ uses
 type
   TTranslationMemoryFileFormatGlossaryCSV = class(TTranslationMemoryFileFormat)
   private
-    FTargetLanguage: string;
+    FTargetLanguage: TLanguageItem;
   protected
     function DoLoadFromStream(Stream: TStream; const Progress: IProgress; DetailedProgress: boolean; Translations: TTranslationMemoryFileFormat.TTranslations;
       Languages: TTranslationMemoryFileFormat.TLanguageFields; Merge: boolean; var SourceLanguage: string): boolean; override;
@@ -56,7 +57,6 @@ uses
   DB,
   amDataCsvReader,
   amCursorService,
-  amLocale,
   amProgress.Stream,
   amLocalization.TranslationMemory,
   amLocalization.Dialog.TargetLanguage;
@@ -94,14 +94,13 @@ function TTranslationMemoryFileFormatGlossaryCSV.Prepare(const Filename: string)
 var
   n: integer;
   s: string;
-  TargetLanguageGuess: string;
+  TargetLanguageGuess: TLanguageItem;
   FormTargetLanguage: TFormTargetLanguage;
-  LocaleItem: TLocaleItem;
 resourcestring
   sSelectTargetLanguage = 'Specify the target language';
 begin
-  FTargetLanguage := '';
-  TargetLanguageGuess := '';
+  FTargetLanguage := nil;
+  TargetLanguageGuess := nil;
 
   // Try to deduce target language from filename
   s := TPath.GetFileNameWithoutExtension(Filename);
@@ -111,32 +110,24 @@ begin
   if (n > 0) then
   begin
     s := Copy(s, 1, n-1);
-    if (TLocaleItems.FindLocaleName(s) <> nil) then
-      TargetLanguageGuess := s;
+    TargetLanguageGuess := LanguageInfo.FindLocaleName(s);
   end;
 
   // Make sure we have the correct target language
-  if (FTargetLanguage = '') then
+  if (FTargetLanguage = nil) then
   begin
     FormTargetLanguage := TFormTargetLanguage.Create(nil);
     try
-      LocaleItem := TLocaleItems.FindLocaleName(TargetLanguageGuess);
+      FormTargetLanguage.Language := TargetLanguageGuess;
 
-      if (LocaleItem <> nil) then
-        FormTargetLanguage.LanguageID := LocaleItem.Locale;
-
-      if (not FormTargetLanguage.Execute(sSelectTargetLanguage)) then
-        Exit(False);
-
-      LocaleItem := TLocaleItems.FindLCID(FormTargetLanguage.LanguageID);
-      if (LocaleItem <> nil) then
-        FTargetLanguage := LocaleItem.LocaleName;
+      if (FormTargetLanguage.Execute(sSelectTargetLanguage)) then
+        FTargetLanguage := FormTargetLanguage.Language;
     finally
       FormTargetLanguage.Free;
     end;
   end;
 
-  Result := True;
+  Result := (FTargetLanguage <> nil);
 end;
 
 // -----------------------------------------------------------------------------
@@ -145,21 +136,15 @@ function TTranslationMemoryFileFormatGlossaryCSV.DoLoadFromStream(Stream: TStrea
   Translations: TTranslationMemoryFileFormat.TTranslations; Languages: TTranslationMemoryFileFormat.TLanguageFields; Merge: boolean;
   var SourceLanguage: string): boolean;
 
-  function GetField(const Language: string): TField;
-  var
-    LocaleItem: TLocaleItem;
-    LanguageName: string;
+  function GetField(LanguageItem: TLanguageItem): TField;
   begin
-    LocaleItem := TLocaleItems.FindLocaleName(Language);
-    if (LocaleItem = nil) then
+    if (LanguageItem = nil) then
       Exit(nil);
 
-    LanguageName := LocaleItem.LocaleName;
-
-    if (not Languages.TryGetValue(LanguageName, Result)) then
+    if (not Languages.TryGetValue(LanguageItem.LocaleName, Result)) then
     begin
-      Result := TranslationMemory.CreateField(LocaleItem);
-      Languages.Add(LanguageName, Result);
+      Result := TranslationMemory.CreateField(LanguageItem);
+      Languages.Add(LanguageItem.LocaleName, Result);
     end;
   end;
 
@@ -181,14 +166,17 @@ begin
   Settings.FirstRow := 14; // Row 13 is the header
 
   SourceLanguage := 'en-US'; // Source language is always en-US
+  var SourceLanguageItem := LanguageInfo.FindLocaleName(SourceLanguage);
+  Assert(SourceLanguageItem <> nil);
 
-  SourceField := GetField(SourceLanguage);
+  SourceField := GetField(SourceLanguageItem);
   if (SourceField = nil) then
     raise ETranslationMemoryFileFormatMSGlossary.CreateFmt(sUnknownSourceLanguage, [SourceLanguage]);
 
+  Assert(FTargetLanguage <> nil);
   TargetField := GetField(FTargetLanguage);
   if (TargetField = nil) then
-    raise ETranslationMemoryFileFormatMSGlossary.CreateFmt(sUnknownTargetLanguage, [FTargetLanguage]);
+    raise ETranslationMemoryFileFormatMSGlossary.CreateFmt(sUnknownTargetLanguage, [FTargetLanguage.LocaleName]);
 
   if (DetailedProgress) then
     ProgressStream := TProgressStream.Create(Stream, Progress)

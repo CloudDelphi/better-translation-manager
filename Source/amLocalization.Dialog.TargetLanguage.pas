@@ -20,6 +20,7 @@ uses
   dxLayoutContainer, cxClasses, cxButtons, dxLayoutControl, cxTextEdit,
   cxMaskEdit, cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxDBExtLookupComboBox,
 
+  amLanguageInfo,
   amLocalization.Dialog;
 
 
@@ -29,12 +30,12 @@ type
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
     procedure ActionOKUpdate(Sender: TObject);
   private
-    function GetLanguageID: integer;
-    procedure SetLanguageID(const Value: integer);
+    function GetLanguage: TLanguageItem;
+    procedure SetLanguage(const Value: TLanguageItem);
   public
     function Execute(const Prompt: string): boolean;
 
-    property LanguageID: integer read GetLanguageID write SetLanguageID;
+    property Language: TLanguageItem read GetLanguage write SetLanguage;
   end;
 
 implementation
@@ -60,14 +61,17 @@ begin
   Result := (ShowModal = mrOK);
 end;
 
-function TFormTargetLanguage.GetLanguageID: integer;
+function TFormTargetLanguage.GetLanguage: TLanguageItem;
 begin
-  Result := ComboBoxSourceLanguage.EditValue;
+  Result := LanguageInfo.FindLocaleName(ComboBoxSourceLanguage.EditValue);
 end;
 
-procedure TFormTargetLanguage.SetLanguageID(const Value: integer);
+procedure TFormTargetLanguage.SetLanguage(const Value: TLanguageItem);
 begin
-  ComboBoxSourceLanguage.EditValue := Value;
+  if (Value <> nil) then
+    ComboBoxSourceLanguage.EditValue := Value.LocaleName
+  else
+    ComboBoxSourceLanguage.Clear;
 end;
 
 end.

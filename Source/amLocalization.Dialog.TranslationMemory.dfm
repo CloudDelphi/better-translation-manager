@@ -8,29 +8,29 @@ inherited FormTranslationMemory: TFormTranslationMemory
   ExplicitWidth = 718
   ExplicitHeight = 474
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 388
     Width = 702
     ExplicitTop = 388
     ExplicitWidth = 702
     inherited ButtonOK: TcxButton
-      Left = 536
-      Top = 10
+      Left = 515
+      Top = 13
       TabOrder = 3
-      ExplicitLeft = 536
-      ExplicitTop = 10
+      ExplicitLeft = 515
+      ExplicitTop = 13
     end
     inherited ButtonCancel: TcxButton
-      Left = 617
-      Top = 10
+      Left = 597
+      Top = 13
       TabOrder = 4
-      ExplicitLeft = 617
-      ExplicitTop = 10
+      ExplicitLeft = 597
+      ExplicitTop = 13
     end
     object ButtonClose: TcxButton [2]
-      Left = 455
-      Top = 10
+      Left = 433
+      Top = 13
       Width = 75
       Height = 25
       Cancel = True
@@ -39,16 +39,16 @@ inherited FormTranslationMemory: TFormTranslationMemory
       TabOrder = 2
     end
     object ButtonSaveAs: TcxButton [3]
-      Left = 91
-      Top = 10
+      Left = 95
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionExport
       TabOrder = 1
     end
     object ButtonLoad: TcxButton [4]
-      Left = 10
-      Top = 10
+      Left = 13
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionImport
@@ -101,8 +101,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Visible = False
     ExplicitWidth = 702
     inherited LabelHeader: TcxLabel
-      ExplicitWidth = 682
-      Width = 682
+      ExplicitWidth = 659
+      Width = 659
     end
   end
   inherited PanelMain: TPanel
@@ -118,13 +118,14 @@ inherited FormTranslationMemory: TFormTranslationMemory
       ExplicitWidth = 686
       ExplicitHeight = 337
       object GridTM: TcxGrid [0]
-        Left = 10
-        Top = 69
-        Width = 666
-        Height = 258
+        Left = 7
+        Top = 84
+        Width = 672
+        Height = 246
         TabOrder = 2
         object GridTMDBTableView: TcxGridDBTableView
           Navigator.Buttons.CustomButtons = <>
+          ScrollbarAnnotations.CustomAnnotations = <>
           OnCellDblClick = GridTMDBTableViewCellDblClick
           OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
           OnInitEdit = GridTMDBTableViewInitEdit
@@ -162,8 +163,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
         end
       end
       object ComboBoxLanguages: TcxComboBox [1]
-        Left = 78
-        Top = 30
+        Left = 77
+        Top = 41
         Properties.DropDownListStyle = lsFixedList
         Properties.OnChange = ComboBoxLanguagesPropertiesChange
         Style.HotTrack = False
@@ -171,8 +172,8 @@ inherited FormTranslationMemory: TFormTranslationMemory
         Width = 162
       end
       object ComboBoxOptions: TcxCheckComboBox [2]
-        Left = 308
-        Top = 30
+        Left = 314
+        Top = 41
         RepositoryItem = DataModuleMain.EditRepositoryCheckComboBoxNormalization
         Properties.Items = <>
         Properties.OnChange = ComboBoxOptionsPropertiesChange
@@ -197,7 +198,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
         Parent = LayoutGroupDuplicates
         CaptionOptions.Text = 'Language:'
         Control = ComboBoxLanguages
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 162
         ControlOptions.ShowBorder = False
         Index = 0
@@ -206,7 +207,7 @@ inherited FormTranslationMemory: TFormTranslationMemory
         Parent = LayoutGroupDuplicates
         CaptionOptions.Text = 'Options:'
         Control = ComboBoxOptions
-        ControlOptions.OriginalHeight = 21
+        ControlOptions.OriginalHeight = 23
         ControlOptions.OriginalWidth = 168
         ControlOptions.ShowBorder = False
         Index = 2
@@ -215,7 +216,11 @@ inherited FormTranslationMemory: TFormTranslationMemory
         Parent = LayoutControlGroup_Root
         CaptionOptions.Text = '&View duplicates'
         Visible = False
-        ButtonOptions.Buttons = <
+        ButtonOptions.ShowExpandButton = True
+        ItemIndex = 1
+        LayoutDirection = ldHorizontal
+        Index = 0
+        Buttons = <
           item
             Glyph.SourceDPI = 96
             Glyph.Data = {
@@ -246,16 +251,12 @@ inherited FormTranslationMemory: TFormTranslationMemory
               5F96130000000049454E44AE426082}
             OnClick = LayoutGroupDuplicatesButton0Click
           end>
-        ButtonOptions.ShowExpandButton = True
-        ItemIndex = 1
-        LayoutDirection = ldHorizontal
-        Index = 0
       end
       object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
         Parent = LayoutGroupDuplicates
-        CaptionOptions.Text = 'Empty Space Item'
         SizeOptions.Height = 10
         SizeOptions.Width = 10
+        CaptionOptions.Text = 'Empty Space Item'
         Index = 1
       end
     end

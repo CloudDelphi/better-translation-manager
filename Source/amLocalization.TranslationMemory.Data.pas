@@ -21,7 +21,7 @@ uses
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
 
-  amLocale,
+  amLanguageInfo,
   amProgress.API,
   amLocalization.Normalization,
   amLocalization.Model,
@@ -46,17 +46,19 @@ type
     FLoaded: boolean;
     FEnabled: boolean;
     FLookupIndex: ITranslationMemoryLookup;
-    FLookupLanguage: TLocaleItem;
+    FLookupLanguage: TLanguageItem;
     FModified: boolean;
     FRefreshEvent: TEvent;
     FProviderHandle: integer;
+    FAdding: boolean;
+    FImperfectLanguageMatchPrompt: boolean;
   private
-    function FindField(LocaleItem: TLocaleItem): TField; overload;
-    class function FindField(DataSet: TDataSet; LocaleItem: TLocaleItem): TField; overload;
+    function FindField(LanguageItem: TLanguageItem): TField; overload;
+    class function FindField(DataSet: TDataSet; LanguageItem: TLanguageItem): TField; overload;
     procedure FieldGetTextEventHandler(Sender: TField; var Text: string; DisplayText: Boolean);
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
-    function CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup; overload;
+    function CreateLookup(Language: TLanguageItem): ITranslationMemoryLookup; overload;
     function Add(SourceField: TField; const SourceValue: string; TargetField: TField; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
   protected
     // Threaded lookup
@@ -71,7 +73,7 @@ type
     property RefreshEvent: TEvent read FRefreshEvent;
   protected
     // ITranslationMemory
-    function CreateField(LocaleItem: TLocaleItem): TField;
+    function CreateField(LanguageItem: TLanguageItem): TField;
     function SaveTableTranslationMemoryClone: IInterface;
     function GetTranslationMemoryDataSet: TDataSet;
     function ITranslationMemory.AddTerm = AddTerm;
@@ -83,19 +85,21 @@ type
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(const Filename: string);
 
-    function Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    procedure BeginAdd;
+    function Add(SourceLanguage: TLanguageItem; const SourceValue: string; TargetLanguage: TLanguageItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    procedure EndAdd;
 
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
     procedure SetLoaded; // For use when loading TMX as main TM
 
-    function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
-    function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
-    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
-    function FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
-    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
-    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
+    function GetLanguages: TArray<TLanguageItem>;
+    function CreateLookup(Language: TLanguageItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup; overload;
+    function CreateBackgroundLookup(SourceLanguage, TargetLanguage: TLanguageItem; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLanguageItem): boolean;
+    function FindTerms(Language: TLanguageItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean; overload;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
     function GetEnabled: boolean;
     procedure SetEnabled(const Value: boolean);
@@ -111,8 +115,8 @@ type
     property Enabled: boolean read GetEnabled write SetEnabled;
   protected
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; override;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; override;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean; override;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean; override;
     procedure EndLookup; override;
     function GetProviderName: string; override;
   public
@@ -156,8 +160,10 @@ uses
 const
   sTMFileSignature: AnsiString = 'amTranslationManagerTM';
 
+  // 2.1        Locale is saved as LCID
+  // 2.2        Locale is saved as RFC 4646 locale name
   TMFileVersionMajor = 2;
-  TMFileVersionMinor = 1;
+  TMFileVersionMinor = 2;
 
 type
   TTMStreamTag = (tmDescription, tmLanguages, tmTerms);
@@ -176,17 +182,17 @@ type
     function Lookup(const Value: string): TTranslationMemoryRecordList;
     function GetValues: TArray<string>;
   public
-    constructor Create(DataSet: TDataSet; Language: TLocaleItem; const Progress: IProgress = nil); overload;
-    constructor Create(DataSet: TDataSet; Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil); overload;
+    constructor Create(DataSet: TDataSet; Language: TLanguageItem; const Progress: IProgress = nil); overload;
+    constructor Create(DataSet: TDataSet; Language: TLanguageItem; SanitizeRules: TSanitizeRules; const Progress: IProgress = nil); overload;
     destructor Destroy; override;
   end;
 
-constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLocaleItem; const Progress: IProgress);
+constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLanguageItem; const Progress: IProgress);
 begin
   Create(DataSet, Language, TranslationManagerSettings.Editor.SanitizeRules, Progress);
 end;
 
-constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress);
+constructor TTranslationMemoryLookup.Create(DataSet: TDataSet; Language: TLanguageItem; SanitizeRules: TSanitizeRules; const Progress: IProgress);
 var
   Field: TField;
   Clone: TFDMemTable;
@@ -641,12 +647,12 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem): ITranslationMemoryLookup;
+function TDataModuleTranslationMemory.CreateLookup(Language: TLanguageItem): ITranslationMemoryLookup;
 begin
   Result := CreateLookup(Language, TranslationManagerSettings.Editor.SanitizeRules);
 end;
 
-function TDataModuleTranslationMemory.CreateLookup(Language: TLocaleItem; SanitizeRules: TSanitizeRules; const Progress: IProgress): ITranslationMemoryLookup;
+function TDataModuleTranslationMemory.CreateLookup(Language: TLanguageItem; SanitizeRules: TSanitizeRules; const Progress: IProgress): ITranslationMemoryLookup;
 var
   Field: TField;
 begin
@@ -665,27 +671,19 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
-var
-  SourceLocaleItem, TargetLocaleItem: TLocaleItem;
-  SourceField, TargetField: TField;
+function TDataModuleTranslationMemory.CreateBackgroundLookup(SourceLanguage, TargetLanguage: TLanguageItem; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
 begin
   if (SourceLanguage = TargetLanguage) then
     Exit(nil);
 
-  if (SourceLanguage = 0) or (TargetLanguage = 0) then
+  if (SourceLanguage = nil) or (TargetLanguage = nil) then
     Exit(nil);
 
   if (not CheckLoaded) then
     Exit(nil);
 
-  SourceLocaleItem := TLocaleItems.FindLCID(SourceLanguage);
-  TargetLocaleItem := TLocaleItems.FindLCID(TargetLanguage);
-  Assert(SourceLocaleItem <> nil);
-  Assert(TargetLocaleItem <> nil);
-
-  SourceField := FindField(SourceLocaleItem);
-  TargetField := FindField(TargetLocaleItem);
+  var SourceField := FindField(SourceLanguage);
+  var TargetField := FindField(TargetLanguage);
 
   if (SourceField = nil) or (TargetField = nil) then
     Exit(nil);
@@ -695,16 +693,16 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.CreateField(LocaleItem: TLocaleItem): TField;
+function TDataModuleTranslationMemory.CreateField(LanguageItem: TLanguageItem): TField;
 begin
-  if (LocaleItem = nil) then
+  if (LanguageItem = nil) then
     Exit(nil);
 
   Result := TWideMemoField.Create(TableTranslationMemory);
 
-  Result.DisplayLabel := LocaleItem.LanguageName;
-  Result.Tag := LocaleItem.Locale;
-  Result.FieldName := LocaleItem.LocaleName;
+  Result.DisplayLabel := LanguageItem.LanguageName;
+  Result.Tag := NativeInt(LanguageItem);
+  Result.FieldName := LanguageItem.LocaleName;
   Result.DataSet := TableTranslationMemory;
   Result.DisplayWidth := 100;
   Result.OnGetText := FieldGetTextEventHandler; // Otherwise memo is edited as "(WIDEMEMO)"
@@ -774,18 +772,44 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.FindField(LocaleItem: TLocaleItem): TField;
+function TDataModuleTranslationMemory.FindField(LanguageItem: TLanguageItem): TField;
 begin
-  Result := FindField(TableTranslationMemory, LocaleItem);
+  Result := FindField(TableTranslationMemory, LanguageItem);
 end;
 
-class function TDataModuleTranslationMemory.FindField(DataSet: TDataSet; LocaleItem: TLocaleItem): TField;
+class function TDataModuleTranslationMemory.FindField(DataSet: TDataSet; LanguageItem: TLanguageItem): TField;
 var
   i: integer;
 begin
+  // Look for perfect language item match
   for i := 0 to DataSet.FieldCount-1 do
-    if (AnsiSameText(LocaleItem.LocaleName, DataSet.Fields[i].FieldName)) then
+    if (LanguageItem = TLanguageItem(DataSet.Fields[i].Tag)) then
       Exit(DataSet.Fields[i]);
+
+  // Look for perfect match on locale name (should be identical to above)
+  for i := 0 to DataSet.FieldCount-1 do
+    if (AnsiSameText(LanguageItem.LocaleName, DataSet.Fields[i].FieldName)) then
+      Exit(DataSet.Fields[i]);
+
+  // Recursive match on fallback
+  var Fallback := LanguageItem.Fallback;
+  if (Fallback <> nil) then
+  begin
+    Result := FindField(DataSet, Fallback);
+    if (Result <> nil) then
+      exit;
+  end;
+
+  // Look for match on ISO 639-1 (language, invariant)
+  for i := 0 to DataSet.FieldCount-1 do
+    if (LanguageItem.ISO639_1Name = TLanguageItem(DataSet.Fields[i].Tag).ISO639_1Name) then
+      Exit(DataSet.Fields[i]);
+
+  // Look for match on LCID
+  for i := 0 to DataSet.FieldCount-1 do
+    if (LanguageItem.LocaleID = TLanguageItem(DataSet.Fields[i].Tag).LocaleID) then
+      Exit(DataSet.Fields[i]);
+
   Result := nil;
 end;
 
@@ -816,14 +840,14 @@ begin
   Result := FLoaded;
 end;
 
-function TDataModuleTranslationMemory.GetLanguages: TArray<TLocaleItem>;
+function TDataModuleTranslationMemory.GetLanguages: TArray<TLanguageItem>;
 var
   i: integer;
 begin
   SetLength(Result, TableTranslationMemory.FieldCount);
 
   for i := 0 to TableTranslationMemory.FieldCount-1 do
-    Result[i] := TLocaleItems.FindLCID(TableTranslationMemory.Fields[i].Tag);
+    Result[i] := TLanguageItem(TableTranslationMemory.Fields[i].Tag);
 end;
 
 function TDataModuleTranslationMemory.GetModified: boolean;
@@ -860,7 +884,7 @@ var
   s: string;
   DuplicateFound: boolean;
   DuplicateTermPair: TPair<TField, TDuplicateTerms>;
-  SourceLanguage, TargetLanguage: TLocaleItem;
+  SourceLanguage, TargetLanguage: TLanguageItem;
   SourceLanguageName, TargetLanguageName: string;
   DuplicateCount: integer;
   DuplicateChoice: TDuplicateChoice;
@@ -954,12 +978,12 @@ begin
       end;
       Assert(DuplicateCount > 0);
 
-      SourceLanguage := TLocaleItems.FindLocaleName(SourceField.FieldName);
+      SourceLanguage := LanguageInfo.FindLocaleName(SourceField.FieldName);
       if (SourceLanguage <> nil) then
         SourceLanguageName := SourceLanguage.LanguageName
       else
         SourceLanguageName := SourceField.FieldName;
-      TargetLanguage := TLocaleItems.FindLocaleName(TargetField.FieldName);
+      TargetLanguage := LanguageInfo.FindLocaleName(TargetField.FieldName);
       if (TargetLanguage <> nil) then
         TargetLanguageName := TargetLanguage.LanguageName
       else
@@ -1183,12 +1207,34 @@ begin
   end;
 end;
 
-function TDataModuleTranslationMemory.Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction;
+procedure TDataModuleTranslationMemory.BeginAdd;
+begin
+  if (FAdding) then
+    raise Exception.Create('Nested BeginAdd not allowed');
+  FAdding := True;
+  FImperfectLanguageMatchPrompt := True;
+end;
+
+procedure TDataModuleTranslationMemory.EndAdd;
+begin
+  if (not FAdding) then
+    raise Exception.Create('EndAdd without BeginAdd not allowed');
+  FAdding := False;
+end;
+
+function TDataModuleTranslationMemory.Add(SourceLanguage: TLanguageItem; const SourceValue: string; TargetLanguage: TLanguageItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction;
 var
   SourceField: TField;
   TargetField: TField;
   Clone: TFDMemTable;
+resourcestring
+  sImperfectLanguageMatch = 'The Translation Memory does not contain the exact language you are adding:'#13#13+'  %s - %s'#13#13+
+    'Do you want to create this language in the Translation Memory?'#13#13+
+    'If you answer No the following existing language will be used instead:'#13#13+'  %s - %s';
 begin
+  if (not FAdding) then
+    raise Exception.Create('BeginAdd has not been called');
+
   Stats := Default(TTranslationMemoryMergeStats);
   Result := DuplicateAction;
 
@@ -1204,9 +1250,28 @@ begin
   SourceField := FindField(SourceLanguage);
   TargetField := FindField(TargetLanguage);
 
+  if (TargetField <> nil) and (TLanguageItem(TargetField.Tag) <> TargetLanguage) then
+  begin
+    var Res: integer;
+
+    if (FImperfectLanguageMatchPrompt) then
+    begin
+      Res := MessageDlg(Format(sImperfectLanguageMatch, [TargetLanguage.LocaleName, TargetLanguage.LanguageName, TLanguageItem(TargetField.Tag).LocaleName, TLanguageItem(TargetField.Tag).LanguageName]),
+        mtConfirmation, [mbYes, mbNo, mbCancel], 0, mbCancel);
+
+      FImperfectLanguageMatchPrompt := False;
+
+      if (Res = mrCancel) then
+        Exit(tmDupActionAbort);
+
+      if (Res = mrYes) then
+        TargetField := nil;
+    end;
+  end;
+
   TableTranslationMemory.DisableControls;
   try
-    // If either the source- or target languages doesn't exist in the dataset then we
+    // If neither the source- nor target languages exists in the dataset then we
     // will need to add them.
     if (SourceField = nil) or (TargetField = nil) then
     begin
@@ -1262,6 +1327,8 @@ begin
 end;
 
 procedure TDataModuleTranslationMemory.LoadFromStream(Stream: TStream);
+var
+  VersionMajor, VersionMinor: integer;
 
   procedure LoadLanguages(Reader: TReader);
   var
@@ -1276,7 +1343,19 @@ procedure TDataModuleTranslationMemory.LoadFromStream(Stream: TStream);
 
       Reader.ReadListBegin;
       begin
-        Field.Tag := Reader.ReadInteger;
+        var LanguageItem: TLanguageItem;
+        if (VersionMajor = 2) and (VersionMinor <= 1) then
+        begin
+          // v2.1 : Locale is a LCID
+          var LocaleID := Reader.ReadInteger;
+          LanguageItem := LanguageInfo.FindLCID(LocaleID);
+        end else
+        begin
+          // v2.2+ : Locale is a RFC 4646 locale name
+          var LocaleName := Reader.ReadString;
+          LanguageItem := LanguageInfo.FindLocaleName(LocaleName);
+        end;
+        Field.Tag := NativeInt(LanguageItem);
         Field.FieldName := Reader.ReadString;
         Field.DisplayLabel := Reader.ReadString;
 
@@ -1339,7 +1418,6 @@ procedure TDataModuleTranslationMemory.LoadFromStream(Stream: TStream);
 var
   Signature: AnsiString;
   Reader: TReader;
-  VersionMajor, VersionMinor: integer;
   n: integer;
   Progress: IProgress;
   ProgressStream: TStream;
@@ -1473,7 +1551,7 @@ var
       begin
         Writer.WriteListBegin;
         begin
-          Writer.WriteInteger(TableTranslationMemory.Fields[i].Tag); // LCID
+          Writer.WriteString(TLanguageItem(TableTranslationMemory.Fields[i].Tag).LocaleName); // RFC 4646 locale name
           Writer.WriteString(TableTranslationMemory.Fields[i].FieldName); // Locale short name
           Writer.WriteString(TableTranslationMemory.Fields[i].DisplayName); // Locale name
         end;
@@ -1619,7 +1697,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
+function TDataModuleTranslationMemory.HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLanguageItem): boolean;
 var
   SourceField: TField;
   SourceValue: string;
@@ -1657,7 +1735,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult;
+function TDataModuleTranslationMemory.FindTerms(Language: TLanguageItem; const Value: string; LookupResult: TTranslationLookupResult;
   RankResult: boolean): boolean;
 begin
   if (not CheckLoaded) then
@@ -1701,7 +1779,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean;
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; LookupResult: TTranslationLookupResult): boolean;
 var
   SourceField: TField;
   TargetField: TField;
@@ -1743,7 +1821,7 @@ begin
   end;
 end;
 
-function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TDataModuleTranslationMemory.FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
 var
   LookupResult: TTranslationLookupResult;
 begin
@@ -1774,7 +1852,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TDataModuleTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
 var
   SourceField, TargetField: TField;
   List: TTranslationMemoryRecordList;
@@ -1900,7 +1978,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TDataModuleTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TDataModuleTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 var
   SourceField: TField;
   TargetField: TField;

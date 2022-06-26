@@ -14,7 +14,7 @@ uses
   System.SysUtils, System.Classes,
   IPPeerClient, REST.Client, REST.Types, Data.Bind.Components, Data.Bind.ObjectScope,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Model,
   amLocalization.Provider;
 
@@ -42,8 +42,8 @@ type
   private
   protected
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; override;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; override;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean; override;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean; override;
     function GetProviderName: string; override;
 
     // ITranslationProviderMicrosoftV3
@@ -80,7 +80,7 @@ resourcestring
 // TTranslationProviderMicrosoftV3
 //
 // -----------------------------------------------------------------------------
-function TTranslationProviderMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TTranslationProviderMicrosoftV3.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 resourcestring
   sPrompMicrosoftV3APIKey = 'You must register an API key before the Microsoft Translator v3 service can be used.';
 begin
@@ -101,7 +101,7 @@ begin
   Result := sProviderNameMSTranslator;
 end;
 
-function TTranslationProviderMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TTranslationProviderMicrosoftV3.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
 var
   JsonResultArray: TJsonArray;
   JsonTranslationItem: TJsonObject;

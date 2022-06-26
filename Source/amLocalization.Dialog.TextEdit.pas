@@ -20,7 +20,7 @@ uses
   cxContainer, cxEdit, cxTextEdit, cxMemo, cxRichEdit, cxButtons, cxSplitter, cxImageList,
   dxLayoutControlAdapters, dxLayoutcxEditAdapters, cxLabel, dxLayoutContainer, cxClasses, dxLayoutControl,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Dialog;
 
 type
@@ -72,20 +72,20 @@ type
     procedure FileSaveAs1Accept(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    FTargetLanguage: TLocaleItem;
-    FSourceLanguage: TLocaleItem;
+    FTargetLanguage: TLanguageItem;
+    FSourceLanguage: TLanguageItem;
     function GetText: string;
     procedure SetText(const Value: string);
     function GetSourceText: string;
     procedure SetSourceText(const Value: string);
-    procedure SetTargetLanguage(Value: TLocaleItem);
-    procedure SetSourceLanguage(const Value: TLocaleItem);
+    procedure SetTargetLanguage(Value: TLanguageItem);
+    procedure SetSourceLanguage(const Value: TLanguageItem);
   public
     function Execute(ShowSourceValue: boolean = True): boolean;
     property Text: string read GetText write SetText;
     property SourceText: string read GetSourceText write SetSourceText;
-    property SourceLanguage: TLocaleItem read FSourceLanguage write SetSourceLanguage;
-    property TargetLanguage: TLocaleItem read FTargetLanguage write SetTargetLanguage;
+    property SourceLanguage: TLanguageItem read FSourceLanguage write SetSourceLanguage;
+    property TargetLanguage: TLanguageItem read FTargetLanguage write SetTargetLanguage;
   end;
 
 implementation
@@ -173,7 +173,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TFormTextEditor.SetSourceLanguage(const Value: TLocaleItem);
+procedure TFormTextEditor.SetSourceLanguage(const Value: TLanguageItem);
 begin
   FSourceLanguage := Value;
 
@@ -184,7 +184,7 @@ begin
   LabelTargetName.Visible := LabelSourceName.Visible;
 end;
 
-procedure TFormTextEditor.SetTargetLanguage(Value: TLocaleItem);
+procedure TFormTextEditor.SetTargetLanguage(Value: TLanguageItem);
 begin
   FTargetLanguage := Value;
 

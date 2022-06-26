@@ -9,11 +9,10 @@ object FormCSVImport: TFormCSVImport
   Constraints.MinHeight = 400
   Constraints.MinWidth = 500
   ParentFont = True
-  OldCreateOrder = False
   Position = poMainFormCenter
   ShowHint = True
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object WizardControl: TdxWizardControl
     Left = 0
     Top = 0
@@ -25,28 +24,24 @@ object FormCSVImport: TFormCSVImport
     ViewStyle = wcvsAero
     OnButtonClick = WizardControlButtonClick
     OnPageChanging = WizardControlPageChanging
-    ExplicitWidth = 631
-    ExplicitHeight = 465
     object WizardControlPageFile: TdxWizardControlPage
       Header.Title = 'Select source file'
       object LayoutControlFile: TdxLayoutControl
         Left = 0
         Top = 0
         Width = 550
-        Height = 293
+        Height = 291
         Align = alClient
         ParentBackground = True
         TabOrder = 0
         Transparent = True
         LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-        ExplicitWidth = 584
-        ExplicitHeight = 296
         DesignSize = (
           550
-          293)
+          291)
         object EditFilename: TcxButtonEdit
-          Left = 58
-          Top = 6
+          Left = 66
+          Top = 7
           Anchors = [akLeft, akTop, akRight]
           Properties.Buttons = <
             item
@@ -58,11 +53,11 @@ object FormCSVImport: TFormCSVImport
           Properties.OnEditValueChanged = EditFilenamePropertiesEditValueChanged
           TabOrder = 0
           TextHint = 'Enter the name of the file to import from'
-          Width = 486
+          Width = 477
         end
         object ComboBoxEncoding: TcxLookupComboBox
-          Left = 58
-          Top = 33
+          Left = 66
+          Top = 37
           Properties.DropDownAutoSize = True
           Properties.DropDownListStyle = lsFixedList
           Properties.DropDownSizeable = True
@@ -91,8 +86,8 @@ object FormCSVImport: TFormCSVImport
           Width = 145
         end
         object ButtonEncoding: TcxButton
-          Left = 209
-          Top = 33
+          Left = 218
+          Top = 37
           Width = 24
           Height = 21
           Action = ActionFileEncodingWarning
@@ -105,8 +100,8 @@ object FormCSVImport: TFormCSVImport
           TabOrder = 2
         end
         object MemoFilePreview: TcxMemo
-          Left = 6
-          Top = 90
+          Left = 7
+          Top = 99
           TabStop = False
           ParentFont = False
           Properties.ReadOnly = True
@@ -122,13 +117,12 @@ object FormCSVImport: TFormCSVImport
           Style.TransparentBorder = False
           Style.IsFontAssigned = True
           TabOrder = 3
-          Height = 197
-          Width = 538
+          Height = 185
+          Width = 536
         end
         object LayoutControlFileGroup_Root: TdxLayoutGroup
           AlignHorz = ahClient
           AlignVert = avClient
-          ButtonOptions.Buttons = <>
           Hidden = True
           ItemIndex = 1
           ShowBorder = False
@@ -138,7 +132,7 @@ object FormCSVImport: TFormCSVImport
           Parent = LayoutControlFileGroup_Root
           CaptionOptions.Text = '&Filename:'
           Control = EditFilename
-          ControlOptions.OriginalHeight = 21
+          ControlOptions.OriginalHeight = 23
           ControlOptions.OriginalWidth = 587
           ControlOptions.ShowBorder = False
           Index = 0
@@ -148,7 +142,7 @@ object FormCSVImport: TFormCSVImport
           AlignHorz = ahLeft
           CaptionOptions.Text = 'Encoding:'
           Control = ComboBoxEncoding
-          ControlOptions.OriginalHeight = 19
+          ControlOptions.OriginalHeight = 21
           ControlOptions.OriginalWidth = 145
           ControlOptions.ShowBorder = False
           Index = 0
@@ -167,7 +161,6 @@ object FormCSVImport: TFormCSVImport
         object dxLayoutGroup1: TdxLayoutGroup
           Parent = LayoutControlFileGroup_Root
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
           ItemIndex = 1
           LayoutDirection = ldHorizontal
           ShowBorder = False
@@ -313,7 +306,6 @@ object FormCSVImport: TFormCSVImport
         object LayoutControlLayoutGroup_Root: TdxLayoutGroup
           AlignHorz = ahClient
           AlignVert = avClient
-          ButtonOptions.Buttons = <>
           Hidden = True
           ShowBorder = False
           Index = -1
@@ -350,8 +342,6 @@ object FormCSVImport: TFormCSVImport
           Parent = dxLayoutGroup3
           CaptionOptions.Text = 'New Group'
           Visible = False
-          ButtonOptions.Buttons = <>
-          ItemIndex = 1
           LayoutDirection = ldHorizontal
           ShowBorder = False
           Index = 1
@@ -440,24 +430,18 @@ object FormCSVImport: TFormCSVImport
         object dxLayoutGroup3: TdxLayoutGroup
           Parent = dxLayoutGroup5
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
-          ItemIndex = 1
           ShowBorder = False
           Index = 0
         end
         object LayoutGroupLayoutMap: TdxLayoutGroup
           Parent = dxLayoutGroup4
           CaptionOptions.Text = 'Mapping'
-          ButtonOptions.Buttons = <>
-          ItemIndex = 2
           ShowBorder = False
           Index = 1
         end
         object dxLayoutGroup5: TdxLayoutGroup
           Parent = LayoutControlLayoutGroup_Root
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
-          ItemIndex = 2
           LayoutDirection = ldHorizontal
           ScrollOptions.Horizontal = smIndependent
           ShowBorder = False
@@ -466,8 +450,6 @@ object FormCSVImport: TFormCSVImport
         object dxLayoutGroup4: TdxLayoutGroup
           Parent = dxLayoutGroup6
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
-          ItemIndex = 1
           LayoutDirection = ldHorizontal
           ShowBorder = False
           Index = 0
@@ -475,14 +457,12 @@ object FormCSVImport: TFormCSVImport
         object dxLayoutGroup6: TdxLayoutGroup
           Parent = dxLayoutGroup5
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
           ShowBorder = False
           Index = 2
         end
         object dxLayoutGroup7: TdxLayoutGroup
           Parent = dxLayoutGroup5
           CaptionOptions.Text = 'New Group'
-          ButtonOptions.Buttons = <>
           ShowBorder = False
           Index = 4
         end
@@ -513,8 +493,7 @@ object FormCSVImport: TFormCSVImport
         Font.Style = []
         ParentFont = False
         OnClick = ButtonImportClick
-        ExplicitTop = 0
-        ExplicitWidth = 400
+        ExplicitWidth = 0
       end
     end
     object WizardControlPageProgress: TdxWizardControlPage
@@ -523,7 +502,7 @@ object FormCSVImport: TFormCSVImport
         Left = 0
         Top = 0
         Width = 550
-        Height = 293
+        Height = 291
         Align = alClient
         ColumnClick = False
         Columns = <
@@ -539,10 +518,6 @@ object FormCSVImport: TFormCSVImport
         StyleHot.BorderStyle = cbsNone
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 232
-        ExplicitTop = 100
-        ExplicitWidth = 121
-        ExplicitHeight = 97
       end
     end
     object WizardControlPageDone: TdxWizardControlPage
@@ -555,19 +530,17 @@ object FormCSVImport: TFormCSVImport
         Left = 0
         Top = 0
         Width = 550
-        Height = 293
+        Height = 291
         Align = alClient
         ParentBackground = True
         TabOrder = 0
         Transparent = True
         LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-        ExplicitLeft = 172
-        ExplicitTop = 96
-        ExplicitWidth = 300
-        ExplicitHeight = 250
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object LabelCountAdded: TcxLabel
-          Left = 68
-          Top = 26
+          Left = 73
+          Top = 30
           AutoSize = False
           Caption = '1000'
           Style.HotTrack = False
@@ -575,13 +548,13 @@ object FormCSVImport: TFormCSVImport
           Properties.Alignment.Horz = taRightJustify
           Properties.ShowAccelChar = False
           Transparent = True
-          Height = 14
+          Height = 16
           Width = 50
-          AnchorX = 118
+          AnchorX = 123
         end
         object LabelCountUpdated: TcxLabel
-          Left = 68
-          Top = 46
+          Left = 73
+          Top = 53
           AutoSize = False
           Caption = '0'
           Style.HotTrack = False
@@ -589,13 +562,13 @@ object FormCSVImport: TFormCSVImport
           Properties.Alignment.Horz = taRightJustify
           Properties.ShowAccelChar = False
           Transparent = True
-          Height = 14
+          Height = 16
           Width = 50
-          AnchorX = 118
+          AnchorX = 123
         end
         object LabelCountSkipped: TcxLabel
-          Left = 68
-          Top = 66
+          Left = 73
+          Top = 76
           AutoSize = False
           Caption = '0'
           Style.HotTrack = False
@@ -603,14 +576,13 @@ object FormCSVImport: TFormCSVImport
           Properties.Alignment.Horz = taRightJustify
           Properties.ShowAccelChar = False
           Transparent = True
-          Height = 14
+          Height = 16
           Width = 50
-          AnchorX = 118
+          AnchorX = 123
         end
         object LayoutControlDoneGroup_Root: TdxLayoutGroup
           AlignHorz = ahClient
           AlignVert = avClient
-          ButtonOptions.Buttons = <>
           Hidden = True
           ItemIndex = 3
           ShowBorder = False
@@ -658,7 +630,6 @@ object FormCSVImport: TFormCSVImport
           Parent = LayoutControlDoneGroup_Root
           CaptionOptions.Text = 'New Group'
           Offsets.Left = 12
-          ButtonOptions.Buttons = <>
           ItemIndex = 2
           ShowBorder = False
           Index = 1

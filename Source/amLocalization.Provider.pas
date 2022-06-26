@@ -14,7 +14,7 @@ uses
   Classes,
   SysUtils,
   Generics.Collections,
-  amLocale,
+  amLanguageInfo,
   amLocalization.Model;
 
 // -----------------------------------------------------------------------------
@@ -25,8 +25,8 @@ uses
 type
   ITranslationProvider = interface
     ['{254E24D5-8F3C-422E-9304-1E21126C8B3C}']
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
     procedure EndLookup;
 
     function GetProviderName: string;
@@ -42,8 +42,8 @@ type
 type
   ITranslationService = interface
     ['{0613B25B-5D59-47E1-B38C-A9FD193E5CC5}']
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; var TargetValue: string): boolean;
     procedure EndLookup;
   end;
 
@@ -116,8 +116,8 @@ type
     function _Release: Integer; stdcall;
 
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean; virtual;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; virtual; abstract;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean; virtual;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean; virtual; abstract;
     procedure EndLookup; virtual;
     function GetProviderName: string; virtual; abstract;
   end;
@@ -195,8 +195,8 @@ type
   private
   protected
     // ITranslationService
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; var TargetValue: string): boolean;
     procedure EndLookup;
   public
     constructor Create(const ATranslationProvider: ITranslationProvider);
@@ -224,7 +224,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TTranslationService.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TTranslationService.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 begin
   Result := FTranslationProvider.BeginLookup(SourceLanguage, TargetLanguage);
 
@@ -247,7 +247,7 @@ begin
     FConflictResolution.Clear;
 end;
 
-function TTranslationService.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; var TargetValue: string): boolean;
+function TTranslationService.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; var TargetValue: string): boolean;
 var
   Translations: TStringList;
 resourcestring
@@ -399,7 +399,7 @@ end;
 // TTranslationProviderDataModule
 //
 // -----------------------------------------------------------------------------
-function TTranslationProviderDataModule.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TTranslationProviderDataModule.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 begin
   Result := True;
 end;

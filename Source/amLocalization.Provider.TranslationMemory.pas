@@ -14,7 +14,7 @@ uses
   Generics.Collections,
   System.SysUtils, System.Classes,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.TranslationMemory;
@@ -30,8 +30,8 @@ type
     FTranslationMemory: TList<ITranslationProvider>;
   protected
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
     procedure EndLookup;
     function GetProviderName: string;
   public
@@ -71,7 +71,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TTranslationProviderTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TTranslationProviderTranslationMemory.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 var
   i: integer;
 begin
@@ -109,7 +109,7 @@ begin
   Result := sProviderNameTM;
 end;
 
-function TTranslationProviderTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TTranslationProviderTranslationMemory.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
 var
   TranslationProvider: ITranslationProvider;
 begin

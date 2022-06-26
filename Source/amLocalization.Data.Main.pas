@@ -164,7 +164,7 @@ uses
   IOUtils,
   Windows,
   cxButtonEdit,
-  amLocale,
+  amLanguageInfo,
   amLocalization.Settings,
   amLocalization.Utils,
   amLocalization.Dialog.TextEdit;
@@ -185,14 +185,14 @@ begin
   DataSetLanguages.CreateDataSet;
   DataSetLanguages.DisableControls;
   try
-    for var i := 0 to TLocaleItems.Count-1 do
+    for var LanguageItem in LanguageInfo do
     begin
       DataSetLanguages.Append;
       try
-        DataSetLanguagesLocaleID.Value := TLocaleItems.Items[i].Locale;
-        DataSetLanguagesLocaleName.AsString := TLocaleItems.Items[i].LocaleName;
-        DataSetLanguagesLanguageName.AsString := TLocaleItems.Items[i].LanguageName;
-        DataSetLanguagesCountryName.AsString := TLocaleItems.Items[i].CountryName;
+        DataSetLanguagesLocaleID.Value := LanguageItem.LocaleID;
+        DataSetLanguagesLocaleName.AsString := LanguageItem.LocaleName;
+        DataSetLanguagesLanguageName.AsString := LanguageItem.LanguageName;
+        DataSetLanguagesCountryName.AsString := LanguageItem.CountryName;
 
         DataSetLanguages.Post;
       except
@@ -217,7 +217,7 @@ begin
 //    TextEditor.SourceText := FocusedProperty.Value;
     TextEditor.Text := TcxButtonEdit(Sender).EditingText;
     if (TcxButtonEdit(Sender).Tag <> 0) then
-      TextEditor.TargetLanguage := TLocaleItems.FindLCID(TcxButtonEdit(Sender).Tag);
+      TextEditor.TargetLanguage := TLanguageItem(TcxButtonEdit(Sender).Tag);
 
     if (TextEditor.Execute(False)) then
     begin
@@ -344,19 +344,26 @@ end;
 procedure TDataModuleMain.GridTableViewFilteredApplicationLanguagesDataControllerFilterRecord(
   ADataController: TcxCustomDataController; ARecordIndex: Integer; var Accept: Boolean);
 begin
-  var LocaleID: LCID := ADataController.Values[ARecordIndex, GridTableViewFilteredApplicationLanguagesLocaleID.Index];
+  var Language := LanguageInfo.FindLocaleName(ADataController.Values[ARecordIndex, GridTableViewFilteredApplicationLanguagesLocaleName.Index]);
+
+  if (Language = nil) then
+  begin
+    Accept := False;
+    Exit;
+  end;
 
   // Native application language is en-US
-  if (LocaleID = $00000409) then
+  if (Language <> nil) and (Language.LocaleID = MakeLangID(LANG_ENGLISH, SUBLANG_ENGLISH_US)) then //  $00000409
   begin
     Accept := True;
     Exit;
   end;
 
-  // Accept row if resource module exist with any of the supportted file names.
+  // Accept row if resource module exist with any of the supported file names.
   for var ModuleNameScheme := Low(TModuleNameScheme) to High(TModuleNameScheme) do
   begin
-    var Filename := LocalizationTools.BuildModuleFilename(ParamStr(0), LocaleID, ModuleNameScheme);
+    var Filename := LocalizationTools.BuildModuleFilename(ParamStr(0), Language, ModuleNameScheme);
+
     if (TFile.Exists(Filename)) then
     begin
       Accept := True;
@@ -372,8 +379,8 @@ begin
   if (not FFilterTargetLanguages) or (FProject = nil) then
     Exit;
 
-  var LocaleID := LCID(ADataController.Values[ARecordIndex, GridTableViewFilteredTargetLanguagesLocaleID.Index]);
-  Accept := (FProject.TranslationLanguages.Contains(LocaleID));
+  var Language := LanguageInfo.FindLocaleName(ADataController.Values[ARecordIndex, GridTableViewFilteredTargetLanguagesLocaleName.Index]);
+  Accept := (Language <> nil) and (FProject.TranslationLanguages.Contains(Language));
 end;
 
 end.

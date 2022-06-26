@@ -1,7 +1,7 @@
 object TranslationProviderMicrosoftV3: TTranslationProviderMicrosoftV3
-  OldCreateOrder = False
   Height = 309
   Width = 411
+  PixelsPerInch = 96
   object RESTRequestTranslate: TRESTRequest
     AutoCreateParams = False
     Client = RESTClient

@@ -41,7 +41,7 @@ inherited FormTargetLanguage: TFormTargetLanguage
         Properties.DropDownAutoSize = True
         Properties.DropDownSizeable = True
         Properties.View = DataModuleMain.GridTableViewLanguages
-        Properties.KeyFieldNames = 'LocaleID'
+        Properties.KeyFieldNames = 'LocaleName'
         Properties.ListFieldItem = DataModuleMain.GridTableViewLanguagesColumnLanguage
         Style.HotTrack = False
         TabOrder = 0

@@ -55,7 +55,7 @@ uses
   msxmldom,
   XMLDoc, XMLIntf, XMLDom,
   amCursorService,
-  amLocale,
+  amLanguageInfo,
   amVersionInfo,
   amProgress.Stream,
   amLocalization.TranslationMemory;
@@ -104,7 +104,7 @@ var
   CreateDate: TDateTime;
   Term: TTerm;
   Terms: TTerms;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   Language: string;
   LanguageName: string;
   Field: TField;
@@ -148,9 +148,9 @@ begin
 
     if (SourceLanguage <> '') then
     begin
-      LocaleItem := TLocaleItems.FindLocaleName(SourceLanguage);
-      if (LocaleItem <> nil) then
-        SourceLanguage := LocaleItem.LocaleName;
+      LanguageItem := LanguageInfo.FindLocaleName(SourceLanguage);
+      if (LanguageItem <> nil) then
+        SourceLanguage := LanguageItem.LocaleName;
     end;
 
     s := VarToStr(Node.Attributes['creationdate']);
@@ -183,9 +183,9 @@ begin
       SourceLanguageTU := VarToStr(ItemNode.Attributes['srclang']);
       if (SourceLanguageTU <> '') then
       begin
-        LocaleItem := TLocaleItems.FindLocaleName(SourceLanguageTU);
-        if (LocaleItem <> nil) then
-          SourceLanguage := LocaleItem.LocaleName
+        LanguageItem := LanguageInfo.FindLocaleName(SourceLanguageTU);
+        if (LanguageItem <> nil) then
+          SourceLanguage := LanguageItem.LocaleName
         else
           SourceLanguage := SourceLanguageTU;
       end;
@@ -199,14 +199,14 @@ begin
           if (Language = '') then
             Language := VarToStr(LanguageNode.Attributes['lang']); // Seen in the EU TMX files
 
-          LocaleItem := TLocaleItems.FindLocaleName(Language);
-          if (LocaleItem <> nil) then
+          LanguageItem := LanguageInfo.FindLocaleName(Language);
+          if (LanguageItem <> nil) then
           begin
-            LanguageName := LocaleItem.LocaleName;
+            LanguageName := LanguageItem.LocaleName;
 
             if (not Languages.TryGetValue(LanguageName, Field)) then
             begin
-              Field := TranslationMemory.CreateField(LocaleItem);
+              Field := TranslationMemory.CreateField(LanguageItem);
               Languages.Add(LanguageName, Field);
             end;
 

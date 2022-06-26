@@ -63,7 +63,7 @@ implementation
 uses
   SysUtils,
   Windows,
-  amLocale;
+  amLanguageInfo;
 
 // -----------------------------------------------------------------------------
 //
@@ -200,15 +200,9 @@ end;
 
 procedure TLocalizerCsvWriter.WriteHeader(AProject: TLocalizerProject);
 
-  procedure WriteLanguage(LanguageID: LCID);
-  var
-    LocaleItem: TLocaleItem;
+  procedure WriteLanguage(Language: TLanguageItem);
   begin
-    LocaleItem := TLocaleItems.FindLCID(LanguageID);
-    if (LocaleItem <> nil) then
-      WriteField(LocaleItem.LocaleName)
-    else
-      WriteField(Format('%.4H', [LanguageID]));
+    WriteField(Language.LocaleName);
   end;
 
 var
@@ -222,13 +216,13 @@ begin
   WriteField('Item');
   WriteField('ItemType');
   WriteField('Property');
-  WriteLanguage(AProject.SourceLanguageID);
+  WriteLanguage(AProject.SourceLanguage);
   if (FLanguage = nil) then
   begin
     for i := 0 to AProject.TranslationLanguages.Count-1 do
-      WriteLanguage(AProject.TranslationLanguages[i].LanguageID)
+      WriteLanguage(AProject.TranslationLanguages[i].Language)
   end else
-    WriteLanguage(FLanguage.LanguageID);
+    WriteLanguage(FLanguage.Language);
 
   EndRow;
 end;

@@ -7,7 +7,6 @@ object FormMain: TFormMain
   ClientWidth = 964
   Color = clBtnFace
   ParentFont = True
-  OldCreateOrder = False
   ShowHint = True
   OnClick = ActionMainExecute
   OnClose = FormClose
@@ -16,7 +15,7 @@ object FormMain: TFormMain
   OnShortCut = FormShortCut
   OnShow = FormShow
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object RibbonMain: TdxRibbon
     Left = 0
     Top = 0
@@ -149,8 +148,6 @@ object FormMain: TFormMain
     MinSize = 80
     ResizeUpdate = True
     Control = PanelModules
-    ExplicitTop = 125
-    ExplicitHeight = 495
   end
   object PanelModules: TPanel
     Left = 0
@@ -163,8 +160,6 @@ object FormMain: TFormMain
     ParentColor = True
     ShowCaption = False
     TabOrder = 3
-    ExplicitTop = 125
-    ExplicitHeight = 495
     object TreeListModules: TcxTreeList
       Left = 0
       Top = 0
@@ -272,9 +267,8 @@ object FormMain: TFormMain
       AutoSize = True
       LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTight
       ShowDesignSelectors = False
-      ExplicitTop = 436
       object LabelCountTranslated: TcxLabel
-        Left = 62
+        Left = 65
         Top = 3
         Caption = '99.999'
         Style.HotTrack = False
@@ -282,10 +276,10 @@ object FormMain: TFormMain
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 96
+        AnchorX = 98
       end
       object LabelCountPending: TcxLabel
-        Left = 193
+        Left = 199
         Top = 3
         Caption = '999.999'
         Style.HotTrack = False
@@ -293,10 +287,10 @@ object FormMain: TFormMain
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 233
+        AnchorX = 238
       end
       object LabelCountTranslatedPercent: TcxLabel
-        Left = 100
+        Left = 102
         Top = 3
         Caption = '(100%)'
         Style.HotTrack = False
@@ -304,45 +298,44 @@ object FormMain: TFormMain
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 137
+        AnchorX = 138
       end
       object LabelCountModuleTranslated: TcxLabel
-        Left = 68
-        Top = 20
+        Left = 71
+        Top = 22
         Caption = '9.999'
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 96
+        AnchorX = 98
       end
       object LabelCountModuleTranslatedPercent: TcxLabel
-        Left = 106
-        Top = 19
+        Left = 108
+        Top = 21
         Caption = '(25%)'
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 137
+        AnchorX = 138
       end
       object LabelCountModulePending: TcxLabel
-        Left = 199
-        Top = 20
+        Left = 205
+        Top = 22
         Caption = '99.999'
         Style.HotTrack = False
         Style.TransparentBorder = False
         Properties.Alignment.Horz = taRightJustify
         Properties.ShowAccelChar = False
         Transparent = True
-        AnchorX = 233
+        AnchorX = 238
       end
       object LayoutControlModulesGroup_Root: TdxLayoutGroup
         AlignHorz = ahClient
         AlignVert = avTop
-        ButtonOptions.Buttons = <>
         Hidden = True
         ItemIndex = 4
         LayoutDirection = ldHorizontal
@@ -356,8 +349,8 @@ object FormMain: TFormMain
         CaptionOptions.Text = 'Translated:'
         Control = LabelCountTranslated
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 34
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 33
         ControlOptions.ShowBorder = False
         Index = 0
       end
@@ -367,8 +360,8 @@ object FormMain: TFormMain
         CaptionOptions.Text = 'Pending:'
         Control = LabelCountPending
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 40
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 39
         ControlOptions.ShowBorder = False
         Index = 0
       end
@@ -378,15 +371,14 @@ object FormMain: TFormMain
         CaptionOptions.Visible = False
         Control = LabelCountTranslatedPercent
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 37
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 36
         ControlOptions.ShowBorder = False
         Index = 0
       end
       object LayoutGroupStatsPercent: TdxLayoutGroup
         Parent = LayoutControlModulesGroup_Root
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ShowBorder = False
         Index = 2
       end
@@ -397,8 +389,8 @@ object FormMain: TFormMain
         CaptionOptions.Text = 'Module:'
         Control = LabelCountModuleTranslated
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 28
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 27
         ControlOptions.ShowBorder = False
         Index = 1
       end
@@ -409,8 +401,8 @@ object FormMain: TFormMain
         CaptionOptions.Visible = False
         Control = LabelCountModuleTranslatedPercent
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 31
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 30
         ControlOptions.ShowBorder = False
         Index = 1
       end
@@ -421,22 +413,20 @@ object FormMain: TFormMain
         CaptionOptions.Text = 'Pending:'
         Control = LabelCountModulePending
         ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 13
-        ControlOptions.OriginalWidth = 34
+        ControlOptions.OriginalHeight = 15
+        ControlOptions.OriginalWidth = 33
         ControlOptions.ShowBorder = False
         Index = 1
       end
       object LayoutGroupStatsTranslated: TdxLayoutGroup
         Parent = LayoutControlModulesGroup_Root
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ShowBorder = False
         Index = 0
       end
       object LayoutGroupStatsPending: TdxLayoutGroup
         Parent = LayoutControlModulesGroup_Root
         CaptionOptions.Visible = False
-        ButtonOptions.Buttons = <>
         ShowBorder = False
         Index = 4
       end
@@ -479,6 +469,7 @@ object FormMain: TFormMain
         OnMouseDown = GridItemsTableViewMouseDown
         OnMouseMove = GridItemsTableViewMouseMove
         Navigator.Buttons.CustomButtons = <>
+        ScrollbarAnnotations.CustomAnnotations = <>
         OnCanFocusRecord = GridItemsTableViewCanFocusRecord
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
@@ -674,7 +665,7 @@ object FormMain: TFormMain
         TabOrder = 1
         object EditSourceText: TcxRichEdit
           Left = 0
-          Top = 13
+          Top = 15
           TabStop = False
           Align = alClient
           Properties.PlainText = True
@@ -684,7 +675,8 @@ object FormMain: TFormMain
           Style.HotTrack = False
           Style.TextColor = clGrayText
           TabOrder = 0
-          Height = 89
+          ExplicitTop = 13
+          Height = 87
           Width = 277
         end
         object LabelSourceName: TcxLabel
@@ -712,7 +704,7 @@ object FormMain: TFormMain
         TabOrder = 2
         object EditTargetText: TcxRichEdit
           Left = 0
-          Top = 13
+          Top = 15
           Align = alClient
           Properties.PlainText = True
           Properties.ReadOnly = True
@@ -723,7 +715,8 @@ object FormMain: TFormMain
           TabOrder = 0
           OnEnter = EditTargetTextEnter
           OnExit = EditTargetTextExit
-          Height = 89
+          ExplicitTop = 13
+          Height = 87
           Width = 417
         end
         object LabelTargetName: TcxLabel
@@ -818,7 +811,7 @@ object FormMain: TFormMain
       MinSize = 40
       ResizeUpdate = True
       Control = PanelEditors
-      ExplicitTop = 389
+      ExplicitTop = 352
     end
   end
   object BarManager: TdxBarManager
@@ -1323,7 +1316,7 @@ object FormMain: TFormMain
           Visible = True
           ItemName = 'dxBarButton23'
         end>
-      OneOnRow = True
+      OneOnRow = False
       Row = 0
       UseOwnFont = False
       Visible = True

@@ -30,7 +30,7 @@ uses
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
   dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons,
 
-  amLocale,
+  amLanguageInfo,
   amProgress.API,
   amLocalization.Model,
   amLocalization.Provider,
@@ -516,14 +516,12 @@ type
     procedure ResetTracker;
   private
     // Language selection
-    FSourceLanguage: TLocaleItem;
-    FTargetLanguage: TLocaleItem;
+    FSourceLanguage: TLanguageItem;
+    FTargetLanguage: TLanguageItem;
     FTranslationLanguage: TTranslationLanguage;
-    function GetLanguageID(Value: LCID): LCID;
-    function GetSourceLanguageID: Word;
-    function GetTargetLanguageID: Word;
-    procedure SetSourceLanguageID(const Value: Word);
-    procedure SetTargetLanguageID(const Value: Word);
+    function GetLanguage(const Value: string): TLanguageItem;
+    procedure SetSourceLanguage(const Value: TLanguageItem);
+    procedure SetTargetLanguage(const Value: TLanguageItem);
     function GetTranslationLanguage: TTranslationLanguage;
     procedure ClearTargetLanguage;
     procedure UpdateTargetLanguage(Clear: boolean = False);
@@ -683,7 +681,7 @@ type
     function ApplyStopList(const Progress: IProgress = nil): TStopListItemList.TStopListStats;
     function RecoverUnusedTranslations(OnlyNew: boolean): integer;
   protected
-    procedure InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
+    procedure InitializeProject(const SourceFilename: string; SourceLocale: TLanguageItem);
     procedure LockUpdates;
     procedure UnlockUpdates;
     procedure BeginUpdate;
@@ -717,7 +715,7 @@ type
     function CountStuff: TCounts;
   protected
     // Build
-    function BuildLanguageModule(LocaleItem: TLocaleItem; const Filename: string): boolean;
+    function BuildLanguageModule(LanguageItem: TLanguageItem; const Filename: string): boolean;
     procedure OnBuildSingleLanguageHandler(Sender: TObject);
   protected
     // ILocalizerSearchHost
@@ -740,11 +738,9 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    property SourceLanguage: TLocaleItem read FSourceLanguage;
-    property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
+    property SourceLanguage: TLanguageItem read FSourceLanguage write SetSourceLanguage;
 
-    property TargetLanguage: TLocaleItem read FTargetLanguage;
-    property TargetLanguageID: Word read GetTargetLanguageID write SetTargetLanguageID;
+    property TargetLanguage: TLanguageItem read FTargetLanguage write SetTargetLanguage;
     property TranslationLanguage: TTranslationLanguage read GetTranslationLanguage;
   end;
 
@@ -1046,7 +1042,7 @@ begin
 
   FPendingFileOpenLock := TCriticalSection.Create;
 
-  FProject := TLocalizerProject.Create('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
+  FProject := TLocalizerProject.Create('', GetLanguage(TranslationManagerSettings.System.DefaultSourceLocale));
   FProject.OnChanged := OnProjectChanged;
   FProject.OnModuleChanged := OnModuleChanged;
   FProject.OnTranslationWarning := OnTranslationWarning;
@@ -1111,10 +1107,18 @@ begin
   for var Folder := Low(TTranslationManagerFolder) to High(TTranslationManagerFolder) do
     ExceptionInfoConsumer.AddExceptionInfo('Folders', TranslationManagerSettings.Folders.FolderName[Folder], TranslationManagerSettings.Folders[Folder]);
 
-  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language ID', SourceLanguageID.ToHexString(8));
-  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language', SourceLanguage.LocaleName);
-  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language ID', TargetLanguageID.ToHexString(8));
-  ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language', TargetLanguage.LocaleName);
+  if (SourceLanguage <> nil) then
+  begin
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language', SourceLanguage.LocaleName);
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language ID', SourceLanguage.LocaleID.ToHexString(8));
+  end else
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source Language', '(none)');
+  if (TargetLanguage <> nil) then
+  begin
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language', TargetLanguage.LocaleName);
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language ID', TargetLanguage.LocaleID.ToHexString(8));
+  end else
+    ExceptionInfoConsumer.AddExceptionInfo('Project', 'Target Language', '(none)');
   ExceptionInfoConsumer.AddExceptionInfo('Project', 'Filename', FProjectFilename);
   ExceptionInfoConsumer.AddExceptionInfo('Project', 'Source filename', FProject.SourceFilename);
   ExceptionInfoConsumer.AddExceptionInfo('Project', 'Symbol Filename', FProject.StringSymbolFilename);
@@ -1286,12 +1290,16 @@ end;
 
 procedure TFormMain.MsgSourceChanged(var Msg: TMessage);
 begin
-  SourceLanguageID := BarEditItemSourceLanguage.EditValue;
+  var Language := LanguageInfo.FindLocaleName(VarToStr(BarEditItemSourceLanguage.EditValue));
+  if (Language <> nil) then
+    SourceLanguage := Language;
 end;
 
 procedure TFormMain.MsgTargetChanged(var Msg: TMessage);
 begin
-  TargetLanguageID := BarEditItemTargetLanguage.EditValue;
+  var Language := LanguageInfo.FindLocaleName(VarToStr(BarEditItemTargetLanguage.EditValue));
+  if (Language <> nil) then
+    TargetLanguage := Language;
 end;
 
 // -----------------------------------------------------------------------------
@@ -1307,7 +1315,7 @@ begin
     if (not CheckSave) then
       exit;
 
-    InitializeProject('test.xxx', SourceLanguageID);
+    InitializeProject('test.xxx', SourceLanguage);
 
     FProject.AddModule('ONE', mkForm).AddItem('Item1', 'TFooBar').AddProperty('Test1', 'value1');
     FProject.AddModule('TWO', mkForm).AddItem('Item2', 'TFooBar').AddProperty('Test2', 'value2');
@@ -1552,29 +1560,34 @@ begin
   Progress.EnableAbort := True;
   Progress.Progress(psProgress, 0, ElegibleCount);
 
-  for i := 0 to SelectionCount-1 do
-  begin
-    Item := Selection[i];
-    Item.Traverse(
-      function(Prop: TLocalizerProperty): boolean
-      begin
-        if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+  FTranslationMemory.BeginAdd;
+  try
+    for i := 0 to SelectionCount-1 do
+    begin
+      Item := Selection[i];
+      Item.Traverse(
+        function(Prop: TLocalizerProperty): boolean
         begin
-          DuplicateAction := FTranslationMemory.Add(SourceLanguage, Prop.Value, TargetLanguage, Prop.TranslatedValue[TranslationLanguage], OneStats, DuplicateAction);
+          if (Prop.EffectiveStatus = ItemStatusTranslate) and (Prop.HasTranslation(TranslationLanguage)) then
+          begin
+            DuplicateAction := FTranslationMemory.Add(SourceLanguage, Prop.Value, TargetLanguage, Prop.TranslatedValue[TranslationLanguage], OneStats, DuplicateAction);
 
-          Inc(Stats.Added, OneStats.Added);
-          Inc(Stats.Merged, OneStats.Merged);
-          Inc(Stats.Skipped, OneStats.Skipped);
-          Inc(Stats.Duplicate, OneStats.Duplicate);
+            Inc(Stats.Added, OneStats.Added);
+            Inc(Stats.Merged, OneStats.Merged);
+            Inc(Stats.Skipped, OneStats.Skipped);
+            Inc(Stats.Duplicate, OneStats.Duplicate);
 
-          Progress.AdvanceProgress;
-        end;
+            Progress.AdvanceProgress;
+          end;
 
-        Result := (DuplicateAction <> tmDupActionAbort) and (not Progress.Aborted);
-      end);
+          Result := (DuplicateAction <> tmDupActionAbort) and (not Progress.Aborted);
+        end);
 
-    if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
-      break;
+      if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
+        break;
+    end;
+  finally
+    FTranslationMemory.EndAdd;
   end;
 
   Progress.Hide;
@@ -1989,37 +2002,45 @@ begin
 
     var LookupResult := TTranslationLookupResult.Create;
     try
-      // Find source values in TM
-      for var Translation in Translations do
-      begin
 
-        Progress.AdvanceProgress;
+      FTranslationMemory.BeginAdd;
+      try
 
-        // Search TM for source terms
-        LookupResult.Clear;
-        if (not FTranslationMemory.FindTerms(SourceLanguage, Translation.Value.Value, LookupResult, True)) then
+        // Find source values in TM
+        for var Translation in Translations do
         begin
-          Inc(Stats.Skipped);
-          continue;
+
+          Progress.AdvanceProgress;
+
+          // Search TM for source terms
+          LookupResult.Clear;
+          if (not FTranslationMemory.FindTerms(SourceLanguage, Translation.Value.Value, LookupResult, True)) then
+          begin
+            Inc(Stats.Skipped);
+            continue;
+          end;
+
+          // Add best match
+          for var Result in LookupResult do
+          begin
+            var OneStats: TTranslationMemoryMergeStats;
+            DuplicateAction := FTranslationMemory.Add(SourceLanguage, Result.SourceValue, TargetLanguage, Translation.Key, OneStats, DuplicateAction);
+
+            Inc(Stats.Added, OneStats.Added);
+            Inc(Stats.Merged, OneStats.Merged);
+            Inc(Stats.Skipped, OneStats.Skipped);
+            Inc(Stats.Duplicate, OneStats.Duplicate);
+
+            // We're only interested in the first match
+            break;
+          end;
+
+          if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
+            break;
         end;
 
-        // Add best match
-        for var Result in LookupResult do
-        begin
-          var OneStats: TTranslationMemoryMergeStats;
-          DuplicateAction := FTranslationMemory.Add(SourceLanguage, Result.SourceValue, TargetLanguage, Translation.Key, OneStats, DuplicateAction);
-
-          Inc(Stats.Added, OneStats.Added);
-          Inc(Stats.Merged, OneStats.Merged);
-          Inc(Stats.Skipped, OneStats.Skipped);
-          Inc(Stats.Duplicate, OneStats.Duplicate);
-
-          // We're only interested in the first match
-          break;
-        end;
-
-        if (DuplicateAction = tmDupActionAbort) or (Progress.Aborted) then
-          break;
+      finally
+        FTranslationMemory.EndAdd;
       end;
 
     finally
@@ -2158,7 +2179,7 @@ begin
   if (FProject.Modules.Count > 0) and ((FTranslationMemoryPeek = nil) or (Force)) then
   begin
     FTranslationMemoryPeek := nil;
-    FTranslationMemoryPeek := FTranslationMemory.CreateBackgroundLookup(SourceLanguageID, TargetLanguageID, TranslationMemoryPeekHandler);
+    FTranslationMemoryPeek := FTranslationMemory.CreateBackgroundLookup(SourceLanguage, TargetLanguage, TranslationMemoryPeekHandler);
     QueueTranslationMemoryPeek;
   end;
 end;
@@ -2809,7 +2830,7 @@ begin
     if (Filename <> '') then
     begin
       OpenDialogEXE.InitialDir := TPath.GetDirectoryName(Filename);
-      OpenDialogEXE.FileName := LocalizationTools.BuildModuleFilename(TPath.GetFileName(Filename), TargetLanguage.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+      OpenDialogEXE.FileName := LocalizationTools.BuildModuleFilename(TPath.GetFileName(Filename), TargetLanguage, TranslationManagerSettings.System.ModuleNameScheme);
     end;
 
     if (not OpenDialogEXE.Execute(Handle)) then
@@ -3851,12 +3872,12 @@ begin
     else
       FormNewProject.SourceApplication := '';
 
-    FormNewProject.SourceLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage);
+    FormNewProject.SourceLanguage := GetLanguage(TranslationManagerSettings.System.DefaultSourceLocale);
 
     if (not FormNewProject.Execute) then
       exit;
 
-    InitializeProject(FormNewProject.SourceApplication, FormNewProject.SourceLanguageID);
+    InitializeProject(FormNewProject.SourceApplication, FormNewProject.SourceLanguage);
     FProjectFilename := '';
 
   finally
@@ -3922,6 +3943,7 @@ var
   Progress: IProgress;
 resourcestring
   sFileNotFound = 'File not found: %s';
+  sErrorLoadingProjectTitle = 'Error loading project';
 begin
   Result := True;
 
@@ -3945,26 +3967,35 @@ begin
     FProject.BeginUpdate;
     try
 
-      FProjectFilename := Filename;
       try
-
-        Stream := TFileStream.Create(FProjectFilename, fmOpenRead);
+        FProjectFilename := Filename;
         try
-          ProgressStream := TProgressStream.Create(Stream, Progress);
+
+          Stream := TFileStream.Create(FProjectFilename, fmOpenRead);
           try
+            ProgressStream := TProgressStream.Create(Stream, Progress);
+            try
 
-            TLocalizationProjectFiler.LoadFromStream(FProject, ProgressStream, Progress);
+              TLocalizationProjectFiler.LoadFromStream(FProject, ProgressStream, Progress);
 
+            finally
+              ProgressStream.Free;
+            end;
           finally
-            ProgressStream.Free;
+            Stream.Free;
           end;
-        finally
-          Stream.Free;
-        end;
 
+        except
+          FProjectFilename := '';
+          raise;
+        end;
       except
-        FProjectFilename := '';
-        raise;
+        on E: ELocalizationPersistence do
+        begin
+          FProject.Clear;
+          TaskMessageDlg(sErrorLoadingProjectTitle, E.Message, mtWarning, [mbOK], 0);
+          Exit(False);
+        end;
       end;
 
       // Source path is relative to project file - Make it absolute
@@ -3993,11 +4024,11 @@ begin
 
     if (BestLanguage <> nil) then
     begin
-      TargetLanguageID := BestLanguage.LanguageID;
+      TargetLanguage := BestLanguage.Language;
       FFilterTargetLanguages := True;
     end else
     begin
-      TargetLanguageID := SourceLanguageID;
+      TargetLanguage := SourceLanguage;
       FFilterTargetLanguages := False;
     end;
 
@@ -4064,7 +4095,7 @@ begin
     end;
 
 
-  InitializeProject('', GetLanguageID(TranslationManagerSettings.System.DefaultSourceLanguage));
+  InitializeProject('', GetLanguage(TranslationManagerSettings.System.DefaultSourceLocale));
 
   // We could just as well have called LoadFromFile directly here but what the hell...
   if (ParamCount > 0) then
@@ -5069,7 +5100,7 @@ procedure TFormMain.BarEditItemTargetLanguageEnter(Sender: TObject);
 begin
   DataModuleMain.FilterTargetLanguages := FFilterTargetLanguages and
     ((FProject.TranslationLanguages.Count > 1) or
-     ((FProject.TranslationLanguages.Count = 1) and (FProject.TranslationLanguages[0].LanguageID <> SourceLanguageID)));
+     ((FProject.TranslationLanguages.Count = 1) and (FProject.TranslationLanguages[0].Language <> SourceLanguage)));
 
   DataModuleMain.Project := FProject;
 end;
@@ -5097,11 +5128,9 @@ procedure TFormMain.BarManagerBarLanguageCaptionButtons0Click(Sender: TObject);
 var
   FormLanguages: TFormLanguages;
   i: integer;
-  Languages: TList<integer>;
-  DeleteLanguages: TList<TTranslationLanguage>;
   Language: TTranslationLanguage;
   PromptCount: integer;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   Res: integer;
   Buttons: TMsgDlgButtons;
 resourcestring
@@ -5113,10 +5142,10 @@ begin
   FormLanguages := TFormLanguages.Create(nil);
   try
 
-    FormLanguages.SourceLanguageID := SourceLanguageID;
+    FormLanguages.SourceLanguage := SourceLanguage;
 
     for i := 0 to FProject.TranslationLanguages.Count-1 do
-      FormLanguages.SelectTargetLanguage(FProject.TranslationLanguages[i].LanguageID);
+      FormLanguages.SelectTargetLanguage(FProject.TranslationLanguages[i].Language);
 
     FormLanguages.ApplyFilter := FFilterTargetLanguages;
 
@@ -5127,9 +5156,9 @@ begin
 
     GridItemsTableView.BeginUpdate;
     try
-      DeleteLanguages := TList<TTranslationLanguage>.Create;
+      var DeleteLanguages := TList<TTranslationLanguage>.Create;
       try
-        Languages := TList<integer>.Create;
+        var Languages := TList<TLanguageItem>.Create;
         try
 
           // Build list of selected languages
@@ -5139,7 +5168,7 @@ begin
           // Loop though list of current languages and build list of languages to delete
           PromptCount := 0;
           for i := FProject.TranslationLanguages.Count-1 downto 0 do
-            if (not Languages.Contains(FProject.TranslationLanguages[i].LanguageID)) then
+            if (not Languages.Contains(FProject.TranslationLanguages[i].Language)) then
             begin
               DeleteLanguages.Add(FProject.TranslationLanguages[i]);
 
@@ -5162,10 +5191,10 @@ begin
             // Prompt user if language contains translations
             if (Language.TranslatedCount > 0) then
             begin
-              LocaleItem := TLocaleItems.FindLCID(Language.LanguageID);
+              LanguageItem := Language.Language;
 
               Res := TaskMessageDlg(sDeleteLanguageTranslationsTitle,
-                Format(sDeleteLanguageTranslations, [LocaleItem.LanguageName, Language.TranslatedCount]),
+                Format(sDeleteLanguageTranslations, [LanguageItem.LanguageName, Language.TranslatedCount]),
                 mtConfirmation, Buttons, 0, mbNo);
 
               if (Res = mrCancel) then
@@ -5182,26 +5211,31 @@ begin
 
         // Remove languages no longer in use
         SaveCursor(crHourGlass);
-        for Language in DeleteLanguages do
-        begin
-          // If we delete current target language we must clear references to it in the GUI
-          if (Language = FTranslationLanguage) then
+        FProject.BeginUpdate;
+        try
+          for Language in DeleteLanguages do
           begin
-            ClearDependents;
-            ClearTargetLanguage;
-          end;
-
-          // Delete translations
-          FProject.Traverse(
-            function(Prop: TLocalizerProperty): boolean
+            // If we delete current target language we must clear references to it in the GUI
+            if (Language = FTranslationLanguage) then
             begin
-              Prop.Translations.Remove(Language);
-              Result := True;
-            end);
+              ClearDependents;
+              ClearTargetLanguage;
+            end;
 
-          Assert(Language.TranslatedCount = 0);
+            // Delete translations
+            FProject.Traverse(
+              function(Prop: TLocalizerProperty): boolean
+              begin
+                Prop.Translations.Remove(Language);
+                Result := True;
+              end);
 
-          FProject.TranslationLanguages.Remove(Language.LanguageID);
+            Assert(Language.TranslatedCount = 0);
+
+            FProject.TranslationLanguages.Remove(Language.Language);
+          end;
+        finally
+          FProject.EndUpdate;
         end;
 
       finally
@@ -5214,7 +5248,7 @@ begin
 
       // If we deleted current target language we must select a new one - default to source language
       if (FTranslationLanguage = nil) then
-        TargetLanguageID := SourceLanguageID;
+        TargetLanguage := SourceLanguage;
 
     finally
       GridItemsTableView.EndUpdate;
@@ -5583,46 +5617,22 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.GetLanguageID(Value: LCID): LCID;
+function TFormMain.GetLanguage(const Value: string): TLanguageItem;
 begin
-  if (Value > 0) then
-    Exit(Value);
-
-  Result := GetUserDefaultLCID;
-
-  // If the user locale isn't a real locale we fall back to the system default locale
-  // Note: The following values denotes custom locales (which we do not support):
-  //       $1000, $2000, $2400, $2800, $2C00, $3000, $3400, $3800, $3C00, $4000, $4400, $4800, $4C00
-
-  if (TLocaleItems.FindLCID(Result) = nil) then
-    Result := GetSystemDefaultLCID;
+  Result := LanguageInfo.FindLocaleName(Value);
+  if (Result = nil) then
+    Result := LanguageInfo.DefaultLocale;
 end;
 
-function TFormMain.GetSourceLanguageID: Word;
-begin
-  Result := FSourceLanguage.Locale;
-(*
-  if (VarIsOrdinal(BarEditItemSourceLanguage.EditValue)) then
-    Result := BarEditItemSourceLanguage.EditValue
-  else
-    Result := 0;
-*)
-end;
-
-procedure TFormMain.SetSourceLanguageID(const Value: Word);
-var
-  LocaleItem: TLocaleItem;
+procedure TFormMain.SetSourceLanguage(const Value: TLanguageItem);
 begin
   // TODO : Should broadcast notification
-  LocaleItem := TLocaleItems.FindLCID(Value);
-  if (LocaleItem = nil) then
-    raise Exception.CreateFmt('Invalid source language ID: %.4X', [Value]);
 
   ClearTranslationMemoryPeekResult;
 
-  FSourceLanguage := LocaleItem;
-  BarEditItemSourceLanguage.EditValue := FSourceLanguage.Locale;
-  FProject.SourceLanguageID := FSourceLanguage.Locale;
+  FSourceLanguage := Value;
+  BarEditItemSourceLanguage.EditValue := FSourceLanguage.LocaleName;
+  FProject.SourceLanguage := FSourceLanguage;
   GridItemsTableViewColumnSource.Caption := FSourceLanguage.LanguageName;
   LabelSourceName.Caption := FSourceLanguage.LanguageName;
   if (FSourceLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
@@ -5641,35 +5651,30 @@ end;
 function TFormMain.GetTranslationLanguage: TTranslationLanguage;
 begin
   if (FTranslationLanguage = nil) then
-    FTranslationLanguage := FProject.TranslationLanguages.Add(TargetLanguageID);
+    FTranslationLanguage := FProject.TranslationLanguages.Add(TargetLanguage);
 
   Result := FTranslationLanguage;
 end;
 
-function TFormMain.GetTargetLanguageID: Word;
-begin
-  Result := FTargetLanguage.Locale;
-end;
+procedure TFormMain.SetTargetLanguage(const Value: TLanguageItem);
 
-procedure TFormMain.SetTargetLanguageID(const Value: Word);
-
-  function FindDictionaryFile(LocaleItem: TLocaleItem; const FileType: string): string;
+  function FindDictionaryFile(LanguageItem: TLanguageItem; const FileType: string): string;
 
     function FindFile(const Folder: string): string;
     begin
-      Result := Format('%s%s.%s', [Folder, LocaleItem.LanguageShortName, FileType]); // DAN
+      Result := Format('%s%s.%s', [Folder, LanguageItem.LocaleName, FileType]); // da-DK
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := Format('%s%s.%s', [Folder, LocaleItem.LocaleName, FileType]); // da-DK
+      Result := Format('%s%s_%s.%s', [Folder, LanguageItem.ISO639_1Name, LanguageItem.ISO3166Name, FileType]); // DA_DK
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := Format('%s%s_%s.%s', [Folder, LocaleItem.ISO639_1Name, LocaleItem.ISO3166Name, FileType]); // DA_DK
+      Result := Format('%s%s.%s', [Folder, LanguageItem.LanguageShortName, FileType]); // DAN
       if (TFile.Exists(Result)) then
         Exit;
 
-      Result := Format('%s%s.%s', [Folder, LocaleItem.ISO639_1Name, FileType]); // DA
+      Result := Format('%s%s.%s', [Folder, LanguageItem.ISO639_1Name, FileType]); // DA
       if (TFile.Exists(Result)) then
         Exit;
 
@@ -5683,7 +5688,6 @@ procedure TFormMain.SetTargetLanguageID(const Value: Word);
   end;
 
 var
-  LocaleItem: TLocaleItem;
   i: integer;
   Found: boolean;
   AnyFound: boolean;
@@ -5695,10 +5699,6 @@ begin
   // Note: Always process setting the target regardless of current value.
   // We need to have the dependents refreshed.
 
-  LocaleItem := TLocaleItems.FindLCID(Value);
-  if (LocaleItem = nil) then
-    raise Exception.CreateFmt('Invalid target language ID: %.4X', [Value]);
-
   ApplyTranslationTextEdit(False);
 
   BeginUpdate;
@@ -5707,9 +5707,9 @@ begin
     ClearTargetLanguage;
     ClearTranslationMemoryPeekResult;
 
-    FTargetLanguage := LocaleItem;
+    FTargetLanguage := Value;
 
-    BarEditItemTargetLanguage.EditValue := FTargetLanguage.Locale;
+    BarEditItemTargetLanguage.EditValue := FTargetLanguage.LocaleName;
 
     CreateTranslationMemoryPeeker(True);
 
@@ -5737,13 +5737,13 @@ begin
     // Load new custom dictionary
     TdxUserSpellCheckerDictionary(SpellChecker.Dictionaries[0]).DictionaryPath := Format('%suser-%s.dic', [EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSpellCheck), FTargetLanguage.LanguageShortName]);
     SpellChecker.Dictionaries[0].Enabled := True;
-    SpellChecker.Dictionaries[0].Language := FTargetLanguage.Locale;
+    SpellChecker.Dictionaries[0].Language := FTargetLanguage.LocaleID;
 
     // Deactivate all existing dictionaries except ones that match new language
     AnyFound := False;
     for i := 1 to SpellChecker.DictionaryCount-1 do
     begin
-      Found := (SpellChecker.Dictionaries[i].Language = FTargetLanguage.Locale);
+      Found := (SpellChecker.Dictionaries[i].Language = FTargetLanguage.LocaleID);
 
   //    if (SpellChecker.Dictionaries[i].Enabled) and (not Found) then
   //      SpellChecker.Dictionaries[i].Unload;
@@ -5768,7 +5768,7 @@ begin
         // AnyFound := True;
         SpellCheckerDictionaryItem := SpellChecker.DictionaryItems.Add;
         SpellCheckerDictionaryItem.DictionaryTypeClass := TdxHunspellDictionary;
-        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := FTargetLanguage.Locale;
+        TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Language := FTargetLanguage.LocaleID;
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).DictionaryPath := FilenameDic;
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).GrammarPath := FilenameAff;
         TdxHunspellDictionary(SpellCheckerDictionaryItem.DictionaryType).Enabled := True;
@@ -5883,7 +5883,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocaleID: Word);
+procedure TFormMain.InitializeProject(const SourceFilename: string; SourceLocale: TLanguageItem);
 begin
   FTranslationMemoryPeek := nil;
   ClearDependents;
@@ -5899,7 +5899,7 @@ begin
     FProject.SourceFilename := SourceFilename;
     FProject.StringSymbolFilename := TPath.ChangeExtension(SourceFilename, TranslationManagerShell.sFileTypeStringSymbols);
 
-    FProject.SourceLanguageID := SourceLocaleID;
+    FProject.SourceLanguage := SourceLocale;
 
     FProject.Modified := False;
 
@@ -5915,8 +5915,8 @@ begin
   RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
   ResetTracker;
 
-  SourceLanguageID := FProject.SourceLanguageID;
-  TargetLanguageID := GetLanguageID(TranslationManagerSettings.System.DefaultTargetLanguage);
+  SourceLanguage := FProject.SourceLanguage;
+  TargetLanguage := GetLanguage(TranslationManagerSettings.System.DefaultTargetLocale);
 end;
 
 // -----------------------------------------------------------------------------
@@ -6431,7 +6431,7 @@ end;
 
 procedure TFormMain.GridItemsTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
 
-  procedure PrepareBidi(Language: TLocaleItem);
+  procedure PrepareBidi(Language: TLanguageItem);
   var
     Flags: DWORD;
   begin
@@ -6967,7 +6967,7 @@ begin
     // Translation list in-place editor
     ((AControl.Parent = GridItems) and (AControl is TcxCustomButtonEdit)) or
     // Translation Memory in-place editor, if language matches
-    ((AControl is TcxCustomButtonEdit) and (AControl.Tag = integer(TargetLanguage.Locale))) or
+    ((AControl is TcxCustomButtonEdit) and (TLanguageItem(AControl.Tag) = TargetLanguage)) or
     // Text Editor memo
     (AControl = EditTargetText) or
     // Text Editor dialog memo, if language matches
@@ -7175,7 +7175,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormMain.BuildLanguageModule(LocaleItem: TLocaleItem; const Filename: string): boolean;
+function TFormMain.BuildLanguageModule(LanguageItem: TLanguageItem; const Filename: string): boolean;
 var
   i: integer;
   TranslationLanguage: TTranslationLanguage;
@@ -7194,7 +7194,7 @@ begin
   TranslationLanguage := nil;
 
   for i := 0 to FProject.TranslationLanguages.Count-1 do
-    if (FProject.TranslationLanguages[i].LanguageID = LocaleItem.Locale) then
+    if (FProject.TranslationLanguages[i].Language = LanguageItem) then
     begin
       TranslationLanguage := FProject.TranslationLanguages[i];
       break;
@@ -7203,7 +7203,7 @@ begin
   if (TranslationLanguage = nil) then
     Exit; // TODO : Should never happen but an error message would be nice anyway.
 
-  QueueToast(Format(sLocalizerResourceModuleBuilding, [LocaleItem.LanguageName]));
+  QueueToast(Format(sLocalizerResourceModuleBuilding, [LanguageItem.LanguageName]));
 
   ProjectProcessor := TProjectResourceProcessor.Create;
   try
@@ -7249,7 +7249,7 @@ end;
 procedure TFormMain.ButtonBuildAllClick(Sender: TObject);
 var
   i: integer;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   Filename: string;
 begin
   if (not CheckSourceFile) then
@@ -7269,10 +7269,10 @@ begin
 
     for i := 0 to FProject.TranslationLanguages.Count-1 do
     begin
-      LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
-      Filename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+      LanguageItem := FProject.TranslationLanguages[i].Language;
+      Filename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LanguageItem, TranslationManagerSettings.System.ModuleNameScheme);
 
-      if (not BuildLanguageModule(LocaleItem, Filename)) then
+      if (not BuildLanguageModule(LanguageItem, Filename)) then
         break;
     end;
 
@@ -7289,7 +7289,7 @@ end;
 
 procedure TFormMain.OnBuildSingleLanguageHandler(Sender: TObject);
 var
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   TargetFilename, Path: string;
   Filter: string;
 resourcestring
@@ -7303,16 +7303,16 @@ begin
 
   ApplyTranslationTextEdit(False);
 
-  LocaleItem := TLocaleItems.FindLCID(TdxBarItem(Sender).Tag);
+  LanguageItem := TLanguageItem(TdxBarItem(Sender).Tag);
 
-  TargetFilename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LocaleItem.Locale, TranslationManagerSettings.System.ModuleNameScheme);
+  TargetFilename := LocalizationTools.BuildModuleFilename(FProject.SourceFilename, LanguageItem, TranslationManagerSettings.System.ModuleNameScheme);
 
   Path := TPath.GetDirectoryName(TargetFilename);
   TargetFilename := TPath.GetFileName(TargetFilename);
 
   Filter := SaveDialogEXE.Filter;
   if (TargetLanguage <> nil) then
-    Filter := Format(sResourceModuleFilter, [LocaleItem.LanguageName, LocaleItem.ISO639_1Name+'*']) + Filter;
+    Filter := Format(sResourceModuleFilter, [LanguageItem.LanguageName, LanguageItem.ISO639_1Name+'*']) + Filter;
 
   if (not PromptForFileName(TargetFilename, Filter, '', sLocalizerResourceModuleFilenamePrompt, Path, True)) then
     Exit;
@@ -7322,7 +7322,7 @@ begin
   FProject.BeginLoad;
   try
 
-    if (not BuildLanguageModule(LocaleItem, TargetFilename)) then
+    if (not BuildLanguageModule(LanguageItem, TargetFilename)) then
       Exit;
 
   finally
@@ -7338,7 +7338,7 @@ procedure TFormMain.PopupMenuBuildPopup(Sender: TObject);
 var
   i: integer;
   BarItemLink: TdxBarItemLink;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
 begin
   // Remove existing items
   for i := PopupMenuBuild.ItemLinks.Count-1 downto 0 do
@@ -7347,14 +7347,14 @@ begin
 
   for i := 0 to FProject.TranslationLanguages.Count-1 do
   begin
-    LocaleItem := TLocaleItems.FindLCID(FProject.TranslationLanguages[i].LanguageID);
+    LanguageItem := FProject.TranslationLanguages[i].Language;
 
     BarItemLink := PopupMenuBuild.ItemLinks.AddButton;
-    BarItemLink.Item.Caption := Format('%s...', [LocaleItem.LanguageName]); // Add ellipsis since we're prompting for filename
-    BarItemLink.Item.Tag := LocaleItem.Locale;
+    BarItemLink.Item.Caption := Format('%s...', [LanguageItem.LanguageName]); // Add ellipsis since we're prompting for filename
+    BarItemLink.Item.Tag := NativeInt(LanguageItem);
     BarItemLink.Item.OnClick := OnBuildSingleLanguageHandler;
     TdxBarButton(BarItemLink.Item).ButtonStyle := bsChecked;
-    TdxBarButton(BarItemLink.Item).Down := (LocaleItem = TargetLanguage);
+    TdxBarButton(BarItemLink.Item).Down := (LanguageItem = TargetLanguage);
   end;
 end;
 
@@ -7686,7 +7686,7 @@ begin
     end;
 
     ScreenTipTranslationMemory.Description.Text := Format(sTranslationMemoryHintTemplate,
-      [GetLanguageID(0), TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
+      [GetLanguage('').LocaleID, TargetLanguage.CharSet, UnicodeToRTF(sTranslationMemoryHintHeader), HintList,
       sRtlLtr[IsRightToLeft], sRtlLtrFont[IsRightToLeft], sRtlLtrFont[TargetLanguage.IsRightToLeft]]);
 
     p := GridItems.ClientToScreen(Point(FHintRect.Right+1, FHintRect.Top));

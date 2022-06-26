@@ -26,16 +26,16 @@ uses
   cxGridDBTableView, cxGrid, cxEditRepositoryItems, dxLayoutcxEditAdapters, cxContainer, cxLabel,
   dxBarBuiltInMenu, cxGridCustomPopupMenu, cxGridPopupMenu, cxCheckBox, cxCheckComboBox, cxTextEdit, cxMaskEdit, cxDropDownEdit,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Normalization,
   amLocalization.Dialog,
-  amLocalization.TranslationMemory;
+  amLocalization.TranslationMemory, dxScrollbarAnnotations;
 
 type
   ITranslationMemoryFormTools = interface
     ['{D76E9F2C-9CF9-42CF-9092-625B809708F0}']
-    function Locate(Language: TLocaleItem; const Value: string): boolean;
-    function LocatePair(LanguageA: TLocaleItem; const ValueA: string; LanguageB: TLocaleItem; const ValueB: string): boolean;
+    function Locate(Language: TLanguageItem; const Value: string): boolean;
+    function LocatePair(LanguageA: TLanguageItem; const ValueA: string; LanguageB: TLanguageItem; const ValueB: string): boolean;
   end;
 
 // -----------------------------------------------------------------------------
@@ -135,7 +135,7 @@ type
     FViewDuplicates: boolean;
     FDuplicateColumn: TcxGridDBColumn;
     FDuplicates: TTranslationMemoryRecordList; // [RecordIndex] = DuplicateIndex
-    FDuplicateLocaleItem: TLocaleItem;
+    FDuplicateLanguageItem: TLanguageItem;
     FDuplicateSourceColumn: TcxGridColumn;
     FSanitizeRules: TSanitizeRules;
     FLookupIndex: ITranslationMemoryLookup;
@@ -149,8 +149,8 @@ type
     procedure RestoreLayout;
   protected
     // ITranslationMemoryFormTools
-    function Locate(Language: TLocaleItem; const Value: string): boolean;
-    function LocatePair(LanguageA: TLocaleItem; const ValueA: string; LanguageB: TLocaleItem; const ValueB: string): boolean;
+    function Locate(Language: TLanguageItem; const Value: string): boolean;
+    function LocatePair(LanguageA: TLanguageItem; const ValueA: string; LanguageB: TLanguageItem; const ValueB: string): boolean;
   public
     destructor Destroy; override;
 
@@ -321,17 +321,17 @@ end;
 
 procedure TFormTranslationMemory.ActionDeleteLanguageExecute(Sender: TObject);
 var
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   Field: TField;
   Clone: IInterface;
 resourcestring
   sDeleteLanguage = 'Are you sure you want to delete the "%s" language from the Translation Memory?';
 begin
   Field := TcxGridDBColumn(FPoupMenuColumn).DataBinding.Field;
-  LocaleItem := TLocaleItems.FindLCID(Field.Tag);
-  Assert(LocaleItem <> nil);
+  LanguageItem := TLanguageItem(Field.Tag);
+  Assert(LanguageItem <> nil);
 
-  if (MessageDlg(Format(sDeleteLanguage, [LocaleItem.LanguageName]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
+  if (MessageDlg(Format(sDeleteLanguage, [LanguageItem.LanguageName]), mtConfirmation, [mbYes, mbNo], 0, mbNo) <> mrYes) then
     Exit;
 
   SaveCursor(crHourGlass);
@@ -405,8 +405,8 @@ end;
 
 procedure TFormTranslationMemory.ActionViewDuplicatesExecute(Sender: TObject);
 var
-  Languages: TArray<TLocaleItem>;
-  LocaleItem: TLocaleItem;
+  Languages: TArray<TLanguageItem>;
+  LanguageItem: TLanguageItem;
 const
   SanitizeKinds: TSanitizeRules = [Low(TSanitizeRule)..High(TSanitizeRule)];
 resourcestring
@@ -447,8 +447,8 @@ begin
       NeedUpdate(tmUpdateRightToLeft);
 
       Languages := FTranslationMemory.GetLanguages;
-      for LocaleItem in Languages do
-        ComboBoxLanguages.Properties.Items.AddObject(LocaleItem.LanguageName, LocaleItem);
+      for LanguageItem in Languages do
+        ComboBoxLanguages.Properties.Items.AddObject(LanguageItem.LanguageName, LanguageItem);
 
       FDuplicates := TTranslationMemoryRecordList.Create;
     end;
@@ -491,7 +491,7 @@ begin
   Progress.UpdateMessage('Loading values...');
 
   // Create an index of sanitized values
-  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLocaleItem, FSanitizeRules, Progress);
+  FLookupIndex := FTranslationMemory.CreateLookup(FDuplicateLanguageItem, FSanitizeRules, Progress);
 
   Progress.UpdateMessage('Finding duplicates...');
   Progress.Marquee := True;
@@ -752,12 +752,12 @@ var
 begin
   BeginUpdate;
   try
-    FDuplicateLocaleItem := TLocaleItem(ComboBoxLanguages.ItemObject);
+    FDuplicateLanguageItem := TLanguageItem(ComboBoxLanguages.ItemObject);
 
     FDuplicateSourceColumn := nil;
     for i := 0 to GridTMDBTableView.ColumnCount-1 do
       if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and
-        (LCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = FDuplicateLocaleItem.Locale) then
+        (TLanguageItem(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = FDuplicateLanguageItem) then
       begin
         FDuplicateSourceColumn := GridTMDBTableView.Columns[i];
         break;
@@ -812,7 +812,7 @@ procedure TFormTranslationMemory.DoUpdateRightToLeft;
 var
   i: integer;
   Column: TcxGridDBColumn;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
 begin
   SetLength(FRightToLeft, GridTMDBTableView.ColumnCount);
 
@@ -821,12 +821,12 @@ begin
     Column := GridTMDBTableView.Columns[i];
 
     if (Column.DataBinding.Field <> nil) then
-      LocaleItem := TLocaleItems.FindLCID(Column.DataBinding.Field.Tag)
+      LanguageItem := TLanguageItem(Column.DataBinding.Field.Tag)
     else
-      LocaleItem := FDuplicateLocaleItem;
+      LanguageItem := FDuplicateLanguageItem;
 
-    if (LocaleItem <> nil) then
-      FRightToLeft[i] := LocaleItem.IsRightToLeft
+    if (LanguageItem <> nil) then
+      FRightToLeft[i] := LanguageItem.IsRightToLeft
     else
       FRightToLeft[i] := IsRightToLeft;
   end;
@@ -995,7 +995,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-function TFormTranslationMemory.Locate(Language: TLocaleItem; const Value: string): boolean;
+function TFormTranslationMemory.Locate(Language: TLanguageItem; const Value: string): boolean;
 begin
   Result := False; // Maybe later...
 end;
@@ -1003,16 +1003,21 @@ end;
 type
   TLocateMatch = (lmNone, lmEqualized, lmSanitized, lmSameSourceAndTarget, lmExactSourceOrTarget, lmExactSourceAndTarget);
 
-function TFormTranslationMemory.LocatePair(LanguageA: TLocaleItem; const ValueA: string;
-  LanguageB: TLocaleItem; const ValueB: string): boolean;
+function TFormTranslationMemory.LocatePair(LanguageA: TLanguageItem; const ValueA: string;
+  LanguageB: TLanguageItem; const ValueB: string): boolean;
 
-  function FindField(Locale: LCID): TField;
-  var
-    i: integer;
+  function FindField(LanguageItem: TLanguageItem): TField;
   begin
-    for i := 0 to GridTMDBTableView.ColumnCount-1 do
-      if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and (LCID(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = Locale) then
+    // First look for exact match
+    for var i := 0 to GridTMDBTableView.ColumnCount-1 do
+      if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and (TLanguageItem(GridTMDBTableView.Columns[i].DataBinding.Field.Tag) = LanguageItem) then
         Exit(GridTMDBTableView.Columns[i].DataBinding.Field);
+
+    // Then look for LCID match
+    for var i := 0 to GridTMDBTableView.ColumnCount-1 do
+      if (GridTMDBTableView.Columns[i].DataBinding.Field <> nil) and (TLanguageItem(GridTMDBTableView.Columns[i].DataBinding.Field.Tag).LocaleID = LanguageItem.LocaleID) then
+        Exit(GridTMDBTableView.Columns[i].DataBinding.Field);
+
     Result := nil;
   end;
 
@@ -1029,8 +1034,8 @@ var
 begin
   Result := False;
 
-  FieldA := FindField(LanguageA.Locale);
-  FieldB := FindField(LanguageB.Locale);
+  FieldA := FindField(LanguageA);
+  FieldB := FindField(LanguageB);
   if (FieldA = nil) or (FieldB = nil) then
     Exit;
 

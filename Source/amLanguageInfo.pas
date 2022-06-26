@@ -1,4 +1,4 @@
-﻿unit amLocale deprecated 'Use amLanguageInfo';
+﻿unit amLanguageInfo;
 
 (*
  * Copyright © 2014 Anders Melander
@@ -24,11 +24,13 @@ uses
 type
 //------------------------------------------------------------------------------
 //
-//      TLocaleItem
+//      TLanguageItem
 //
 //------------------------------------------------------------------------------
-  TLocaleItem = class
+  TLanguageItem = class
   private
+    FLocaleName: string; // Primary key. All other values are derived from this.
+
     FLocale: LCID;
     FISO3166Name: string;
     FCountryName: string;
@@ -36,108 +38,168 @@ type
     FDisplayName: string;
     FLanguageName: string;
     FLanguageShortName: string;
-    FLocaleName: string;
+    FFallbackName: string;
+    FFallback: TLanguageItem;
     FCharSet: integer;
     FReadingLayout: integer;
+    FInvariant: boolean;
     FIgnore: boolean;
+    FTag: NativeInt;
   protected
     function GetFlag: TBitmap;
-    function GetDisplayName: string;
+    function GetLocaleID: LCID;
+    function GetLanguageID: LangID;
+    function GetPrimaryLanguageID: Word;
+    function GetSubLanguageID: Word;
     function GetISO3166Name: string;
-    function GetLocaleName: string;
-    function GetCountryCode: integer;
-    function GetAnsiCodePage: integer;
+    function GetISO639_1Name: string;
+    function GetISO639_2Name: string;
+    function GetDisplayName: string;
     function GetLanguageName: string;
     function GetLanguageShortName: string;
-    function GetLanguage: LangID;
-    function GetCharSet: integer;
+    function GetFallbackName: string;
+    function GetFallback: TLanguageItem;
+    function GetCountryCode: integer;
     function GetCountryName: string;
-    function GetISO639_1Name: string;
-    function GetPrimaryLanguage: Word;
-    function GetSubLanguage: Word;
+    function GetAnsiCodePage: integer;
+    function GetCharSet: integer;
     function GetReadingLayout: integer;
     function GetIsLeftToRight: boolean;
     function GetIsRightToLeft: boolean;
   public
-    constructor Create(ALocale: LCID);
+    // ALocaleName = RFC4646 code (e.g. en-Us)
+    constructor Create(const ALocaleName: string);
     destructor Destroy; override;
 
     function ReleaseFlag: TBitmap;
     procedure DestroyFlag;
 
-    class function GetLocaleData(ID: LCID; Flag: DWORD): string; overload;
-    class function GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD; overload;
+    class function GetLocaleData(const ALocaleName: string; Flag: DWORD): string; overload; static;
+    class function GetLocaleDataInt(const ALocaleName: string; Flag: DWORD): DWORD; overload; static;
 
     function GetLocaleData(Flag: DWORD): string; overload;
     function GetLocaleDataInt(Flag: DWORD): DWORD; overload;
 
+    /// <summary>LocaleName: The RFC 4646 language-region code.
+    /// E.g. en-US, en-GB, da-DK, de-DE etc.</summary>
+    property LocaleName: string read FLocaleName;
+
     property Flag: TBitmap read GetFlag; // Note: Include amFlags unit to include flag resources
-    property DisplayName: string read GetDisplayName;
-    /// <summary>ISO3166Name: The ISO3166-1 alpha-2 two letter country code. E.g. US, GB, DK, DE etc.</summary>
+
+    property LocaleID: LCID read GetLocaleID;
+    property PrimaryLanguageID: Word read GetPrimaryLanguageID;
+    property SubLanguageID: Word read GetSubLanguageID;
+    property LanguageID: LangID read GetLanguageID;
+
+    /// <summary>ISO3166Name: The ISO3166-1 alpha-2 two letter country code.
+    /// E.g. US, GB, DK, DE etc.</summary>
     property ISO3166Name: string read GetISO3166Name;
-    /// <summary>ISO639_1Name: The ISO639-1 two letter language code. E.g. EN, DA, DE etc.</summary>
+
+    /// <summary>ISO639_1Name: The ISO639-1 two letter language code.
+    /// E.g. EN, DA, DE etc.</summary>
     property ISO639_1Name: string read GetISO639_1Name;
-    /// <summary>LocaleName: The RFC 4646 language-region code. E.g. en-US, en-GB, da-DK, de-DE etc.</summary>
-    property LocaleName: string read GetLocaleName;
-    function LocaleSName: string; deprecated 'Use LocaleName instead';
-    property CountryCode: integer read GetCountryCode;
-    property CountryName: string read GetCountryName;
-    property AnsiCodePage: integer read GetAnsiCodePage;
-    property Locale: LCID read FLocale;
-    property PrimaryLanguage: Word read GetPrimaryLanguage;
-    property SubLanguage: Word read GetSubLanguage;
+
+    /// <summary>ISO639_2Name: The ISO639-2 three letter language/region code.
+    /// E.g. ENU, DAN, DEU etc.</summary>
+    property ISO639_2Name: string read GetISO639_2Name;
+
+    /// <summary>DisplayName: Localized display name.
+    /// E.g. Deutsch (Deutschland)</summary>
+    property DisplayName: string read GetDisplayName;
+
+    /// <summary>LanguageName: Localized primary language name.
+    /// E.g. Deutsch</summary>
     property LanguageName: string read GetLanguageName;
-    /// <summary>LanguageShortName: The ISO639-2 three letter language-region code. E.g. ENU, ENG, DAN, DEU etc.</summary>
+
+    /// <summary>LanguageShortName: Abbreviated, three letter language-region code.
+    /// E.g. ENU, ENG, DAN, DEU etc.
+    /// Note: Not identical to ISO639-2.</summary>
     property LanguageShortName: string read GetLanguageShortName;
-    property Language: LangID read GetLanguage;
+
+    /// <summary>Fallback: Fallback locale.
+    /// E.g. EN for ENU, DE for DEU, etc.
+    /// Note: FallbackName is not guaranteed to map to an actual locale in which
+    /// case Fallback is nil.</summary>
+    property Fallback: TLanguageItem read GetFallback;
+    property FallbackName: string read GetFallbackName;
+
+    /// <summary>CountryCode: IBM country code.</summary>
+    property CountryCode: integer read GetCountryCode;
+
+    /// <summary>LanguageName: Localized country name.
+    /// E.g. Deutschland</summary>
+    property CountryName: string read GetCountryName;
+
+    /// <summary>AnsiCodePage: Default code page for non-unicode applications.</summary>
+    property AnsiCodePage: integer read GetAnsiCodePage;
+
     property CharSet: integer read GetCharSet;
     property ReadingLayout: integer read GetReadingLayout;
     property IsLeftToRight: boolean read GetIsLeftToRight;
     property IsRightToLeft: boolean read GetIsRightToLeft;
+
+    /// <summary>Invariant: Neutral locale data, that is, data defined by language only. Country/region data uses the default.</summary>
+    property Invariant: boolean read FInvariant write FInvariant;
+
+    /// <summary>Tag: Custom data. Not touched by the library.</summary>
+    property Tag: NativeInt read FTag write FTag;
+    /// <summary>Ignore: Custom data. Not touched by the library.</summary>
     property Ignore: boolean read FIgnore write FIgnore;
   end;
 
 //------------------------------------------------------------------------------
 //
-//      TLocaleItems
+//      LanguageInfo
 //
 //------------------------------------------------------------------------------
-  TLocaleItems = class abstract
+  TLanguageInfo = record
   private
     class var
-      FLocaleItems: TList<TLocaleItem>;
-      FCustomSorted: boolean;
+      FLanguageItems: TDictionary<string, TLanguageItem>;
+      FLCIDToLanguage: TDictionary<LCID, TLanguageItem>;
   private
-    class function GetLocaleItems: TList<TLocaleItem>; static;
-    class function GetLocaleItem(Index: integer): TLocaleItem; static;
-    class function GetCount: integer; static;
-    class property LocaleItems: TList<TLocaleItem> read GetLocaleItems;
+    procedure AddItem(LanguageItem: TLanguageItem);
+    procedure LoadLanguageItems;
+    function GetCount: integer;
   strict private
+    class constructor Create;
     class destructor Destroy;
   public
-    class function IndexOf(AID: LCID): integer; static;
-    class function IndexOfCountry(const ISO3166Name: string): integer; static;
-    class function IndexOfName(const Name: string): integer; static;
-    class function IndexOfLanguageName(const Name: string): integer; static;
-    class function IndexOfLanguageShortName(const Name: string): integer; static;
-    class function IndexOfCountryCode(const Value: integer): integer; static; deprecated;
+    function FindLCID(Value: LCID): TLanguageItem;
 
-    class function FindLCID(Value: LCID): TLocaleItem; static;
-    class function FindCountry(const Value: string): TLocaleItem; static;
-    class function FindName(const Value: string): TLocaleItem; static;
-    class function FindLocaleName(const Value: string; Exact: boolean = False): TLocaleItem; static;
-    class function FindLanguageName(const Value: string): TLocaleItem; static;
-    class function FindLanguageShortName(const Value: string): TLocaleItem; static;
-    class function FindCountryCode(const Value: integer): TLocaleItem; static; deprecated;
-    class function FindISO639_1Name(const Value: string): TLocaleItem; static;
-    class function FindISO3166Name(const Value: string): TLocaleItem; static;
+    // FindName: Search for DisplayName.
+    function FindName(const Value: string): TLanguageItem;
 
-    class procedure Sort(const AComparer: IComparer<TLocaleItem>); deprecated 'Custom sort prevents binary LCID search';
+    // FindLocale: If the value is numeric calls FindLCID. Otherwise calls
+    // FindLocaleName.
+    function FindLocale(const Value: string): TLanguageItem;
 
-    class property Items[index: integer]: TLocaleItem read GetLocaleItem;
-    class property Count: integer read GetCount;
+    // FindLocaleName: Search by LocaleName, then by ISO639_1Name
+    function FindLocaleName(const Value: string; Exact: boolean = False): TLanguageItem;
+
+    function FindCountry(const Value: string): TLanguageItem;
+    function FindLanguageName(const Value: string): TLanguageItem;
+    function FindLanguageShortName(const Value: string): TLanguageItem;
+    function FindISO639_1Name(const Value: string): TLanguageItem;
+    function FindISO3166Name(const Value: string): TLanguageItem;
+
+    // Wraps the ResolveLocaleName API function
+    function ResolveLocaleName(const Value: string): TLanguageItem;
+
+    // Wraps the GetUserDefaultLocaleName API function
+    function UserDefaultLocale: TLanguageItem;
+    // Wraps the GetSystemDefaultLocaleName  API function
+    function SystemDefaultLocale: TLanguageItem;
+    // Same as UserDefaultLocale with fallback to SystemDefaultLocale
+    function DefaultLocale: TLanguageItem;
+
+    property Count: integer read GetCount;
+
+    function GetEnumerator: TEnumerator<TLanguageItem>;
   end;
 
+var
+  LanguageInfo: TLanguageInfo;
 
 const
   LOCALE_SLANGDISPLAYNAME = $0000006f;
@@ -148,19 +210,21 @@ const
 //      Utilities
 //
 //------------------------------------------------------------------------------
-function LocaleISO3166Name: string;
+function LocaleName: string; deprecated 'Use LanguageInfo.DefaultLocale';
+function LocaleISO3166Name: string; deprecated 'Use LanguageInfo.DefaultLocale';
 function LocaleMonetaryGrouping(Index: integer): integer;
 procedure ClearLocale;
 procedure SetLocale(Locale: LCID);
 function MakeLangID(Primary, Region: Word ): Word;
-function LocaleName: string;
+function TryLocaleToISO639_1Name(Locale: LCID; var Value: string): boolean; deprecated 'Avoid use of LCID';
+function LocaleToISO639_1Name(Locale: LCID; const Default: string = ''): string; deprecated 'Avoid use of LCID';
+function TryISO639_1NameToLocale(const Name: string; var Value: LCID): boolean; deprecated 'Avoid use of LCID';
+function ISO639_1NameToLocale(const Name: string; Default: LCID = 0): TLCID; deprecated 'Avoid use of LCID';
+
 function LoadNewResourceModule(Locale: LCID): HModule; overload;
-function LoadNewResourceModule(LocaleItem: TLocaleItem): HModule; overload;
-function LoadNewResourceModule(LocaleItem: TLocaleItem; var ModuleFilename: string): HModule; overload;
-function TryLocaleToISO639_1Name(Locale: LCID; var Value: string): boolean;
-function LocaleToISO639_1Name(Locale: LCID; const Default: string = ''): string;
-function TryISO639_1NameToLocale(const Name: string; var Value: TLCID): boolean;
-function ISO639_1NameToLocale(const Name: string; Default: TLCID = 0): TLCID;
+function LoadNewResourceModule(const LocaleName: string): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLanguageItem): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLanguageItem; var ModuleFilename: string): HModule; overload;
 
 
 //------------------------------------------------------------------------------
@@ -368,7 +432,11 @@ implementation
 
 uses
   System.SysUtils,
-  System.IOUtils;
+  System.IOUtils,
+  System.SyncObjs;
+
+var
+  LanguageInfoLock: TCriticalSection;
 
 //------------------------------------------------------------------------------
 //
@@ -398,23 +466,29 @@ end;
 //------------------------------------------------------------------------------
 
 function LoadNewResourceModule(Locale: LCID): HModule;
-var
-  LocaleItem: TLocaleItem;
 begin
-  LocaleItem := TLocaleItems.FindLCID(Locale);
+  var LocaleItem := LanguageInfo.FindLCID(Locale);
   if (LocaleItem = nil) then
     raise Exception.CreateFmt('Invalid language ID: %.4X', [Locale]);
   Result := LoadNewResourceModule(LocaleItem);
 end;
 
-function LoadNewResourceModule(LocaleItem: TLocaleItem): HModule;
+function LoadNewResourceModule(const LocaleName: string): HModule; overload;
+begin
+  var LocaleItem := LanguageInfo.FindLocaleName(LocaleName);
+  if (LocaleItem = nil) then
+    raise Exception.CreateFmt('Invalid locale name: %s', [LocaleName]);
+  Result := LoadNewResourceModule(LocaleItem);
+end;
+
+function LoadNewResourceModule(LocaleItem: TLanguageItem): HModule;
 var
   Filename: string;
 begin
   Result := LoadNewResourceModule(LocaleItem, Filename);
 end;
 
-function LoadNewResourceModule(LocaleItem: TLocaleItem; var ModuleFilename: string): HModule; overload;
+function LoadNewResourceModule(LocaleItem: TLanguageItem; var ModuleFilename: string): HModule; overload;
 const
   LOAD_LIBRARY_AS_IMAGE_RESOURCE = $00000020;
 
@@ -490,7 +564,11 @@ var
 function LocaleISO3166Name: string;
 begin
   if (FISO3166Name = '') then
-    FISO3166Name := TLocaleItem.GetLocaleData(GetThreadLocale, LOCALE_SISO3166CTRYNAME);
+  begin
+    var LocaleItem := LanguageInfo.FindLCID(GetThreadLocale);
+    if (LocaleItem <> nil) then
+      FISO3166Name := LocaleItem.ISO639_1Name;
+  end;
   Result := FISO3166Name;
 end;
 
@@ -498,7 +576,11 @@ end;
 
 function LocaleName: string;
 begin
-  Result := TLocaleItem.GetLocaleData(GetThreadLocale, LOCALE_SLANGUAGE);
+  var LocaleItem := LanguageInfo.FindLCID(GetThreadLocale);
+  if (LocaleItem <> nil) then
+    Result := LocaleItem.LanguageName
+  else
+    Result := '';
 end;
 
 //------------------------------------------------------------------------------
@@ -573,109 +655,189 @@ begin
 end;
 
 //------------------------------------------------------------------------------
-
-procedure ClearLocale;
-begin
-  FISO3166Name := '';
-  SetLength(FMonetaryGrouping, 0);
-end;
-
-
-//------------------------------------------------------------------------------
 //
-//      TLocaleItems
+//      TLanguageInfo
 //
 //------------------------------------------------------------------------------
-function EnumLocalesCallback(LocaleID: PChar): Integer; stdcall;
-var
-  AID: LCID;
-  LocaleItem: TLocaleItem;
-  s: string;
+function EnumLocalesCallback(ALocaleName: PChar; Flags: DWORD; Param: LPARAM): DWORD; stdcall;
 begin
-  AID := StrToInt('$' + Copy(LocaleID, 5, 4));
-  s := IntToHex(AID, 4);
-
   Result := 1;
 
-  LocaleItem := TLocaleItem.Create(AID);
+  // Discard Locale Invariant - it doesn't make sense here
+  if (ALocaleName = nil) or (ALocaleName^ = #0) then
+    exit;
+
+  var LocaleName: string := ALocaleName;
+
+  var LanguageItem := TLanguageItem.Create(LocaleName);
   try
-    if (LocaleItem.ISO3166Name <> '') then
-//      (TLocaleItems.IndexOfCountry(LocaleItem.ISO3166Name) = -1) then
-      TLocaleItems.FLocaleItems.Add(LocaleItem)
-    else
-      LocaleItem.Free;
+
+    LanguageItem.Invariant := (Flags and LOCALE_NEUTRALDATA = LOCALE_NEUTRALDATA);
+
+    LanguageInfo.AddItem(LanguageItem);
+
   except
-    LocaleItem.Free;
+    LanguageItem.Free;
     Result := 0;
   end;
 end;
 
 //------------------------------------------------------------------------------
 
-class destructor TLocaleItems.Destroy;
+class constructor TLanguageInfo.Create;
 begin
-  FreeAndNil(FLocaleItems);
+  FLanguageItems := nil;
+  FLCIDToLanguage := nil;
+end;
+
+class destructor TLanguageInfo.Destroy;
+begin
+  FreeAndNil(FLanguageItems);
+  FreeAndNil(FLCIDToLanguage);
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindCountry(const Value: string): TLocaleItem;
-var
-  i: integer;
+procedure TLanguageInfo.LoadLanguageItems;
 begin
-  Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].ISO3166Name, Value)) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
+  if (FLanguageItems <> nil) then
+    exit;
+
+  if (not CheckWin32Version(6)) then
+    raise Exception.Create('LanguageItems requires Windows Vista or later');
+
+  LanguageInfoLock.Enter;
+  try
+
+    if (FLanguageItems <> nil) then
+      exit;
+
+    FLanguageItems := TObjectDictionary<string, TLanguageItem>.Create([doOwnsValues]);
+
+    // Get list of all locales supported by system
+    EnumSystemLocalesEx(@EnumLocalesCallback, LOCALE_WINDOWS or LOCALE_NEUTRALDATA, 0, nil);
+
+  finally
+    LanguageInfoLock.Leave;
+  end;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindCountryCode(const Value: integer): TLocaleItem;
-var
-  i: integer;
+function TLanguageInfo.ResolveLocaleName(const Value: string): TLanguageItem;
 begin
-  Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (FLocaleItems[i].CountryCode = Value) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
+  var Size := WinAPI.Windows.ResolveLocaleName(PChar(Value), nil, 0);
+  if (Size = 0) and (GetLastError <> ERROR_INSUFFICIENT_BUFFER) then
+    RaiseLastOSError;
+
+  var LocaleName: string;
+  SetLength(LocaleName, Size-1);
+  if (Size > 1) and (WinAPI.Windows.ResolveLocaleName(PChar(Value), PChar(LocaleName), Size) = 0) then
+    RaiseLastOSError;
+
+  Result := FindLocaleName(LocaleName, True);
+end;
+
+function TLanguageInfo.SystemDefaultLocale: TLanguageItem;
+begin
+  var LocaleName: string;
+  SetLength(LocaleName, LOCALE_NAME_MAX_LENGTH-1);
+
+  var Size := GetSystemDefaultLocaleName(PChar(LocaleName), Length(LocaleName)+1);
+
+  if (Size = 0) then
+    RaiseLastOSError;
+
+  SetLength(LocaleName, Size-1);
+
+  Result := FindLocaleName(LocaleName, True);
+end;
+
+function TLanguageInfo.UserDefaultLocale: TLanguageItem;
+begin
+  var LocaleName: string;
+  SetLength(LocaleName, LOCALE_NAME_MAX_LENGTH-1);
+
+  var Size := GetUserDefaultLocaleName(PChar(LocaleName), Length(LocaleName)+1);
+
+  if (Size = 0) then
+    RaiseLastOSError;
+
+  SetLength(LocaleName, Size-1);
+
+  Result := FindLocaleName(LocaleName, True);
+end;
+
+function TLanguageInfo.DefaultLocale: TLanguageItem;
+begin
+  Result := UserDefaultLocale;
+
+  // If the user locale isn't a real locale we fall back to the system default locale
+  // Note: The following values denotes custom locales (which we do not support):
+  //       $1000, $2000, $2400, $2800, $2C00, $3000, $3400, $3800, $3C00, $4000, $4400, $4800, $4C00
+
+  if (Result = nil) then
+    Result := SystemDefaultLocale;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindISO3166Name(const Value: string): TLocaleItem;
-var
-  i: integer;
+function TLanguageInfo.GetCount: integer;
 begin
-  Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].ISO3166Name, Value)) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
+  LoadLanguageItems;
+  Result := FLanguageItems.Count;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindISO639_1Name(const Value: string): TLocaleItem;
-var
-  i: integer;
-  SubLanguage: Word;
-  LCID: TLCID;
-  BetterLocaleItem: TLocaleItem;
+function TLanguageInfo.GetEnumerator: TEnumerator<TLanguageItem>;
 begin
+  LoadLanguageItems;
+  Result := FLanguageItems.Values.GetEnumerator;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TLanguageInfo.AddItem(LanguageItem: TLanguageItem);
+begin
+  if (LanguageItem.ISO3166Name <> '') then
+    FLanguageItems.Add(LanguageItem.LocaleName.ToLower, LanguageItem)
+  else
+    LanguageItem.Free;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageInfo.FindCountry(const Value: string): TLanguageItem;
+begin
+  LoadLanguageItems;
+  for var Item in Self do
+    if (AnsiSameText(Item.CountryName, Value)) then
+      Exit(Item);
   Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].ISO639_1Name, Value)) then
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageInfo.FindISO3166Name(const Value: string): TLanguageItem;
+begin
+  LoadLanguageItems;
+  for var Item in Self do
+    if (AnsiSameText(Item.ISO3166Name, Value)) then
+      Exit(Item);
+  Result := nil;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageInfo.FindISO639_1Name(const Value: string): TLanguageItem;
+begin
+  LoadLanguageItems;
+  Result := nil;
+  for var Item in Self do
+    if (AnsiSameText(Item.ISO639_1Name, Value)) then
     begin
-      Result := FLocaleItems[i];
+      Result := Item;
       break;
     end;
 
@@ -695,14 +857,14 @@ begin
   //
   // In order to work around this problem we only consider sub-languages that
   // also satisfies the test for ISO639-1 name.
-  if (Result <> nil) and (Result.SubLanguage <> 1) then
+  if (Result <> nil) and (Result.SubLanguageID <> 1) then
   begin
     // We should probably start with 1, but no harm's done
-    for SubLanguage := 0 to Result.SubLanguage-1 do
+    for var SubLanguage := 0 to Result.SubLanguageID-1 do
     begin
-      LCID := MAKELANGID(Result.PrimaryLanguage, SubLanguage);
+      var LCID := MAKELANGID(Result.PrimaryLanguageID, SubLanguage);
 
-      BetterLocaleItem := TLocaleItems.FindLCID(LCID);
+      var BetterLocaleItem := FindLCID(LCID);
 
       if (BetterLocaleItem <> nil) and (AnsiSameText(BetterLocaleItem.ISO639_1Name, Value)) then
       begin
@@ -715,69 +877,102 @@ end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindLanguageName(const Value: string): TLocaleItem;
-var
-  i: integer;
+function TLanguageInfo.FindLanguageName(const Value: string): TLanguageItem;
 begin
+  LoadLanguageItems;
+  for var Item in Self do
+    if (AnsiSameText(Item.LanguageName, Value)) then
+      Exit(Item);
   Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].LanguageName, Value)) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindLanguageShortName(const Value: string): TLocaleItem;
-var
-  i: integer;
+function TLanguageInfo.FindLanguageShortName(const Value: string): TLanguageItem;
 begin
+  LoadLanguageItems;
+  for var Item in Self do
+    if (AnsiSameText(Item.LanguageShortName, Value)) then
+      Exit(Item);
   Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].LanguageShortName, Value)) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
 end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindLCID(Value: LCID): TLocaleItem;
-var
-  Index: integer;
+function TLanguageInfo.FindLCID(Value: LCID): TLanguageItem;
 begin
-  Index := IndexOf(Value);
-  if (Index <> -1) then
-    Result := FLocaleItems[Index]
-  else
+  LoadLanguageItems;
+
+  // Since LCID lookup is fairly common we cache it with a dictionary
+  if (FLCIDToLanguage = nil) then
+  begin
+    LanguageInfoLock.Enter;
+    try
+
+      if (FLCIDToLanguage = nil) then
+      begin
+        FLCIDToLanguage := TDictionary<LCID, TLanguageItem>.Create;
+
+        for var Item in Self do
+        begin
+          // Since there's a one to many mapping between LCID and locale name
+          // we try to cache the most specific mapping by giving priority to
+          // variant locales over invariant ones.
+          if (not Item.Invariant) then
+          begin
+            var ExistingItem: TLanguageItem;
+            // Item is variant - Only add if no variant mapping already exist
+            if (not FLCIDToLanguage.TryGetValue(Item.LocaleID, ExistingItem)) then
+              FLCIDToLanguage.Add(Item.LocaleID, Item)
+            else
+            if (ExistingItem.Invariant) then
+              FLCIDToLanguage.AddOrSetValue(Item.LocaleID, Item);
+          end else
+          // Item is invariant - Only add if no mapping already exist
+          if (not FLCIDToLanguage.ContainsKey(Item.LocaleID)) then
+            FLCIDToLanguage.Add(Item.LocaleID, Item);
+        end;
+      end;
+
+    finally
+      LanguageInfoLock.Leave;
+    end;
+  end;
+
+  if (not FLCIDToLanguage.TryGetValue(Value, Result)) then
     Result := nil;
 end;
 
-class function TLocaleItems.FindLocaleName(const Value: string; Exact: boolean): TLocaleItem;
-var
-  i: integer;
-  Language: string;
-begin
-  Result := nil;
+//------------------------------------------------------------------------------
 
+function TLanguageInfo.FindLocale(const Value: string): TLanguageItem;
+begin
+  var n: integer;
+  if (TryStrToInt(Value, n)) then
+    Result := FindLCID(LCID(n))
+  else
+    Result := FindLocaleName(Value);
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageInfo.FindLocaleName(const Value: string; Exact: boolean): TLanguageItem;
+begin
+  LoadLanguageItems;
   // Search for RFC 4646 match
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].LocaleName, Value)) then
-      Exit(FLocaleItems[i]);
+  if (FLanguageItems.TryGetValue(Value.ToLower, Result)) then
+    exit;
 
   if (Exact) then
-    exit;
+    exit(nil);
 
   // Exact match on language-region (e.g. "en-US") failed.
   // If value is a two part language-region value (i.e. it contains a "-") then
   // look for the region invariant ISO639-1 (e.g. "en") part instead.
   // Note that this logic fails on some languages. For example for
   // Norwegian (nb-NO & nn-NO) the invariant part is NO.
-  Language := Value;
-  i := Pos('-', Language);
+  var Language := Value;
+  var i := Pos('-', Language);
   if (i > 0) then
     Delete(Language, i, MaxInt);
 
@@ -786,286 +981,34 @@ end;
 
 //------------------------------------------------------------------------------
 
-class function TLocaleItems.FindName(const Value: string): TLocaleItem;
-var
-  i: integer;
+function TLanguageInfo.FindName(const Value: string): TLanguageItem;
 begin
+  LoadLanguageItems;
+  for var Item in Self do
+    if (AnsiSameText(Item.DisplayName, Value)) then
+      Exit(Item);
   Result := nil;
-  for i := 0 to LocaleItems.Count-1 do
-    if (AnsiSameText(FLocaleItems[i].DisplayName, Value)) then
-    begin
-      Result := FLocaleItems[i];
-      break;
-    end;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.GetCount: integer;
-begin
-  Result := LocaleItems.Count;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.GetLocaleItem(Index: integer): TLocaleItem;
-begin
-  Result := LocaleItems[Index];
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.GetLocaleItems: TList<TLocaleItem>;
-begin
-  if (FLocaleItems = nil) then
-  begin
-    FLocaleItems := TObjectList<TLocaleItem>.Create;
-
-    // Get list of all locales supported by system
-    EnumSystemLocales(@EnumLocalesCallback, LCID_SUPPORTED);
-
-    // Sort list so we can do binary search on it
-    FLocaleItems.Sort(TComparer<TLocaleItem>.Construct(
-      function(const A, B: TLocaleItem): integer
-      begin
-        Result := integer(A.Locale) - integer(B.Locale);
-      end));
-  end;
-
-  Result := FLocaleItems;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOfCountry(const ISO3166Name: string): integer;
-begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
-  begin
-    if (AnsiSameText(FLocaleItems[Result].ISO3166Name, ISO3166Name)) then
-      break;
-    dec(Result);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOfCountryCode(const Value: integer): integer;
-begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
-  begin
-    if (FLocaleItems[Result].CountryCode = Value) then
-      break;
-    dec(Result);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOfLanguageName(const Name: string): integer;
-begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
-  begin
-    if (AnsiSameText(FLocaleItems[Result].LanguageName, Name)) then
-      break;
-    dec(Result);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOfLanguageShortName(const Name: string): integer;
-begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
-  begin
-    if (AnsiSameText(FLocaleItems[Result].LanguageShortName, Name)) then
-      break;
-    dec(Result);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOfName(const Name: string): integer;
-begin
-  Result := LocaleItems.Count-1;
-  while (Result >= 0) do
-  begin
-    if (AnsiSameText(FLocaleItems[Result].DisplayName, Name)) then
-      break;
-    dec(Result);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-class procedure TLocaleItems.Sort(const AComparer: IComparer<TLocaleItem>);
-begin
-  // We need the original list to be sorted by LCID in order to perform binary search on it.
-  // If it is sorted in any other order then we must fall back to sequential scan.
-  LocaleItems.Sort(AComparer);
-  FCustomSorted := True;
-end;
-
-//------------------------------------------------------------------------------
-
-class function TLocaleItems.IndexOf(AID: LCID): integer;
-var
-  Lo, Hi, Mid: Integer;
-  Compare: Integer;
-begin
-  if (not FCustomSorted) then
-  begin
-    // Binary search
-    Lo := 0;
-    Hi := LocaleItems.Count-1;
-    while (Lo <= Hi) do
-    begin
-      Mid := Lo + (Hi - Lo) shr 1;
-      Compare := integer(FLocaleItems[Mid].Locale) - integer(AID);
-      if (Compare = 0) then
-        Exit(Mid);
-      if (Compare < 0) then
-        Lo := Mid + 1
-      else
-        Hi := Mid - 1;
-    end;
-    Result := -1;
-  end else
-  begin
-    // Sequential scan
-    Result := LocaleItems.Count-1;
-    while (Result >= 0) do
-    begin
-      if (FLocaleItems[Result].Locale = AID) then
-        break;
-      dec(Result);
-    end;
-  end;
 end;
 
 
 //------------------------------------------------------------------------------
 //
-//      TLocaleItem
+//      TLanguageItem
 //
 //------------------------------------------------------------------------------
-function TLocaleItem.GetLanguage: LangID;
+constructor TLanguageItem.Create(const ALocaleName: string);
 begin
-  // http://msdn2.microsoft.com/en-us/library/ms776294(VS.85).aspx
-  Result := FLocale and $3FF;
-end;
+  inherited Create;
+  FLocaleName := ALocaleName;
 
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetLanguageName: string;
-begin
-  (*
-  LOCALE_SLANGUAGE
-  localized name of language.
-  *)
-  if (FLanguageName = '') then
-    FLanguageName := GetLocaleData(LOCALE_SLANGUAGE);
-  Result := FLanguageName;
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetLanguageShortName: string;
-begin
-  (*
-  LOCALE_SABBREVLANGNAME
-  abbreviated language name
-  http://www.microsoft.com/globaldev/reference/winxp/langtla.mspx
-  *)
-  if (FLanguageShortName = '') then
-    FLanguageShortName := GetLocaleData(LOCALE_SABBREVLANGNAME);
-  Result := FLanguageShortName;
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetLocaleData(Flag: DWORD): string;
-begin
-  Result := GetLocaleData(Locale, Flag);
-end;
-
-function TLocaleItem.GetLocaleDataInt(Flag: DWORD): DWORD;
-begin
-  Result := GetLocaleDataInt(Locale, Flag);
-end;
-
-class function TLocaleItem.GetLocaleDataInt(ID: LCID; Flag: DWORD): DWORD;
-begin
-  if (GetLocaleInfo(ID, Flag or LOCALE_RETURN_NUMBER, PChar(@Result), SizeOf(Result) div SizeOf(Char)) = 0) then
-    RaiseLastOSError;
-end;
-
-class function TLocaleItem.GetLocaleData(ID: LCID; Flag: DWORD): string;
-var
-  Size: integer;
-begin
-  Size := GetLocaleInfo(ID, Flag, nil, 0);
-  SetLength(Result, Size-1);
-  if (GetLocaleInfo(ID, Flag, PChar(Result), Size) = 0) then
-    RaiseLastOSError;
-end;
-
-function TLocaleItem.GetLocaleName: string;
-begin
-  (*
-  LOCALE_SNAME
-  A multi-part tag to uniquely identify the locale.
-  The tag is based on the language tagging conventions of RFC 4646.
-  *)
-  // en-us, da-dk, etc. = Format('%s-%s', [ISO639_1Name, ISO3166Name]);
-  if (FLocaleName = '') then
-    FLocaleName := GetLocaleData(LOCALE_SNAME);
-  Result := FLocaleName;
-end;
-
-function TLocaleItem.LocaleSName: string;
-begin
-  Result := GetLocaleName;
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetPrimaryLanguage: Word;
-begin
-  Result := PRIMARYLANGID(FLocale);
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetSubLanguage: Word;
-begin
-  Result := SUBLANGID(FLocale);
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.ReleaseFlag: TBitmap;
-begin
-  Result := FFlag;
-  FFlag := nil;
-end;
-
-//------------------------------------------------------------------------------
-
-constructor TLocaleItem.Create(ALocale: LCID);
-begin
-  FLocale := ALocale;
+  FLocale := LCID(-1);
   FCharSet := -1;
   FReadingLayout := -1;
 end;
 
 //------------------------------------------------------------------------------
 
-destructor TLocaleItem.Destroy;
+destructor TLanguageItem.Destroy;
 begin
   DestroyFlag;
   inherited Destroy;
@@ -1073,95 +1016,49 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TLocaleItem.DestroyFlag;
+procedure TLanguageItem.DestroyFlag;
 begin
   FreeAndNil(FFlag);
 end;
 
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetAnsiCodePage: integer;
+function TLanguageItem.ReleaseFlag: TBitmap;
 begin
-  (*
-  LOCALE_IDEFAULTANSICODEPAGE
-  The ANSI code page used by a locale for applications that do not support
-  Unicode. The maximum number of characters allowed for this string is six,
-  including a terminating null character. If no ANSI code page is available,
-  only Unicode can be used for the locale. In this case, the value is CP_ACP (0).
-  *)
-  Result := GetLocaleDataInt(LOCALE_IDEFAULTANSICODEPAGE);
+  Result := FFlag;
+  FFlag := nil;
 end;
 
 //------------------------------------------------------------------------------
 
-function TLocaleItem.GetCharSet: integer;
-const
-  TCI_SRCLOCALE = $1000;
-var
-  CharsetInfo: TCharsetInfo;
-  ALocale: LCID;
+function TLanguageItem.GetLocaleData(Flag: DWORD): string;
 begin
-  if (FCharset = -1) then
-  begin
-    ALocale := Locale;
-    if (not TranslateCharsetInfo(ALocale, CharsetInfo, TCI_SRCLOCALE)) then
-    begin
-      // For some strage reason TranslateCharsetInfo fails on some locales
-      if (GetLastError <> ERROR_INVALID_PARAMETER) then
-        RaiseLastOSError;
-      FCharset := DEFAULT_CHARSET;
-    end else
-      FCharset := CharsetInfo.ciCharset;
-  end;
-  Result := FCharset;
+  Result := GetLocaleData(LocaleName, Flag);
+end;
+
+function TLanguageItem.GetLocaleDataInt(Flag: DWORD): DWORD;
+begin
+  Result := GetLocaleDataInt(LocaleName, Flag);
+end;
+
+class function TLanguageItem.GetLocaleDataInt(const ALocaleName: string; Flag: DWORD): DWORD;
+begin
+  if (GetLocaleInfoEx(PChar(ALocaleName), Flag or LOCALE_RETURN_NUMBER, PChar(@Result), SizeOf(Result) div SizeOf(Char)) = 0) then
+    RaiseLastOSError;
+end;
+
+class function TLanguageItem.GetLocaleData(const ALocaleName: string; Flag: DWORD): string;
+begin
+  var Size := GetLocaleInfoEx(PChar(ALocaleName), Flag, nil, 0);
+  if (Size = 0) and (GetLastError <> ERROR_INSUFFICIENT_BUFFER) then
+    RaiseLastOSError;
+
+  SetLength(Result, Size-1);
+  if (Size > 1) and (GetLocaleInfoEx(PChar(ALocaleName), Flag, PChar(Result), Size) = 0) then
+      RaiseLastOSError;
 end;
 
 //------------------------------------------------------------------------------
 
-function TLocaleItem.GetCountryCode: integer;
-begin
-  (*
-  LOCALE_ICOUNTRY
-  Country/region code, based on international phone codes, also referred to as
-  IBM country/region codes. The maximum number of characters allowed for this
-  string is six, including a terminating null character.
-  *)
-  Result := GetLocaleDataInt(LOCALE_ICOUNTRY);
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetCountryName: string;
-begin
-  (*
-  LOCALE_SCOUNTRY
-  Full localized name of the country/region. The maximum number of characters
-  allowed for this string is 80, including a terminating null character. This
-  name is based on the localization of the product. Thus it changes for each
-  localized version.
-  *)
-  if (FCountryName = '') then
-    FCountryName := GetLocaleData(LOCALE_SCOUNTRY);
-  Result := FCountryName;
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetDisplayName: string;
-begin
-  if (FDisplayName = '') then
-  begin
-    if (CheckWin32Version(6)) then
-      FDisplayName := GetLocaleData(LOCALE_SLANGDISPLAYNAME)
-    else
-      FDisplayName := LanguageName;
-  end;
-  Result := FDisplayName;
-end;
-
-//------------------------------------------------------------------------------
-
-function TLocaleItem.GetFlag: TBitmap;
+function TLanguageItem.GetFlag: TBitmap;
 var
   HResInfo: THandle;
   Name: string;
@@ -1181,7 +1078,40 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TLocaleItem.GetISO3166Name: string;
+function TLanguageItem.GetLocaleID: LCID;
+begin
+  // Do not use GetLocaleDataInt(LOCALE_ILANGUAGE) !
+  if (FLocale = LCID(-1)) then
+  begin
+    if (CheckWin32Version(7)) then
+      FLocale := LocaleNameToLCID(PChar(FLocaleName), LOCALE_ALLOW_NEUTRAL_NAMES)
+    else
+      FLocale := LocaleNameToLCID(PChar(FLocaleName), 0);
+  end;
+  Result := FLocale;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetLanguageID: LangID;
+begin
+  // http://msdn2.microsoft.com/en-us/library/ms776294(VS.85).aspx
+  Result := LocaleID and $3FF;
+end;
+
+function TLanguageItem.GetPrimaryLanguageID: Word;
+begin
+  Result := PRIMARYLANGID(LocaleID);
+end;
+
+function TLanguageItem.GetSubLanguageID: Word;
+begin
+  Result := SUBLANGID(LocaleID);
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetISO3166Name: string;
 begin
   (*
   LOCALE_SISO3166CTRYNAME
@@ -1196,33 +1126,200 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TLocaleItem.GetISO639_1Name: string;
+function TLanguageItem.GetISO639_1Name: string;
 begin
   (*
   LOCALE_SISO639LANGNAME
   The abbreviated name of the language based entirely on the ISO Standard 639
-  values, in lowercase form, for example, "en" for English. The maximum number
-  of characters allowed for this string is nine, including a terminating null
-  character.
+  values, in lowercase form, such as "en" for English. This can be a 3-letter
+  code for languages that don't have a 2-letter code, such as "haw" for
+  Hawaiian. The maximum number of characters allowed for this string is nine,
+  including a terminating null character.
   *)
   Result := GetLocaleData(LOCALE_SISO639LANGNAME);
 end;
 
 //------------------------------------------------------------------------------
 
-function TLocaleItem.GetReadingLayout: integer;
+function TLanguageItem.GetISO639_2Name: string;
+begin
+  (*
+  LOCALE_SISO639LANGNAME2
+  Three-letter ISO language name, in lowercase form (ISO 639-2 three-letter
+  code for the language), such as "eng" for English. The maximum number of
+  characters allowed for this string is nine, including a terminating null
+  character.
+  *)
+  Result := GetLocaleData(LOCALE_SISO639LANGNAME2);
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetDisplayName: string;
+begin
+  (*
+  LOCALE_SLANGDISPLAYNAME (pre Windows 7)
+  LOCALE_SLOCALIZEDDISPLAYNAME (Windows 7 and later)
+  Full localized name of the locale for the user interface language, for
+  example, Deutsch (Deutschland) for German (Germany)" There is no limit on the
+  number of characters allowed for this string. Since this name is based on the
+  localization of the product, it changes for each localized version.
+  *)
+  if (FDisplayName = '') then
+  begin
+    if (CheckWin32Version(7)) then
+      FDisplayName := GetLocaleData(LOCALE_SLOCALIZEDDISPLAYNAME)
+    else
+      FDisplayName := GetLocaleData(LOCALE_SLANGDISPLAYNAME)
+  end;
+
+  Result := FDisplayName;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetLanguageShortName: string;
+begin
+  (*
+  LOCALE_SABBREVLANGNAME
+  Abbreviated name of the language. In most cases, the name is created by taking
+  the two-letter language abbreviation from ISO Standard 639 and adding a third
+  letter, as appropriate, to indicate the sublanguage. For example, the
+  abbreviated name for the language corresponding to the English (United States)
+  locale is ENU.
+  http://archives.miloush.net/michkap/archive/2005/02/17/375235.html
+  http://archives.miloush.net/michkap/archive/2006/09/27/773341.html
+  *)
+  if (FLanguageShortName = '') then
+    FLanguageShortName := GetLocaleData(LOCALE_SABBREVLANGNAME);
+  Result := FLanguageShortName;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetLanguageName: string;
+begin
+  (*
+  LOCALE_SLANGUAGE (pre Windows 7)
+  LOCALE_SLOCALIZEDLANGUAGENAME (Windows 7 and later)
+  Full localized primary name of the user interface language included in a
+  localized display name, for example, Deutsch representing German. Since this
+  name is based on the localization of the product, it changes for each
+  localized version.
+  *)
+  if (FLanguageName = '') then
+  begin
+    if (CheckWin32Version(7)) then
+      FLanguageName := GetLocaleData(LOCALE_SLOCALIZEDLANGUAGENAME)
+    else
+      FLanguageName := GetLocaleData(LOCALE_SLANGUAGE);
+  end;
+  Result := FLanguageName;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetFallback: TLanguageItem;
+begin
+  if (FFallback = nil) then
+    FFallback := LanguageInfo.FindLocaleName(FallbackName);
+  Result := FFallback;
+end;
+
+function TLanguageItem.GetFallbackName: string;
+begin
+  if (FFallbackName = '') then
+    FFallbackName := GetLocaleData(LOCALE_SPARENT);
+  Result := FFallbackName;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetCountryCode: integer;
+const
+  LOCALE_IDIALINGCODE = LOCALE_ICOUNTRY; // Defined for Windows 10+
+begin
+  (*
+  LOCALE_ICOUNTRY
+  Country/region code, based on international phone codes, also referred to as
+  IBM country/region codes. The maximum number of characters allowed for this
+  string is six, including a terminating null character.
+  *)
+  Result := GetLocaleDataInt(LOCALE_IDIALINGCODE);
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetCountryName: string;
+begin
+  (*
+  LOCALE_SCOUNTRY (pre Windows 7)
+  LOCALE_SLOCALIZEDCOUNTRYNAME (Windows 7 and later)
+  Full localized name of the country/region, for example, Deutschland for
+  Germany. The maximum number of characters allowed for this string is 80,
+  including a terminating null character. Since this name is based on the
+  localization of the product, it changes for each localized version.
+  *)
+  if (FCountryName = '') then
+    if (CheckWin32Version(7)) then
+      FCountryName := GetLocaleData(LOCALE_SLOCALIZEDCOUNTRYNAME)
+    else
+      FCountryName := GetLocaleData(LOCALE_SCOUNTRY);
+  Result := FCountryName;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetAnsiCodePage: integer;
+begin
+  (*
+  LOCALE_IDEFAULTANSICODEPAGE
+  The ANSI code page used by a locale for applications that do not support
+  Unicode. The maximum number of characters allowed for this string is six,
+  including a terminating null character. If no ANSI code page is available,
+  only Unicode can be used for the locale. In this case, the value is CP_ACP (0).
+  *)
+  Result := GetLocaleDataInt(LOCALE_IDEFAULTANSICODEPAGE);
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetCharSet: integer;
+const
+  TCI_SRCLOCALE = $1000;
+var
+  CharsetInfo: TCharsetInfo;
+begin
+  if (FCharset = -1) then
+  begin
+    var ALocale := LocaleID;
+    if (not TranslateCharsetInfo(ALocale, CharsetInfo, TCI_SRCLOCALE)) then
+    begin
+      // For some strage reason TranslateCharsetInfo fails on some locales
+      if (GetLastError <> ERROR_INVALID_PARAMETER) then
+        RaiseLastOSError;
+      FCharset := DEFAULT_CHARSET;
+    end else
+      FCharset := CharsetInfo.ciCharset;
+  end;
+  Result := FCharset;
+end;
+
+//------------------------------------------------------------------------------
+
+function TLanguageItem.GetReadingLayout: integer;
 begin
   if (FReadingLayout = -1) then
     FReadingLayout := GetLocaleDataInt(LOCALE_IREADINGLAYOUT);
   Result := FReadingLayout;
 end;
 
-function TLocaleItem.GetIsLeftToRight: boolean;
+function TLanguageItem.GetIsLeftToRight: boolean;
 begin
   Result := (ReadingLayout = 0);
 end;
 
-function TLocaleItem.GetIsRightToLeft: boolean;
+function TLanguageItem.GetIsRightToLeft: boolean;
 begin
   Result := (ReadingLayout = 1);
 end;
@@ -1289,10 +1386,8 @@ end;
 //------------------------------------------------------------------------------
 
 function TryLocaleToISO639_1Name(Locale: LCID; var Value: string): boolean;
-var
-  LocaleItem: TLocaleItem;
 begin
-  LocaleItem := TLocaleItems.FindLCID(Locale);
+  var LocaleItem := LanguageInfo.FindLCID(Locale);
 
   if (LocaleItem <> nil) then
   begin
@@ -1304,6 +1399,7 @@ begin
     Value := '';
   end;
 end;
+
 //------------------------------------------------------------------------------
 
 function LocaleToISO639_1Name(Locale: LCID; const Default: string = ''): string;
@@ -1314,16 +1410,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TryISO639_1NameToLocale(const Name: string; var Value: TLCID): boolean;
-var
-  LocaleItem: TLocaleItem;
+function TryISO639_1NameToLocale(const Name: string; var Value: LCID): boolean;
 begin
-  LocaleItem := TLocaleItems.FindISO639_1Name(Name);
+  var LocaleItem := LanguageInfo.FindISO639_1Name(Name);
 
   if (LocaleItem <> nil) then
   begin
     Result := True;
-    Value := LocaleItem.Locale;
+    Value := LocaleItem.LocaleID;
   end else
   begin
     Result := False;
@@ -1333,7 +1427,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-function ISO639_1NameToLocale(const Name: string; Default: TLCID = 0): TLCID;
+function ISO639_1NameToLocale(const Name: string; Default: LCID = 0): TLCID;
 begin
   if (not TryISO639_1NameToLocale(Name, Result)) then
     Result := Default;
@@ -1341,6 +1435,17 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure ClearLocale;
+begin
+  FISO3166Name := '';
+  SetLength(FMonetaryGrouping, 0);
+end;
+
+//------------------------------------------------------------------------------
+
 initialization
+  LanguageInfoLock := TCriticalSection.Create;
   ClearLocale;
+finalization
+  LanguageInfoLock.Free;
 end.

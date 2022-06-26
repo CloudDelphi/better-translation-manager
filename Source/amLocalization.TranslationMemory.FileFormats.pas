@@ -107,7 +107,7 @@ uses
   FireDAC.Comp.Client,
   FireDAC.Comp.DataSet,
   amCursorService,
-  amLocale,
+  amLanguageInfo,
   amVersionInfo,
   amFileUtils,
   amLocalization.Common,

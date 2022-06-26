@@ -84,8 +84,7 @@ uses
   IOUtils,
   Dialogs,
   System.UITypes,
-  Controls,
-  amLocale;
+  Controls;
 
 const
   sResourceModuleStub = 'EmptyResourceModule.dll';

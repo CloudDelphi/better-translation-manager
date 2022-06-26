@@ -21,11 +21,11 @@ uses
   Dialogs,
   UITypes,
   Windows,
-  amLocale,
   amVersionInfo,
   amSplash,
   amCursorService,
   amProgress,
+  amLanguageInfo,
   DelphiDabbler.SingleInstance,
   {$ifdef MADEXCEPT}
   amLocalization.ExceptionHandler.MadExcept,

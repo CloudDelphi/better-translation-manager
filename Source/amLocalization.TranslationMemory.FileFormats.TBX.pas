@@ -54,7 +54,7 @@ uses
   msxmldom,
   XMLDoc, XMLIntf, XMLDom,
   amCursorService,
-  amLocale,
+  amLanguageInfo,
   amVersionInfo,
   amProgress.Stream,
   amLocalization.TranslationMemory;
@@ -101,7 +101,7 @@ var
   Node: IXMLNode;
   Term: TTerm;
   Terms: TTerms;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   Language: string;
   LanguageName: string;
   Field: TField;
@@ -173,14 +173,14 @@ begin
             Language := VarToStr(LanguageNode.Attributes['lang']);
 
           if (Language <> '') then
-            LocaleItem := TLocaleItems.FindLocaleName(Language)
+            LanguageItem := LanguageInfo.FindLocaleName(Language)
           else
-            LocaleItem := nil; // Ignore unknown language
+            LanguageItem := nil; // Ignore unknown language
 
           TermGroupNode := nil;
-          if (LocaleItem <> nil) then
+          if (LanguageItem <> nil) then
           begin
-            LanguageName := LocaleItem.LocaleName;
+            LanguageName := LanguageItem.LocaleName;
 
             // First language becomes the source language
             if (SourceLanguage = '') then
@@ -201,7 +201,7 @@ begin
           begin
             if (not Languages.TryGetValue(LanguageName, Field)) then
             begin
-              Field := TranslationMemory.CreateField(LocaleItem);
+              Field := TranslationMemory.CreateField(LanguageItem);
               Languages.Add(LanguageName, Field);
             end;
 

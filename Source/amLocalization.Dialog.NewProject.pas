@@ -21,6 +21,7 @@ uses
   cxTextEdit, cxMaskEdit, cxButtonEdit, dxLayoutControl, dxLayoutControlAdapters, cxButtons, dxSkinsCore,
   cxGridDBTableView, System.Actions, cxMRUEdit, cxLabel,
 
+  amLanguageInfo,
   amLocalization.Dialog;
 
 type
@@ -36,14 +37,14 @@ type
     procedure EditSourceApplicationPropertiesButtonClick(Sender: TObject);
   private
     function GetSourceApplication: string;
-    function GetSourceLanguageID: Word;
+    function GetSourceLanguage: TLanguageItem;
     procedure SetSourceApplication(const Value: string);
-    procedure SetSourceLanguageID(const Value: Word);
+    procedure SetSourceLanguage(const Value: TLanguageItem);
   public
     procedure SetLanguageView(View: TcxGridDBTableView; ListItem: TcxGridDBColumn);
     function Execute: boolean;
     property SourceApplication: string read GetSourceApplication write SetSourceApplication;
-    property SourceLanguageID: Word read GetSourceLanguageID write SetSourceLanguageID;
+    property SourceLanguage: TLanguageItem read GetSourceLanguage write SetSourceLanguage;
   end;
 
 implementation
@@ -114,9 +115,9 @@ begin
   Result := EditSourceApplication.Text;
 end;
 
-function TFormNewProject.GetSourceLanguageID: Word;
+function TFormNewProject.GetSourceLanguage: TLanguageItem;
 begin
-  Result := ComboBoxSourceLanguage.EditValue;
+  Result := LanguageInfo.FindLocaleName(VarToStr(ComboBoxSourceLanguage.EditValue));
 end;
 
 procedure TFormNewProject.SetLanguageView(View: TcxGridDBTableView; ListItem: TcxGridDBColumn);
@@ -130,9 +131,9 @@ begin
   EditSourceApplication.Text := Value;
 end;
 
-procedure TFormNewProject.SetSourceLanguageID(const Value: Word);
+procedure TFormNewProject.SetSourceLanguage(const Value: TLanguageItem);
 begin
-  ComboBoxSourceLanguage.EditValue := Value;
+  ComboBoxSourceLanguage.EditValue := Value.LocaleName;
 end;
 
 end.

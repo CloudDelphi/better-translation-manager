@@ -40,8 +40,9 @@ object DataModuleMain: TDataModuleMain
     Top = 125
     object GridTableViewLanguages: TcxGridDBTableView
       Navigator.Buttons.CustomButtons = <>
+      ScrollbarAnnotations.CustomAnnotations = <>
       DataController.DataSource = DataSourceLanguages
-      DataController.KeyFieldNames = 'LocaleID'
+      DataController.KeyFieldNames = 'LocaleName'
       DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
       DataController.Summary.DefaultGroupSummaryItems = <>
       DataController.Summary.FooterSummaryItems = <>
@@ -54,13 +55,13 @@ object DataModuleMain: TDataModuleMain
       OptionsSelection.CellSelect = False
       OptionsView.ColumnAutoWidth = True
       OptionsView.GroupByBox = False
-      object GridTableViewLanguagesColumnLocaleID: TcxGridDBColumn
-        Caption = 'Locale ID'
-        DataBinding.FieldName = 'LocaleID'
-      end
       object GridTableViewLanguagesColumnLocaleName: TcxGridDBColumn
         Caption = 'Locale'
         DataBinding.FieldName = 'LocaleName'
+      end
+      object GridTableViewLanguagesColumnLocaleID: TcxGridDBColumn
+        Caption = 'Locale ID'
+        DataBinding.FieldName = 'LocaleID'
       end
       object GridTableViewLanguagesColumnLanguage: TcxGridDBColumn
         Caption = 'Language'
@@ -76,9 +77,10 @@ object DataModuleMain: TDataModuleMain
     end
     object GridTableViewFilteredTargetLanguages: TcxGridDBTableView
       Navigator.Buttons.CustomButtons = <>
+      ScrollbarAnnotations.CustomAnnotations = <>
       DataController.DataSource = DataSourceLanguages
       DataController.Filter.Active = True
-      DataController.KeyFieldNames = 'LocaleID'
+      DataController.KeyFieldNames = 'LocaleName'
       DataController.Summary.DefaultGroupSummaryItems = <>
       DataController.Summary.FooterSummaryItems = <>
       DataController.Summary.SummaryGroups = <>
@@ -90,13 +92,13 @@ object DataModuleMain: TDataModuleMain
       OptionsSelection.CellSelect = False
       OptionsView.ColumnAutoWidth = True
       OptionsView.GroupByBox = False
-      object GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn
-        Caption = 'Locale ID'
-        DataBinding.FieldName = 'LocaleID'
-      end
       object GridTableViewFilteredTargetLanguagesLocaleName: TcxGridDBColumn
         Caption = 'Locale'
         DataBinding.FieldName = 'LocaleName'
+      end
+      object GridTableViewFilteredTargetLanguagesLocaleID: TcxGridDBColumn
+        Caption = 'Locale ID'
+        DataBinding.FieldName = 'LocaleID'
       end
       object GridTableViewFilteredTargetLanguagesLanguage: TcxGridDBColumn
         Caption = 'Language'
@@ -128,13 +130,13 @@ object DataModuleMain: TDataModuleMain
       OptionsView.NoDataToDisplayInfoText = '<None available>'
       OptionsView.ColumnAutoWidth = True
       OptionsView.GroupByBox = False
-      object GridTableViewFilteredApplicationLanguagesLocaleID: TcxGridDBColumn
-        Caption = 'Locale ID'
-        DataBinding.FieldName = 'LocaleID'
-      end
       object GridTableViewFilteredApplicationLanguagesLocaleName: TcxGridDBColumn
         Caption = 'Locale'
         DataBinding.FieldName = 'LocaleName'
+      end
+      object GridTableViewFilteredApplicationLanguagesLocaleID: TcxGridDBColumn
+        Caption = 'Locale ID'
+        DataBinding.FieldName = 'LocaleID'
       end
       object GridTableViewFilteredApplicationLanguagesLanguage: TcxGridDBColumn
         Caption = 'Language'
@@ -193,14 +195,14 @@ object DataModuleMain: TDataModuleMain
       Properties.DropDownAutoSize = True
       Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
       Properties.View = GridTableViewLanguages
-      Properties.KeyFieldNames = 'LocaleID'
+      Properties.KeyFieldNames = 'LocaleName'
       Properties.ListFieldItem = GridTableViewLanguagesColumnLanguage
     end
     object EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem
       Properties.DropDownAutoSize = True
       Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
       Properties.View = GridTableViewFilteredTargetLanguages
-      Properties.KeyFieldNames = 'LocaleID'
+      Properties.KeyFieldNames = 'LocaleName'
       Properties.ListFieldItem = GridTableViewFilteredTargetLanguagesLanguage
     end
     object EditRepositoryComboBoxItemFilteredApplicationLanguage: TcxEditRepositoryExtLookupComboBoxItem

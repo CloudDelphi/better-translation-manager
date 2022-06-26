@@ -31,6 +31,7 @@ uses
   cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridLevel, cxGrid,
 
   amDataCsvReader,
+  amLanguageInfo,
   amLocalization.Model,
   amLocalization.Engine;
 
@@ -138,7 +139,7 @@ type
     TColumnMap = record
       Mapped: boolean;
       Kind: TColumnMapKind;
-      Value: LCID;
+      Language: TLanguageItem;
     end;
 
     TMapMode = set of (mmID, mmValue);
@@ -212,7 +213,6 @@ uses
   System.Math,
   System.Character,
   System.UITypes,
-  amLocale,
   amProgress.Stream,
   amProgress.API,
   amLocalization.Common,
@@ -660,7 +660,7 @@ procedure TFormCSVImport.OnColumnMenuItemTargetClick(Sender: TObject);
 begin
   FColumnMap[TMenuItem(Sender).Owner.Tag].Mapped := True;
   FColumnMap[TMenuItem(Sender).Owner.Tag].Kind := cmValueTarget;
-  FColumnMap[TMenuItem(Sender).Owner.Tag].Value := TMenuItem(Sender).Tag;
+  FColumnMap[TMenuItem(Sender).Owner.Tag].Language := TLanguageItem(TMenuItem(Sender).Tag);
   GridLayoutTableView.Columns[TMenuItem(Sender).Owner.Tag].Caption := TMenuItem(Sender).Caption;
   ValidateLayout;
 end;
@@ -985,13 +985,9 @@ end;
 
 procedure TFormCSVImport.DisplayColumnMapPopupMenu(Column: TcxCustomGridTableItem);
 
-  function LanguageID(LanguageID: LCID): string;
+  function LanguageID(Language: TLanguageItem): string;
   begin
-    var LocaleItem := TLocaleItems.FindLCID(LanguageID);
-    if (LocaleItem <> nil) then
-      Result := Format('%s %s', [LocaleItem.LocaleName, LocaleItem.LanguageName])
-    else
-      Result := Format('%.4H', [LanguageID]);
+    Result := Format('%s %s', [Language.LocaleName, Language.LanguageName]);
   end;
 
 resourcestring
@@ -1061,7 +1057,7 @@ begin
   *)
   begin
     var MenuItem := TMenuItem.Create(PopupMenuColumn);
-    MenuItem.Hint := Format(sColumnCaptionSourceLanguage, [LanguageID(FProject.SourceLanguageID)]);
+    MenuItem.Hint := Format(sColumnCaptionSourceLanguage, [LanguageID(FProject.SourceLanguage)]);
     if (mmValue in FMapMode) then
       MenuItem.Caption := Format(sColumnCaptionRequired, [MenuItem.Hint])
     else
@@ -1084,12 +1080,12 @@ begin
   for var Language in FProject.TranslationLanguages do
   begin
     var MenuItem := TMenuItem.Create(PopupMenuColumn);
-    MenuItem.Caption := Format(sColumnCaptionTargetLanguage, [LanguageID(Language.LanguageID)]);
-    MenuItem.Tag := Language.LanguageID;
+    MenuItem.Caption := Format(sColumnCaptionTargetLanguage, [LanguageID(Language.Language)]);
+    MenuItem.Tag := NativeInt(Language.Language);
     MenuItem.OnClick := OnColumnMenuItemTargetClick;
     MenuItem.RadioItem := True;
     MenuItem.GroupIndex := 1;
-    MenuItem.Checked := (FColumnMap[Index].Mapped) and (FColumnMap[Index].Kind = cmValueTarget) and (FColumnMap[Index].Value = Language.LanguageID);
+    MenuItem.Checked := (FColumnMap[Index].Mapped) and (FColumnMap[Index].Kind = cmValueTarget) and (FColumnMap[Index].Language = Language.Language);
     PopupMenuColumn.Items.Add(MenuItem);
   end;
 
@@ -1522,7 +1518,7 @@ begin
     if (FColumnMap[i].Mapped) and (FColumnMap[i].Kind = cmValueTarget) then
     begin
       Translations[n].Index := i;
-      Translations[n].Language := FProject.TranslationLanguages.Find(FColumnMap[i].Value);
+      Translations[n].Language := FProject.TranslationLanguages.Find(FColumnMap[i].Language);
       Inc(n);
     end;
 

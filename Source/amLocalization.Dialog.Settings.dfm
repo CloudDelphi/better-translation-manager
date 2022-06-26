@@ -114,7 +114,7 @@ inherited FormSettings: TFormSettings
         ParentColor = False
         TabOrder = 1
         TabStop = False
-        Properties.ActivePage = TabSheetFileLocations
+        Properties.ActivePage = TabSheetGeneral
         Properties.CustomButtons.Buttons = <>
         Properties.MultiLine = True
         Properties.ShowFrame = True
@@ -143,7 +143,7 @@ inherited FormSettings: TFormSettings
             OptionsItem.FocusControlOnItemCaptionClick = True
             object LabelEditingHeader: TcxLabel
               Left = 0
-              Top = 146
+              Top = 21
               AutoSize = False
               Caption = 'Editing'
               Style.HotTrack = False
@@ -156,7 +156,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxEditUseProposed: TcxCheckBox
               Left = 12
-              Top = 170
+              Top = 45
               Caption = 'Use Proposed status for new translations'
               ParentBackground = False
               ParentColor = False
@@ -167,7 +167,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAtstart: TcxCheckBox
               Left = 12
-              Top = 514
+              Top = 389
               Caption = 'Display guide dialog when the application starts'
               ParentBackground = False
               ParentColor = False
@@ -178,7 +178,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel2: TcxLabel
               Left = 0
-              Top = 490
+              Top = 365
               AutoSize = False
               Caption = 'Dialogs'
               Style.HotTrack = False
@@ -191,7 +191,7 @@ inherited FormSettings: TFormSettings
             end
             object ButtonDialogsSuppressReset: TcxButton
               Left = 12
-              Top = 540
+              Top = 415
               Width = 197
               Height = 23
               Caption = 'Reset suppressed dialogs'
@@ -199,7 +199,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelLanguage: TcxLabel
               Left = 0
-              Top = 398
+              Top = 273
               AutoSize = False
               Caption = 'Language'
               Style.HotTrack = False
@@ -212,7 +212,7 @@ inherited FormSettings: TFormSettings
             end
             object LabelResourceModuleHeader: TcxLabel
               Left = 0
-              Top = 58
+              Top = -67
               AutoSize = False
               Caption = 'Resource modules'
               Style.HotTrack = False
@@ -225,7 +225,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxResourceModulesIncludeVersionInfo: TcxCheckBox
               Left = 12
-              Top = 82
+              Top = -43
               Hint = 
                 'Include the version info of the source application into the gene' +
                 'rated resource modules'
@@ -240,7 +240,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxSourceLanguage: TcxExtLookupComboBox
               Left = 149
-              Top = 422
+              Top = 297
               RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
@@ -251,7 +251,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxTargetLanguage: TcxExtLookupComboBox
               Left = 149
-              Top = 452
+              Top = 327
               RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
               Properties.ClearKey = 46
               Properties.DropDownAutoSize = True
@@ -262,7 +262,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxEditBiDiMode: TcxCheckBox
               Left = 12
-              Top = 338
+              Top = 213
               Caption = 'BiDi mode follows edited language'
               ParentBackground = False
               ParentColor = False
@@ -274,7 +274,7 @@ inherited FormSettings: TFormSettings
             end
             object cxLabel3: TcxLabel
               Left = 0
-              Top = 0
+              Top = -125
               AutoSize = False
               Caption = 'Project'
               Style.HotTrack = False
@@ -287,7 +287,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxProjectAutoApplyStopList: TcxCheckBox
               Left = 12
-              Top = 24
+              Top = -101
               Caption = 'Apply Stop List when project is updated'
               ParentBackground = False
               ParentColor = False
@@ -299,7 +299,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxModuleNameScheme: TcxImageComboBox
               Left = 230
-              Top = 108
+              Top = -17
               EditValue = 0
               Properties.Items = <
                 item
@@ -321,7 +321,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxEqualization: TcxCheckComboBox
               Left = 230
-              Top = 308
+              Top = 183
               Hint = 
                 'Specifies the rules that should be applied to automatic translat' +
                 'ions in order to make the properties of the translations match t' +
@@ -351,7 +351,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxNormalization: TcxCheckComboBox
               Left = 230
-              Top = 278
+              Top = 153
               Hint = 
                 'Specifies the rules that are applied when comparing texts for si' +
                 'milarity'
@@ -363,7 +363,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxAutoApplyTranslations: TcxComboBox
               Left = 230
-              Top = 196
+              Top = 71
               Properties.DropDownListStyle = lsFixedList
               Properties.Items.Strings = (
                 'Never'
@@ -377,7 +377,7 @@ inherited FormSettings: TFormSettings
             end
             object ComboBoxAutoApplyTranslationsSimilar: TcxComboBox
               Left = 152
-              Top = 250
+              Top = 125
               Properties.DropDownListStyle = lsFixedList
               Properties.Items.Strings = (
                 'Never'
@@ -390,7 +390,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoApplyTranslationsExisting: TcxCheckBox
               Left = 24
-              Top = 224
+              Top = 99
               Caption = 'Also apply to already translated values'
               Style.HotTrack = False
               Style.TransparentBorder = False
@@ -398,7 +398,7 @@ inherited FormSettings: TFormSettings
             end
             object CheckBoxAutoShowMultiLineEditor: TcxCheckBox
               Left = 12
-              Top = 364
+              Top = 239
               Caption = 'Display multi-line editor when editing multi-line texts'
               ParentBackground = False
               ParentColor = False
@@ -2025,7 +2025,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               Control = CheckBoxAutoRecovery
               ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 174
+              ControlOptions.OriginalWidth = 188
               ControlOptions.ShowBorder = False
               Index = 0
             end
@@ -2180,7 +2180,7 @@ inherited FormSettings: TFormSettings
               CaptionOptions.Visible = False
               Control = CheckBoxFileProjectOmitDontTranslate
               ControlOptions.OriginalHeight = 19
-              ControlOptions.OriginalWidth = 188
+              ControlOptions.OriginalWidth = 239
               ControlOptions.ShowBorder = False
               Index = 0
             end

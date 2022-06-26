@@ -11,7 +11,7 @@ inherited FormTextEditor: TFormTextEditor
   ExplicitWidth = 613
   ExplicitHeight = 409
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
     Top = 327
     Width = 597
@@ -19,12 +19,12 @@ inherited FormTextEditor: TFormTextEditor
     ExplicitTop = 327
     ExplicitWidth = 597
     inherited ButtonOK: TcxButton
-      Left = 430
-      ExplicitLeft = 430
+      Left = 410
+      ExplicitLeft = 410
     end
     inherited ButtonCancel: TcxButton
-      Left = 511
-      ExplicitLeft = 511
+      Left = 492
+      ExplicitLeft = 492
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -33,8 +33,8 @@ inherited FormTextEditor: TFormTextEditor
     Visible = False
     ExplicitWidth = 597
     inherited LabelHeader: TcxLabel
-      ExplicitWidth = 575
-      Width = 575
+      ExplicitWidth = 554
+      Width = 554
     end
   end
   inherited PanelMain: TPanel
@@ -51,10 +51,10 @@ inherited FormTextEditor: TFormTextEditor
       ExplicitWidth = 581
       ExplicitHeight = 250
       object PanelEditors: TPanel [0]
-        Left = 6
-        Top = 6
-        Width = 569
-        Height = 238
+        Left = 7
+        Top = 7
+        Width = 567
+        Height = 236
         BevelOuter = bvNone
         Color = 16053234
         FullRepaint = False
@@ -65,28 +65,30 @@ inherited FormTextEditor: TFormTextEditor
           Left = 277
           Top = 0
           Width = 4
-          Height = 238
+          Height = 236
           HotZoneClassName = 'TcxSimpleStyle'
           HotZone.ArrowHighlightColor = clHighlight
           PositionAfterOpen = 80
           AutoSnap = True
           MinSize = 50
           Control = PanelSource
+          ExplicitHeight = 238
         end
         object PanelSource: TPanel
           Left = 0
           Top = 0
           Width = 277
-          Height = 238
+          Height = 236
           Align = alLeft
           BevelOuter = bvNone
           FullRepaint = False
           ParentColor = True
           ShowCaption = False
           TabOrder = 1
+          ExplicitHeight = 238
           object EditSourceText: TcxRichEdit
             Left = 0
-            Top = 13
+            Top = 15
             TabStop = False
             Align = alClient
             PopupMenu = PopupActionBar1
@@ -97,7 +99,9 @@ inherited FormTextEditor: TFormTextEditor
             Style.HotTrack = False
             Style.TextColor = clGrayText
             TabOrder = 0
-            Height = 225
+            ExplicitTop = 13
+            ExplicitHeight = 225
+            Height = 221
             Width = 277
           end
           object LabelSourceName: TcxLabel
@@ -116,17 +120,19 @@ inherited FormTextEditor: TFormTextEditor
         object PanelText: TPanel
           Left = 281
           Top = 0
-          Width = 288
-          Height = 238
+          Width = 286
+          Height = 236
           Align = alClient
           BevelOuter = bvNone
           FullRepaint = False
           ParentColor = True
           ShowCaption = False
           TabOrder = 2
+          ExplicitWidth = 288
+          ExplicitHeight = 238
           object EditText: TcxRichEdit
             Left = 0
-            Top = 13
+            Top = 15
             Align = alClient
             PopupMenu = PopupActionBar1
             Properties.MemoMode = True
@@ -134,8 +140,11 @@ inherited FormTextEditor: TFormTextEditor
             Properties.ScrollBars = ssVertical
             Style.HotTrack = False
             TabOrder = 0
-            Height = 225
-            Width = 288
+            ExplicitTop = 13
+            ExplicitWidth = 288
+            ExplicitHeight = 225
+            Height = 221
+            Width = 286
           end
           object LabelTargetName: TcxLabel
             Left = 0
@@ -147,7 +156,8 @@ inherited FormTextEditor: TFormTextEditor
             Properties.ShowAccelChar = False
             Transparent = True
             Visible = False
-            AnchorX = 144
+            ExplicitWidth = 288
+            AnchorX = 143
           end
         end
       end

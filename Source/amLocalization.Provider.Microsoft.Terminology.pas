@@ -13,7 +13,7 @@ interface
 uses
   System.SysUtils, System.Classes,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Provider.Microsoft.Terminology.SOAP;
@@ -29,8 +29,8 @@ type
     FTerminology: Terminology;
   protected
     // ITranslationProvider
-    function BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
-    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+    function BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
+    function Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
     procedure EndLookup;
     function GetProviderName: string;
   public
@@ -60,7 +60,7 @@ resourcestring
 // TTranslationProviderMicrosoftTerminology
 //
 // -----------------------------------------------------------------------------
-function TTranslationProviderMicrosoftTerminology.BeginLookup(SourceLanguage, TargetLanguage: TLocaleItem): boolean;
+function TTranslationProviderMicrosoftTerminology.BeginLookup(SourceLanguage, TargetLanguage: TLanguageItem): boolean;
 begin
   FTerminology := GetTerminology;
   Result := True;
@@ -76,7 +76,7 @@ begin
   Result := sProviderNameMSTerminology;
 end;
 
-function TTranslationProviderMicrosoftTerminology.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean;
+function TTranslationProviderMicrosoftTerminology.Lookup(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean;
 var
   Sources: TranslationSources;
   ResultMatches: Matches;

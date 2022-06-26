@@ -56,7 +56,7 @@ uses
   Controls,
   msxmldom,
   XMLDoc, XMLIntf,
-  amLocale,
+  amLanguageInfo,
   amLocalization.Dialog.SelectModule;
 
 // -----------------------------------------------------------------------------
@@ -620,8 +620,6 @@ var
   Body: IXMLNode;
   Node: IXMLNode;
   SourceLanguageName, TargetLanguageName: string;
-  SourceLocaleID, TargetLocaleID: LCID;
-  LocaleItem: TLocaleItem;
   FormSelectModule: TFormSelectModule;
 resourcestring
   sXLIFFMissingModuleName = 'The XLIFF file does not specify a module name';
@@ -648,40 +646,38 @@ begin
   TargetLanguageName := Node.Attributes['target-language'];
 
   // Translate Language Name to Locale ID
-  LocaleItem := TLocaleItems.FindLocaleName(SourceLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindISO3166Name(SourceLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageShortName(SourceLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageName(SourceLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindCountry(SourceLanguageName);
+  var SourceLanguageItem := LanguageInfo.FindLocaleName(SourceLanguageName);
+  if (SourceLanguageItem = nil) then
+    SourceLanguageItem := LanguageInfo.FindISO3166Name(SourceLanguageName);
+  if (SourceLanguageItem = nil) then
+    SourceLanguageItem := LanguageInfo.FindLanguageShortName(SourceLanguageName);
+  if (SourceLanguageItem = nil) then
+    SourceLanguageItem := LanguageInfo.FindLanguageName(SourceLanguageName);
+  if (SourceLanguageItem = nil) then
+    SourceLanguageItem := LanguageInfo.FindCountry(SourceLanguageName);
 
-  if (LocaleItem = nil) then
+  if (SourceLanguageItem = nil) then
     raise Exception.CreateFmt('Unknown source language: %s', [SourceLanguageName]);
-  SourceLocaleID := LocaleItem.Locale;
 
   // Translate Language Name to Locale ID
-  LocaleItem := TLocaleItems.FindLocaleName(TargetLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindISO3166Name(TargetLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageShortName(TargetLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindLanguageName(TargetLanguageName);
-  if (LocaleItem = nil) then
-    LocaleItem := TLocaleItems.FindCountry(TargetLanguageName);
+  var TargetLanguageItem := LanguageInfo.FindLocaleName(TargetLanguageName);
+  if (TargetLanguageItem = nil) then
+    TargetLanguageItem := LanguageInfo.FindISO3166Name(TargetLanguageName);
+  if (TargetLanguageItem = nil) then
+    TargetLanguageItem := LanguageInfo.FindLanguageShortName(TargetLanguageName);
+  if (TargetLanguageItem = nil) then
+    TargetLanguageItem := LanguageInfo.FindLanguageName(TargetLanguageName);
+  if (TargetLanguageItem = nil) then
+    TargetLanguageItem := LanguageInfo.FindCountry(TargetLanguageName);
 
-  if (LocaleItem = nil) then
+  if (TargetLanguageItem = nil) then
     raise Exception.CreateFmt('Unknown target language: %s', [TargetLanguageName]);
-  TargetLocaleID := LocaleItem.Locale;
 
   // Verify that module source language matches project
-  if (SourceLocaleID <> Project.SourceLanguageID) then
+  if (SourceLanguageItem.LocaleName <> Project.SourceLanguage.LocaleName) then
   begin
     if (TaskMessageDlg(sXLIFFLanguageMismatchTitle,
-      Format(sXLIFFLanguageMismatch, [TLocaleItems.FindLCID(Project.SourceLanguageID).LanguageName, TLocaleItems.FindLCID(SourceLocaleID).LanguageName]),
+      Format(sXLIFFLanguageMismatch, [Project.SourceLanguage.LanguageName, SourceLanguageItem.LanguageName]),
       mtWarning, [mbIgnore, mbAbort], 0, mbAbort) = mrAbort) then
       Exit(nil);
     IgnoreMismatch := True;
@@ -745,7 +741,7 @@ begin
   if (Result.Kind = mkOther) then
     Result.Kind := ModuleKind;
 
-  TranslationLanguage := Result.Project.TranslationLanguages.Add(TargetLocaleID);
+  TranslationLanguage := Result.Project.TranslationLanguages.Add(TargetLanguageItem);
 
   FillChar(FTranslationCount, SizeOf(FTranslationCount), 0);
 

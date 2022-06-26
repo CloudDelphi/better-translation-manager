@@ -518,6 +518,7 @@ uses
   amShell,
   amPath,
   amCursorService,
+  amLanguageInfo,
   amLocalization.Utils,
   amLocalization.Model,
   amLocalization.Settings,
@@ -656,8 +657,8 @@ begin
   CheckBoxResourceModulesIncludeVersionInfo.Checked := TranslationManagerSettings.System.IncludeVersionInfo;
   ComboBoxModuleNameScheme.EditValue := Ord(TranslationManagerSettings.System.ModuleNameScheme);
 
-  ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLanguage;
-  ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLanguage;
+  ComboBoxSourceLanguage.EditValue := TranslationManagerSettings.System.DefaultSourceLocale;
+  ComboBoxTargetLanguage.EditValue := TranslationManagerSettings.System.DefaultTargetLocale;
 
   (*
   ** Appearance
@@ -744,8 +745,8 @@ begin
   TranslationManagerSettings.System.IncludeVersionInfo := CheckBoxResourceModulesIncludeVersionInfo.Checked;
   TranslationManagerSettings.System.ModuleNameScheme := TModuleNameScheme(ComboBoxModuleNameScheme.EditValue);
 
-  TranslationManagerSettings.System.DefaultSourceLanguage := VarToLCID(ComboBoxSourceLanguage.EditValue);
-  TranslationManagerSettings.System.DefaultTargetLanguage := VarToLCID(ComboBoxTargetLanguage.EditValue);
+  TranslationManagerSettings.System.DefaultSourceLocale := VarToStr(ComboBoxSourceLanguage.EditValue);
+  TranslationManagerSettings.System.DefaultTargetLocale := VarToStr(ComboBoxTargetLanguage.EditValue);
 
   (*
   ** Appearance
@@ -1924,11 +1925,13 @@ end;
 
 procedure TFormSettings.LoadProofing(SpellChecker: TdxSpellChecker);
 
-  function GetDictionaryLanguage(ADictionary: TdxCustomSpellCheckerDictionary): Integer;
+  function GetDictionaryLanguage(ADictionary: TdxCustomSpellCheckerDictionary): LCID;
   begin
     Result := ADictionary.Language;
     if (Result = 0) then
-      Result := dxLanguages.GetDefaultLanguageLCID;
+      // We do not use dxLanguages.GetDefaultLanguageLCID as that returns the
+      // system default instead of the user default.
+      Result := LanguageInfo.DefaultLocale.LocaleID;
   end;
 
   procedure PopulateLanguages;
@@ -1962,7 +1965,7 @@ procedure TFormSettings.LoadProofing(SpellChecker: TdxSpellChecker);
             ADictionary := SpellChecker.Dictionaries[J];
             if (ADictionary is TdxUserSpellCheckerDictionary) or (not ADictionary.Enabled) then
               Continue;
-            if (GetDictionaryLanguage(ADictionary) = Item.Tag) then
+            if (GetDictionaryLanguage(ADictionary) = LCID(Item.Tag)) then
             begin
               ComboBoxProofingLanguages.States[I] := cbsChecked;
               Break;
@@ -2049,18 +2052,18 @@ end;
 
 procedure TFormSettings.ApplyProofing(SpellChecker: TdxSpellChecker);
 
-  function GetDictionaryLanguage(ADictionary: TdxCustomSpellCheckerDictionary): Integer;
+  function GetDictionaryLanguage(ADictionary: TdxCustomSpellCheckerDictionary): LCID;
   begin
     Result := ADictionary.Language;
     if (Result = 0) then
-      Result := dxLanguages.GetDefaultLanguageLCID;
+      Result := LanguageInfo.DefaultLocale.LocaleID;
   end;
 
   procedure SaveLanguages;
   var
     i, j: Integer;
     Dictionary: TdxCustomSpellCheckerDictionary;
-    LCID: integer;
+    LocaleID: integer;
   begin
     for i := 0 to ComboBoxProofingLanguages.Properties.Items.Count-1 do
     begin
@@ -2070,11 +2073,11 @@ procedure TFormSettings.ApplyProofing(SpellChecker: TdxSpellChecker);
         if (Dictionary is TdxUserSpellCheckerDictionary) then
           continue;
 
-        LCID := ComboBoxProofingLanguages.Properties.Items[i].Tag;
-        if (LCID = -1) then
+        LocaleID := ComboBoxProofingLanguages.Properties.Items[i].Tag;
+        if (LocaleID = -1) then
           continue;
 
-        if (GetDictionaryLanguage(Dictionary) = LCID) then
+        if (GetDictionaryLanguage(Dictionary) = LCID(LocaleID)) then
         begin
           Dictionary.Enabled := (ComboBoxProofingLanguages.States[i] = cbsChecked);
           Break;

@@ -14,7 +14,7 @@ uses
   Generics.Collections,
   System.SysUtils, System.Classes, Data.DB, Windows,
 
-  amLocale,
+  amLanguageInfo,
   amProgress.API,
   amLocalization.Normalization,
   amLocalization.Model,
@@ -70,7 +70,7 @@ type
 
   ITranslationMemory = interface
     ['{8D4D5538-3A16-4220-9FDF-F88B8A7DED6C}']
-    function CreateField(LocaleItem: TLocaleItem): TField;
+    function CreateField(LanguageItem: TLanguageItem): TField;
     function SaveTableTranslationMemoryClone: IInterface;
     function AddTerm(SourceField: TField; const SourceValue, SanitizedSourceValue: string; TargetField: TField; const TargetValue: string;
       Duplicates: TDuplicates; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction): TTranslationMemoryDuplicateAction;
@@ -85,19 +85,21 @@ type
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(const Filename: string);
 
-    function Add(SourceLanguage: TLocaleItem; const SourceValue: string; TargetLanguage: TLocaleItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    procedure BeginAdd;
+    function Add(SourceLanguage: TLanguageItem; const SourceValue: string; TargetLanguage: TLanguageItem; const TargetValue: string; var Stats: TTranslationMemoryMergeStats; DuplicateAction: TTranslationMemoryDuplicateAction = tmDupActionPrompt): TTranslationMemoryDuplicateAction; overload;
+    procedure EndAdd;
 
     function CheckSave: boolean;
     function CheckLoaded(Force: boolean = False): boolean;
     procedure SetLoaded; // For use when loading TMX as main TM
 
-    function GetLanguages: TArray<TLocaleItem>;
-    function CreateLookup(Language: TLocaleItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
-    function CreateBackgroundLookup(SourceLanguage, TargetLanguage: LCID; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
-    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLocaleItem): boolean;
-    function FindTerms(Language: TLocaleItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
-    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; Translations: TStrings): boolean; overload;
-    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLocaleItem; LookupResult: TTranslationLookupResult): boolean; overload;
+    function GetLanguages: TArray<TLanguageItem>;
+    function CreateLookup(Language: TLanguageItem; SanitizeKinds: TSanitizeRules; const Progress: IProgress = nil): ITranslationMemoryLookup;
+    function CreateBackgroundLookup(SourceLanguage, TargetLanguage: TLanguageItem; AResultHandler: TNotifyEvent): ITranslationMemoryPeek;
+    function HasSourceTerm(Prop: TLocalizerProperty; SourceLanguage: TLanguageItem): boolean;
+    function FindTerms(Language: TLanguageItem; const Value: string; LookupResult: TTranslationLookupResult; RankResult: boolean = False): boolean;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; Translations: TStrings): boolean; overload;
+    function FindTranslations(Prop: TLocalizerProperty; SourceLanguage, TargetLanguage: TLanguageItem; LookupResult: TTranslationLookupResult): boolean; overload;
 
     function GetEnabled: boolean;
     procedure SetEnabled(const Value: boolean);

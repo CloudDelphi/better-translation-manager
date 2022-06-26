@@ -24,7 +24,7 @@ uses
 
   VirtualTrees,
 
-  amLocale,
+  amLanguageInfo,
   amLocalization.Dialog;
 
 type
@@ -48,27 +48,26 @@ type
   protected
     function GetApplyFilter: boolean;
     procedure SetApplyFilter(const Value: boolean);
-    function GetSourceLanguageID: LCID;
-    procedure SetSourceLanguageID(const Value: LCID);
+    function GetSourceLanguage: TLanguageItem;
+    procedure SetSourceLanguage(const Value: TLanguageItem);
     function GetTargetLanguageCount: integer;
-    function GetTargetLanguage(Index: integer): LCID;
+    function GetTargetLanguage(Index: integer): TLanguageItem;
 
     procedure LoadLanguages;
-    function NodeToLanguage(Node: PVirtualNode): LCID;
-    function NodeToLocaleItem(Node: PVirtualNode): TLocaleItem;
+    function NodeToLanguageItem(Node: PVirtualNode): TLanguageItem;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     function Execute: boolean;
 
-    function SelectTargetLanguage(LanguageID: LCID): boolean;
+    function SelectTargetLanguage(Language: TLanguageItem): boolean;
     procedure ClearTargetLanguages;
 
     property ApplyFilter: boolean read GetApplyFilter write SetApplyFilter;
-    property SourceLanguageID: LCID read GetSourceLanguageID write SetSourceLanguageID;
+    property SourceLanguage: TLanguageItem read GetSourceLanguage write SetSourceLanguage;
     property TargetLanguageCount: integer read GetTargetLanguageCount;
-    property TargetLanguage[Index: integer]: LCID read GetTargetLanguage;
+    property TargetLanguage[Index: integer]: TLanguageItem read GetTargetLanguage;
   end;
 
 //------------------------------------------------------------------------------
@@ -130,19 +129,23 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TFormLanguages.TreeViewGetText(Sender: TBaseVirtualTree; Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType; var CellText: string);
-var
-  LocaleItem: TLocaleItem;
 begin
   if (Node = nil) or (Node = FTreeView.RootNode) then
     Exit;
 
-  LocaleItem := NodeToLocaleItem(Node);
+  var LanguageItem := NodeToLanguageItem(Node);
 
   if (Node.Parent = FTreeView.RootNode) and (Node.ChildCount > 0) then
-    CellText := Format('%s - %s', [ExtractLanguage(LocaleItem.DisplayName), LocaleItem.ISO639_1Name.ToUpper])
+    // Top level parent node: Region invariant
+    CellText := Format('%s - %s', [ExtractLanguage(LanguageItem.DisplayName), LanguageItem.LocaleName.ToUpper])
   else
-    CellText := Format('%s - %s', [LocaleItem.LanguageName, LocaleItem.LanguageShortName]);
-//    CellText := Format('%s - %s', [LocaleItem.LanguageName, TLocaleItem.GetLocaleData(MAKELCID(MakeLangID(LocaleItem.PrimaryLanguage, SUBLANG_NEUTRAL), SORT_DEFAULT), LOCALE_SLOCALIZEDLANGUAGENAME)]);
+    // Child nodes or top level nodes with out children: Language, Region
+    CellText := Format('%s - %s', [LanguageItem.LanguageName, LanguageItem.LocaleName]);
+
+(*
+  if (LanguageItem.Invariant) then
+    CellText := CellText + ' *';
+*)
 end;
 
 procedure TFormLanguages.TreeViewIncrementalSearch(Sender: TBaseVirtualTree; Node: PVirtualNode; const SearchText: string; var Result: Integer);
@@ -157,41 +160,28 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TFormLanguages.NodeToLocaleItem(Node: PVirtualNode): TLocaleItem;
+function TFormLanguages.NodeToLanguageItem(Node: PVirtualNode): TLanguageItem;
 begin
-  Result := TLocaleItem(FTreeView.GetNodeData(Node)^);
-end;
-
-function TFormLanguages.NodeToLanguage(Node: PVirtualNode): LCID;
-var
-  Language: Word;
-begin
-  if (Node.Parent = FTreeView.RootNode) and (Node.ChildCount > 0) then
-  begin
-    Language := NodeToLocaleItem(Node).PrimaryLanguage;
-    Result := MAKELCID(MakeLangID(Language, SUBLANG_NEUTRAL), SORT_DEFAULT);
-  end else
-    Result := NodeToLocaleItem(Node).Locale;
+  Result := TLanguageItem(FTreeView.GetNodeData(Node)^);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TFormLanguages.LoadLanguages;
 var
-  i: integer;
   LanguageNode, LocaleNode: PVirtualNode;
-  SortedLanguages: TList<TLocaleItem>;
+  SortedLanguages: TList<TLanguageItem>;
   Languages: TDictionary<string, PVirtualNode>;
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem;
   LanguageName: string;
 begin
-  SortedLanguages := TList<TLocaleItem>.Create;
+  SortedLanguages := TList<TLanguageItem>.Create;
   try
-    for i := 0 to TLocaleItems.Count-1 do
-      SortedLanguages.Add(TLocaleItems.Items[i]);
+    for var Item in LanguageInfo do
+      SortedLanguages.Add(Item);
 
-    SortedLanguages.Sort(TComparer<TLocaleItem>.Construct(
-      function(const Left, Right: TLocaleItem): Integer
+    SortedLanguages.Sort(TComparer<TLanguageItem>.Construct(
+      function(const Left, Right: TLanguageItem): Integer
       begin
         Result := CompareText(ExtractLanguage(Left.DisplayName), ExtractLanguage(Right.DisplayName));
         if (Result = 0) then
@@ -201,28 +191,53 @@ begin
     Languages := TDictionary<string, PVirtualNode>.Create;
     try
 
-      for LocaleItem in SortedLanguages do
+      // Start by adding invariant locale nodes
+      for LanguageItem in SortedLanguages do
       begin
-        LanguageName := ExtractLanguage(LocaleItem.DisplayName);
+        if (not LanguageItem.Invariant) then
+          continue;
+
+        LanguageName := LanguageItem.ISO639_1Name;
 
         if (not Languages.TryGetValue(LanguageName, LanguageNode)) then
         begin
-          LanguageNode := FTreeView.AddChild(nil, LocaleItem);
+          LanguageNode := FTreeView.AddChild(nil, LanguageItem);
           FNodes.Add(LanguageNode);
           LanguageNode.CheckType := ctCheckBox;
+          LanguageNode.States := LanguageNode.States - [vsExpanded];
           Languages.Add(LanguageName, LanguageNode);
         end else
         begin
-          if (LanguageNode.ChildCount = 0) then
-          begin
-            LocaleNode := FTreeView.AddChild(LanguageNode, NodeToLocaleItem(LanguageNode));
-            FNodes.Add(LocaleNode);
-            LocaleNode.CheckType := ctCheckBox;
-          end;
+          // Invariant locales with the same language code as an existing locale
+          // are added as child nodes under that.
+          LanguageNode := FTreeView.AddChild(LanguageNode, LanguageItem);
+          FNodes.Add(LanguageNode);
+          LanguageNode.CheckType := ctCheckBox;
+        end;
+      end;
 
-          LocaleNode := FTreeView.AddChild(LanguageNode, LocaleItem);
+
+      // Then all the invariant locale nodes. These will become child nodes
+      // under the invariant locale nodes.
+      for LanguageItem in SortedLanguages do
+      begin
+        if (LanguageItem.Invariant) then
+          continue;
+
+        LanguageName := LanguageItem.ISO639_1Name;
+
+        if (Languages.TryGetValue(LanguageName, LanguageNode)) then
+        begin
+          LocaleNode := FTreeView.AddChild(LanguageNode, LanguageItem);
           FNodes.Add(LocaleNode);
           LocaleNode.CheckType := ctCheckBox;
+        end else
+        begin
+          // This shouldn't happen but don't bomb if it does.
+          LanguageNode := FTreeView.AddChild(nil, LanguageItem);
+          FNodes.Add(LanguageNode);
+          LanguageNode.CheckType := ctCheckBox;
+          Languages.Add(LanguageName, LanguageNode);
         end;
       end;
 
@@ -260,7 +275,7 @@ begin
   for i := 0 to FNodes.Count-1 do
     if (FNodes[i].CheckState = csCheckedNormal) then
     begin
-      if (NodeToLanguage(FNodes[i]) = SourceLanguageID) then
+      if (NodeToLanguageItem(FNodes[i]) = SourceLanguage) then
         SourceEqualsTarget := True;
       Inc(CheckedCount);
     end;
@@ -291,14 +306,14 @@ begin
   FTreeView.Invalidate;
 end;
 
-function TFormLanguages.SelectTargetLanguage(LanguageID: LCID): boolean;
+function TFormLanguages.SelectTargetLanguage(Language: TLanguageItem): boolean;
 var
   i: integer;
 begin
   Result := False;
 
   for i := 0 to FNodes.Count-1 do
-    if (NodeToLanguage(FNodes[i]) = LanguageID) then
+    if (NodeToLanguageItem(FNodes[i]) = Language) then
     begin
       FNodes[i].CheckState := csCheckedNormal;
       FTreeView.InvalidateNode(FNodes[i]);
@@ -310,26 +325,23 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TFormLanguages.GetSourceLanguageID: LCID;
+function TFormLanguages.GetSourceLanguage: TLanguageItem;
 begin
-  if (VarIsOrdinal(ComboBoxSourceLanguage.EditValue)) then
-    Result := ComboBoxSourceLanguage.EditValue
-  else
-    Result := 0;
+  Result := LanguageInfo.FindLocaleName(ComboBoxSourceLanguage.EditValue);
 end;
 
-procedure TFormLanguages.SetSourceLanguageID(const Value: LCID);
+procedure TFormLanguages.SetSourceLanguage(const Value: TLanguageItem);
 begin
-  ComboBoxSourceLanguage.EditValue := Value;
+  ComboBoxSourceLanguage.EditValue := Value.LocaleName;
 end;
 
 //------------------------------------------------------------------------------
 
-function TFormLanguages.GetTargetLanguage(Index: integer): LCID;
+function TFormLanguages.GetTargetLanguage(Index: integer): TLanguageItem;
 var
   i: integer;
 begin
-  Result := 0;
+  Result := nil;
 
   i := 0;
   while (i < FNodes.Count) and (Index >= 0) do
@@ -337,7 +349,7 @@ begin
     if (FNodes[i].CheckState = csCheckedNormal) then
     begin
       if (Index = 0) then
-        Exit(NodeToLanguage(FNodes[i]));
+        Exit(NodeToLanguageItem(FNodes[i]));
       Dec(Index);
     end;
 

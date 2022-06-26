@@ -11,15 +11,20 @@
 interface
 
 uses
-  Windows;
+  Windows,
+  amLanguageInfo;
 
 type
   TModuleNameScheme = (mnsISO639_2, mnsISO639_1, mnsRFC4646);
 
 type
   LocalizationTools = record
-    class function LoadResourceModule(ALanguage: LCID): boolean; static;
-    class function BuildModuleFilename(const BaseFilename: string; LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string; static;
+    class function LoadResourceModule(LanguageItem: TLanguageItem): boolean; overload; static;
+    class function LoadResourceModule(LocaleID: LCID): boolean; overload; static;
+    class function LoadResourceModule(const LocaleName: string): boolean; overload; static;
+    class function BuildModuleFilename(const BaseFilename: string; LanguageItem: TLanguageItem; ModuleNameScheme: TModuleNameScheme): string; overload; static;
+    class function BuildModuleFilename(const BaseFilename: string; LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string; overload; static;
+    class function BuildModuleFilename(const BaseFilename: string; const LocaleName: string; ModuleNameScheme: TModuleNameScheme): string; overload; static;
   end;
 
 // -----------------------------------------------------------------------------
@@ -34,44 +39,56 @@ uses
   Controls,
   SysUtils,
   IOUtils,
-  amLocale,
   amVersionInfo;
 
 // -----------------------------------------------------------------------------
 
 class function LocalizationTools.BuildModuleFilename(const BaseFilename: string;
-  LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string;
-var
-  LocaleItem: TLocaleItem;
+  LanguageItem: TLanguageItem; ModuleNameScheme: TModuleNameScheme): string;
 begin
-  LocaleItem := TLocaleItems.FindLCID(LocaleID);
   case ModuleNameScheme of
 
     mnsISO639_2:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LanguageShortName);
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LanguageItem.LanguageShortName);
 
     mnsISO639_1:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.ISO639_1Name);
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LanguageItem.ISO639_1Name);
 
     mnsRFC4646:
-      Result := TPath.ChangeExtension(BaseFilename, '.'+LocaleItem.LocaleName);
+      Result := TPath.ChangeExtension(BaseFilename, '.'+LanguageItem.LocaleName);
 
   end;
 end;
 
+class function LocalizationTools.BuildModuleFilename(const BaseFilename: string;
+  LocaleID: LCID; ModuleNameScheme: TModuleNameScheme): string;
+begin
+  var LanguageItem := LanguageInfo.FindLCID(LocaleID);
+  if (LanguageItem <> nil) then
+    Result := BuildModuleFilename(BaseFilename, LanguageItem, ModuleNameScheme)
+  else
+    Result := '';
+end;
+
+class function LocalizationTools.BuildModuleFilename(const BaseFilename: string;
+  const LocaleName: string; ModuleNameScheme: TModuleNameScheme): string;
+begin
+  var LanguageItem := LanguageInfo.FindLocaleName(LocaleName);
+  if (LanguageItem <> nil) then
+    Result := BuildModuleFilename(BaseFilename, LanguageItem, ModuleNameScheme)
+  else
+    Result := '';
+end;
+
 // -----------------------------------------------------------------------------
 
-class function LocalizationTools.LoadResourceModule(ALanguage: LCID): boolean;
+class function LocalizationTools.LoadResourceModule(LanguageItem: TLanguageItem): boolean;
 var
-  LocaleItem: TLocaleItem;
   Module: HModule;
   ModuleFilename: string;
   ApplicationVersion, ModuleVersion: string;
 const
   // Do not localize - localizations has not yet been loaded
-  sResourceModuleUnknownLanguage = 'Unknown language ID: %d'+#13#13+
-    'The default language will be used instead.';
-
   sResourceModuleOutOfSync = 'The resource module for the current language (%s) appears to be out of sync with the application.'+#13#13+
     'Application version: %s'+#13+
     'Resource module version: %s'+#13#13+
@@ -79,17 +96,7 @@ const
 begin
   Result := False;
 
-  if (ALanguage = 0) then
-    Exit;
-
-  LocaleItem := TLocaleItems.FindLCID(ALanguage);
-  if (LocaleItem = nil) then
-  begin
-    MessageDlg(Format(sResourceModuleUnknownLanguage, [ALanguage]), mtWarning, [mbOK], 0);
-    Exit;
-  end;
-
-  Module := LoadNewResourceModule(LocaleItem, ModuleFilename);
+  Module := LoadNewResourceModule(LanguageItem, ModuleFilename);
 
   if (Module <> 0) and (ModuleFilename <> '') then
   begin
@@ -100,12 +107,54 @@ begin
     if (ApplicationVersion <> ModuleVersion) then
     begin
       LoadNewResourceModule(nil, ModuleFilename);
-      MessageDlg(Format(sResourceModuleOutOfSync, [LocaleItem.LanguageName, ApplicationVersion, ModuleVersion]), mtWarning, [mbOK], 0);
+      MessageDlg(Format(sResourceModuleOutOfSync, [LanguageItem.LanguageName, ApplicationVersion, ModuleVersion]), mtWarning, [mbOK], 0);
     end else
       Result := True;
   end else
     // Use default application language if we failed to load a resource module
     LoadNewResourceModule(nil, ModuleFilename);
+end;
+
+class function LocalizationTools.LoadResourceModule(LocaleID: LCID): boolean;
+const
+  // Do not localize - localizations has not yet been loaded
+  sResourceModuleUnknownLanguage = 'Unknown language ID: %d'+#13#13+
+    'The default language will be used instead.';
+begin
+  Result := False;
+
+  if (LocaleID = 0) then
+    Exit;
+
+  var LanguageItem := LanguageInfo.FindLCID(LocaleID);
+  if (LanguageItem = nil) then
+  begin
+    MessageDlg(Format(sResourceModuleUnknownLanguage, [LocaleID]), mtWarning, [mbOK], 0);
+    Exit;
+  end;
+
+  Result := LoadResourceModule(LanguageItem);
+end;
+
+class function LocalizationTools.LoadResourceModule(const LocaleName: string): boolean;
+const
+  // Do not localize - localizations has not yet been loaded
+  sResourceModuleUnknownLanguage = 'Unknown language: %s'+#13#13+
+    'The default language will be used instead.';
+begin
+  Result := False;
+
+  if (LocaleName = '') then
+    Exit;
+
+  var LanguageItem := LanguageInfo.FindLocaleName(LocaleName);
+  if (LanguageItem = nil) then
+  begin
+    MessageDlg(Format(sResourceModuleUnknownLanguage, [LocaleName]), mtWarning, [mbOK], 0);
+    Exit;
+  end;
+
+  Result := LoadResourceModule(LanguageItem);
 end;
 
 end.
