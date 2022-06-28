@@ -50,9 +50,24 @@ type
   ELocalizationPersistence = class(Exception);
 
 const
+  (* Versions:
+  **
+  **  (none)    First version.
+  **            XML does not contain version number.
+  **            File is ANSI encoded.
+  **            Strings are DFM escaped.
+  **            Locale/Language specified with Windows LCID values.
+  **
+  **   1        File contains version number and meta block.
+  **
+  **   2        File is UFT-8 encoded.
+  **            Strings are HTML escaped.
+  **
+  **   3        Locale/Language specified with RFC 4646 language-region codes.
+  **
+  *)
   LocalizationFileFormatVersionUnknown = 1;             // Old verson that didn't write meta\version value
   LocalizationFileFormatVersionBadTextEncoding = 1;     // Old version with badly designed text encoding
-  LocalizationFileFormatVersionLanguageName = 3;        // Language specified with RFC 4646 language-region codes.
   LocalizationFileFormatVersionCurrent = 3;             // Current version
 
 const
@@ -260,6 +275,10 @@ var
   TranslationStatus: TTranslationStatus;
   s: string;
   TextDecoder: TTextDecoder;
+resourcestring
+  sUnsupportedFutureVersion = 'The translation project file requires a newer version of Better Translation Manager.'#13+
+    'This version, %s, supports project file formats up to version %s.'#13+
+    'The file was saved with version %s in project file format version %s.';
 begin
   if (Progress <> nil) then
     Progress.UpdateMessage(sProgressProjectLoad);
@@ -279,6 +298,15 @@ begin
   Node := RootNode.ChildNodes['meta'];
   if (Node <> nil) then
     FileFormatVersion := StrToIntDef(Node.ChildValues['version'], LocalizationFileFormatVersionUnknown);
+
+  // Reject future file format versions
+  if (FileFormatVersion > LocalizationFileFormatVersionCurrent) then
+  begin
+    var ThisAppVersion := TVersionInfo.FileVersionString(ParamStr(0));
+    var FileAppVersion := VarToStr(Node.ChildValues['toolversion']);
+    raise ELocalizationPersistence.CreateFmt(sUnsupportedFutureVersion,
+      [ThisAppVersion, IntToStr(LocalizationFileFormatVersionCurrent), FileAppVersion, FileFormatVersion.ToString]);
+  end;
 
   // Select text decoder based on file format version
   if (FileFormatVersion = LocalizationFileFormatVersionBadTextEncoding) then
