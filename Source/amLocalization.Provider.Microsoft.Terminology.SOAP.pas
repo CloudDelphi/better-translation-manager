@@ -1,17 +1,17 @@
 // ************************************************************************ //
 // The types declared in this file were generated from data read from the
 // WSDL File described below:
-// WSDL     : http://api.terminology.microsoft.com/Terminology.svc?wsdl
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?wsdl=wsdl0
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?wsdl=wsdl0>0
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd0
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd2
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd3
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd4
-//  >Import : http://api.terminology.microsoft.com/Terminology.svc?xsd=xsd1
+// WSDL     : https://api.terminology.microsoft.com/Terminology.svc?wsdl
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?wsdl=wsdl0
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?wsdl=wsdl0>0
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?xsd=xsd0
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?xsd=xsd2
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?xsd=xsd3
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?xsd=xsd4
+//  >Import : https://api.terminology.microsoft.com/Terminology.svc?xsd=xsd1
 // Encoding : utf-8
 // Version  : 1.0
-// (04-10-2021 22:02:56 - - $Rev: 106319 $)
+// (28-06-2022 11:32:00 - - $Rev: 106319 $)
 // ************************************************************************ //
 
 unit amLocalization.Provider.Microsoft.Terminology.SOAP;
@@ -33,7 +33,7 @@ type
   // The following types, referred to in the WSDL document are not being represented
   // in this file. They are either aliases[@] of other types represented or were referred
   // to but never[!] declared in the document. The types from the latter category
-  // typically map to predefined/known XML or Embarcadero types; however, they could also 
+  // typically map to predefined/known XML or Embarcadero types; however, they could also
   // indicate incorrect WSDL documents that failed to declare or import a schema type.
   // ************************************************************************ //
   // !:string          - "http://www.w3.org/2001/XMLSchema"[Gbl]
@@ -478,11 +478,11 @@ type
   // binding   : BasicHttpBinding_Terminology
   // service   : Terminology
   // port      : BasicHttpBinding_Terminology
-  // URL       : http://api.terminology.microsoft.com/Terminology.svc
+  // URL       : https://api.terminology.microsoft.com/Terminology.svc
   // ************************************************************************ //
   Terminology = interface(IInvokable)
   ['{0A88EA60-50B7-7BCC-EBBE-FAC31545AACB}']
-    function  GetTranslations(const text: string; const from: string; const to_: string; const sensitivity: SearchStringComparison; const searchOperator: SearchOperator; const sources: TranslationSources; 
+    function  GetTranslations(const text: string; const from: string; const to_: string; const sensitivity: SearchStringComparison; const searchOperator: SearchOperator; const sources: TranslationSources;
                               const unique: Boolean; const maxTranslations: Integer; const includeDefinitions: Boolean; const products: Products): Matches; stdcall;
     function  GetLanguages: Languages; stdcall;
     function  GetProducts: Products; stdcall;
@@ -497,8 +497,8 @@ implementation
 
 function GetTerminology(UseWSDL: Boolean; Addr: string; HTTPRIO: THTTPRIO): Terminology;
 const
-  defWSDL = 'http://api.terminology.microsoft.com/Terminology.svc?wsdl';
-  defURL  = 'http://api.terminology.microsoft.com/Terminology.svc';
+  defWSDL = 'https://api.terminology.microsoft.com/Terminology.svc?wsdl';
+  defURL  = 'https://api.terminology.microsoft.com/Terminology.svc';
   defSvc  = 'Terminology';
   defPrt  = 'BasicHttpBinding_Terminology';
 var
@@ -932,3 +932,4 @@ initialization
   RemClassRegistry.RegisterXSClass(InvalidParameters2, 'https://api.terminology.microsoft.com/terminology', 'InvalidParameters2', 'InvalidParameters');
 
 end.
+

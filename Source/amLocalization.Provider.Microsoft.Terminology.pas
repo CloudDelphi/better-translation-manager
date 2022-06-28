@@ -47,6 +47,7 @@ implementation
 uses
   Dialogs,
   Soap.InvokeRegistry,
+  Soap.SOAPHTTPTrans,
   amLocalization.Normalization,
   amLocalization.Settings;
 
@@ -104,6 +105,8 @@ begin
 
       Exception.RaiseOuterException(ELocalizationProviderMicrosoftTerminology.CreateFmt('Microsoft Terminology provider lookup failed: %s', [Msg]));
     end;
+    on E: ESOAPHTTPException do
+      Exception.RaiseOuterException(ELocalizationProviderMicrosoftTerminology.CreateFmt('Microsoft Terminology provider lookup failed: %s', [E.Message]));
   end;
 
   // Get result
