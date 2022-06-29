@@ -193,6 +193,7 @@ object DataModuleMain: TDataModuleMain
     end
     object EditRepositoryComboBoxItemLanguage: TcxEditRepositoryExtLookupComboBoxItem
       Properties.DropDownAutoSize = True
+      Properties.ImmediatePost = True
       Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
       Properties.View = GridTableViewLanguages
       Properties.KeyFieldNames = 'LocaleName'
@@ -200,6 +201,7 @@ object DataModuleMain: TDataModuleMain
     end
     object EditRepositoryComboBoxItemFilteredTargetLanguage: TcxEditRepositoryExtLookupComboBoxItem
       Properties.DropDownAutoSize = True
+      Properties.ImmediatePost = True
       Properties.IncrementalFilteringOptions = [ifoHighlightSearchText, ifoUseContainsOperator]
       Properties.View = GridTableViewFilteredTargetLanguages
       Properties.KeyFieldNames = 'LocaleName'

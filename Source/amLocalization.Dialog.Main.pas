@@ -4016,6 +4016,8 @@ begin
     RibbonMain.DocumentName := TPath.GetFileNameWithoutExtension(FProject.SourceFilename);
     ResetTracker;
 
+    SourceLanguage := FProject.SourceLanguage;
+
     // Find language with most translations
     BestLanguage := nil;
     for i := 0 to FProject.TranslationLanguages.Count-1 do
@@ -5626,6 +5628,11 @@ end;
 
 procedure TFormMain.SetSourceLanguage(const Value: TLanguageItem);
 begin
+  // For now changing the source language does not mark the project modified.
+  // LoadFromFile relies on this as it sets SourceLanguage after it has cleared
+  // the modified flag.
+  // This behavior may change in the future.
+
   // TODO : Should broadcast notification
 
   ClearTranslationMemoryPeekResult;
