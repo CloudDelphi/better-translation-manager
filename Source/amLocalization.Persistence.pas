@@ -493,12 +493,16 @@ class procedure TLocalizationProjectFiler.SaveToStream(Project: TLocalizerProjec
     State: TLocalizerItemState;
     s: string;
   begin
-    if (Item.InheritParentState) or (Item.State = []) then
+    if (Item.InheritParentState) then
       Exit;
-    s := '';
+
     ItemState := Item.State;
     if (soOmitNewState in AOptions) then
       Exclude(ItemState, ItemStateNew); // Excluding "New" makes it easier to do version control on a project
+    if (Item.State = []) then
+      Exit;
+
+    s := '';
     for State in ItemState do
     begin
       if (s <> '') then
