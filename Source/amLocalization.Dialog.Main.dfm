@@ -63,9 +63,6 @@ object FormMain: TFormMain
         end
         item
           ToolbarName = 'BarManagerBarMark'
-        end
-        item
-          ToolbarName = 'BarManagerBarStopList'
         end>
       Index = 1
     end
@@ -83,6 +80,9 @@ object FormMain: TFormMain
         end
         item
           ToolbarName = 'BarManagerBarMachineTranslation'
+        end
+        item
+          ToolbarName = 'BarManagerBarStopList'
         end>
       KeyTip = 'T'
       Index = 2
@@ -563,7 +563,7 @@ object FormMain: TFormMain
           Width = 70
         end
         object GridItemsTableViewColumnEffectiveStatus: TcxGridColumn
-          Caption = 'Effetive status'
+          Caption = 'Effective status'
           DataBinding.ValueType = 'Integer'
           RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemStatus
           Visible = False
@@ -1357,6 +1357,7 @@ object FormMain: TFormMain
       Category = 0
       Hint = 'Source language'
       Visible = ivAlways
+      Width = 120
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.OnEditValueChanged = BarEditItemSourceLanguagePropertiesEditValueChanged
       RepositoryItem = DataModuleMain.EditRepositoryComboBoxItemLanguage
@@ -1369,6 +1370,7 @@ object FormMain: TFormMain
       Visible = ivAlways
       OnEnter = BarEditItemTargetLanguageEnter
       OnExit = BarEditItemTargetLanguageExit
+      Width = 120
       PropertiesClassName = 'TcxExtLookupComboBoxProperties'
       Properties.OnEditValueChanged = BarEditItemTargetLanguagePropertiesEditValueChanged
       Properties.OnInitPopup = BarEditItemTargetLanguagePropertiesInitPopup
