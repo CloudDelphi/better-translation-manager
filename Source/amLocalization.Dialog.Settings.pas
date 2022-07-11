@@ -31,14 +31,21 @@ uses
   dxRibbonSkins,
   dxSpellChecker,
 
+  amLocalization.Settings,
   amLocalization.Dialog;
 
 type
+  // TcxButton interposer
+  // Do not draw dropdown arrow for an Office Button.
+  TcxButton = class(cxButtons.TcxButton)
+  protected
+    function CreateViewInfo: TcxButtonViewInfo; override;
+  public
+    procedure Click; override;
+  end;
+
+type
   TFormSettings = class(TFormDialog)
-    ActionCategoryGeneral: TAction;
-    ActionCategoryFiles: TAction;
-    ActionCategoryProofing: TAction;
-    ActionCategorySystem: TAction;
     ActionFoldersModify: TAction;
     ActionFolderReset: TAction;
     ActionFoldersExplorer: TAction;
@@ -46,44 +53,22 @@ type
     ActionProofingAdd: TAction;
     ActionProofingReplace: TAction;
     ActionProofingDelete: TAction;
-    ImageListColorSchemesGlyphsLarge: TcxImageList;
-    ImageListColorSchemesGlyphsSmall: TcxImageList;
-    ImageListSkin: TImageList;
-    ImageListSkinLarge: TImageList;
-    LayoutLookAndFeelList: TdxLayoutLookAndFeelList;
-    LayoutSkinLookAndFeel: TdxLayoutSkinLookAndFeel;
-    LayoutSkinLookAndFeelURL: TdxLayoutSkinLookAndFeel;
-    LayoutSkinLookAndFeelTitle: TdxLayoutSkinLookAndFeel;
-    PageControl: TcxPageControl;
-    TabSheetGeneral: TcxTabSheet;
-    LayoutControlGeneral: TdxLayoutControl;
-    LabelEditingHeader: TcxLabel;
+    ImageListSkin: TcxImageList;
+    ImageListSkinLarge: TcxImageList;
     CheckBoxEditUseProposed: TcxCheckBox;
     CheckBoxAtstart: TcxCheckBox;
-    cxLabel2: TcxLabel;
     ImageComboBoxSkin: TcxImageComboBox;
     ButtonDialogsSuppressReset: TcxButton;
-    dxLayoutGroup1: TdxLayoutGroup;
-    LayoutControlGeneralItem1: TdxLayoutItem;
     LayoutControlGeneralItem2: TdxLayoutItem;
     LayoutGroupEditing: TdxLayoutGroup;
     LayoutControlGeneralItem12: TdxLayoutItem;
-    LayoutControlGeneralItem13: TdxLayoutItem;
     LayoutGroupStartup: TdxLayoutGroup;
-    LayoutItemUITheme: TdxLayoutItem;
-    LayoutGroupUserInterface: TdxLayoutGroup;
-    LayoutControlGeneralGroup2: TdxLayoutGroup;
-    LayoutGroup3: TdxLayoutGroup;
+    LayoutItemUserInterfaceSkin: TdxLayoutItem;
+    LayoutGroupUserInterfaceTheme: TdxLayoutGroup;
     LayoutControlGeneralItem11: TdxLayoutItem;
-    LayoutControlGeneralGroup4: TdxLayoutGroup;
-    TabSheetFileLocations: TcxTabSheet;
-    TabSheetProofing: TcxTabSheet;
-    LayoutControlProofing: TdxLayoutControl;
     CheckBoxProofingIgnoreNumbers: TcxCheckBox;
-    cxLabel12: TcxLabel;
     CheckBoxProofingIgnoreRepeatWords: TcxCheckBox;
     ComboBoxProofingLanguages: TcxCheckComboBox;
-    cxLabel13: TcxLabel;
     ButtonProofingEditCustomDictionary: TcxButton;
     CheckBoxProofingSpellCheck: TcxCheckBox;
     CheckBoxProofingIgnoreUppercase: TcxCheckBox;
@@ -101,14 +86,10 @@ type
     CheckBoxProofingAutoCorrect: TcxCheckBox;
     ButtonProofingAutoCorrectExceptions: TcxButton;
     CheckBoxProofingCorrectInitialCaps: TcxCheckBox;
-    LayoutGroupProofing: TdxLayoutGroup;
     dxLayoutItem5: TdxLayoutItem;
-    dxLayoutItem1: TdxLayoutItem;
     dxLayoutItem6: TdxLayoutItem;
-    dxLayoutGroup3: TdxLayoutGroup;
     dxLayoutItem7: TdxLayoutItem;
     dxLayoutGroup4: TdxLayoutGroup;
-    dxLayoutItem9: TdxLayoutItem;
     dxLayoutGroup6: TdxLayoutGroup;
     dxLayoutItem8: TdxLayoutItem;
     dxLayoutSeparatorItem1: TdxLayoutSeparatorItem;
@@ -118,7 +99,6 @@ type
     dxLayoutItem11: TdxLayoutItem;
     dxLayoutItem13: TdxLayoutItem;
     dxLayoutItem14: TdxLayoutItem;
-    dxLayoutGroup7: TdxLayoutGroup;
     dxLayoutItem10: TdxLayoutItem;
     dxLayoutGroup5: TdxLayoutGroup;
     dxLayoutAutoCreatedGroup3: TdxLayoutAutoCreatedGroup;
@@ -137,75 +117,39 @@ type
     dxLayoutAutoCreatedGroup4: TdxLayoutAutoCreatedGroup;
     dxLayoutItem12: TdxLayoutItem;
     dxLayoutAutoCreatedGroup5: TdxLayoutAutoCreatedGroup;
-    TabSheetSystem: TcxTabSheet;
-    LayoutControlAdvanced: TdxLayoutControl;
     LabelAutoUpdateIntro: TcxLabel;
     CheckBoxSingleInstance: TcxCheckBox;
-    cxLabel4: TcxLabel;
     ButtonRegisterFiletypes: TcxButton;
-    cxLabel11: TcxLabel;
     CheckBoxAutoUpdateEnabled: TcxCheckBox;
     ButtonAutoUpdateNow: TcxButton;
     ButtonAutoUpdateReset: TcxButton;
-    cxLabel14: TcxLabel;
-    LayoutControlAdvancedGroup_Root: TdxLayoutGroup;
     LayoutControlAdvancedItem1: TdxLayoutItem;
-    LayoutControlAdvancedItem2: TdxLayoutItem;
     LayoutControlAdvancedItem3: TdxLayoutItem;
     LayoutControlAdvancedGroup2: TdxLayoutGroup;
     LayoutControlAdvancedGroup4: TdxLayoutGroup;
-    LayoutControlAdvancedItem6: TdxLayoutItem;
     LayoutControlAdvancedItem7: TdxLayoutItem;
     LayoutControlAdvancedItem8: TdxLayoutItem;
     LayoutControlAdvancedGroup5: TdxLayoutGroup;
     LayoutControlAdvancedGroup6: TdxLayoutGroup;
     LayoutControlAdvancedItem9: TdxLayoutItem;
     LayoutControlAdvancedItem10: TdxLayoutItem;
-    LayoutControlAdvancedItem17: TdxLayoutItem;
     LayoutControlAdvancedGroup7: TdxLayoutGroup;
     LayoutControlAdvancedGroup9: TdxLayoutGroup;
-    PanelCategory: TPanel;
-    ButtonCategoryGeneral: TcxButton;
-    ButtonCategoryFiles: TcxButton;
-    ButtonCategoryAdvanced: TcxButton;
-    ButtonCategoryProofing: TcxButton;
     PopupMenuFolderReset: TPopupMenu;
     Reset1: TMenuItem;
     Resetall1: TMenuItem;
     StyleRepository: TcxStyleRepository;
     StyleBackground: TcxStyle;
     StyleDisabled: TcxStyle;
-    TabSheetTranslationServices: TcxTabSheet;
-    ButtonCategoryTranslators: TcxButton;
-    ActionCategoryTranslators: TAction;
-    LayoutControlTranslatorsGroup_Root: TdxLayoutGroup;
-    LayoutControlTranslators: TdxLayoutControl;
-    dxLayoutItem16: TdxLayoutItem;
-    LabelTranslatorTM: TcxLabel;
     LayoutGroupTranslatorTM: TdxLayoutGroup;
     dxLayoutItem23: TdxLayoutItem;
     CheckBoxTMLoadOnDemand: TcxCheckBox;
-    dxLayoutGroup2: TdxLayoutGroup;
-    dxLayoutItem24: TdxLayoutItem;
-    LabelTransalatorMS: TcxLabel;
     LayoutGroupTranslatorMS: TdxLayoutGroup;
     dxLayoutItem25: TdxLayoutItem;
     EditTranslatorMSAPIKey: TcxButtonEdit;
-    dxLayoutGroup8: TdxLayoutGroup;
-    LayoutSkinLookAndFeelGroup: TdxLayoutSkinLookAndFeel;
     ImageList: TcxImageList;
     LayoutItemRestart: TdxLayoutLabeledItem;
-    LayoutSkinLookAndFeelStandard: TdxLayoutSkinLookAndFeel;
-    LayoutGroupRestart: TdxLayoutGroup;
-    dxLayoutItem29: TdxLayoutItem;
-    LabelLanguage: TcxLabel;
-    LayoutGroupLanguage: TdxLayoutGroup;
-    dxLayoutGroup10: TdxLayoutGroup;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
-    LayoutControlFilesGroup_Root: TdxLayoutGroup;
-    LayoutControlFiles: TdxLayoutControl;
-    dxLayoutItem31: TdxLayoutItem;
-    cxLabel5: TcxLabel;
     dxLayoutItem32: TdxLayoutItem;
     GridFolders: TcxGrid;
     GridFoldersTableView: TcxGridTableView;
@@ -217,38 +161,25 @@ type
     ButtonFilesReset: TcxButton;
     dxLayoutItem34: TdxLayoutItem;
     ButtonFilesModify: TcxButton;
-    dxLayoutGroup11: TdxLayoutGroup;
     dxLayoutGroup12: TdxLayoutGroup;
     dxLayoutGroup13: TdxLayoutGroup;
-    dxLayoutItem35: TdxLayoutItem;
-    cxLabel6: TcxLabel;
     dxLayoutItem36: TdxLayoutItem;
     CheckBoxAutoRecovery: TcxCheckBox;
     dxLayoutItem37: TdxLayoutItem;
     EditAutoRecoveryInterval: TcxSpinEdit;
     LayoutGroupRecovery: TdxLayoutGroup;
-    dxLayoutGroup14: TdxLayoutGroup;
-    dxLayoutItem39: TdxLayoutItem;
-    cxLabel10: TcxLabel;
     dxLayoutItem40: TdxLayoutItem;
     CheckBoxHistoryBackup: TcxCheckBox;
     LayoutGroupBackup: TdxLayoutGroup;
-    dxLayoutGroup15: TdxLayoutGroup;
     dxLayoutItem41: TdxLayoutItem;
     EditHistoryBackupMaxFiles: TcxSpinEdit;
     dxLayoutItem42: TdxLayoutItem;
     EditHistoryBackupMaxSize: TcxSpinEdit;
     dxLayoutGroup16: TdxLayoutGroup;
     dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem;
-    dxLayoutSeparatorItem3: TdxLayoutSeparatorItem;
-    LayoutItemCategories: TdxLayoutItem;
-    LayoutItemPages: TdxLayoutItem;
-    dxLayoutItem26: TdxLayoutItem;
-    LabelResourceModuleHeader: TcxLabel;
     LayoutGroupResourceModules: TdxLayoutGroup;
     dxLayoutItem27: TdxLayoutItem;
     CheckBoxResourceModulesIncludeVersionInfo: TcxCheckBox;
-    dxLayoutGroup9: TdxLayoutGroup;
     dxLayoutItem43: TdxLayoutItem;
     ComboBoxSourceLanguage: TcxExtLookupComboBox;
     dxLayoutItem28: TdxLayoutItem;
@@ -261,20 +192,8 @@ type
     CheckBoxSaveBackup: TcxCheckBox;
     dxLayoutItem46: TdxLayoutItem;
     SpinEditTranslatorTerminologyMaxResult: TcxSpinEdit;
-    dxLayoutItem47: TdxLayoutItem;
-    cxLabel1: TcxLabel;
     LayoutGroupTranslatorMSTerminology: TdxLayoutGroup;
-    dxLayoutGroup17: TdxLayoutGroup;
-    TabSheetAppearance: TcxTabSheet;
-    ActionCategoryAppearance: TAction;
-    ButtonCategoryAppearance: TcxButton;
-    LayoutControlAppearanceGroup_Root: TdxLayoutGroup;
-    LayoutControlAppearance: TdxLayoutControl;
-    dxLayoutItem48: TdxLayoutItem;
-    LabelListStyles: TcxLabel;
     dxLayoutGroup18: TdxLayoutGroup;
-    dxLayoutGroup19: TdxLayoutGroup;
-    cxLabel15: TcxLabel;
     GridColorsLevel: TcxGridLevel;
     GridColors: TcxGrid;
     dxLayoutItem49: TdxLayoutItem;
@@ -290,8 +209,6 @@ type
     dxLayoutSeparatorItem5: TdxLayoutSeparatorItem;
     dxLayoutItem51: TdxLayoutItem;
     ButtonStyleReset: TcxButton;
-    LayoutItemUIHeader: TdxLayoutItem;
-    LabelApperance: TcxLabel;
     dxLayoutItem53: TdxLayoutItem;
     CheckBoxStatusGlyphHint: TcxCheckBox;
     ActionEditStatusGlyphs: TAction;
@@ -309,12 +226,9 @@ type
     dxLayoutGroup20: TdxLayoutGroup;
     dxLayoutGroup21: TdxLayoutGroup;
     dxLayoutGroup22: TdxLayoutGroup;
-    dxLayoutItem60: TdxLayoutItem;
-    cxLabel3: TcxLabel;
     dxLayoutItem61: TdxLayoutItem;
     CheckBoxProjectAutoApplyStopList: TcxCheckBox;
     LayoutGroupProject: TdxLayoutGroup;
-    dxLayoutGroup24: TdxLayoutGroup;
     dxLayoutItem62: TdxLayoutItem;
     ComboBoxModuleNameScheme: TcxImageComboBox;
     dxLayoutItem63: TdxLayoutItem;
@@ -336,19 +250,10 @@ type
     CheckBoxAutoApplyTranslationsExisting: TcxCheckBox;
     dxLayoutItem55: TdxLayoutItem;
     dxLayoutGroup25: TdxLayoutGroup;
-    dxLayoutItem56: TdxLayoutItem;
-    cxLabel7: TcxLabel;
-    dxLayoutGroup26: TdxLayoutGroup;
     dxLayoutItem70: TdxLayoutItem;
     CheckBoxFileProjectOmitDontTranslate: TcxCheckBox;
     dxLayoutItem71: TdxLayoutItem;
     CheckBoxFileProjectSort: TcxCheckBox;
-    TabSheetParser: TcxTabSheet;
-    LayoutControlParserGroup_Root: TdxLayoutGroup;
-    LayoutControlParser: TdxLayoutControl;
-    dxLayoutItem72: TdxLayoutItem;
-    cxLabel8: TcxLabel;
-    LayoutGroupInputParser: TdxLayoutGroup;
     dxLayoutGroup27: TdxLayoutGroup;
     dxLayoutItem73: TdxLayoutItem;
     ComboBoxStringListHandling: TcxComboBox;
@@ -362,14 +267,54 @@ type
     GridSynthesizeTableViewColumnMask: TcxGridColumn;
     GridSynthesizeTableViewColumnName: TcxGridColumn;
     GridSynthesizeTableViewColumnValue: TcxGridColumn;
-    cxButton1: TcxButton;
-    ActionCategoryParser: TAction;
+    ActionColorThemeLight: TAction;
+    ActionColorThemeDark: TAction;
+    ActionColorThemeCustom: TAction;
+    ImageListColorSchemePreview: TcxImageList;
+    ImageListColorSchemesLarge: TcxImageList;
+    ImageListColorSchemesSmall: TcxImageList;
     LayoutItemUILanguage: TdxLayoutItem;
     ComboBoxApplicationLanguage: TcxExtLookupComboBox;
     dxLayoutItem30: TdxLayoutItem;
     CheckBoxAutoShowMultiLineEditor: TcxCheckBox;
     dxLayoutItem52: TdxLayoutItem;
     CheckBoxFileProjectSaveNewState: TcxCheckBox;
+    LayoutGroupCategoryButtons: TdxLayoutGroup;
+    LayoutGroupCategoryGeneral: TdxLayoutGroup;
+    LayoutGroupCategoryAppearance: TdxLayoutGroup;
+    LayoutGroupCategoryProviders: TdxLayoutGroup;
+    LayoutGroupCategoryParser: TdxLayoutGroup;
+    LayoutGroupCategoryFiles: TdxLayoutGroup;
+    LayoutGroupCategoryProofing: TdxLayoutGroup;
+    LayoutGroupCategoryAdvanced: TdxLayoutGroup;
+    LayoutGroupCategories: TdxLayoutGroup;
+    dxLayoutEmptySpaceItem4: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup6: TdxLayoutAutoCreatedGroup;
+    dxLayoutEmptySpaceItem5: TdxLayoutEmptySpaceItem;
+    dxLayoutEmptySpaceItem6: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup7: TdxLayoutAutoCreatedGroup;
+    dxLayoutEmptySpaceItem7: TdxLayoutEmptySpaceItem;
+    dxLayoutEmptySpaceItem8: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup8: TdxLayoutAutoCreatedGroup;
+    dxLayoutEmptySpaceItem9: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup9: TdxLayoutAutoCreatedGroup;
+    dxLayoutEmptySpaceItem10: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup10: TdxLayoutAutoCreatedGroup;
+    dxLayoutItem1: TdxLayoutItem;
+    ButtonThemeLight: TcxButton;
+    dxLayoutItem9: TdxLayoutItem;
+    ButtonThemeDark: TcxButton;
+    dxLayoutItem16: TdxLayoutItem;
+    ButtonThemeCustom: TcxButton;
+    LayoutGroupUserInterfaceLanguage: TdxLayoutGroup;
+    LayoutGroupUserInterfaceThemeAdvanced: TdxLayoutGroup;
+    dxLayoutEmptySpaceItem11: TdxLayoutEmptySpaceItem;
+    dxLayoutAutoCreatedGroup11: TdxLayoutAutoCreatedGroup;
+    dxLayoutItem24: TdxLayoutItem;
+    ComboBoxColorScheme: TcxImageComboBox;
+    LayoutItemColorSample: TdxLayoutItem;
+    PaintBoxColorSample: TPaintBox;
+    dxLayoutAutoCreatedGroup12: TdxLayoutAutoCreatedGroup;
     procedure TextEditTranslatorMSAPIKeyPropertiesButtonClick(Sender: TObject; AButtonIndex: Integer);
     procedure TextEditTranslatorMSAPIKeyPropertiesChange(Sender: TObject);
     procedure ActionCategoryExecute(Sender: TObject);
@@ -432,20 +377,17 @@ type
     procedure GridSynthesizeTableViewColumnValidateDrawValue(
       Sender: TcxCustomGridTableItem; ARecord: TcxCustomGridRecord;
       const AValue: Variant; AData: TcxEditValidateInfo);
-  private
-    type
-      TSkinDetails = record
-        Name: string;
-        Group: string;
-        DisplayName: string;
-        Filename: string;
-        Index: integer;
-        GlyphSmall: TBitmap;
-        GlyphLarge: TBitmap;
-      end;
+    procedure ActionColorThemeLightExecute(Sender: TObject);
+    procedure ActionColorThemeLightUpdate(Sender: TObject);
+    procedure ActionColorThemeDarkExecute(Sender: TObject);
+    procedure ActionColorThemeDarkUpdate(Sender: TObject);
+    procedure ActionColorThemeCustomExecute(Sender: TObject);
+    procedure ActionColorThemeCustomUpdate(Sender: TObject);
+    procedure ImageComboBoxSkinPropertiesChange(Sender: TObject);
+    procedure ComboBoxColorSchemePropertiesChange(Sender: TObject);
+    procedure PaintBoxColorSamplePaint(Sender: TObject);
   private
     FSpellCheckerAutoCorrectOptions: TdxSpellCheckerAutoCorrectOptions;
-    FSkinList: TList<TSkinDetails>;
     FRestartRequired: boolean;
     FSpellChecker: TdxSpellChecker;
     FRibbonStyle: TdxRibbonStyle;
@@ -456,7 +398,35 @@ type
     procedure OnColorsEditColorDefaultHandler(Sender: TObject);
     procedure OnCustomColorClickHandler(Sender: TObject; AButtonIndex: Integer);
   private
+    type
+      TPreviewColors = (pcFrame, pcWindow, pcText, pcSelect);
+
+      TSkinColorScheme = record
+        Name: string;
+        Index: integer;
+        Colors: TArray<TColor>;
+        PreviewColors: array[TPreviewColors] of TColor;
+        Dark: boolean;
+        Hue: integer;
+        Lightness: integer;
+      end;
+      PSkinColorScheme = ^TSkinColorScheme;
+
+      TSkinDetails = record
+        Name: string;
+        Group: string;
+        DisplayName: string;
+        Index: integer;
+        GlyphSmall: TBitmap;
+        GlyphLarge: TBitmap;
+        ColorSchemes: TArray<TSkinColorScheme>;
+      end;
+  private
+    FSkinList: TList<TSkinDetails>;
+    FColorTheme: TColorTheme;
+  private
     procedure PopulateSkins;
+    procedure PopulateColorSchemes(Items: TcxImageComboBoxItems);
     function GetSkin: string;
     procedure SetSkin(const value: string);
   protected
@@ -500,11 +470,8 @@ uses
   Generics.Defaults,
   Types, UITypes,
   IOUtils,
+  Math,
 
-(*
-  dxSkinsDefaultPainters,
-  dxSkinsLookAndFeelPainter,
-*)
   dxSkinsdxRibbonPainter,
 
   dxSpellCheckerCore,
@@ -514,6 +481,8 @@ uses
   cxStorage,
   dxColorGallery,
   dxCoreGraphics,
+  dxSkinInfo,
+  dxSkinsStrs,
 
   amShell,
   amPath,
@@ -521,7 +490,6 @@ uses
   amLanguageInfo,
   amLocalization.Utils,
   amLocalization.Model,
-  amLocalization.Settings,
   amLocalization.Settings.SpellChecker,
   amLocalization.Persistence,
   amLocalization.Skin,
@@ -573,44 +541,37 @@ end;
 // -----------------------------------------------------------------------------
 
 procedure TFormSettings.FormCreate(Sender: TObject);
-var
-  i: integer;
-  Button: TcxButton;
-  Action: TAction;
-  Index: integer;
 begin
   // Make sure Actions, Buttons and Tabsheet pages are in sync
-  for i := 0 to PanelCategory.ControlCount-1 do
-    if (PanelCategory.Controls[i] is TcxButton) then
-    begin
-      Button := TcxButton(PanelCategory.Controls[i]);
-      Action := TAction(Button.Action);
+  for var i := 0 to LayoutGroupCategories.Count-1 do
+  begin
+    var Action := TAction.Create(Self);
+    Action.Caption := LayoutGroupCategories.Items[i].CaptionOptions.Text;
+    Action.OnExecute := ActionCategoryExecute;
+    Action.OnUpdate := ActionCategoryUpdate;
 
-      // Button tab order must equal Tabsheet order.
-      // - Button.TabOrder controls shortcut.
-      // - Action.Visible controls visibility.
-      Index := Button.TabOrder;
-      Action.Tag := Index;
-      Action.ShortCut := ShortCut(Ord('1')+Index, [ssCtrl]);
-      Action.Enabled := Action.Visible;
-      Button.Visible := Action.Visible;
-    end;
+    var Button := TcxButton.Create(Self);
+    Button.Action := Action;
+    Button.Width := 100;
+    Button.OptionsImage.Margin := 8; // Makes text left aligned
 
-  PageControl.HideTabs := True;
-  ActionCategoryGeneral.Execute;
-  // PageControl.ActivePage := TabSheetGeneral;
-  PanelCategory.ParentBackground := True; // This keeps getting set to False at design time if the main form isn't opened in the editor
+    var ButtonItem := LayoutGroupCategoryButtons.CreateItemForControl(Button);
 
-  LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Assign(Font);
-  LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font.Style := [fsBold];
-  LayoutSkinLookAndFeelURL.ItemOptions.CaptionOptions.Font.Assign(LayoutSkinLookAndFeelTitle.ItemOptions.CaptionOptions.Font);
+    Action.Tag := ButtonItem.Index;
+    Action.ShortCut := ShortCut(Ord('1')+ButtonItem.Index, [ssCtrl]);
+  end;
+
+  // Tabs can be visible at design time to ease development, but we hide them at run time.
+  LayoutGroupCategories.TabbedOptions.HideTabs := True;
+  // Start with first category active (in case we forgot to set it at design time).
+  LayoutGroupCategories.ItemIndex := 0;
 
   PopulateSkins;
 
   GridFoldersTableView.DataController.RecordCount := Length(FolderOrder);
   GridFoldersTableView.DataController.BeginUpdate;
   try
-    for i := Low(FolderOrder) to High(FolderOrder) do
+    for var i := Low(FolderOrder) to High(FolderOrder) do
     begin
       GridFoldersTableView.DataController.Values[i, 0] := TranslationManagerSettings.Folders.FolderName[FolderOrder[i]];
       GridFoldersTableView.DataController.Values[i, 2] := TranslationManagerSettings.Folders.FolderReadOnly[FolderOrder[i]]; // Read-only
@@ -641,7 +602,6 @@ begin
   (*
   ** General section
   *)
-  SetSkin(TranslationManagerSettings.System.Skin);
 
   CheckBoxProjectAutoApplyStopList.Checked := TranslationManagerSettings.System.AutoApplyStopList;
 
@@ -663,6 +623,10 @@ begin
   (*
   ** Appearance
   *)
+  SetSkin(DataModuleMain.CustomSkinName);
+  ComboBoxColorScheme.EditValue := DataModuleMain.CustomColorScheme;
+  FColorTheme := TranslationManagerSettings.System.ColorTheme;
+  LayoutGroupUserInterfaceThemeAdvanced.Visible := (FColorTheme = ctCustom);
   LoadStyles;
   ActionEditStatusGlyphs.Checked := TranslationManagerSettings.Editor.DisplayStatusGlyphs;
   ActionEditStatusHint.Checked := TranslationManagerSettings.Editor.StatusGlyphHints;
@@ -817,6 +781,10 @@ begin
         ShowMessageFmt('Unable to change the portable setting: %s', [E.Message]);
     end;
   end;
+
+  DataModuleMain.ColorTheme := FColorTheme;
+  DataModuleMain.CustomSkinName := GetSkin;
+  DataModuleMain.CustomColorScheme := ComboBoxColorScheme.Text;
 end;
 
 // -----------------------------------------------------------------------------
@@ -908,8 +876,6 @@ begin
   LoadStyles;
 end;
 
-// -----------------------------------------------------------------------------
-
 procedure TFormSettings.ApplySynthesizeRules;
 begin
   TranslationManagerSettings.Parser.Synthesize.Rules.Clear;
@@ -937,63 +903,26 @@ end;
 // -----------------------------------------------------------------------------
 
 function TFormSettings.GetSkin: string;
-var
-  SkinDetails: TSkinDetails;
 begin
   if (ImageComboBoxSkin.ItemIndex <> -1) then
-  begin
-    SkinDetails := FSkinList[ImageComboBoxSkin.ItemIndex];
-    Result := ComposeSkinName(SkinDetails.Name, SkinDetails.Filename, SkinDetails.Index);
-  end else
+    Result := FSkinList[ImageComboBoxSkin.ItemIndex].Name
+  else
     Result := '';
 end;
 
 procedure TFormSettings.SetSkin(const Value: string);
-var
-  Name, Filename: string;
-  Index: integer;
-  i: integer;
-begin
-  DecomposeSkinName(Value, Name, Filename, Index);
 
-  if (Filename <> '') then
+  function DoSetSkin(const Value: string): integer;
   begin
-    Filename := EnvironmentVars.ExpandString(Filename);
+    for var i := 0 to FSkinList.Count-1 do
+      if (AnsiSameText(Value, FSkinList[i].Name)) then
+        Exit(i);
 
-    // Look for exact filename and name match
-    for i := 0 to FSkinList.Count-1 do
-      if (AnsiSameText(Filename, FSkinList[i].Filename)) and (AnsiSameText(Name, FSkinList[i].Name)) then
-      begin
-        ImageComboBoxSkin.ItemIndex := i;
-        exit;
-      end;
-
-    // Look for exact filename and index match
-    if (Index <> -1) then
-      for i := 0 to FSkinList.Count-1 do
-        if (AnsiSameText(Filename, FSkinList[i].Filename)) and (Index = FSkinList[i].Index) then
-        begin
-          ImageComboBoxSkin.ItemIndex := i;
-          exit;
-        end;
-
-    // A bit more expensive, but resilient to folder change
-    Filename := TPath.GetFileName(Filename);
-    for i := 0 to FSkinList.Count-1 do
-      if (AnsiSameText(Filename, TPath.GetFileName(FSkinList[i].Filename))) and (AnsiSameText(Name, FSkinList[i].Name)) then
-      begin
-        ImageComboBoxSkin.ItemIndex := i;
-        exit;
-      end;
+    Result := -1;
   end;
 
-  // Compare name, ignore filename and index
-  for i := 0 to FSkinList.Count-1 do
-    if (AnsiSameText(Name, FSkinList[i].Name)) then
-    begin
-      ImageComboBoxSkin.ItemIndex := i;
-      exit;
-    end;
+begin
+  ImageComboBoxSkin.ItemIndex := DoSetSkin(Value);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1284,14 +1213,106 @@ end;
 
 // -----------------------------------------------------------------------------
 
+procedure TFormSettings.ImageComboBoxSkinPropertiesChange(Sender: TObject);
+begin
+  PopulateColorSchemes(ComboBoxColorScheme.Properties.Items);
+
+  if (ImageComboBoxSkin.ItemIndex <> -1) and (ComboBoxColorScheme.Properties.Items.Count > 0) then
+    ComboBoxColorScheme.ItemIndex := 0
+  else
+    ComboBoxColorScheme.ItemIndex := -1;
+
+  LayoutItemColorSample.Visible := (ImageComboBoxSkin.ItemIndex <> -1) and (ComboBoxColorScheme.ItemIndex <> -1) and
+    (Length(FSkinList[ImageComboBoxSkin.ItemIndex].ColorSchemes[ComboBoxColorScheme.Properties.Items[ComboBoxColorScheme.ItemIndex].Tag].Colors) > 1);
+
+  PaintBoxColorSample.Invalidate;
+end;
+
+procedure TFormSettings.ComboBoxColorSchemePropertiesChange(Sender: TObject);
+begin
+  LayoutItemColorSample.Visible := (ImageComboBoxSkin.ItemIndex <> -1) and (ComboBoxColorScheme.ItemIndex <> -1) and
+    (Length(FSkinList[ImageComboBoxSkin.ItemIndex].ColorSchemes[ComboBoxColorScheme.Properties.Items[ComboBoxColorScheme.ItemIndex].Tag].Colors) > 1);
+
+  PaintBoxColorSample.Invalidate;
+end;
+
+procedure TFormSettings.PaintBoxColorSamplePaint(Sender: TObject);
+begin
+  var r := TPaintBox(Sender).ClientRect;
+
+  if (ImageComboBoxSkin.ItemIndex = -1) or (ComboBoxColorScheme.ItemIndex = -1) then
+  begin
+    TPaintBox(Sender).Canvas.FillRect(r);
+    exit;
+  end;
+
+  var ColorSchemeIndex := ComboBoxColorScheme.Properties.Items[ComboBoxColorScheme.ItemIndex].Tag;
+  var Colors := FSkinList[ImageComboBoxSkin.ItemIndex].ColorSchemes[ColorSchemeIndex].Colors;
+
+  // Draw border in two contrast colors (black/white)
+  TPaintBox(Sender).Canvas.Pen.Color := Colors[0];
+  TPaintBox(Sender).Canvas.Rectangle(r);
+  r.Inflate(-1, -1);
+
+  TPaintBox(Sender).Canvas.Pen.Color := Colors[1];
+  TPaintBox(Sender).Canvas.Rectangle(r);
+  r.Inflate(-1, -1);
+
+  var Width := r.Width;
+  for var i := 0 to High(Colors) do
+  begin
+    r.Right := (Width * (i + 1)) div Length(Colors);
+    TPaintBox(Sender).Canvas.Brush.Color := Colors[i];
+    TPaintBox(Sender).Canvas.FillRect(r);
+    r.Left := r.Right;
+  end;
+end;
+
+// -----------------------------------------------------------------------------
+
 procedure TFormSettings.ActionCategoryExecute(Sender: TObject);
 begin
-  PageControl.ActivePageIndex := TAction(Sender).Tag;
+  LayoutGroupCategories.ItemIndex := TAction(Sender).Tag;
 end;
 
 procedure TFormSettings.ActionCategoryUpdate(Sender: TObject);
 begin
-  TAction(Sender).Checked := (TAction(Sender).Tag = PageControl.ActivePageIndex);
+  TAction(Sender).Checked := (TAction(Sender).Tag = LayoutGroupCategories.ItemIndex);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormSettings.ActionColorThemeCustomExecute(Sender: TObject);
+begin
+  FColorTheme := ctCustom;
+  LayoutGroupUserInterfaceThemeAdvanced.Visible := True;
+end;
+
+procedure TFormSettings.ActionColorThemeCustomUpdate(Sender: TObject);
+begin
+  TAction(Sender).Checked := (FColorTheme = ctCustom);
+end;
+
+procedure TFormSettings.ActionColorThemeDarkExecute(Sender: TObject);
+begin
+  FColorTheme := ctDark;
+  LayoutGroupUserInterfaceThemeAdvanced.Visible := False;
+end;
+
+procedure TFormSettings.ActionColorThemeDarkUpdate(Sender: TObject);
+begin
+  TAction(Sender).Checked := (FColorTheme = ctDark);
+end;
+
+procedure TFormSettings.ActionColorThemeLightExecute(Sender: TObject);
+begin
+  FColorTheme := ctLight;
+  LayoutGroupUserInterfaceThemeAdvanced.Visible := False;
+end;
+
+procedure TFormSettings.ActionColorThemeLightUpdate(Sender: TObject);
+begin
+  TAction(Sender).Checked := (FColorTheme = ctLight);
 end;
 
 // -----------------------------------------------------------------------------
@@ -1647,7 +1668,10 @@ begin
   if (Key = VK_TAB) and (ssCtrl in Shift) then
   begin
     Key := 0;
-    PageControl.ActivePage := PageControl.FindNextPageEx(PageControl.ActivePage, not(ssShift in Shift), True, True);
+    if (ssShift in Shift) then
+      LayoutGroupCategories.ItemIndex := (LayoutGroupCategories.ItemIndex + LayoutGroupCategories.VisibleCount - 1) mod LayoutGroupCategories.VisibleCount
+    else
+      LayoutGroupCategories.ItemIndex := (LayoutGroupCategories.ItemIndex + 1) mod LayoutGroupCategories.VisibleCount;
   end else
 (*
   if (Key = VK_F1) and (Shift = [ssAlt]) then
@@ -1661,165 +1685,334 @@ end;
 
 // -----------------------------------------------------------------------------
 
-type
-  TSkinFolder = (SkinFolderUser, SkinFolderSystem);
+procedure TFormSettings.PopulateColorSchemes(Items: TcxImageComboBoxItems);
+
+  procedure ApplyColor(Bitmap: TBitmap; Color: TColor);
+  begin
+    // ARGB -> ABGR
+    var Temp := TColorRec(Color).R;
+    TColorRec(Color).R := TColorRec(Color).B;
+    TColorRec(Color).B := Temp;
+
+    // Keep alpha but replace color
+    for var Row := 0 to Bitmap.Height-1 do
+    begin
+      var Pixel: PDWORD := Bitmap.ScanLine[Row];
+      for var x := 0 to Bitmap.Width-1 do
+      begin
+        Pixel^ := (Pixel^ and $FF000000) or (DWORD(Color) and $00FFFFFF);
+        Inc(Pixel);
+      end;
+    end;
+  end;
+
+  function Clamp(const Value: Integer): Integer; inline;
+  begin
+    Result := Value;
+    if Result > 255 then
+      Result := 255
+    else
+    if Result < 0 then
+      Result := 0;
+  end;
+
+  procedure Blend(Foreground: TColorRec; var Background: TColorRec);
+  const
+    OneOver255: Single = 1 / 255;
+  begin
+    if Foreground.A = 0 then
+      Exit;
+
+    if Foreground.A = $FF then
+    begin
+      Background := Foreground;
+      Exit;
+    end;
+
+    var ScaleFG := Foreground.A * OneOver255;
+    var ScaleBG := 1.0 - ScaleFG;
+    Background.A := Clamp(Round(ScaleBG * Background.A + ScaleFG * Foreground.A));
+    Background.R := Clamp(Round(ScaleBG * Background.R + ScaleFG * Foreground.R));
+    Background.G := Clamp(Round(ScaleBG * Background.G + ScaleFG * Foreground.G));
+    Background.B := Clamp(Round(ScaleBG * Background.B + ScaleFG * Foreground.B));
+  end;
+
+  procedure BlendBitmap(Target, Source: TBitmap);
+  begin
+    Assert(Target.Height = Source.Height);
+    Assert(Target.Width = Source.Width);
+
+    // Blend one bitmap onto another.
+    // True alpha composition blend, not merge. Target alpha is maintained.
+    for var Row := 0 to Target.Height-1 do
+    begin
+      var TargetPixel: PColorRec := Target.ScanLine[Row];
+      var SourcePixel: PColorRec := Source.ScanLine[Row];
+      for var x := 0 to Target.Width-1 do
+      begin
+        Blend(SourcePixel^, TargetPixel^);
+        Inc(TargetPixel);
+        Inc(SourcePixel);
+      end;
+    end;
+  end;
+
+begin
+  Items.BeginUpdate;
+  try
+    ImageListColorSchemesSmall.Clear;
+    ImageListColorSchemesLarge.Clear;
+    Items.Clear;
+
+    if (ImageComboBoxSkin.ItemIndex = -1) then
+      exit;
+
+    // Create a list of color schemes and sort it by light/dark and then by hue
+    var ColorSchemes := TList<PSkinColorScheme>.Create;
+    try
+      for var i := 0 to High(FSkinList[ImageComboBoxSkin.ItemIndex].ColorSchemes) do
+      begin
+        var ColorScheme: PSkinColorScheme := @FSkinList[ImageComboBoxSkin.ItemIndex].ColorSchemes[i];
+        ColorSchemes.Add(ColorScheme);
+      end;
+
+      ColorSchemes.Sort(TComparer<PSkinColorScheme>.Construct(
+        function(const A, B: PSkinColorScheme): integer
+        begin
+          Result := Ord(A.Dark) - Ord(B.Dark);
+          if (Result = 0) then
+            Result := Ord(A.Hue) - Ord(B.Hue);
+          if (Result = 0) then
+            Result := Ord(A.Lightness) - Ord(B.Lightness);
+        end));
+
+      var Preview := TBitmap.Create;
+      var Overlay := TBitmap.Create;
+      try
+        Preview.SetSize(ImageListColorSchemePreview.Width, ImageListColorSchemePreview.Height);
+        Preview.PixelFormat := pf32bit;
+        Overlay.SetSize(ImageListColorSchemePreview.Width, ImageListColorSchemePreview.Height);
+        Overlay.PixelFormat := pf32bit;
+
+        for var ColorScheme in ColorSchemes do
+        begin
+          var Item := Items.Add;
+          Item.Value := ColorScheme.Name;
+          Item.Description := ColorScheme.Name;
+          Item.Tag := ColorScheme.Index;
+          if (AnsiSameText(ColorScheme.Name, sdxDefaultColorPaletteName)) then
+            Item.Index := 0;
+
+          // Construct color scheme preview image
+          ImageListColorSchemePreview.GetImage(0, Preview);
+          ApplyColor(Preview, ColorScheme.PreviewColors[pcFrame]);
+
+          ImageListColorSchemePreview.GetImage(1, Overlay);
+          ApplyColor(Overlay, ColorScheme.PreviewColors[pcWindow]);
+          BlendBitmap(Preview, Overlay);
+
+          ImageListColorSchemePreview.GetImage(2, Overlay);
+          ApplyColor(Overlay, ColorScheme.PreviewColors[pcText]);
+          BlendBitmap(Preview, Overlay);
+
+          ImageListColorSchemePreview.GetImage(3, Overlay);
+          ApplyColor(Overlay, ColorScheme.PreviewColors[pcSelect]);
+          BlendBitmap(Preview, Overlay);
+
+          Item.ImageIndex := ImageListColorSchemesSmall.Add(Preview, nil);
+          ImageListColorSchemesLarge.Add(Preview, nil);
+        end;
+
+      finally
+        Overlay.Free;
+        Preview.Free;
+      end;
+    finally
+      ColorSchemes.Free;
+    end;
+
+  finally
+    Items.EndUpdate;
+  end;
+end;
 
 procedure TFormSettings.PopulateSkins;
-const
-  ColorSchemeNameMap: array[0..7] of string = (
-    'Blue', 'Black', 'Silver', 'DarkGray', 'LightGray', 'White', 'MediumGray', 'Colorful' );
-  ColorSchemeDisplayNameMap: array[0..7] of string = (
-    'Blue', 'Black', 'Silver', 'Dark Gray', 'Light Gray', 'White', 'Medium Gray', 'Colorful');
-  ColorSchemesGroupName = 'Ribbon Color Schemes';
 
-  procedure LoadSkinDetails(dxSkinDetails: TdxSkinDetails; var SkinDetails: TSkinDetails);
+  function RGB2Hue(Color: TColorRec): integer;
   begin
-    SkinDetails.Filename := '';
-    SkinDetails.Index := -1;
-    SkinDetails.Name := dxSkinDetails.Name;
-    SkinDetails.DisplayName := dxSkinDetails.DisplayName;
-    SkinDetails.Group := dxSkinDetails.GroupName;
-    SkinDetails.GlyphSmall := dxSkinDetails.Icons[sis16].GetAsBitmap;
-    SkinDetails.GlyphLarge := dxSkinDetails.Icons[sis48].GetAsBitmap;
+    var RGBMin := Min(Color.R, Min(Color.G, Color.B));
+    var RGBMax:= Max(Color.R, Max(Color.G, Color.B));
+
+    if (RGBMin = RGBMax) then
+      Exit(0);
+
+    var Hue: Single;
+
+    if (RGBMax = Color.R) then
+      Hue := (Color.G - Color.B) / (RGBMax - RGBMin)
+    else
+    if (RGBMax = Color.G) then
+      Hue := 2.0 + (Color.B - Color.R) / (RGBMax - RGBMin)
+    else
+      Hue := 4.0 + (Color.R - Color.G) / (RGBMax - RGBMin);
+
+    Hue := Hue * 60;
+    if (Hue < 0) then
+      Hue := Hue + 360;
+
+    Result := Round(Hue);
   end;
 
-  procedure LoadExternalSkinDetails(const Filename: string);
-  var
-    Reader: TdxSkinBinaryReader;
-    i: Integer;
-    FileStream: TFileStream;
-    SkinDetails: TSkinDetails;
+  function RGB2Lightness(Color: TColorRec): integer;
   begin
-    FileStream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyNone);
-    try
-      Reader := TdxSkinBinaryReader.Create(FileStream);
+    var RGBMin := Min(Color.R, Min(Color.G, Color.B));
+    var RGBMax:= Max(Color.R, Max(Color.G, Color.B));
+
+    Result := (RGBMin + RGBMax) div 2;
+  end;
+
+  function LoadSkinDetails(Skin: TdxSkin; DevExSkinDetails: TdxSkinDetails; var ASkinDetails: TSkinDetails): boolean; overload;
+
+    procedure AddColor(Palette: TdxSkinColorPalette; Colors: TList<TColor>; const Name: string);
+    var
+      ColorProperty: TdxSkinColor;
+    begin
+      if (Palette.Find(Name, ColorProperty)) then
+        Colors.Add(ColorProperty.Value);
+    end;
+
+    function ResolvePaletteColor(Palette: TdxSkinColorPalette; const Name: string; Default: TColor): TColor;
+    var
+      ColorProperty: TdxSkinColor;
+    begin
+      if (Palette.Find(Name, ColorProperty)) then
+        Result := ColorProperty.Value
+      else
+        Result := Default;
+    end;
+
+  var
+    PreviewColors: array[TPreviewColors] of record
+      Reference: string;
+      Color: TColor;
+    end;
+
+  begin
+    ASkinDetails.Index := -1;
+    ASkinDetails.Name := DevExSkinDetails.Name;
+    ASkinDetails.DisplayName := DevExSkinDetails.DisplayName;
+    ASkinDetails.Group := DevExSkinDetails.GroupName;
+    ASkinDetails.GlyphSmall := DevExSkinDetails.Icons[sis16].GetAsBitmap;
+    ASkinDetails.GlyphLarge := DevExSkinDetails.Icons[sis48].GetAsBitmap;
+
+    // Get skin color names for preview
+    begin
+      var SkinGroup := Skin.GetGroupByName('Ribbon');
+
+      var SkinElement := SkinGroup.GetElementByName('FormCaption');
+      PreviewColors[pcFrame].Reference := SkinElement.ColorReference;
+      PreviewColors[pcFrame].Color := SkinElement.Color;
+
+      SkinElement := SkinGroup.GetElementByName('FormContent');
+      PreviewColors[pcWindow].Reference := SkinElement.ColorReference;
+      PreviewColors[pcWindow].Color := SkinElement.Color;
+      PreviewColors[pcText].Reference := SkinElement.TextColorReference;
+      PreviewColors[pcText].Color := SkinElement.TextColor;
+
+      var Color := Skin.GetColorByName('SelectionColor');
+      PreviewColors[pcSelect].Reference := Color.ValueReference;
+      PreviewColors[pcSelect].Color := Color.Value;
+    end;
+
+    // Get selected palette colors
+    SetLength(ASkinDetails.ColorSchemes, Skin.ColorPalettes.Count);
+    for var i := 0 to Skin.ColorPalettes.Count-1 do
+    begin
+      var Palette := Skin.ColorPalettes[i];
+
+      ASkinDetails.ColorSchemes[i].Name := Palette.Name;
+      ASkinDetails.ColorSchemes[i].Index := i;
+
+      // Resolve skin colors for preview
+      for var PreviewColor := Low(TPreviewColors) to High(TPreviewColors) do
+        ASkinDetails.ColorSchemes[i].PreviewColors[PreviewColor] := ResolvePaletteColor(Palette, PreviewColors[PreviewColor].Reference, PreviewColors[PreviewColor].Color);
+
+      // Calculate hue and light/dark so we can order the list by it later
+      ASkinDetails.ColorSchemes[i].Hue := (RGB2Hue(TColorRec(ASkinDetails.ColorSchemes[i].PreviewColors[pcFrame])) + 16) div 32;
+      ASkinDetails.ColorSchemes[i].Lightness := RGB2Lightness(TColorRec(ASkinDetails.ColorSchemes[i].PreviewColors[pcFrame]));
+      ASkinDetails.ColorSchemes[i].Dark := RGB2Lightness(TColorRec(ASkinDetails.ColorSchemes[i].PreviewColors[pcWindow])) < RGB2Lightness(TColorRec(ASkinDetails.ColorSchemes[i].PreviewColors[pcText]));
+
+      // Create a list of unique colors samples
+      var Colors := TList<TColor>.Create;
       try
-        for i := 0 to Reader.Count - 1 do
+        AddColor(Palette, Colors, 'White');
+        AddColor(Palette, Colors, 'Black');
+        AddColor(Palette, Colors, 'Paint High');
+        AddColor(Palette, Colors, 'Paint');
+        AddColor(Palette, Colors, 'Paint Shadow');
+        AddColor(Palette, Colors, 'Brush');
+        AddColor(Palette, Colors, 'Accent Brush');
+        AddColor(Palette, Colors, 'Accent Brush Light');
+        AddColor(Palette, Colors, 'Accent Paint');
+        AddColor(Palette, Colors, 'Accent Paint Light');
+        AddColor(Palette, Colors, 'Key Brush');
+        AddColor(Palette, Colors, 'Key Brush Light');
+        AddColor(Palette, Colors, 'Key Paint');
+
+(*
+        for var j := 0 to Skin.ColorPalettes[i].Count-1 do
         begin
-          LoadSkinDetails(Reader.SkinDetails[i], SkinDetails);
-
-          SkinDetails.Filename := EnvironmentVars.TokenizeString(Filename);
-          SkinDetails.Index := i;
-
-          FSkinList.Add(SkinDetails);
+          var Color := Skin.ColorPalettes[i].Items[j].Value;
+          var Index: integer;
+          if (not Colors.BinarySearch(Color, Index)) then
+            Colors.Insert(Index, Color);
         end;
+        // Sort colors by Hue (this is extremely slow but since we know that there
+        // are only a few handfulls of colors it's safe to do).
+        Colors.Sort(TComparer<TColor>.Construct(
+            function (const Item1, Item2: TColor): Integer
+            begin
+              if (Item1 = Item2) then
+                Exit(0);
+              var Hue1 := RGB2Hue(TColorRec(Item1));
+              var Hue2 := RGB2Hue(TColorRec(Item2));
+              Result := (Hue1 - Hue2);
+            end));
+*)
+        SetLength(ASkinDetails.ColorSchemes[i].Colors, Colors.Count);
+        for var j := 0 to Colors.Count-1 do
+          ASkinDetails.ColorSchemes[i].Colors[j] := Colors[j];
       finally
-        Reader.Free;
+        Colors.Free;
       end;
-    finally
-      FileStream.Free;
     end;
+
+    Result := True;
   end;
 
-  function SkinFolder(Folder: TSkinFolder): string;
+  function LoadSkinDetails(Skin: TdxSkin; var ASkinDetails: TSkinDetails): boolean; overload;
   begin
-    case Folder of
-      SkinFolderUser:
-        Result := IncludeTrailingPathDelimiter(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderUserSkins));
-      SkinFolderSystem:
-        Result := IncludeTrailingPathDelimiter(EnvironmentVars.ExpandString(TranslationManagerSettings.Folders.FolderSkins));
-    end;
+    var DevExSkinDetails: TdxSkinDetails;
+    if (not TdxSkinRibbonPainter(Skin).Painter.GetPainterDetails(DevExSkinDetails)) then
+      Exit(False);
+
+    Result := LoadSkinDetails(Skin, DevExSkinDetails, ASkinDetails);
   end;
 
-  procedure LoadSkinFolder(const Folder: string);
-  var
-    Filename: string;
-  begin
-    if (TDirectory.Exists(Folder)) then
-      for Filename in TDirectory.GetFiles(Folder, '*.SKINRES') do
-        LoadExternalSkinDetails(Filename);
-  end;
-
-  function IsColorScheme(const ASkinName: string; out AIndex: Integer): Boolean;
-  var
-    i: Integer;
-  begin
-    Result := False;
-    for i := 0 to Length(ColorSchemeNameMap) - 1 do
-      if (SameText(ASkinName, ColorSchemeNameMap[i])) then
-      begin
-        Result := True;
-        AIndex := i;
-        Break;
-      end;
-  end;
-
-  procedure LoadColorSchemeGlyph(ABitmap: TBitmap; AImageList: TcxImageList; AGlyphIndex: Integer);
-  var
-    ABitmap32: TcxBitmap32;
-  begin
-    case AGlyphIndex of
-      3: //DarkGray
-        AGlyphIndex := 1;
-      4: //LightGray
-        AGlyphIndex := 2;
-      6: //DarkGray
-        AGlyphIndex := 3;
-      7: //Colorful
-        AGlyphIndex := 0;
-    end;
-    ABitmap32 := TcxBitmap32.CreateSize(AImageList.Width, AImageList.Height, True);
-    try
-      AImageList.Draw(ABitmap32.Canvas, 0, 0, AGlyphIndex);
-      ABitmap.Assign(ABitmap32);
-    finally
-      ABitmap32.Free;
-    end;
-  end;
-
-  procedure LoadColorSchemeDetails(ColorSchemeIndex: integer; var SkinDetails: TSkinDetails);
-  begin
-    SkinDetails.Filename := '';
-    SkinDetails.Index := -1;
-    SkinDetails.Name := ColorSchemeNameMap[ColorSchemeIndex];
-    SkinDetails.DisplayName := ColorSchemeDisplayNameMap[ColorSchemeIndex];
-    SkinDetails.Group := ColorSchemesGroupName;
-    SkinDetails.GlyphSmall := TBitmap.Create;
-    LoadColorSchemeGlyph(SkinDetails.GlyphSmall, ImageListColorSchemesGlyphsSmall, ColorSchemeIndex);
-    SkinDetails.GlyphLarge := TBitmap.Create;
-    LoadColorSchemeGlyph(SkinDetails.GlyphLarge, ImageListColorSchemesGlyphsLarge, ColorSchemeIndex);
-  end;
-
-var
-  i: integer;
-  Skin: TdxCustomRibbonSkin;
-  SkinDetails: TSkinDetails;
-  dxSkinDetails: TdxSkinDetails;
-  ColorSchemeIndex: integer;
-  Item: TcxImageComboBoxItem;
 begin
   FSkinList.Clear;
   try
 
-    for i := 0 to dxRibbonSkinsManager.SkinCount-1 do
+    for var i := 0 to cxLookAndFeelPaintersManager.Count-1 do
     begin
-      Skin := dxRibbonSkinsManager.Skins[I];
-
-      if (Skin.Style <> FRibbonStyle) then
-        continue;
-
-      if (Skin is TdxSkinRibbonPainter) then
+      var SkinInfo: TdxSkinInfo;
+      if (cxLookAndFeelPaintersManager.Items[i].GetPainterData(SkinInfo)) then
       begin
-        if (TdxSkinRibbonPainter(Skin).Painter.IsInternalPainter) then
-          continue;
-
-        if (not TdxSkinRibbonPainter(Skin).Painter.GetPainterDetails(dxSkinDetails)) then
-          continue;
-
-        LoadSkinDetails(dxSkinDetails, SkinDetails);
-      end else
-      if (IsColorScheme(Skin.Name, ColorSchemeIndex)) then
-      begin
-        LoadColorSchemeDetails(ColorSchemeIndex, SkinDetails);
-      end else
-        continue;
-
-      FSkinList.Add(SkinDetails);
+        var SkinDetails: TSkinDetails;
+        if (LoadSkinDetails(SkinInfo.Skin, SkinInfo.Skin.Details, SkinDetails)) then
+          FSkinList.Add(SkinDetails);
+      end;
     end;
-
-    LoadSkinFolder(SkinFolder(SkinFolderUser));
-    if (not AnsiSameText(SkinFolder(SkinFolderUser), SkinFolder(SkinFolderSystem))) then
-      LoadSkinFolder(SkinFolder(SkinFolderSystem));
 
     FSkinList.Sort(TComparer<TSkinDetails>.Construct(function(const Left, Right: TSkinDetails): Integer
       begin
@@ -1831,10 +2024,9 @@ begin
     ImageComboBoxSkin.Properties.Items.Clear;
     ImageListSkin.Clear;
     ImageListSkinLarge.Clear;
-    for i := 0 to FSkinList.Count-1 do
+    for var SkinDetails in FSkinList do
     begin
-      SkinDetails := FSkinList[i];
-      Item := ImageComboBoxSkin.Properties.Items.Add;
+      var Item := ImageComboBoxSkin.Properties.Items.Add;
       Item.Value := SkinDetails.Name;
       Item.Description := SkinDetails.DisplayName;
       // Add small glyph (displayed in combo edit)
@@ -1844,9 +2036,9 @@ begin
     end;
 
   finally
-    for i := 0 to FSkinList.Count-1 do
+    for var i := 0 to FSkinList.Count-1 do
     begin
-      SkinDetails := FSkinList[i];
+      var SkinDetails := FSkinList[i];
       FreeAndNil(SkinDetails.GlyphSmall);
       FreeAndNil(SkinDetails.GlyphLarge);
     end;
@@ -1859,7 +2051,7 @@ begin
     exit;
 
   FRestartRequired := True;
-  LayoutGroupRestart.Visible := True;
+  LayoutItemRestart.Visible := True;
 end;
 
 // -----------------------------------------------------------------------------
@@ -2145,6 +2337,36 @@ begin
   SaveExceptions;
 
   SpellChecker.LoadDictionaries(True);
+end;
+
+// -----------------------------------------------------------------------------
+
+{ TcxButton }
+
+type
+  TButtonViewInfo = class(TcxButtonViewInfo)
+  public
+    procedure Calculate(const ABounds: TRect); override;
+  end;
+
+procedure TButtonViewInfo.Calculate(const ABounds: TRect);
+begin
+  inherited;
+  if (TcxButton(Button).Kind = cxbkOfficeDropDown) then
+    FDropDownArrowRect := TRect.Empty;
+end;
+
+procedure TcxButton.Click;
+begin
+  inherited;
+
+  if (Kind = cxbkOfficeDropDown) and (Action <> nil) then
+    Action.Execute;
+end;
+
+function TcxButton.CreateViewInfo: TcxButtonViewInfo;
+begin
+  Result := TButtonViewInfo.Create(Self);
 end;
 
 // -----------------------------------------------------------------------------

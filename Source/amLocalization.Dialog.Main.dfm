@@ -20,12 +20,12 @@ object FormMain: TFormMain
     Left = 0
     Top = 0
     Width = 964
-    Height = 158
+    Height = 154
     ApplicationButton.Visible = False
     BarManager = BarManager
     Style = rs2016
     ColorSchemeAccent = rcsaBlue
-    ColorSchemeName = 'Office2016Colorful'
+    ColorSchemeName = 'TheBezier'
     QuickAccessToolbar.Toolbar = BarManagerBarQuickAccess
     SupportNonClientDrawing = True
     Contexts = <>
@@ -34,6 +34,7 @@ object FormMain: TFormMain
     TabOrder = 0
     TabStop = False
     object RibbonTabMain: TdxRibbonTab
+      Active = True
       Caption = 'Main'
       Groups = <
         item
@@ -49,7 +50,6 @@ object FormMain: TFormMain
       Index = 0
     end
     object RibbonTabEdit: TdxRibbonTab
-      Active = True
       Caption = 'Edit'
       Groups = <
         item
@@ -138,9 +138,9 @@ object FormMain: TFormMain
   end
   object SplitterTreeLists: TcxSplitter
     Left = 240
-    Top = 158
-    Width = 4
-    Height = 462
+    Top = 154
+    Width = 10
+    Height = 466
     HotZoneClassName = 'TcxSimpleStyle'
     HotZone.ArrowHighlightColor = clHighlight
     PositionAfterOpen = 120
@@ -148,23 +148,27 @@ object FormMain: TFormMain
     MinSize = 80
     ResizeUpdate = True
     Control = PanelModules
+    ExplicitTop = 121
+    ExplicitHeight = 499
   end
   object PanelModules: TPanel
     Left = 0
-    Top = 158
+    Top = 154
     Width = 240
-    Height = 462
+    Height = 466
     Align = alLeft
     BevelOuter = bvNone
     FullRepaint = False
     ParentColor = True
     ShowCaption = False
     TabOrder = 3
+    ExplicitTop = 121
+    ExplicitHeight = 499
     object TreeListModules: TcxTreeList
       Left = 0
       Top = 0
       Width = 240
-      Height = 403
+      Height = 407
       Align = alClient
       Bands = <
         item
@@ -200,8 +204,7 @@ object FormMain: TFormMain
       OptionsView.TreeLineStyle = tllsNone
       PopupMenu = PopupMenuTree
       ScrollbarAnnotations.CustomAnnotations = <>
-      Styles.Background = DataModuleMain.StyleDefault
-      Styles.Inactive = DataModuleMain.StyleInactive
+      Styles.Inactive = DataModuleMain.StyleSelectedInactive
       Styles.Selection = DataModuleMain.StyleSelected
       Styles.OnGetContentStyle = TreeListModulesStylesGetContentStyle
       Styles.Indicator = DataModuleMain.StyleDefault
@@ -210,7 +213,7 @@ object FormMain: TFormMain
       OnFocusedColumnChanged = TreeListModulesFocusedColumnChanged
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
-      ExplicitHeight = 436
+      ExplicitHeight = 440
       object TreeListColumnModuleName: TcxTreeListColumn
         BestFitMaxWidth = 200
         Caption.AlignVert = vaTop
@@ -259,7 +262,7 @@ object FormMain: TFormMain
     end
     object LayoutControlModules: TdxLayoutControl
       Left = 0
-      Top = 403
+      Top = 407
       Width = 240
       Height = 59
       Align = alBottom
@@ -267,6 +270,7 @@ object FormMain: TFormMain
       AutoSize = True
       LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTight
       ShowDesignSelectors = False
+      ExplicitTop = 440
       object LabelCountTranslated: TcxLabel
         Left = 65
         Top = 3
@@ -445,25 +449,25 @@ object FormMain: TFormMain
     end
   end
   object PanelMain: TPanel
-    Left = 244
-    Top = 158
-    Width = 720
-    Height = 462
+    Left = 250
+    Top = 154
+    Width = 714
+    Height = 466
     Align = alClient
     BevelOuter = bvNone
     FullRepaint = False
     ShowCaption = False
     TabOrder = 4
-    ExplicitTop = 125
-    ExplicitHeight = 495
+    ExplicitTop = 121
+    ExplicitHeight = 499
     object GridItems: TcxGrid
       Left = 0
       Top = 0
-      Width = 720
-      Height = 356
+      Width = 714
+      Height = 354
       Align = alClient
       TabOrder = 0
-      ExplicitHeight = 389
+      ExplicitHeight = 387
       object GridItemsTableView: TcxGridTableView
         PopupMenu = PopupMenuTree
         OnMouseDown = GridItemsTableViewMouseDown
@@ -506,7 +510,7 @@ object FormMain: TFormMain
         Styles.Content = DataModuleMain.StyleDefault
         Styles.UseOddEvenStyles = bFalse
         Styles.OnGetContentStyle = GridItemsTableViewStylesGetContentStyle
-        Styles.Inactive = DataModuleMain.StyleInactive
+        Styles.Inactive = DataModuleMain.StyleSelectedInactive
         Styles.Indicator = DataModuleMain.StyleDefault
         Styles.Selection = DataModuleMain.StyleSelected
         OnCustomDrawIndicatorCell = GridItemsTableViewCustomDrawIndicatorCell
@@ -629,8 +633,8 @@ object FormMain: TFormMain
     end
     object PanelEditors: TPanel
       Left = 0
-      Top = 360
-      Width = 720
+      Top = 364
+      Width = 714
       Height = 102
       Align = alBottom
       BevelOuter = bvNone
@@ -639,11 +643,11 @@ object FormMain: TFormMain
       ParentBackground = False
       ShowCaption = False
       TabOrder = 1
-      ExplicitTop = 393
+      ExplicitTop = 397
       object SplitterEditors: TcxSplitter
         Left = 277
         Top = 0
-        Width = 4
+        Width = 10
         Height = 102
         HotZoneClassName = 'TcxSimpleStyle'
         HotZone.ArrowHighlightColor = clHighlight
@@ -675,7 +679,6 @@ object FormMain: TFormMain
           Style.HotTrack = False
           Style.TextColor = clGrayText
           TabOrder = 0
-          ExplicitTop = 13
           Height = 87
           Width = 277
         end
@@ -692,9 +695,9 @@ object FormMain: TFormMain
         end
       end
       object PanelText: TPanel
-        Left = 281
+        Left = 287
         Top = 0
-        Width = 417
+        Width = 405
         Height = 102
         Align = alClient
         BevelOuter = bvNone
@@ -715,9 +718,8 @@ object FormMain: TFormMain
           TabOrder = 0
           OnEnter = EditTargetTextEnter
           OnExit = EditTargetTextExit
-          ExplicitTop = 13
           Height = 87
-          Width = 417
+          Width = 405
         end
         object LabelTargetName: TcxLabel
           Left = 0
@@ -728,11 +730,11 @@ object FormMain: TFormMain
           Properties.Alignment.Horz = taCenter
           Properties.ShowAccelChar = False
           Transparent = True
-          AnchorX = 209
+          AnchorX = 203
         end
       end
       object PanelTextEditButtons: TPanel
-        Left = 698
+        Left = 692
         Top = 0
         Width = 22
         Height = 102
@@ -800,9 +802,9 @@ object FormMain: TFormMain
     end
     object SplitterMainEditors: TcxSplitter
       Left = 0
-      Top = 356
-      Width = 720
-      Height = 4
+      Top = 354
+      Width = 714
+      Height = 10
       HotZoneClassName = 'TcxSimpleStyle'
       HotZone.ArrowHighlightColor = clHighlight
       AlignSplitter = salBottom
@@ -811,7 +813,7 @@ object FormMain: TFormMain
       MinSize = 40
       ResizeUpdate = True
       Control = PanelEditors
-      ExplicitTop = 352
+      ExplicitTop = 387
     end
   end
   object BarManager: TdxBarManager
@@ -834,6 +836,7 @@ object FormMain: TFormMain
     MenusShowRecentItemsFirst = False
     PopupMenuLinks = <>
     ShowShortCutInHint = True
+    Style = bmsUseLookAndFeel
     UseSystemFont = True
     Left = 428
     Top = 16
@@ -871,7 +874,7 @@ object FormMain: TFormMain
     object BarManagerBarProject: TdxBar
       Caption = 'Project'
       CaptionButtons = <>
-      DockedLeft = 172
+      DockedLeft = 168
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -947,7 +950,7 @@ object FormMain: TFormMain
           Hint = 'Select available target languages'
           OnClick = BarManagerBarLanguageCaptionButtons0Click
         end>
-      DockedLeft = 367
+      DockedLeft = 390
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -971,7 +974,7 @@ object FormMain: TFormMain
     object BarManagetBarTranslationStatus: TdxBar
       Caption = 'Status'
       CaptionButtons = <>
-      DockedLeft = 159
+      DockedLeft = 179
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -999,7 +1002,7 @@ object FormMain: TFormMain
     object BarManagetBarTranslationState: TdxBar
       Caption = 'State'
       CaptionButtons = <>
-      DockedLeft = 274
+      DockedLeft = 294
       DockedTop = 0
       FloatLeft = 818
       FloatTop = 2
@@ -1133,7 +1136,7 @@ object FormMain: TFormMain
     object BarManagerBarMachineTranslation: TdxBar
       Caption = 'Machine Translation'
       CaptionButtons = <>
-      DockedLeft = 414
+      DockedLeft = 434
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1276,7 +1279,7 @@ object FormMain: TFormMain
     object BarManagerBarStopList: TdxBar
       Caption = 'Stop List'
       CaptionButtons = <>
-      DockedLeft = 655
+      DockedLeft = 754
       DockedTop = 0
       FloatLeft = 998
       FloatTop = 8
@@ -1813,12 +1816,6 @@ object FormMain: TFormMain
       Category = 0
       ButtonStyle = bsChecked
     end
-  end
-  object SkinController: TdxSkinController
-    ScrollbarMode = sbmClassic
-    SkinName = 'UserSkin'
-    Left = 500
-    Top = 16
   end
   object OpenDialogXLIFF: TOpenDialog
     Filter = 

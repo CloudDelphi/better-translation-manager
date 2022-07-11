@@ -246,6 +246,7 @@
         <DCCReference Include="amLocalization.TranslationMemory.Data.API.pas"/>
         <DCCReference Include="amLocalization.Integration.Tracker.API.pas"/>
         <DCCReference Include="amLocalization.Integration.Tracker.pas"/>
+        <DCCReference Include="amLocalization.Application.API.pas"/>
         <None Include="..\Bin\Win32\Debug\amTranslationManager.xlat"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

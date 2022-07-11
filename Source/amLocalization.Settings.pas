@@ -405,6 +405,8 @@ type
     property Version: integer read FVersion write FVersion;
   end;
 
+  TColorTheme = (ctLight, ctDark, ctCustom);
+
   TTranslationManagerSystemSettings = class(TConfigurationSection)
   private
     FBooting: boolean;
@@ -417,6 +419,8 @@ type
   private
     FSingleInstance: boolean;
     FSkin: string;
+    FColorScheme: string;
+    FColorTheme: TColorTheme;
     FIncludeVersionInfo: boolean;
     FModuleNameScheme: TModuleNameScheme;
     FDefaultSourceLocale: string;
@@ -455,6 +459,8 @@ type
     property SingleInstance: boolean read FSingleInstance write FSingleInstance default False;
 
     property Skin: string read FSkin write FSkin;
+    property ColorScheme: string read FColorScheme write FColorScheme;
+    property ColorTheme: TColorTheme read FColorTheme write FColorTheme;
 
     property AutoApplyStopList: boolean read FAutoApplyStopList write FAutoApplyStopList default True;
 

@@ -173,6 +173,41 @@ object DataModuleMain: TDataModuleMain
       Offsets.RootItemsAreaOffsetVert = 2
       PixelsPerInch = 96
     end
+    object LayoutSkinLookAndFeelSettings: TdxLayoutSkinLookAndFeel
+      GroupOptions.CaptionOptions.TextDisabledColor = clWindowText
+      ItemOptions.CaptionOptions.TextDisabledColor = clWindowText
+      Offsets.RootItemsAreaOffsetHorz = 0
+      Offsets.RootItemsAreaOffsetVert = 0
+      PixelsPerInch = 96
+    end
+    object LayoutSkinLookAndFeelURL: TdxLayoutSkinLookAndFeel
+      ItemOptions.CaptionOptions.HotTrack = True
+      ItemOptions.CaptionOptions.TextHotColor = clBlue
+      Offsets.RootItemsAreaOffsetHorz = 0
+      Offsets.RootItemsAreaOffsetVert = 0
+      PixelsPerInch = 96
+    end
+    object LayoutSkinLookAndFeelTitle: TdxLayoutSkinLookAndFeel
+      ItemOptions.CaptionOptions.Font.Charset = DEFAULT_CHARSET
+      ItemOptions.CaptionOptions.Font.Color = clWindowText
+      ItemOptions.CaptionOptions.Font.Height = -11
+      ItemOptions.CaptionOptions.Font.Name = 'Segoe UI'
+      ItemOptions.CaptionOptions.Font.Style = [fsBold]
+      ItemOptions.CaptionOptions.UseDefaultFont = False
+      Offsets.RootItemsAreaOffsetHorz = 0
+      Offsets.RootItemsAreaOffsetVert = 0
+      PixelsPerInch = 96
+    end
+    object LayoutSkinLookAndFeelGroup: TdxLayoutSkinLookAndFeel
+      ItemOptions.Padding.AssignedValues = [lpavLeft]
+      ItemOptions.Padding.Left = 12
+      PixelsPerInch = 96
+    end
+    object LayoutSkinLookAndFeelNoPadding: TdxLayoutSkinLookAndFeel
+      Offsets.TabSheetContentOffsetHorz = -8
+      Offsets.TabSheetContentOffsetVert = -8
+      PixelsPerInch = 96
+    end
   end
   object EditRepository: TcxEditRepository
     Left = 196
@@ -4952,7 +4987,7 @@ object DataModuleMain: TDataModuleMain
       Color = clHighlight
       TextColor = clHighlightText
     end
-    object StyleInactive: TcxStyle
+    object StyleSelectedInactive: TcxStyle
       AssignedValues = [svColor]
       Color = 12884335
     end
@@ -4973,5 +5008,18 @@ object DataModuleMain: TDataModuleMain
       AssignedValues = [svColor]
       Color = 15532012
     end
+  end
+  object SkinController: TdxSkinController
+    ScrollbarMode = sbmClassic
+    SkinName = 'TheBezier'
+    SkinPaletteName = 'Fireball'
+    Left = 321
+    Top = 20
+  end
+  object LookAndFeelControllerMain: TcxLookAndFeelController
+    ScrollbarMode = sbmClassic
+    SkinName = 'TheBezier'
+    Left = 322
+    Top = 76
   end
 end

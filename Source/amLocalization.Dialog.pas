@@ -34,7 +34,6 @@ type
     LayoutControlHeaderGroup_Root: TdxLayoutGroup;
     LayoutItemHeader: TdxLayoutItem;
     LabelHeader: TcxLabel;
-    PanelMain: TPanel;
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionCancelExecute(Sender: TObject);
   private

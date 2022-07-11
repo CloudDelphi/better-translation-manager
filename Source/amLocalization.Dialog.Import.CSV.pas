@@ -1209,7 +1209,7 @@ procedure TFormCSVImport.GridLayoutTableViewStylesGetContentStyle(Sender: TcxCus
   AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
 begin
   if (ARecord.Index < FSettings.FirstRow-1) then
-    AStyle := DataModuleMain.StyleInactive
+    AStyle := DataModuleMain.StyleSelectedInactive
   else
   if (not FColumnMap[AItem.Index].Mapped) then
     AStyle := DataModuleMain.StyleNeedAction

@@ -32,6 +32,7 @@ uses
 
   amLanguageInfo,
   amProgress.API,
+  amLocalization.Application.API,
   amLocalization.Model,
   amLocalization.Provider,
   amLocalization.Dialog.Search,
@@ -75,13 +76,17 @@ type
 //
 // -----------------------------------------------------------------------------
 type
-  TFormMain = class(TdxRibbonForm, ILocalizerSearchHost, IExceptionInfoProvider)
+  TFormMain = class(TdxRibbonForm,
+      ITranslationManagerApplication,
+      ITranslationManagerApplicationSubscriber,
+      ILocalizerSearchHost,
+      IExceptionInfoProvider
+    )
     OpenDialogXLIFF: TOpenDialog;
     BarManager: TdxBarManager;
     RibbonMain: TdxRibbon;
     RibbonTabMain: TdxRibbonTab;
     StatusBar: TdxRibbonStatusBar;
-    SkinController: TdxSkinController;
     BarManagerBarFile: TdxBar;
     BarButtonOpenProject: TdxBarLargeButton;
     BarButtonNewProject: TdxBarLargeButton;
@@ -575,7 +580,6 @@ type
     procedure SaveSettings;
     procedure ApplySettings;
     procedure ApplyCustomSettings;
-    procedure ApplyListStyles;
     function QueueRestart(Immediately: boolean = False): boolean;
   private
     // Hints
@@ -717,6 +721,17 @@ type
     // Build
     function BuildLanguageModule(LanguageItem: TLanguageItem; const Filename: string): boolean;
     procedure OnBuildSingleLanguageHandler(Sender: TObject);
+  private
+    // Notification
+    FSubscriptions: TList<ITranslationManagerApplicationSubscriber>;
+    procedure Notify(Notification: TTranslationManagerApplicationNotification);
+  protected
+    // ITranslationManagerApplication
+    procedure Subscribe(const Subscriber: ITranslationManagerApplicationSubscriber);
+    procedure Unsubscribe(const Subscriber: ITranslationManagerApplicationSubscriber);
+  protected
+    // ITranslationManagerApplicationSubscriber
+    procedure TranslationManagerApplicationNotification(Notification: TTranslationManagerApplicationNotification);
   protected
     // ILocalizerSearchHost
     function ILocalizerSearchHost.GetProject = GetProject;
@@ -727,13 +742,6 @@ type
   protected
     // IExceptionInfoProvider
     procedure GetExceptionInfo(const ExceptIntf: IUnknown; const ExceptionInfoConsumer: IExceptionInfoConsumer);
-  private
-    // Skin
-    FSkin: string;
-    FColorSchemeAccent: integer;
-  protected
-    procedure SetSkin(const Value: string);
-    property Skin: string read FSkin write SetSkin;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -768,10 +776,6 @@ uses
 {$ifdef DEBUG}
   Diagnostics,
 {$endif DEBUG}
-
-  // DevExpress skins
-  dxSkinOffice2016Colorful,
-  dxSkinOffice2019Colorful,
 
   // Skin utils
   dxSkinsDefaultPainters,
@@ -864,9 +868,6 @@ const
   StatusBarPanelStats = 3;
 
 const
-  sDefaultSkinName = 'Office2016Colorful';
-
-const
   HintCornerSize = 8;
 
 // -----------------------------------------------------------------------------
@@ -918,6 +919,8 @@ end;
 
 destructor TFormMain.Destroy;
 begin
+  Notify(tmaShutdown);
+
   ExceptionHandler.UnregisterExceptionInfoProvider(Self);
 
   FTranslationMemoryPeek := nil;
@@ -935,8 +938,12 @@ begin
 
   FProjectIndex := nil;
 
+  RegisterTranslationManagerApplication(nil);
+
   FModuleItemsDataSource.Free;
   FProject.Free;
+
+  FreeAndNil(FSubscriptions);
 
   FreeAndNil(FPendingFileOpen);
   FreeAndNil(FPendingFileOpenLock);
@@ -1038,9 +1045,11 @@ procedure TFormMain.FormCreate(Sender: TObject);
 var
   i: integer;
 begin
-  DisableAero := True;
+  DisableAero := True; // Required to skin caption bar
 
   FPendingFileOpenLock := TCriticalSection.Create;
+
+  RegisterTranslationManagerApplication(Self);
 
   FProject := TLocalizerProject.Create('', GetLanguage(TranslationManagerSettings.System.DefaultSourceLocale));
   FProject.OnChanged := OnProjectChanged;
@@ -1050,7 +1059,6 @@ begin
   FModuleItemsDataSource := TLocalizerModuleItemsDataSource.Create(nil);
   GridItemsTableView.DataController.CustomDataSource := FModuleItemsDataSource;
 
-  DataModuleMain := TDataModuleMain.Create(Self);
   FTranslationMemory := TranslationMemory.PrimaryProvider;
 
   Application.OnHint := ShowHint;
@@ -1065,9 +1073,6 @@ begin
 
   CreateBookmarkMenu;
 
-  FSkin := '';
-  FColorSchemeAccent := Ord(RibbonMain.ColorSchemeAccent);
-
   if (TranslationManagerSettings.System.SafeMode) then
     Caption := Caption + ' [SAFE MODE]';
 
@@ -1079,8 +1084,10 @@ begin
     Exit;
   end;
 
+  TranslationManagerApplication.Subscribe(Self);
+
   ApplySettings;
-  ApplyCustomSettings;
+  Notify(tmaSettingsChanged);
 
   // Load ribbon banner
   LoadBanner;
@@ -1096,7 +1103,7 @@ procedure TFormMain.GetExceptionInfo(const ExceptIntf: IInterface; const Excepti
 begin
   ExceptionInfoConsumer.AddExceptionInfo('Application', 'Portable', TranslationManagerSettings.System.Portable.ToString(TUseBoolStrs.True));
   ExceptionInfoConsumer.AddExceptionInfo('Application', 'SingleInstance', TranslationManagerSettings.System.SingleInstance.ToString(TUseBoolStrs.True));
-  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Skin', FSkin);
+  ExceptionInfoConsumer.AddExceptionInfo('Application', 'Skin', TranslationManagerSettings.System.Skin);
   ExceptionInfoConsumer.AddExceptionInfo('Application', 'ApplicationLanguage', TranslationManagerSettings.System.ApplicationLanguage.ToHexString(8));
   ExceptionInfoConsumer.AddExceptionInfo('Application', 'Safe Mode', TranslationManagerSettings.System.SafeMode.ToString(TUseBoolStrs.True));
   ExceptionInfoConsumer.AddExceptionInfo('Application', 'Last boot completed', TranslationManagerSettings.System.LastBootCompleted.ToString(TUseBoolStrs.True));
@@ -1126,55 +1133,54 @@ end;
 
 // -----------------------------------------------------------------------------
 
-procedure TFormMain.ApplyListStyles;
-
-  procedure ApplyListStyle(AListStyle: TListStyle; Style: TcxStyle);
-  var
-    ListStyle: TTranslationManagerListStyleSettings;
-  begin
-    ListStyle := TranslationManagerSettings.Editor.Style[AListStyle];
-
-    if (ListStyle.ColorBackground <> clDefault) then
-      Style.Color := ListStyle.ColorBackground
-    else
-    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorBackground <> clDefault) then
-      Style.Color := TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorBackground
-    else
-      Style.Color := clWhite;
-
-    if (ListStyle.ColorText <> clDefault) then
-      Style.TextColor := ListStyle.ColorText
-    else
-    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorText <> clDefault) then
-      Style.TextColor := TranslationManagerSettings.Editor.Style[ListStyleDefault].ColorText
-    else
-      Style.TextColor := clBlack;
-
-    if (ListStyle.Bold <> -1) then
-    begin
-      if (ListStyle.Bold = 1) then
-        Style.Font.Style := Style.Font.Style + [fsBold]
-      else
-        Style.Font.Style := Style.Font.Style - [fsBold];
-    end else
-    if (TranslationManagerSettings.Editor.Style[ListStyleDefault].Bold = 1) then
-      Style.Font.Style := Style.Font.Style + [fsBold]
-    else
-      Style.Font.Style := Style.Font.Style - [fsBold];
-  end;
-
+procedure TFormMain.Notify(Notification: TTranslationManagerApplicationNotification);
 begin
-  ApplyListStyle(ListStyleDefault, DataModuleMain.StyleDefault);
-  ApplyListStyle(ListStyleSelected, DataModuleMain.StyleSelected);
-  ApplyListStyle(ListStyleInactive, DataModuleMain.StyleInactive);
-  ApplyListStyle(ListStyleFocused, DataModuleMain.StyleFocused);
-  ApplyListStyle(ListStyleNotTranslated, DataModuleMain.StyleNeedTranslation);
-  ApplyListStyle(ListStyleProposed, DataModuleMain.StyleProposed);
-  ApplyListStyle(ListStyleTranslated, DataModuleMain.StyleComplete);
-  ApplyListStyle(ListStyleHold, DataModuleMain.StyleHold);
-  ApplyListStyle(ListStyleDontTranslate, DataModuleMain.StyleDontTranslate);
-  ApplyListStyle(ListStyleSynthesized, DataModuleMain.StyleSynthesized);
+  if (FSubscriptions = nil) then
+    exit;
+
+  for var i := FSubscriptions.Count-1 downto 0 do
+    FSubscriptions[i].TranslationManagerApplicationNotification(Notification);
 end;
+
+procedure TFormMain.Subscribe(const Subscriber: ITranslationManagerApplicationSubscriber);
+begin
+  if (FSubscriptions = nil) then
+    FSubscriptions := TList<ITranslationManagerApplicationSubscriber>.Create;
+
+  if (not FSubscriptions.Contains(Subscriber)) then
+    FSubscriptions.Add(Subscriber);
+end;
+
+procedure TFormMain.Unsubscribe(const Subscriber: ITranslationManagerApplicationSubscriber);
+begin
+  if (FSubscriptions <> nil) then
+    FSubscriptions.Remove(Subscriber);
+end;
+
+// -----------------------------------------------------------------------------
+
+procedure TFormMain.TranslationManagerApplicationNotification(Notification: TTranslationManagerApplicationNotification);
+begin
+  case Notification of
+    tmaSettingsChanged:
+      begin
+        ApplyCustomSettings;
+        (* Docking presently not used
+        DockManager.Font.Assign(Font);
+
+        // Work around for DevExpress issue t1094717
+        // Filter drop down text isn't painted with skin colors
+        // https://supportcenter.devexpress.com/ticket/details/t1094717/filter-drop-down-text-isn-t-painted-with-skin-colors
+        DockManager.Font.Color := clWindowText;
+        *)
+      end;
+
+    tmaShutdown:
+      TranslationManagerApplication.Unsubscribe(Self);
+  end;
+end;
+
+// -----------------------------------------------------------------------------
 
 procedure TFormMain.ApplySettings;
 begin
@@ -1219,9 +1225,7 @@ begin
   (*
   ** Settings that can be modified via GUI
   *)
-  SetSkin(TranslationManagerSettings.System.Skin);
-
-  ApplyListStyles;
+  RibbonMain.ColorSchemeName := DataModuleMain.SkinName;
 
   if (TranslationManagerSettings.Editor.UseProposedStatus) then
     TLocalizerTranslations.DefaultStatus := tStatusProposed
@@ -1346,6 +1350,7 @@ end;
 
 procedure TFormMain.FormShow(Sender: TObject);
 begin
+  Notify(tmaStartup);
   PostMessage(Handle, MSG_AFTER_SHOW, 0, 0);
 end;
 
@@ -3964,6 +3969,8 @@ begin
   try
 //    Progress.Marquee := True;
 
+    Notify(tmaProjectLoading);
+
     FProject.BeginUpdate;
     try
 
@@ -4010,6 +4017,8 @@ begin
     end;
 
     FProjectIndex := FProject.CreatePropertyLookup(TranslationManagerSettings.Editor.SanitizeRules);
+
+    Notify(tmaProjectLoaded);
 
     UpdateProjectModifiedIndicator;
 
@@ -4510,6 +4519,7 @@ begin
     FProject.StringSymbolFilename := PathUtil.FilenameMakeRelative(TPath.GetDirectoryName(SourceFilename), SymbolFilename);
 
     try
+      Notify(tmaProjectSaving);
 
       if (not SafeReplaceFile(ProjectFilename,
         function(const Filename: string): boolean
@@ -4549,6 +4559,7 @@ begin
     FProject.Modified := False;
 
     SetInfoText('Saved');
+    Notify(tmaProjectSaved);
     UpdateProjectModifiedIndicator;
   finally
     Progress := nil;
@@ -4720,11 +4731,10 @@ begin
 
     CreateTranslationMemoryPeeker(False);
 
-    ApplyCustomSettings;
-
-
     // Make sure folders exist and are writable
     TranslationManagerSettings.Folders.ValidateFolders;
+
+    Notify(tmaSettingsChanged);
 
     if (FormSettings.RestartRequired) then
     begin
@@ -5407,214 +5417,6 @@ begin
     Result := GridItemsTableView.Controller.SelectedRowCount
   else
     Result := TreeListModules.SelectionCount;
-end;
-
-// -----------------------------------------------------------------------------
-
-procedure TFormMain.SetSkin(const Value: string);
-
-  function DetectRemoteSession: boolean;
-  const
-    SM_REMOTECONTROL      = $2001; // This system metric is used in a Terminal
-                                   // Services environment. Its value is nonzero
-                                   // if the current session is remotely
-                                   // controlled; otherwise, 0.
-
-    SM_REMOTESESSION      = $1000; // This system metric is used in a Terminal
-                                   // Services environment. If the calling process
-                                   // is associated with a Terminal Services
-                                   // client session, the return value is nonzero.
-                                   // If the calling process is associated with
-                                   // the Terminal Server console session, the
-                                   // return value is 0. The console session is
-                                   // not necessarily the physical console.
-  var
-    Mode: string;
-  begin
-    Result := (GetSystemMetrics(SM_REMOTESESSION) <> 0) or (GetSystemMetrics(SM_REMOTECONTROL) <> 0);
-
-    // Test for emulated local/remote mode
-    if (FindCmdLineSwitch('Session', Mode, True)) then
-    begin
-      if (SameText(Mode, 'Remote')) then
-        Result := True
-      else
-      if (SameText(Mode, 'Local')) then
-        Result := False;
-    end;
-  end;
-
-var
-  SkinName, SkinFilename: string;
-  SkinIndex: integer;
-  OriginalSkinName: string;
-  SkinLoaded: boolean;
-  Retry: boolean;
-  ColorSchemeName: string;
-  RibbonSkin: TdxCustomRibbonSkin;
-  SkinDetails: TdxSkinDetails;
-  i: integer;
-begin
-  if (AnsiSameText(FSkin, Value)) then
-    exit;
-
-  if (TranslationManagerSettings.System.SafeMode) then
-  begin
-    // In safe mode we just store the skin value, but doesn't act on it. This enables the user to modify the skin
-    // setting without any immediate consequences.
-    FSkin := Value;
-    exit;
-  end;
-
-  DecomposeSkinName(Value, SkinName, SkinFilename, SkinIndex);
-  OriginalSkinName := SkinName;
-
-  SkinFilename := EnvironmentVars.ExpandString(SkinFilename);
-
-  SkinLoaded := False;
-  if (SkinFilename <> '') then
-  begin
-    if (TFile.Exists(SkinFilename)) then
-    begin
-      SkinLoaded := dxSkinsUserSkinLoadFromFile(SkinFilename, SkinName);
-      if (not SkinLoaded) and (SkinIndex <> -1) then
-        SkinLoaded := dxSkinsUserSkinLoadFromFileByIndex(SkinFilename, SkinIndex);
-    end;
-    if (not SkinLoaded) then
-    begin
-      SkinFilename := '';
-      SkinIndex := -1;
-    end else
-      SkinName := 'UserSkin'; // Custom skin must be named "UserSkin"
-  end;
-
-  Retry := True;
-  while (True) do
-  begin
-
-    // Verify that skin is valid
-    // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, dxRibbonMain.Style);
-    // DevExpress 17.1.1
-    RibbonSkin := dxRibbonSkinsManager.GetMostSuitable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
-
-    if (RibbonSkin <> nil) or (SkinLoaded) or (not Retry) then
-      break;
-
-    Retry := False;
-
-    // Map old skins to new skins
-    if (ContainsText(SkinName, 'Silver')) then
-      SkinName := 'Office2013White'
-    else
-    if (ContainsText(SkinName, 'Blue')) then
-      SkinName := 'Office2013LightGray'
-    else
-    if (ContainsText(SkinName, 'Black')) then
-      SkinName := 'Office2013DarkGray'
-    else
-      break;
-
-    OriginalSkinName := SkinName;
-  end;
-
-  // If value was invalid. Try default.
-  if (RibbonSkin = nil) then
-  begin
-    SkinFilename := '';
-    SkinIndex := -1;
-    SkinName := sDefaultSkinName;
-    OriginalSkinName := SkinName;
-
-    if (not AnsiSameText(SkinName, Value)) then
-      // RibbonSkin := dxRibbonSkinsManager.Find(SkinName, RibbonMain.Style);
-      // DevExpress 17.1.1
-      RibbonSkin := dxRibbonSkinsManager.GetMostSuitable(SkinName, RibbonMain.Style, Screen.PixelsPerInch);
-  end;
-
-  // If value was invalid. Find first valid skin.
-  if (RibbonSkin = nil) then
-  begin
-    SkinName := '';
-    for i := 0 to dxRibbonSkinsManager.SkinCount-1 do
-    begin
-      RibbonSkin := dxRibbonSkinsManager.Skins[I];
-
-      if (RibbonSkin.Style <> RibbonMain.Style) then
-        continue;
-
-      if not(RibbonSkin is TdxSkinRibbonPainter) then
-        continue;
-
-      if (TdxSkinRibbonPainter(RibbonSkin).Painter.IsInternalPainter) then
-        continue;
-
-      if (TdxSkinRibbonPainter(RibbonSkin).Painter.GetPainterDetails(SkinDetails)) then
-      begin
-        SkinName := SkinDetails.Name;
-        break;
-      end;
-    end;
-    OriginalSkinName := SkinName;
-  end;
-
-
-  RibbonMain.BeginUpdate;
-  try
-    RibbonMain.ColorSchemeAccent := TdxRibbonColorSchemeAccent(FColorSchemeAccent);
-
-{
-    if (SkinName = '') or (ContainsText(SkinName, 'Office')) then
-    begin
-      ColorSchemeName := 'Colorful';
-      if (dxRibbonSkinsManager.Find(ColorSchemeName, RibbonMain.Style) = nil) then
-        ColorSchemeName := SkinName;
-    end else
-}
-      ColorSchemeName := SkinName;
-
-    // Ribbon skin (ColorSchemeName specifies the skin/painter to use for the ribbon)
-    RibbonMain.ColorSchemeName := ColorSchemeName;
-
-    // "The rest" skin (i.e. not ribbon)
-    if (SkinName <> '') then
-    begin
-      if (cxLookAndFeelPaintersManager.GetPainter(SkinName) = nil) then
-      begin
-        // Ribbon Color Schemes only skins the ribbon. Use a static skin for rest of application.
-        if (RibbonMain.ColorScheme.Style = rs2013) then
-          SkinName := 'Office2013White'
-        else
-        if (RibbonMain.ColorScheme.Style = rs2016) then
-          SkinName := 'Office2016Colorful'
-        else
-          SkinName := sDefaultSkinName;
-      end;
-
-      FSkin := ComposeSkinName(OriginalSkinName, SkinFilename, SkinIndex);
-    end else
-    begin
-      FSkin := '';
-    end;
-
-    SkinController.SkinName := SkinName;
-
-    // Switch to Alternate skin mode (use Fills instead of BitBlts) if remote session
-    if (DetectRemoteSession) then
-      SkinController.UseImageSet := imsAlternate;
-
-    SkinController.UseSkins := (FSkin <> ''); // Causes splash to flicker if skinned
-
-    // SkinPainter is nil if we tried to use a non-existing skin
-    if (RootLookAndFeel.SkinPainter = nil) then
-    begin
-      FSkin := '';
-      SkinController.UseImageSet := imsAlternate;
-      SkinController.UseSkins := False;
-    end;
-
-  finally
-    RibbonMain.EndUpdate;
-  end;
 end;
 
 // -----------------------------------------------------------------------------
@@ -7926,7 +7728,7 @@ var
 begin
   if (ANode.Selected) and (not Sender.Focused) then
   begin
-    AStyle := DataModuleMain.StyleInactive;
+    AStyle := DataModuleMain.StyleSelectedInactive;
     Exit;
   end else
   if (ANode.Selected) and ((AColumn = nil) or (not AColumn.Focused)) then

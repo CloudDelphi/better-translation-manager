@@ -85,7 +85,8 @@ uses
   amLocalization.Settings.Layout.Tree in 'amLocalization.Settings.Layout.Tree.pas',
   amLocalization.TranslationMemory.Data.API in 'amLocalization.TranslationMemory.Data.API.pas',
   amLocalization.Integration.Tracker.API in 'amLocalization.Integration.Tracker.API.pas',
-  amLocalization.Integration.Tracker in 'amLocalization.Integration.Tracker.pas';
+  amLocalization.Integration.Tracker in 'amLocalization.Integration.Tracker.pas',
+  amLocalization.Application.API in 'amLocalization.Application.API.pas';
 
 {$R *.res}
 
@@ -303,6 +304,8 @@ end;
 var
   CursorRecall: ICursorRecall;
 begin
+  CheckSkins;
+
   // Grab restart semaphore.
   // If we were restarted then a previous instance of the application will have grabbed the semaphore before lauching this instance
   // and will be holding on to it until it has completed shutting down. Once the previous instance releases the semaphore we

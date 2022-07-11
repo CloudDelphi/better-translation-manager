@@ -5,25 +5,24 @@ object FormDialog: TFormDialog
   Caption = 'Lorem Ipsum'
   ClientHeight = 280
   ClientWidth = 537
-  Color = clWhite
+  Color = clBtnFace
   ParentFont = True
-  OldCreateOrder = False
   Position = poMainFormCenter
   ShowHint = True
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object LayoutControlButtons: TdxLayoutControl
     Left = 0
-    Top = 232
+    Top = 229
     Width = 537
-    Height = 48
+    Height = 51
     Align = alBottom
     TabOrder = 0
     AutoSize = True
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelHeader
     object ButtonOK: TcxButton
-      Left = 370
-      Top = 11
+      Left = 367
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionOK
@@ -32,8 +31,8 @@ object FormDialog: TFormDialog
       TabOrder = 0
     end
     object ButtonCancel: TcxButton
-      Left = 451
-      Top = 11
+      Left = 449
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionCancel
@@ -44,7 +43,6 @@ object FormDialog: TFormDialog
     object LayoutControlButtonsGroup_Root: TdxLayoutGroup
       AlignHorz = ahClient
       AlignVert = avTop
-      ButtonOptions.Buttons = <>
       Hidden = True
       ShowBorder = False
       Index = -1
@@ -73,7 +71,6 @@ object FormDialog: TFormDialog
     object LayoutGroupButtons: TdxLayoutGroup
       Parent = LayoutControlButtonsGroup_Root
       CaptionOptions.Text = 'New Group'
-      ButtonOptions.Buttons = <>
       LayoutDirection = ldHorizontal
       ShowBorder = False
       Index = 0
@@ -83,14 +80,14 @@ object FormDialog: TFormDialog
     Left = 0
     Top = 0
     Width = 537
-    Height = 39
+    Height = 41
     Align = alTop
     TabOrder = 1
     AutoSize = True
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelHeader
     object LabelHeader: TcxLabel
-      Left = 11
-      Top = 11
+      Left = 13
+      Top = 13
       Caption = 'Lorem ipsum'
       Style.HotTrack = False
       Style.TextStyle = [fsBold]
@@ -99,12 +96,11 @@ object FormDialog: TFormDialog
       Properties.ShowEndEllipsis = True
       Properties.WordWrap = True
       Transparent = True
-      Width = 515
+      Width = 511
     end
     object LayoutControlHeaderGroup_Root: TdxLayoutGroup
-      AlignHorz = ahClient
-      AlignVert = avTop
-      ButtonOptions.Buttons = <>
+      AlignHorz = ahParentManaged
+      AlignVert = avParentManaged
       Hidden = True
       ShowBorder = False
       Index = -1
@@ -113,50 +109,30 @@ object FormDialog: TFormDialog
       Parent = LayoutControlHeaderGroup_Root
       CaptionOptions.Visible = False
       Control = LabelHeader
-      ControlOptions.OriginalHeight = 13
+      ControlOptions.OriginalHeight = 15
       ControlOptions.OriginalWidth = 7
       ControlOptions.ShowBorder = False
       Index = 0
     end
   end
-  object PanelMain: TPanel
+  object LayoutControl: TdxLayoutControl
     Left = 0
-    Top = 39
+    Top = 41
     Width = 537
-    Height = 193
+    Height = 188
     Align = alClient
-    BevelEdges = [beTop, beBottom]
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    Color = clWhite
-    Padding.Left = 8
-    Padding.Top = 4
-    Padding.Right = 8
-    Padding.Bottom = 4
-    ParentBackground = False
-    ShowCaption = False
     TabOrder = 2
-    ExplicitTop = 41
-    ExplicitHeight = 200
-    object LayoutControl: TdxLayoutControl
-      Left = 8
-      Top = 4
-      Width = 521
-      Height = 181
-      Align = alClient
-      ParentBackground = True
-      TabOrder = 0
-      Transparent = True
-      LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-      ExplicitLeft = 5
-      object LayoutControlGroup_Root: TdxLayoutGroup
-        AlignHorz = ahClient
-        AlignVert = avTop
-        ButtonOptions.Buttons = <>
-        Hidden = True
-        ShowBorder = False
-        Index = -1
-      end
+    LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
+    ExplicitLeft = 8
+    ExplicitTop = 4
+    ExplicitWidth = 521
+    ExplicitHeight = 181
+    object LayoutControlGroup_Root: TdxLayoutGroup
+      AlignHorz = ahClient
+      AlignVert = avTop
+      Hidden = True
+      ShowBorder = False
+      Index = -1
     end
   end
   object ActionList: TActionList

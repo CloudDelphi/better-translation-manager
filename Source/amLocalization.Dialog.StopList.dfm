@@ -5,37 +5,36 @@ inherited FormStopList: TFormStopList
   ClientHeight = 528
   ClientWidth = 655
   OnShow = FormShow
-  ExplicitTop = -66
   ExplicitWidth = 671
-  ExplicitHeight = 567
+  ExplicitHeight = 566
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 480
+    Top = 477
     Width = 655
-    ExplicitTop = 480
+    ExplicitTop = 477
     ExplicitWidth = 655
     inherited ButtonOK: TcxButton
-      Left = 488
+      Left = 485
       TabOrder = 2
-      ExplicitLeft = 488
+      ExplicitLeft = 485
     end
     inherited ButtonCancel: TcxButton
-      Left = 569
+      Left = 567
       TabOrder = 3
-      ExplicitLeft = 569
+      ExplicitLeft = 567
     end
     object ButtonImport: TcxButton [2]
-      Left = 11
-      Top = 11
+      Left = 13
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionImport
       TabOrder = 0
     end
     object ButtonExport: TcxButton [3]
-      Left = 92
-      Top = 11
+      Left = 95
+      Top = 13
       Width = 75
       Height = 25
       Action = ActionExport
@@ -75,175 +74,168 @@ inherited FormStopList: TFormStopList
     ExplicitWidth = 655
     inherited LabelHeader: TcxLabel
       Caption = 'List of items that should never be translated'
-      ExplicitWidth = 633
-      Width = 633
+      ExplicitWidth = 629
+      Width = 629
     end
   end
-  inherited PanelMain: TPanel
+  inherited LayoutControl: TdxLayoutControl
     Width = 655
-    Height = 441
-    ExplicitTop = 39
+    Height = 436
+    ExplicitLeft = 0
+    ExplicitTop = 41
     ExplicitWidth = 655
     ExplicitHeight = 441
-    inherited LayoutControl: TdxLayoutControl
-      Width = 639
-      Height = 429
-      ExplicitLeft = 8
-      ExplicitWidth = 639
-      ExplicitHeight = 429
-      object TreeListStopList: TcxTreeList [0]
-        Left = 6
-        Top = 6
-        Width = 627
-        Height = 417
-        Bands = <
+    object TreeListStopList: TcxTreeList [0]
+      Left = 7
+      Top = 7
+      Width = 641
+      Height = 422
+      Bands = <
+        item
+        end>
+      DragMode = dmAutomatic
+      Navigator.Buttons.CustomButtons = <>
+      OptionsBehavior.GoToNextCellOnTab = True
+      OptionsBehavior.FocusCellOnCycle = True
+      OptionsCustomizing.ColumnFiltering = bFalse
+      OptionsCustomizing.ColumnVertSizing = False
+      OptionsCustomizing.StackedColumns = False
+      OptionsData.AnsiSort = True
+      OptionsSelection.MultiSelect = True
+      OptionsView.CategorizedColumn = TreeListStopListColumnGroup
+      OptionsView.CheckGroups = True
+      OptionsView.PaintStyle = tlpsCategorized
+      OptionsView.TreeLineStyle = tllsNone
+      ScrollbarAnnotations.CustomAnnotations = <>
+      TabOrder = 0
+      OnBeginDragNode = TreeListStopListBeginDragNode
+      OnDeletion = TreeListStopListDeletion
+      OnDragOver = TreeListStopListDragOver
+      OnInitEditValue = TreeListStopListInitEditValue
+      OnKeyDown = TreeListStopListKeyDown
+      OnMoveTo = TreeListStopListMoveTo
+      OnNodeChanged = TreeListStopListNodeChanged
+      OnNodeCheckChanged = TreeListStopListNodeCheckChanged
+      object TreeListStopListColumnGroup: TcxTreeListColumn
+        PropertiesClassName = 'TcxComboBoxProperties'
+        Properties.OnInitPopup = TreeListStopListColumnGroupPropertiesInitPopup
+        Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
+        Caption.Text = 'Group'
+        Width = 140
+        Position.ColIndex = 0
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        SortOrder = soAscending
+        SortIndex = 0
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
+        OnGetDisplayText = TreeListStopListColumnGroupGetDisplayText
+        OnGetEditingProperties = TreeListStopListColumnGroupGetEditingProperties
+      end
+      object TreeListStopListColumnField: TcxTreeListColumn
+        PropertiesClassName = 'TcxImageComboBoxProperties'
+        Properties.Items = <
           item
+            Description = 'Module'
+            Value = 0
+          end
+          item
+            Description = 'Element'
+            Value = 1
+          end
+          item
+            Description = 'Type'
+            Value = 2
+          end
+          item
+            Description = 'Name'
+            Value = 3
+          end
+          item
+            Description = 'Type and Name'
+            Value = 4
+          end
+          item
+            Description = 'Value'
+            Value = 5
+          end
+          item
+            Description = 'Type, Name and Value'
+            Value = 6
           end>
-        DragMode = dmAutomatic
-        Navigator.Buttons.CustomButtons = <>
-        OptionsBehavior.GoToNextCellOnTab = True
-        OptionsBehavior.FocusCellOnCycle = True
-        OptionsCustomizing.ColumnFiltering = bFalse
-        OptionsCustomizing.ColumnVertSizing = False
-        OptionsCustomizing.StackedColumns = False
-        OptionsData.AnsiSort = True
-        OptionsSelection.MultiSelect = True
-        OptionsView.CategorizedColumn = TreeListStopListColumnGroup
-        OptionsView.CheckGroups = True
-        OptionsView.PaintStyle = tlpsCategorized
-        OptionsView.TreeLineStyle = tllsNone
-        TabOrder = 0
-        OnBeginDragNode = TreeListStopListBeginDragNode
-        OnDeletion = TreeListStopListDeletion
-        OnDragOver = TreeListStopListDragOver
-        OnInitEditValue = TreeListStopListInitEditValue
-        OnKeyDown = TreeListStopListKeyDown
-        OnMoveTo = TreeListStopListMoveTo
-        OnNodeChanged = TreeListStopListNodeChanged
-        OnNodeCheckChanged = TreeListStopListNodeCheckChanged
-        object TreeListStopListColumnGroup: TcxTreeListColumn
-          PropertiesClassName = 'TcxComboBoxProperties'
-          Properties.OnInitPopup = TreeListStopListColumnGroupPropertiesInitPopup
-          Properties.OnValidate = TreeListStopListColumnGroupPropertiesValidate
-          Caption.Text = 'Group'
-          DataBinding.ValueType = 'String'
-          Width = 140
-          Position.ColIndex = 0
-          Position.RowIndex = 0
-          Position.BandIndex = 0
-          SortOrder = soAscending
-          SortIndex = 0
-          Summary.FooterSummaryItems = <>
-          Summary.GroupFooterSummaryItems = <>
-          OnGetDisplayText = TreeListStopListColumnGroupGetDisplayText
-          OnGetEditingProperties = TreeListStopListColumnGroupGetEditingProperties
-        end
-        object TreeListStopListColumnField: TcxTreeListColumn
-          PropertiesClassName = 'TcxImageComboBoxProperties'
-          Properties.Items = <
-            item
-              Description = 'Module'
-              Value = 0
-            end
-            item
-              Description = 'Element'
-              Value = 1
-            end
-            item
-              Description = 'Type'
-              Value = 2
-            end
-            item
-              Description = 'Name'
-              Value = 3
-            end
-            item
-              Description = 'Type and Name'
-              Value = 4
-            end
-            item
-              Description = 'Value'
-              Value = 5
-            end
-            item
-              Description = 'Type, Name and Value'
-              Value = 6
-            end>
-          BestFitMaxWidth = 200
-          Caption.Text = 'Field'
-          DataBinding.ValueType = 'Integer'
-          Width = 100
-          Position.ColIndex = 1
-          Position.RowIndex = 0
-          Position.BandIndex = 0
-          SortOrder = soAscending
-          SortIndex = 1
-          Summary.FooterSummaryItems = <>
-          Summary.GroupFooterSummaryItems = <>
-        end
-        object TreeListStopListColumnOperator: TcxTreeListColumn
-          PropertiesClassName = 'TcxImageComboBoxProperties'
-          Properties.Items = <
-            item
-              Description = 'equals'
-              Value = 0
-            end
-            item
-              Description = 'starts with'
-              Value = 1
-            end
-            item
-              Description = 'ends with'
-              Value = 2
-            end
-            item
-              Description = 'contains'
-              Value = 3
-            end
-            item
-              Description = 'RegExp'
-              Value = 4
-            end>
-          BestFitMaxWidth = 60
-          Caption.Text = 'Operator'
-          DataBinding.ValueType = 'Integer'
-          Options.Sorting = False
-          Width = 60
-          Position.ColIndex = 2
-          Position.RowIndex = 0
-          Position.BandIndex = 0
-          Summary.FooterSummaryItems = <>
-          Summary.GroupFooterSummaryItems = <>
-        end
-        object TreeListStopListColumnValue: TcxTreeListColumn
-          PropertiesClassName = 'TcxTextEditProperties'
-          Properties.ValidateOnEnter = True
-          Properties.ValidationOptions = [evoShowErrorIcon]
-          Properties.OnValidate = TreeListStopListColumnValuePropertiesValidate
-          Caption.Text = 'Value'
-          DataBinding.ValueType = 'String'
-          Options.Sorting = False
-          Width = 300
-          Position.ColIndex = 3
-          Position.RowIndex = 0
-          Position.BandIndex = 0
-          Summary.FooterSummaryItems = <>
-          Summary.GroupFooterSummaryItems = <>
-        end
+        BestFitMaxWidth = 200
+        Caption.Text = 'Field'
+        DataBinding.ValueType = 'Integer'
+        Width = 100
+        Position.ColIndex = 1
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        SortOrder = soAscending
+        SortIndex = 1
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
       end
-      inherited LayoutControlGroup_Root: TdxLayoutGroup
-        AlignVert = avClient
+      object TreeListStopListColumnOperator: TcxTreeListColumn
+        PropertiesClassName = 'TcxImageComboBoxProperties'
+        Properties.Items = <
+          item
+            Description = 'equals'
+            Value = 0
+          end
+          item
+            Description = 'starts with'
+            Value = 1
+          end
+          item
+            Description = 'ends with'
+            Value = 2
+          end
+          item
+            Description = 'contains'
+            Value = 3
+          end
+          item
+            Description = 'RegExp'
+            Value = 4
+          end>
+        BestFitMaxWidth = 60
+        Caption.Text = 'Operator'
+        DataBinding.ValueType = 'Integer'
+        Options.Sorting = False
+        Width = 60
+        Position.ColIndex = 2
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
       end
-      object LayoutItemFilters: TdxLayoutItem
-        Parent = LayoutControlGroup_Root
-        AlignVert = avClient
-        CaptionOptions.Visible = False
-        Control = TreeListStopList
-        ControlOptions.OriginalHeight = 150
-        ControlOptions.OriginalWidth = 250
-        ControlOptions.ShowBorder = False
-        Index = 0
+      object TreeListStopListColumnValue: TcxTreeListColumn
+        PropertiesClassName = 'TcxTextEditProperties'
+        Properties.ValidateOnEnter = True
+        Properties.ValidationOptions = [evoShowErrorIcon]
+        Properties.OnValidate = TreeListStopListColumnValuePropertiesValidate
+        Caption.Text = 'Value'
+        Options.Sorting = False
+        Width = 300
+        Position.ColIndex = 3
+        Position.RowIndex = 0
+        Position.BandIndex = 0
+        Summary.FooterSummaryItems = <>
+        Summary.GroupFooterSummaryItems = <>
       end
+    end
+    inherited LayoutControlGroup_Root: TdxLayoutGroup
+      AlignVert = avClient
+    end
+    object LayoutItemFilters: TdxLayoutItem
+      Parent = LayoutControlGroup_Root
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Control = TreeListStopList
+      ControlOptions.OriginalHeight = 150
+      ControlOptions.OriginalWidth = 250
+      ControlOptions.ShowBorder = False
+      Index = 0
     end
   end
   inherited ActionList: TActionList
