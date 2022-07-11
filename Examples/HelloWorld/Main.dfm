@@ -10,11 +10,12 @@ object FormMain: TFormMain
   Padding.Top = 12
   Padding.Right = 12
   Padding.Bottom = 12
-  OldCreateOrder = False
+  Menu = MainMenu
   Position = poScreenCenter
   OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
   PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 15
   object ListBoxValues: TListBox
     AlignWithMargins = True
     Left = 12
@@ -26,15 +27,11 @@ object FormMain: TFormMain
     Margins.Right = 0
     Margins.Bottom = 0
     Align = alClient
-    ItemHeight = 13
+    ItemHeight = 15
     Items.Strings = (
       'Foo'
       'Bar')
     TabOrder = 0
-    ExplicitLeft = 9
-    ExplicitTop = 34
-    ExplicitWidth = 329
-    ExplicitHeight = 146
   end
   object PanelTop: TPanel
     Left = 12
@@ -46,24 +43,21 @@ object FormMain: TFormMain
     BevelOuter = bvNone
     FullRepaint = False
     TabOrder = 1
-    ExplicitLeft = 0
-    ExplicitTop = 0
-    ExplicitWidth = 353
     object LabelValue: TLabel
       Left = 0
       Top = 0
-      Width = 26
+      Width = 25
       Height = 25
       Align = alLeft
       Caption = 'Text:'
       Layout = tlCenter
-      ExplicitHeight = 13
+      ExplicitHeight = 15
     end
     object EditValue: TEdit
       AlignWithMargins = True
-      Left = 34
+      Left = 33
       Top = 3
-      Width = 252
+      Width = 203
       Height = 22
       Margins.Left = 8
       Margins.Right = 20
@@ -71,22 +65,34 @@ object FormMain: TFormMain
       Align = alClient
       TabOrder = 0
       TextHint = '(enter some text)'
-      ExplicitLeft = 76
-      ExplicitTop = 2
-      ExplicitWidth = 165
-      ExplicitHeight = 21
+      ExplicitWidth = 253
+      ExplicitHeight = 23
     end
     object ButtonAdd: TButton
-      Left = 306
+      Left = 256
       Top = 0
-      Width = 75
+      Width = 125
       Height = 25
       Align = alRight
       Caption = 'Add text'
       Default = True
       TabOrder = 1
       OnClick = ButtonAddClick
-      ExplicitLeft = 264
+    end
+  end
+  object MainMenu: TMainMenu
+    Left = 168
+    Top = 72
+    object MenuItemFile: TMenuItem
+      Caption = '&File'
+      object MenuItemExit: TMenuItem
+        Caption = 'E&xit'
+        ShortCut = 32883
+        OnClick = MenuItemExitClick
+      end
+    end
+    object MenuItemLanguage: TMenuItem
+      Caption = '&Language'
     end
   end
 end

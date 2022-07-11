@@ -1,2538 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
 <xlat>
   <meta>
-    <version>1</version>
-    <created>2019-10-30T10:52:27.232+01:00</created>
+    <version>2</version>
+    <created>2022-07-11T23:25:22.782+02:00</created>
     <tool>amTranslationManager</tool>
-    <toolversion>1.0.7242.38544</toolversion>
+    <toolversion>1.3.8203.40858</toolversion>
   </meta>
-  <project sourcefile=".\Win32\Debug\HelloWorld.exe" stringsymbolfile=".\HelloWorld.drc" language="1033">
+  <options>
+    <stringlisthandling>2</stringlisthandling>
+    <junksaved>False</junksaved>
+    <sorted>True</sorted>
+    <omitnewstate>True</omitnewstate>
+  </options>
+  <project sourcefile=".\Win32\Debug\HelloWorld.exe" stringsymbolfile=".\HelloWorld.drc" language="1033" properties="45">
     <targetlanguages>
-      <language language="1030" translated="21"/>
-      <language language="1031" translated="21"/>
-      <language language="3073" translated="21"/>
+      <language language="1030" translated="26"/>
+      <language language="3073" translated="26"/>
+      <language language="1031" translated="26"/>
     </targetlanguages>
     <modules>
-      <module name="resourcestrings" type="strings" state="new">
+      <module name="resourcestrings" type="strings" properties="38">
         <items>
-          <item name="System_RTLConsts_hNoFilterViewer" state="new">
+          <item name="Main_sCloseQuery">
             <properties>
-              <property state="new" status="skip">
-                <value>No help viewer that supports filters</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SReadOnlyProperty" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Property is read-only</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleFeatureNotSupported" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Feature not supported by this style</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidCharCount" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid count (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SWindowClass" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error creating window class</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameThu" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Thu</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarInvalid" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid argument</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SZeroDivide" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Floating point division by zero</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidCast" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid class typecast</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SStackOverflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Stack overflow</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgInformation" state="new">
-            <properties>
-              <property state="new">
-                <value>Information</value>
-                <translations>
-                  <translation language="1030">Information</translation>
-                  <translation language="1031" status="proposed">Informationen</translation>
-                  <translation language="3073">المعلومات</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidFormat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Format '%s' invalid or incompatible with argument</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidGUID" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>'%s' is not a valid GUID value</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_STimeEncodeError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid argument to time encode</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SBitsIndexError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Bits index out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_Win_ComConst_SOleError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>OLE error %.8x</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SFOpenErrorEx" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot open file "%s". %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidPointer" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid pointer operation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameSat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Saturday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SDuplicateClass" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>A class named %s already exists</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverMultipleSingleCast" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot have multiple single cast observers added to the observers collection</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadStartError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot call Start on a running or suspended thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAccessDenied" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>File access denied</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAssertionFailed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Assertion failed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgWarning" state="new">
-            <properties>
-              <property state="new">
-                <value>Warning</value>
-                <translations>
-                  <translation language="1030">Advarsel</translation>
-                  <translation language="1031" status="proposed">Warnung</translation>
-                  <translation language="3073">تحذير</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsXP" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows XP</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgAbort" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Abort</value>
-                <translations>
-                  <translation language="1030">&amp;Afbryd</translation>
-                  <translation language="1031" status="proposed">&amp;Abbruch</translation>
-                  <translation language="3073">&amp;احباط</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SImageCanvasNeedsBitmap" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Can only modify an image if it contains a bitmap</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SDispatchError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Variant method calls not supported</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameOct" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>October</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sTimespanValueCannotBeNan" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Value cannot be NaN</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>''%s'' is not a valid component name</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidDestinationIndex" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid destination index (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameApr" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Apr</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidTimeStamp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>'%d.%d' is not a valid timestamp</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcDown" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Down</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgNoToAll" state="new">
-            <properties>
-              <property state="new">
-                <value>N&amp;o to All</value>
-                <translations>
-                  <translation language="1030">N&amp;Ej til Alle</translation>
-                  <translation language="1031" status="proposed">&amp;Alle Nein</translation>
-                  <translation language="3073">&amp;لا للجميع</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleClassNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style class '%s' not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidTimeString" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid time string: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SCantWriteResourceStreamError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Can't write to a read-only resource stream</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidVarCast" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid variant type conversion</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleInvalidHandle" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid style handle</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPrinterIndexError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Printer index out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameApr" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>April</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SUnknown" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>&lt;unknown&gt;</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDockZoneNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value> - Dock zone not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SListCountError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>List count out of bounds (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SCannotShowModal" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot make a visible window modal</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SWriteAccess" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Write</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameFri" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Fri</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidCharsInPath" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid characters in path</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SPrivilege" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Privileged instruction</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SServiceNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Specified Login Credential Service not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2008R2" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2008 R2</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SUnknownProperty" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Property %s does not exist</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SAssignError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot assign a %s to a %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameMon" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Monday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameFri" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Friday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidVarOpWithHResultWithPrefix" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid variant operation (%s%.8x)#10%s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SScrollBarRange" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Scrollbar property out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SSPVersionStr" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s Service Pack %4:d (Version %1:d.%2:d, Build %3:d, %5:s)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Exception %s in module %s at %p.#13#10%s%s#13#10</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SErrorSettingCount" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error setting %s.Count</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SClassNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Class %s not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcBkSp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>BkSp</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidIcon" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Icon image is not valid</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgCancel" state="new">
-            <properties>
-              <property state="new">
-                <value>Cancel</value>
-                <translations>
-                  <translation language="1030">Fortryd</translation>
-                  <translation language="1031" status="proposed">Abbrechen</translation>
-                  <translation language="3073">إلغاء الأمر</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoTableOfContents" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to find a Table of Contents</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleClassRegisterError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style class '%s' already registered</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2003R2" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2003 R2</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SLogin" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Login</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sTimespanElementTooLong" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Timespan element too long</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPropertyOutOfRange" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s property out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameNov" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Nov</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDockZoneHasNoCtl" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value> - Dock zone has no control</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SParameterCountMismatch" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Parameter count mismatch</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameJun" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Jun</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcPgUp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>PgUp</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidImage" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid image</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SCheckSynchronizeError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>CheckSynchronize called from thread $%x, which is NOT the main thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SOutOfMemory" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Out of memory</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SUnknownStreamFormat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unsupported stream format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SEndOfFile" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Read beyond end of file</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_sBeginInvokeNoHandle" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot call BeginInvoke on a control with no parent or window handle</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_STaskDlgRadioButtonCaption" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>RadioButton%d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVTIFFImages" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>TIFF Images</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SGenericItemNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Item not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SFileNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>The specified file was not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadExternalSetReturnValue" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot call SetReturnValue on an externally create thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidRegType" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid data type for '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SIconToClipboard" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Clipboard does not support Icons</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows8" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows 8</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SOSError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>System Error.  Code: %d.#13#10%s%s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameDec" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Dec</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcEsc" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Esc</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameFeb" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Feb</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarBadType" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid variant type</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidTaskDlgButtonCaption" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Caption cannot be empty</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2012R2" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2012 R2</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoContext" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No context-sensitive help installed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SUsername" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>&amp;Username</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleUnregisterError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot unregister the system style</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SArgumentNil" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Argument must not be nil</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SUnknownGroup" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s not in a class registration group</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcIns" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Ins</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sSpinCountOutOfRange" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>SpinCount out of range. Must be between 0 and %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverNoMulticastFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No multi cast observer with ID %d was added to the observer collection</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleHookClassRegistered" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Class '%s' is already registered for '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameSep" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Sep</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameTue" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Tuesday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameMar" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>March</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcHome" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Home</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameJan" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>January</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SNoMappingForUnicodeCharacter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No mapping for the Unicode character exists in the target multi-byte code page</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarUnexpected" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unexpected variant error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleNotRegistered" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style '%s' is not registered</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgIgnore" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Ignore</value>
-                <translations>
-                  <translation language="1030">&amp;Ignorer</translation>
-                  <translation language="1031" status="proposed">&amp;Ignorieren</translation>
-                  <translation language="3073">&amp;تجاهل</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SNoDefaultPrinter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>There is no default printer currently selected</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sBeginInvokeDestroying" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot call BeginInvoke on a TComponent in the process of destruction</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SWindowsVistaRequired" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s requires Windows Vista or later</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows7" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows 7</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SModuleAccessViolation" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Access violation at address %p in module '%s'. %s of address %p</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarOverflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Variant overflow</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SChangeWicSize" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot change the size of a WIC Image</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleLoadError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to load style '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgHelp" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Help</value>
-                <translations>
-                  <translation language="1030">&amp;Hjælp</translation>
-                  <translation language="1031" status="proposed">&amp;Hilfe</translation>
-                  <translation language="3073">&amp;تعليمات</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2012" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2012</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SIntfCastError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Interface not supported</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SParentRequired" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Control '%s' has no parent window</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVIcons" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Icons</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeAlreadyUsedWithPrefix" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Custom variant type (%s%.4x) already used by %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SExecuteAccess" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Execution</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverNoInterface" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>The object does not implement the observer interface</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SVersionStr" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s (Version %d.%d, Build %d, %5:s)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SCannotOpenClipboard" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot open clipboard: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPromptArrayTooShort" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Length of value array must be &gt;= length of prompt array</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoSearch" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to open Search</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPrinting" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Printing in progress</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidPropertyPath" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid property path</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidPropertyValue" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid property value</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameSun" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Sunday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleNotRegisteredNoName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style not registered</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInsertLineError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to insert a line</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMenuNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Sub-menu is not in menu</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sArgumentOutOfRange_Index" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Index out of range (%d).  Must be &gt;= 0 and &lt; %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameSep" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>September</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameJun" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>June</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPromptArrayEmpty" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Prompt array must not be empty</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameWed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Wed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SParentGivenNotAParent" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Parent given is not a parent of '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcShift" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Shift+</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SByteIndexOutOfBounds" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Start index out of bounds (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameMar" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Mar</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SPropertyException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error reading %s%s%s: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SRangeError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Range check error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverNotAvailable" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Observer is not available</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVBitmaps" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Bitmaps</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidOp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid floating point operation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidProperty" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid property value</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SDuplicateItem" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>List does not allow duplicates ($0%x)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgClose" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Close</value>
-                <translations>
-                  <translation language="1030">&amp;Luk</translation>
-                  <translation language="1031" status="proposed">S&amp;chließen</translation>
-                  <translation language="3073">&amp;اغلاق</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameFeb" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>February</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcAlt" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Alt+</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDuplicateMenus" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Menu '%s' is already being used by another form</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SRegCreateFailed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Failed to create key %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SNoTimers" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Not enough timers available</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoComSupport" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s has not been registered as a COM class</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SSeekNotImplemented" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s.Seek not implemented</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleHookClassNotRegistered" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Class '%s' is not registered for '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgNo" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;No</value>
-                <translations>
-                  <translation language="1030">&amp;Nej</translation>
-                  <translation language="1031" status="proposed">&amp;Nein</translation>
-                  <translation language="3073">&amp;لا</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SGroupIndexTooLow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>GroupIndex cannot be less than a previous menu item's GroupIndex</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidStringBaseIndex" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid StringBaseIndex</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SDuplicateName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>A component named %s already exists</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVMetafiles" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Metafiles</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidSourceArray" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid source array</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameDec" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>December</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameJan" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Jan</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcPgDn" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>PgDn</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarArrayLocked" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Variant or safe array is locked</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameTue" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Tue</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SOverflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Floating point overflow</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SUnderflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Floating point underflow</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInsufficientRtti" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Insufficient RTTI available to support this operation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SArgumentMissing" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No argument for format '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInsertImage" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to Insert Image</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_Win_ComConst_STooManyParams" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Dispatch methods do not support more than 64 parameters</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sNoConstruct" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Class %s is not intended to be constructed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAccessViolationArg3" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Access violation at address %p. %s of address %p</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverUnsupported" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Observer is not supported</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgError" state="new">
-            <properties>
-              <property state="new">
-                <value>Error</value>
-                <translations>
-                  <translation language="1030">Fejl</translation>
-                  <translation language="1031" status="proposed">Fehler</translation>
-                  <translation language="3073">الخطا</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgYes" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Yes</value>
-                <translations>
-                  <translation language="1030">&amp;Ja</translation>
-                  <translation language="1031" status="proposed">&amp;Ja</translation>
-                  <translation language="3073">&amp;نعم</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidFileName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid file name - %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SUnknownClipboardFormat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unsupported clipboard format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sMustWaitOnOneEvent" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Must wait on at least one event</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadExternalCheckTerminated" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot call CheckTerminated on an externally created thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameSun" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Sun</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcLeft" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Left</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SMemoryStreamError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Out of memory while expanding memory stream</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameOct" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Oct</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcDel" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Del</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_Win_ComConst_SVarNotObject" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Variant does not reference an automation object</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAssertError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s (%s, line %d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SListCapacityError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>List capacity out of bounds (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidVarOp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid variant operation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcEnd" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>End</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidPixelFormat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid pixel format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAbstractError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Abstract Error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleNotFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style '%s' not found</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows2000" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows 2000</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SVersion32" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>32-bit Edition</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMDIChildNotVisible" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot hide an MDI Child Form</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWriteError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Stream write error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcSpace" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Space</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcRight" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Right</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadExternalTerminate" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot terminate an externally created thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMenuIndexError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Menu index out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidMetafile" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Metafile is not valid</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameJul" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Jul</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SUnkOSError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>A call to an OS function failed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgOK" state="new">
-            <properties>
-              <property state="new">
-                <value>OK</value>
-                <translations>
-                  <translation language="1030">OK</translation>
-                  <translation language="1031" status="proposed">OK</translation>
-                  <translation language="3073">موافق</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_STrayIconRemoveError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot remove shell notification icon</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SImageIndexError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid ImageList Index</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidAccess" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid access</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SOutOfRange" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Value must be between %d and %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sInvalidTimeoutValue" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid Timeout value: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarArrayBounds" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Variant or safe array index out of bounds</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameThu" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Thursday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SReadAccess" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Read</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SNoCanvasHandle" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Canvas does not allow drawing</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcTab" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Tab</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameMon" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Mon</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SNoMDIForm" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot create form. No MDI forms are currently active</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SFCreateErrorEx" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot create file "%s". %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidVarNullOp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid NULL variant operation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sInvalidStringAndObjectArrays" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Length of Strings and Objects arrays must be equal</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInputBufferExceed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Input buffer exceeded for %s = %d, %s = %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SWindowDCError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error creating window device context</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNonPublicType" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Type '%s' is not declared in the interface section of a unit</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcUp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Up</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sInvalidTimespanDuration" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>The duration cannot be returned because the absolute value exceeds the value of TTimeSpan.MaxValue</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SRegSetDataFailed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Failed to set data for '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDockedCtlNeedsName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Docked control must have a name</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameMay" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>May</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SIntOverflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Integer overflow</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleFormatError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid style format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeNotUsableWithPrefix" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Custom variant type (%s%.4x) is not usable</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleInvalidParameter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s parameter cannot be nil</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SImageWriteFail" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Failed to write ImageList data to stream</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadCreateError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Thread creation error: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongDayNameWed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Wednesday</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SCharIndexOutOfBounds" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Character index out of bounds (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleRegisterError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Style '%s' already registered</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SNoMonitorSupportException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Monitor support function not initialized</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SStyleLoadErrors" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to load styles: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SGenericDuplicateItem" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Duplicates not allowed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sTimespanTooLong" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Timespan too long</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SVersion64" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>64-bit Edition</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SCannotDragForm" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot drag a form</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows8Point1" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows 8.1</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidTextFormatFlag" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Text format flag '%s' not supported</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortDayNameSat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Sat</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SNotPrinting" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Printer is not currently printing</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDockTreeRemoveError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error removing control from dock tree</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidOffsetString" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid time Offset string: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidImage" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid stream format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SReadError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Stream read error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeCouldNotConvert" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Could not convert variant of type (%s) into type (%s)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SAccessViolationNoArg" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Access violation</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SExceptTitle" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Application Error</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SDivByZero" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Division by zero</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameNov" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>November</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVEnhMetafiles" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Enhanced Metafiles</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SPassword" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>&amp;Password</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sObserverNoSinglecastFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No single cast observer with ID %d was added to the observer collection</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SMonitorLockException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Object lock not owned</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDomain" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>&amp;Domain</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SParamIsNil" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Parameter %s cannot be nil</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeConvertOverflow" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Overflow while converting variant of type (%s) into type (%s)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SExternalException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>External exception %x</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2008" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2008</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsVista" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Vista</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMenuReinserted" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Menu inserted twice</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SInvalidDateString" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid date string: %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadExternalWait" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot wait for an externally created thread</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidDestinationArray" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid destination array</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgYesToAll" state="new">
-            <properties>
-              <property state="new">
-                <value>Yes to &amp;All</value>
-                <translations>
-                  <translation language="1030">Ja til &amp;Alle</translation>
-                  <translation language="1031" status="proposed">A&amp;Lle Ja</translation>
-                  <translation language="3073">&amp;نعم للجميع</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SImageReadFail" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Failed to read ImageList data from stream</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarNotImplemented" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Operation not supported</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInOutError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>I/O error %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SOutOfResources" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Out of system resources</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2016" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2016</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidEncodingName" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid encoding name</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindowsServer2003" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows Server 2003</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDockZoneVersionConflict" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error loading dock zone from the stream. Expecting version %d, but found %d.</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidImageSize" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid image size</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameJul" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>July</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SNotImplemented" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Feature not implemented</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarArrayCreate" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Error creating variant or safe array</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SThreadError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Thread Error: %s (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgAll" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;All</value>
-                <translations>
-                  <translation language="1030">&amp;Alle</translation>
-                  <translation language="1031" status="proposed">&amp;Alle</translation>
-                  <translation language="3073">&amp;جميع</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoContextFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No help found for context %d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sCannotNegateTimespan" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Negating the minimum value of a Timespan is invalid</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgConfirm" state="new">
-            <properties>
-              <property state="new">
-                <value>Confirm</value>
-                <translations>
-                  <translation language="1030">Bekræft</translation>
-                  <translation language="1031" status="proposed">Bestätigung</translation>
-                  <translation language="3073">تاكيد</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeTooManyCustom" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Too many custom variant types have been registered</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SDateEncodeError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid argument to date encode</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SListBoxMustBeVirtual" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Listbox (%s) style must be virtual in order to set Count</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_STaskDlgButtonCaption" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Button%d</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SControlParentSetToSelf" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>A control cannot have itself as its parent</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcCtrl" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Ctrl+</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoTopics" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No topic-based help system installed</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SRegGetDataFailed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Failed to get data for '%s'</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameMay" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>May</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SLongMonthNameAug" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>August</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SSafecallException" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Exception in safecall method</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidImageList" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid ImageList</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SVarTypeOutOfRangeWithPrefix" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Custom variant type (%s%.4x) is out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SScanLine" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Scan line index out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SVisibleChanged" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot change Visible in OnShow or OnHide</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_STooManyOpenFiles" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Too many open files</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SDiskFull" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Disk full</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidInteger" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>'%s' is not a valid integer value</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_sAllFilter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>All</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNoIndex" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unable to open Index</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SListIndexError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>List index out of bounds (%d)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidInput" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid numeric input</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SSortedListError" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Operation not allowed on sorted list</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_sInvalidTimespanFormat" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid Timespan format</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SDuplicateString" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>String list does not allow duplicates</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SInvalidCodePage" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Invalid code page</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SChangeIconSize" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot change the size of an icon</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SNothingFound" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>No help found for %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SWindows10" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Windows 10</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SCannotFocus" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Cannot focus a disabled or invisible window</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SParamIsNegative" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Parameter %s cannot be a negative value</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SmkcEnter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Enter</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidPrinter" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Printer selected is not valid</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_Win_ComConst_SNoMethod" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Method '%s' not supported by automation object</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidBitmap" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Bitmap image is not valid</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SArgumentOutOfRange" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Argument out of range</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SObjectDisposed" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Method called on disposed object</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SUnknownExtension" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Unknown picture file extension (.%s)</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SShortMonthNameAug" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Aug</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SMsgDlgRetry" state="new">
-            <properties>
-              <property state="new">
-                <value>&amp;Retry</value>
-                <translations>
-                  <translation language="1030">&amp;Prøv igen</translation>
-                  <translation language="1031" status="proposed">&amp;Wiederholen</translation>
-                  <translation language="3073">&amp;اعاده المحاوله</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="System_SysConst_SControlC" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Control-C hit</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SInvalidPrinterOp" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>Operation not supported on selected printer</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Vcl_Consts_SDeviceOnPort" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>%s on %s</value>
-              </property>
-            </properties>
-          </item>
-          <item name="System_RTLConsts_SByRefArgMismatch" state="new">
-            <properties>
-              <property state="new" status="skip">
-                <value>VAR and OUT arguments must match parameter type exactly</value>
-              </property>
-            </properties>
-          </item>
-          <item name="Main_sCloseQuery" state="new">
-            <properties>
-              <property state="new">
+              <property>
                 <value>Are you sure you want to exit the application?</value>
                 <translations>
                   <translation language="1030">Er du sikker på at du vil afslutte programmet?</translation>
@@ -2542,58 +33,697 @@
               </property>
             </properties>
           </item>
-          <item name="System_RTLConsts_SAncestorNotFound" state="new">
+          <item name="Main_sDefaultLanguage">
             <properties>
-              <property state="new" status="skip">
-                <value>Ancestor for '%s' not found</value>
+              <property>
+                <value>Automatic: %s</value>
+                <translations>
+                  <translation language="3073" status="proposed">تلقائي: %s</translation>
+                  <translation language="1030" status="proposed">Automatisk: %s</translation>
+                  <translation language="1031" status="proposed">Automatisch: %s</translation>
+                </translations>
               </property>
             </properties>
           </item>
-          <item name="System_RTLConsts_SResNotFound" state="new">
+          <item name="Main_sRestart">
             <properties>
-              <property state="new" status="skip">
-                <value>Resource %s not found</value>
+              <property>
+                <value>Please restart the application to use the selected language module</value>
+                <translations>
+                  <translation language="3073" status="proposed">يرجى إعادة تشغيل التطبيق لاستخدام وحدة اللغة المحددة</translation>
+                  <translation language="1030" status="proposed">Vær venlig at genstart programmet for at benytte det valgte sprogmodul</translation>
+                  <translation language="1031" status="proposed">Bitte starten sie die anwendung neu, um das ausgewählte sprachmodul zu verwenden</translation>
+                </translations>
               </property>
             </properties>
           </item>
-          <item name="Vcl_Consts_SReplaceImage" state="new">
+          <item name="System_RTLConsts_hNoFilterViewer" status="skip"/>
+          <item name="System_RTLConsts_SAncestorNotFound" status="skip"/>
+          <item name="System_RTLConsts_sArgumentInvalid">
             <properties>
-              <property state="new" status="skip">
-                <value>Unable to Replace Image</value>
+              <property>
+                <value>Invalid argument</value>
               </property>
             </properties>
           </item>
+          <item name="System_RTLConsts_SArgumentNil" status="skip"/>
+          <item name="System_RTLConsts_SArgumentOutOfRange" status="skip"/>
+          <item name="System_RTLConsts_sArgumentOutOfRange_Index" status="skip"/>
+          <item name="System_RTLConsts_SAssignError" status="skip"/>
+          <item name="System_RTLConsts_sBeginInvokeDestroying" status="skip"/>
+          <item name="System_RTLConsts_SBitsIndexError" status="skip"/>
+          <item name="System_RTLConsts_SByRefArgMismatch" status="skip"/>
+          <item name="System_RTLConsts_sCannotNegateTimespan" status="skip"/>
+          <item name="System_RTLConsts_SCantWriteResourceStreamError" status="skip"/>
+          <item name="System_RTLConsts_SCheckSynchronizeError" status="skip"/>
+          <item name="System_RTLConsts_SClassNotFound" status="skip"/>
+          <item name="System_RTLConsts_SDuplicateClass" status="skip"/>
+          <item name="System_RTLConsts_SDuplicateItem" status="skip"/>
+          <item name="System_RTLConsts_SDuplicateName" status="skip"/>
+          <item name="System_RTLConsts_SDuplicateString" status="skip"/>
+          <item name="System_RTLConsts_SEmptyFileName">
+            <properties>
+              <property>
+                <value>File name is empty</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SEmptyPath">
+            <properties>
+              <property>
+                <value>Path is empty</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SEmptySearchPattern">
+            <properties>
+              <property>
+                <value>Search pattern is empty</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SFCreateErrorEx" status="skip"/>
+          <item name="System_RTLConsts_SFileNotFound" state="unused" status="skip"/>
+          <item name="System_RTLConsts_SFOpenErrorEx" status="skip"/>
+          <item name="System_RTLConsts_SGenericDuplicateItem" status="skip"/>
+          <item name="System_RTLConsts_SGenericItemNotFound" status="skip"/>
+          <item name="System_RTLConsts_SInputBufferExceed" status="skip"/>
+          <item name="System_RTLConsts_SInsufficientRtti" status="skip"/>
+          <item name="System_RTLConsts_SInvalidCharsInFileName">
+            <properties>
+              <property>
+                <value>Invalid characters in file name</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SInvalidCharsInPath" status="skip"/>
+          <item name="System_RTLConsts_SInvalidCharsInSearchPattern">
+            <properties>
+              <property>
+                <value>Invalid characters in search pattern</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SInvalidDateString" status="skip"/>
+          <item name="System_RTLConsts_SInvalidFileName" state="unused" status="skip"/>
+          <item name="System_RTLConsts_SInvalidImage" status="skip"/>
+          <item name="System_RTLConsts_SInvalidMask">
+            <properties>
+              <property>
+                <value>'%s' is an invalid mask at (%d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SInvalidName" status="skip"/>
+          <item name="System_RTLConsts_SInvalidOffsetString" status="skip"/>
+          <item name="System_RTLConsts_SInvalidProperty" status="skip"/>
+          <item name="System_RTLConsts_SInvalidPropertyPath" status="skip"/>
+          <item name="System_RTLConsts_SInvalidPropertyValue" status="skip"/>
+          <item name="System_RTLConsts_SInvalidRegType" status="skip"/>
+          <item name="System_RTLConsts_sInvalidStringAndObjectArrays" status="skip"/>
+          <item name="System_RTLConsts_sInvalidTimeoutValue" status="skip"/>
+          <item name="System_RTLConsts_sInvalidTimespanDuration" status="skip"/>
+          <item name="System_RTLConsts_sInvalidTimespanFormat" status="skip"/>
+          <item name="System_RTLConsts_SInvalidTimeString" status="skip"/>
+          <item name="System_RTLConsts_SListCapacityError" status="skip"/>
+          <item name="System_RTLConsts_SListCountError" status="skip"/>
+          <item name="System_RTLConsts_SListIndexError" status="skip"/>
+          <item name="System_RTLConsts_SMemoryStreamError" status="skip"/>
+          <item name="System_RTLConsts_sMustWaitOnOneEvent" status="skip"/>
+          <item name="System_RTLConsts_SNoComSupport" status="skip"/>
+          <item name="System_RTLConsts_sNoConstruct" status="skip"/>
+          <item name="System_RTLConsts_SNoContext" status="skip"/>
+          <item name="System_RTLConsts_SNoContextFound" status="skip"/>
+          <item name="System_RTLConsts_SNoIndex" status="skip"/>
+          <item name="System_RTLConsts_SNonPublicType" status="skip"/>
+          <item name="System_RTLConsts_SNoSearch" status="skip"/>
+          <item name="System_RTLConsts_SNoTableOfContents" status="skip"/>
+          <item name="System_RTLConsts_SNothingFound" status="skip"/>
+          <item name="System_RTLConsts_SNoTopics" status="skip"/>
+          <item name="System_RTLConsts_sObserverMultipleSingleCast" status="skip"/>
+          <item name="System_RTLConsts_sObserverNoInterface" status="skip"/>
+          <item name="System_RTLConsts_sObserverNoMulticastFound" status="skip"/>
+          <item name="System_RTLConsts_sObserverNoSinglecastFound" status="skip"/>
+          <item name="System_RTLConsts_sObserverNotAvailable" status="skip"/>
+          <item name="System_RTLConsts_sObserverUnsupported" status="skip"/>
+          <item name="System_RTLConsts_SParameterCountMismatch" status="skip"/>
+          <item name="System_RTLConsts_SParamIsNegative" status="skip"/>
+          <item name="System_RTLConsts_SParamIsNil" status="skip"/>
+          <item name="System_RTLConsts_SPathFormatNotSupported">
+            <properties>
+              <property>
+                <value>The path format is not supported</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SPathNotFound">
+            <properties>
+              <property>
+                <value>The specified path was not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SPathTooLong">
+            <properties>
+              <property>
+                <value>The specified path is too long</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SPropertyException" status="skip"/>
+          <item name="System_RTLConsts_SReadError" status="skip"/>
+          <item name="System_RTLConsts_SReadOnlyProperty" status="skip"/>
+          <item name="System_RTLConsts_SRegCreateFailed" status="skip"/>
+          <item name="System_RTLConsts_SRegGetDataFailed" status="skip"/>
+          <item name="System_RTLConsts_SRegSetDataFailed" status="skip"/>
+          <item name="System_RTLConsts_SResNotFound" status="skip"/>
+          <item name="System_RTLConsts_sSameArrays">
+            <properties>
+              <property>
+                <value>Source and Destination arrays must not be the same</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SSeekNotImplemented" status="skip"/>
+          <item name="System_RTLConsts_SServiceNotFound" status="skip"/>
+          <item name="System_RTLConsts_SSortedListError" status="skip"/>
+          <item name="System_RTLConsts_sSpinCountOutOfRange" status="skip"/>
+          <item name="System_RTLConsts_SSPVersionStr" status="skip"/>
+          <item name="System_RTLConsts_SThreadCreateError" status="skip"/>
+          <item name="System_RTLConsts_SThreadError" status="skip"/>
+          <item name="System_RTLConsts_SThreadExternalCheckTerminated" status="skip"/>
+          <item name="System_RTLConsts_SThreadExternalSetReturnValue" status="skip"/>
+          <item name="System_RTLConsts_SThreadExternalTerminate" status="skip"/>
+          <item name="System_RTLConsts_SThreadExternalWait" status="skip"/>
+          <item name="System_RTLConsts_SThreadStartError" status="skip"/>
+          <item name="System_RTLConsts_sTimespanElementTooLong" status="skip"/>
+          <item name="System_RTLConsts_sTimespanTooLong" status="skip"/>
+          <item name="System_RTLConsts_sTimespanValueCannotBeNan" status="skip"/>
+          <item name="System_RTLConsts_SUnknownGroup" status="skip"/>
+          <item name="System_RTLConsts_SUnknownProperty" status="skip"/>
+          <item name="System_RTLConsts_SVersion32" status="skip"/>
+          <item name="System_RTLConsts_SVersion64" status="skip"/>
+          <item name="System_RTLConsts_SVersionStr" status="skip"/>
+          <item name="System_RTLConsts_SWindows" status="skip"/>
+          <item name="System_RTLConsts_SWindows10" status="skip"/>
+          <item name="System_RTLConsts_SWindows2000" status="skip"/>
+          <item name="System_RTLConsts_SWindows7" status="skip"/>
+          <item name="System_RTLConsts_SWindows8" status="skip"/>
+          <item name="System_RTLConsts_SWindows8Point1" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2003" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2003R2" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2008" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2008R2" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2012" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2012R2" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2016" status="skip"/>
+          <item name="System_RTLConsts_SWindowsServer2019">
+            <properties>
+              <property>
+                <value>Windows Server 2019</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SWindowsVista" status="skip"/>
+          <item name="System_RTLConsts_SWindowsXP" status="skip"/>
+          <item name="System_RTLConsts_SWinRTInstanceError">
+            <properties>
+              <property>
+                <value>Cannot create instance of class %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_RTLConsts_SWriteError" status="skip"/>
+          <item name="System_SysConst_SAbstractError" status="skip"/>
+          <item name="System_SysConst_SAccessDenied" status="skip"/>
+          <item name="System_SysConst_SAccessViolationArg3" status="skip"/>
+          <item name="System_SysConst_SAccessViolationNoArg" status="skip"/>
+          <item name="System_SysConst_SArgumentMissing" status="skip"/>
+          <item name="System_SysConst_SAssertError" status="skip"/>
+          <item name="System_SysConst_SAssertionFailed" status="skip"/>
+          <item name="System_SysConst_SByteIndexOutOfBounds" status="skip"/>
+          <item name="System_SysConst_SCharIndexOutOfBounds" status="skip"/>
+          <item name="System_SysConst_SControlC" status="skip"/>
+          <item name="System_SysConst_SDateEncodeError" status="skip"/>
+          <item name="System_SysConst_SDiskFull" status="skip"/>
+          <item name="System_SysConst_SDispatchError" status="skip"/>
+          <item name="System_SysConst_SDivByZero" status="skip"/>
+          <item name="System_SysConst_SEndOfFile" status="skip"/>
+          <item name="System_SysConst_SException" status="skip"/>
+          <item name="System_SysConst_SExceptTitle" status="skip"/>
+          <item name="System_SysConst_SExecuteAccess" status="skip"/>
+          <item name="System_SysConst_SExternalException" status="skip"/>
+          <item name="System_SysConst_SFileNotFound">
+            <properties>
+              <property>
+                <value>File not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_SysConst_SInOutError" status="skip"/>
+          <item name="System_SysConst_SIntfCastError" status="skip"/>
+          <item name="System_SysConst_SIntOverflow" status="skip"/>
+          <item name="System_SysConst_SInvalidAccess" status="skip"/>
+          <item name="System_SysConst_SInvalidCast" status="skip"/>
+          <item name="System_SysConst_SInvalidCharCount" status="skip"/>
+          <item name="System_SysConst_SInvalidCodePage" status="skip"/>
+          <item name="System_SysConst_SInvalidDestinationArray" status="skip"/>
+          <item name="System_SysConst_SInvalidDestinationIndex" status="skip"/>
+          <item name="System_SysConst_SInvalidEncodingName" status="skip"/>
+          <item name="System_SysConst_SInvalidFormat" status="skip"/>
+          <item name="System_SysConst_SInvalidGUID" status="skip"/>
+          <item name="System_SysConst_SInvalidInput" status="skip"/>
+          <item name="System_SysConst_SInvalidInteger" status="skip"/>
+          <item name="System_SysConst_SInvalidOp" status="skip"/>
+          <item name="System_SysConst_SInvalidPointer" status="skip"/>
+          <item name="System_SysConst_SInvalidSourceArray" status="skip"/>
+          <item name="System_SysConst_SInvalidStringBaseIndex" status="skip"/>
+          <item name="System_SysConst_SInvalidTimeStamp" status="skip"/>
+          <item name="System_SysConst_SInvalidUnknownFilename">
+            <properties>
+              <property>
+                <value>Invalid filename</value>
+              </property>
+            </properties>
+          </item>
+          <item name="System_SysConst_SInvalidVarCast" status="skip"/>
+          <item name="System_SysConst_SInvalidVarNullOp" status="skip"/>
+          <item name="System_SysConst_SInvalidVarOp" status="skip"/>
+          <item name="System_SysConst_SInvalidVarOpWithHResultWithPrefix" status="skip"/>
+          <item name="System_SysConst_SLongDayNameFri" status="skip"/>
+          <item name="System_SysConst_SLongDayNameMon" status="skip"/>
+          <item name="System_SysConst_SLongDayNameSat" status="skip"/>
+          <item name="System_SysConst_SLongDayNameSun" status="skip"/>
+          <item name="System_SysConst_SLongDayNameThu" status="skip"/>
+          <item name="System_SysConst_SLongDayNameTue" status="skip"/>
+          <item name="System_SysConst_SLongDayNameWed" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameApr" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameAug" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameDec" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameFeb" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameJan" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameJul" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameJun" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameMar" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameMay" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameNov" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameOct" status="skip"/>
+          <item name="System_SysConst_SLongMonthNameSep" status="skip"/>
+          <item name="System_SysConst_SModuleAccessViolation" status="skip"/>
+          <item name="System_SysConst_SMonitorLockException" status="skip"/>
+          <item name="System_SysConst_SNoMappingForUnicodeCharacter" status="skip"/>
+          <item name="System_SysConst_SNoMonitorSupportException" status="skip"/>
+          <item name="System_SysConst_SNotImplemented" status="skip"/>
+          <item name="System_SysConst_SObjectDisposed" status="skip"/>
+          <item name="System_SysConst_SOSError" status="skip"/>
+          <item name="System_SysConst_SOutOfMemory" status="skip"/>
+          <item name="System_SysConst_SOverflow" status="skip"/>
+          <item name="System_SysConst_SPrivilege" status="skip"/>
+          <item name="System_SysConst_SRangeError" status="skip"/>
+          <item name="System_SysConst_SReadAccess" status="skip"/>
+          <item name="System_SysConst_SSafecallException" status="skip"/>
+          <item name="System_SysConst_SShortDayNameFri" status="skip"/>
+          <item name="System_SysConst_SShortDayNameMon" status="skip"/>
+          <item name="System_SysConst_SShortDayNameSat" status="skip"/>
+          <item name="System_SysConst_SShortDayNameSun" status="skip"/>
+          <item name="System_SysConst_SShortDayNameThu" status="skip"/>
+          <item name="System_SysConst_SShortDayNameTue" status="skip"/>
+          <item name="System_SysConst_SShortDayNameWed" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameApr" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameAug" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameDec" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameFeb" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameJan" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameJul" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameJun" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameMar" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameMay" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameNov" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameOct" status="skip"/>
+          <item name="System_SysConst_SShortMonthNameSep" status="skip"/>
+          <item name="System_SysConst_SStackOverflow" status="skip"/>
+          <item name="System_SysConst_STimeEncodeError" status="skip"/>
+          <item name="System_SysConst_STooManyOpenFiles" status="skip"/>
+          <item name="System_SysConst_SUnderflow" status="skip"/>
+          <item name="System_SysConst_SUnknown" status="skip"/>
+          <item name="System_SysConst_SUnkOSError" status="skip"/>
+          <item name="System_SysConst_SVarArrayBounds" status="skip"/>
+          <item name="System_SysConst_SVarArrayCreate" status="skip"/>
+          <item name="System_SysConst_SVarArrayLocked" status="skip"/>
+          <item name="System_SysConst_SVarBadType" status="skip"/>
+          <item name="System_SysConst_SVarInvalid" status="skip"/>
+          <item name="System_SysConst_SVarNotImplemented" status="skip"/>
+          <item name="System_SysConst_SVarOverflow" status="skip"/>
+          <item name="System_SysConst_SVarTypeAlreadyUsedWithPrefix" status="skip"/>
+          <item name="System_SysConst_SVarTypeConvertOverflow" status="skip"/>
+          <item name="System_SysConst_SVarTypeCouldNotConvert" status="skip"/>
+          <item name="System_SysConst_SVarTypeNotUsableWithPrefix" status="skip"/>
+          <item name="System_SysConst_SVarTypeOutOfRangeWithPrefix" status="skip"/>
+          <item name="System_SysConst_SVarTypeTooManyCustom" status="skip"/>
+          <item name="System_SysConst_SVarUnexpected" status="skip"/>
+          <item name="System_SysConst_SWriteAccess" status="skip"/>
+          <item name="System_SysConst_SZeroDivide" status="skip"/>
+          <item name="System_Win_ComConst_SNoMethod" status="skip"/>
+          <item name="System_Win_ComConst_SOleError" status="skip"/>
+          <item name="System_Win_ComConst_STooManyParams" status="skip"/>
+          <item name="System_Win_ComConst_SVarNotObject" status="skip"/>
+          <item name="Vcl_Consts_sAllFilter" status="skip"/>
+          <item name="Vcl_Consts_sBeginInvokeNoHandle" status="skip"/>
+          <item name="Vcl_Consts_SCannotDragForm" status="skip"/>
+          <item name="Vcl_Consts_SCannotFocus" status="skip"/>
+          <item name="Vcl_Consts_SCannotOpenClipboard" status="skip"/>
+          <item name="Vcl_Consts_SCannotShowModal" status="skip"/>
+          <item name="Vcl_Consts_SChangeIconSize" status="skip"/>
+          <item name="Vcl_Consts_SChangeWicSize" status="skip"/>
+          <item name="Vcl_Consts_SControlNonMainThreadUsage">
+            <properties>
+              <property>
+                <value>Control '%s' is used on a not main thread</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SControlParentSetToSelf" status="skip"/>
+          <item name="Vcl_Consts_SControlPath">
+            <properties>
+              <property>
+                <value>. Path:&amp;#13;&amp;#10;%s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SDeviceOnPort" status="skip"/>
+          <item name="Vcl_Consts_SDockedCtlNeedsName" status="skip"/>
+          <item name="Vcl_Consts_SDockTreeRemoveError" status="skip"/>
+          <item name="Vcl_Consts_SDockZoneHasNoCtl" status="skip"/>
+          <item name="Vcl_Consts_SDockZoneNotFound" status="skip"/>
+          <item name="Vcl_Consts_SDockZoneVersionConflict" status="skip"/>
+          <item name="Vcl_Consts_SDomain" status="skip"/>
+          <item name="Vcl_Consts_SDuplicateMenus" status="skip"/>
+          <item name="Vcl_Consts_SErrorSettingCount" status="skip"/>
+          <item name="Vcl_Consts_SGroupIndexTooLow" status="skip"/>
+          <item name="Vcl_Consts_SIconToClipboard" status="skip"/>
+          <item name="Vcl_Consts_SImageCanvasNeedsBitmap" status="skip"/>
+          <item name="Vcl_Consts_SImageIndexError" status="skip"/>
+          <item name="Vcl_Consts_SImageReadFail" status="skip"/>
+          <item name="Vcl_Consts_SImageWriteFail" status="skip"/>
+          <item name="Vcl_Consts_SInRemoteSession">
+            <properties>
+              <property>
+                <value>Cannot change SingleBufferingInRemoteSessions in a remote session</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SInsertImage" status="skip"/>
+          <item name="Vcl_Consts_SInsertLineError" status="skip"/>
+          <item name="Vcl_Consts_SInvalidBitmap" status="skip"/>
+          <item name="Vcl_Consts_SInvalidFrameIndex">
+            <properties>
+              <property>
+                <value>Invalid image frame index %d: there are %d frames (0-%d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SInvalidIcon" status="skip"/>
+          <item name="Vcl_Consts_SInvalidImage" state="unused" status="skip"/>
+          <item name="Vcl_Consts_SInvalidImageList" status="skip"/>
+          <item name="Vcl_Consts_SInvalidImageSize" status="skip"/>
+          <item name="Vcl_Consts_SInvalidMetafile" status="skip"/>
+          <item name="Vcl_Consts_SInvalidPixelFormat" status="skip"/>
+          <item name="Vcl_Consts_SInvalidPrinter" status="skip"/>
+          <item name="Vcl_Consts_SInvalidPrinterOp" status="skip"/>
+          <item name="Vcl_Consts_SInvalidTaskDlgButtonCaption" status="skip"/>
+          <item name="Vcl_Consts_SInvalidTextFormatFlag" status="skip"/>
+          <item name="Vcl_Consts_SListBoxMustBeVirtual" status="skip"/>
+          <item name="Vcl_Consts_SLogin" status="skip"/>
+          <item name="Vcl_Consts_SMDIChildNotVisible" status="skip"/>
+          <item name="Vcl_Consts_SMenuIndexError" status="skip"/>
+          <item name="Vcl_Consts_SMenuNotFound" status="skip"/>
+          <item name="Vcl_Consts_SMenuReinserted" status="skip"/>
+          <item name="Vcl_Consts_SmkcAlt" status="skip"/>
+          <item name="Vcl_Consts_SmkcBkSp" status="skip"/>
+          <item name="Vcl_Consts_SmkcCtrl" status="skip"/>
+          <item name="Vcl_Consts_SmkcDel" status="skip"/>
+          <item name="Vcl_Consts_SmkcDown" status="skip"/>
+          <item name="Vcl_Consts_SmkcEnd" status="skip"/>
+          <item name="Vcl_Consts_SmkcEnter" status="skip"/>
+          <item name="Vcl_Consts_SmkcEsc" status="skip"/>
+          <item name="Vcl_Consts_SmkcHome" status="skip"/>
+          <item name="Vcl_Consts_SmkcIns" status="skip"/>
+          <item name="Vcl_Consts_SmkcLeft" status="skip"/>
+          <item name="Vcl_Consts_SmkcPgDn" status="skip"/>
+          <item name="Vcl_Consts_SmkcPgUp" status="skip"/>
+          <item name="Vcl_Consts_SmkcRight" status="skip"/>
+          <item name="Vcl_Consts_SmkcShift" status="skip"/>
+          <item name="Vcl_Consts_SmkcSpace" status="skip"/>
+          <item name="Vcl_Consts_SmkcTab" status="skip"/>
+          <item name="Vcl_Consts_SmkcUp" status="skip"/>
+          <item name="Vcl_Consts_SMsgDlgAbort">
+            <properties>
+              <property>
+                <value>&amp;Abort</value>
+                <translations>
+                  <translation language="1030">&amp;Afbryd</translation>
+                  <translation language="1031" status="proposed">&amp;Abbruch</translation>
+                  <translation language="3073">&amp;احباط</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgAll">
+            <properties>
+              <property>
+                <value>&amp;All</value>
+                <translations>
+                  <translation language="1030">&amp;Alle</translation>
+                  <translation language="1031" status="proposed">&amp;Alle</translation>
+                  <translation language="3073">&amp;جميع</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgCancel">
+            <properties>
+              <property>
+                <value>Cancel</value>
+                <translations>
+                  <translation language="1030">Fortryd</translation>
+                  <translation language="1031" status="proposed">Abbrechen</translation>
+                  <translation language="3073">إلغاء الأمر</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgClose">
+            <properties>
+              <property>
+                <value>&amp;Close</value>
+                <translations>
+                  <translation language="1030">&amp;Luk</translation>
+                  <translation language="1031" status="proposed">S&amp;chließen</translation>
+                  <translation language="3073">&amp;اغلاق</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgConfirm">
+            <properties>
+              <property>
+                <value>Confirm</value>
+                <translations>
+                  <translation language="1030">Bekræft</translation>
+                  <translation language="1031" status="proposed">Bestätigung</translation>
+                  <translation language="3073">تاكيد</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgError">
+            <properties>
+              <property>
+                <value>Error</value>
+                <translations>
+                  <translation language="1030">Fejl</translation>
+                  <translation language="1031" status="proposed">Fehler</translation>
+                  <translation language="3073">الخطا</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgHelp">
+            <properties>
+              <property>
+                <value>&amp;Help</value>
+                <translations>
+                  <translation language="1030">&amp;Hjælp</translation>
+                  <translation language="1031" status="proposed">&amp;Hilfe</translation>
+                  <translation language="3073">&amp;تعليمات</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgIgnore">
+            <properties>
+              <property>
+                <value>&amp;Ignore</value>
+                <translations>
+                  <translation language="1030">&amp;Ignorer</translation>
+                  <translation language="1031" status="proposed">&amp;Ignorieren</translation>
+                  <translation language="3073">&amp;تجاهل</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgInformation">
+            <properties>
+              <property>
+                <value>Information</value>
+                <translations>
+                  <translation language="1030">Information</translation>
+                  <translation language="1031" status="proposed">Informationen</translation>
+                  <translation language="3073">المعلومات</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgNo">
+            <properties>
+              <property>
+                <value>&amp;No</value>
+                <translations>
+                  <translation language="1030">&amp;Nej</translation>
+                  <translation language="1031" status="proposed">&amp;Nein</translation>
+                  <translation language="3073">&amp;لا</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgNoToAll">
+            <properties>
+              <property>
+                <value>N&amp;o to All</value>
+                <translations>
+                  <translation language="1030">N&amp;Ej til Alle</translation>
+                  <translation language="1031" status="proposed">&amp;Alle Nein</translation>
+                  <translation language="3073">&amp;لا للجميع</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgOK">
+            <properties>
+              <property>
+                <value>OK</value>
+                <translations>
+                  <translation language="1030">OK</translation>
+                  <translation language="1031" status="proposed">OK</translation>
+                  <translation language="3073">موافق</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgRetry">
+            <properties>
+              <property>
+                <value>&amp;Retry</value>
+                <translations>
+                  <translation language="1030">&amp;Prøv igen</translation>
+                  <translation language="1031" status="proposed">&amp;Wiederholen</translation>
+                  <translation language="3073">&amp;اعاده المحاوله</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgWarning">
+            <properties>
+              <property>
+                <value>Warning</value>
+                <translations>
+                  <translation language="1030">Advarsel</translation>
+                  <translation language="1031" status="proposed">Warnung</translation>
+                  <translation language="3073">تحذير</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgYes">
+            <properties>
+              <property>
+                <value>&amp;Yes</value>
+                <translations>
+                  <translation language="1030">&amp;Ja</translation>
+                  <translation language="1031" status="proposed">&amp;Ja</translation>
+                  <translation language="3073">&amp;نعم</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SMsgDlgYesToAll">
+            <properties>
+              <property>
+                <value>Yes to &amp;All</value>
+                <translations>
+                  <translation language="1030">Ja til &amp;Alle</translation>
+                  <translation language="1031" status="proposed">A&amp;Lle Ja</translation>
+                  <translation language="3073">&amp;نعم للجميع</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Vcl_Consts_SNoCanvasHandle" status="skip"/>
+          <item name="Vcl_Consts_SNoDefaultPrinter" status="skip"/>
+          <item name="Vcl_Consts_SNoMDIForm" status="skip"/>
+          <item name="Vcl_Consts_SNoTimers" status="skip"/>
+          <item name="Vcl_Consts_SNotPrinting" status="skip"/>
+          <item name="Vcl_Consts_SOutOfRange" status="skip"/>
+          <item name="Vcl_Consts_SOutOfResources" status="skip"/>
+          <item name="Vcl_Consts_SParentGivenNotAParent" status="skip"/>
+          <item name="Vcl_Consts_SParentRequired" status="skip"/>
+          <item name="Vcl_Consts_SPassword" status="skip"/>
+          <item name="Vcl_Consts_SPrinterIndexError" status="skip"/>
+          <item name="Vcl_Consts_SPrinting" status="skip"/>
+          <item name="Vcl_Consts_SPromptArrayEmpty" status="skip"/>
+          <item name="Vcl_Consts_SPromptArrayTooShort" status="skip"/>
+          <item name="Vcl_Consts_SPropertyOutOfRange" status="skip"/>
+          <item name="Vcl_Consts_SReplaceImage" status="skip"/>
+          <item name="Vcl_Consts_SScanLine" status="skip"/>
+          <item name="Vcl_Consts_SScrollBarRange" status="skip"/>
+          <item name="Vcl_Consts_SStyleClassNotFound" status="skip"/>
+          <item name="Vcl_Consts_SStyleClassRegisterError" status="skip"/>
+          <item name="Vcl_Consts_SStyleFeatureNotSupported" status="skip"/>
+          <item name="Vcl_Consts_SStyleFormatError" status="skip"/>
+          <item name="Vcl_Consts_SStyleHookClassNotRegistered" status="skip"/>
+          <item name="Vcl_Consts_SStyleHookClassRegistered" status="skip"/>
+          <item name="Vcl_Consts_SStyleInvalidHandle" status="skip"/>
+          <item name="Vcl_Consts_SStyleInvalidParameter" status="skip"/>
+          <item name="Vcl_Consts_SStyleLoadError" status="skip"/>
+          <item name="Vcl_Consts_SStyleLoadErrors" status="skip"/>
+          <item name="Vcl_Consts_SStyleNotFound" status="skip"/>
+          <item name="Vcl_Consts_SStyleNotRegistered" status="skip"/>
+          <item name="Vcl_Consts_SStyleNotRegisteredNoName" status="skip"/>
+          <item name="Vcl_Consts_SStyleRegisterError" status="skip"/>
+          <item name="Vcl_Consts_SStyleUnregisterError" status="skip"/>
+          <item name="Vcl_Consts_STaskDlgButtonCaption" status="skip"/>
+          <item name="Vcl_Consts_STaskDlgRadioButtonCaption" status="skip"/>
+          <item name="Vcl_Consts_STrayIconRemoveError" status="skip"/>
+          <item name="Vcl_Consts_SUnknownClipboardFormat" status="skip"/>
+          <item name="Vcl_Consts_SUnknownExtension" status="skip"/>
+          <item name="Vcl_Consts_SUnknownStreamFormat" status="skip"/>
+          <item name="Vcl_Consts_SUsername" status="skip"/>
+          <item name="Vcl_Consts_SVBitmaps" status="skip"/>
+          <item name="Vcl_Consts_SVEnhMetafiles" status="skip"/>
+          <item name="Vcl_Consts_SVIcons" status="skip"/>
+          <item name="Vcl_Consts_SVisibleChanged" status="skip"/>
+          <item name="Vcl_Consts_SVMetafiles" status="skip"/>
+          <item name="Vcl_Consts_SVTIFFImages" status="skip"/>
+          <item name="Vcl_Consts_SWindowClass" status="skip"/>
+          <item name="Vcl_Consts_SWindowDCError" status="skip"/>
+          <item name="Vcl_Consts_SWindowsVistaRequired" status="skip"/>
         </items>
       </module>
-      <module name="TFORMMAIN" type="form" state="new">
+      <module name="TFORMMAIN" type="form" properties="7">
         <items>
-          <item name="FormMain.PanelTop.EditValue" type="TEdit" state="new">
+          <item name="FormMain" type="TFormMain">
             <properties>
-              <property name="TextHint" state="new">
-                <value>(enter some text)</value>
-                <translations>
-                  <translation language="1030">(indtast noget tekst)</translation>
-                  <translation language="1031" status="proposed">(text eingeben )</translation>
-                  <translation language="3073" status="proposed">(ادخل بعض النص)</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="FormMain.PanelTop.LabelValue" type="TLabel" state="new">
-            <properties>
-              <property name="Caption" state="new">
-                <value>Text:</value>
-                <translations>
-                  <translation language="1030">Tekst:</translation>
-                  <translation language="1031" status="proposed">Text:</translation>
-                  <translation language="3073" status="proposed">النص:</translation>
-                </translations>
-              </property>
-            </properties>
-          </item>
-          <item name="FormMain" type="TFormMain" state="new">
-            <properties>
-              <property name="Caption" state="new">
+              <property name="Caption">
                 <value>Hello World</value>
                 <translations>
                   <translation language="1030">Hej Verden</translation>
@@ -2603,14 +733,87 @@
               </property>
             </properties>
           </item>
-          <item name="FormMain.PanelTop.ButtonAdd" type="TButton" state="new">
+          <item name="FormMain.ListBoxValues" type="TListBox">
             <properties>
-              <property name="Caption" state="new">
+              <property name="Items.Strings[0]" status="skip"/>
+              <property name="Items.Strings[1]" status="skip"/>
+            </properties>
+          </item>
+          <item name="FormMain.MainMenu.MenuItemFile" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;File</value>
+                <translations>
+                  <translation language="1031" status="proposed">&amp;Datei</translation>
+                  <translation language="1030" status="proposed">&amp;Filer</translation>
+                  <translation language="3073" status="proposed">&amp;ملف</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.MainMenu.MenuItemFile.MenuItemExit" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>E&amp;xit</value>
+                <translations>
+                  <translation language="1031" status="proposed">&amp;Ausgang</translation>
+                  <translation language="1030" status="proposed">&amp;Afslut</translation>
+                  <translation language="3073" status="proposed">&amp;مخرج</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.MainMenu.MenuItemLanguage" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Language</value>
+                <translations>
+                  <translation language="1031" status="proposed">&amp;Sprache</translation>
+                  <translation language="1030" status="proposed">&amp;Sprog</translation>
+                  <translation language="3073" status="proposed">&amp;اللغة</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.MainMenu.MenuItemLanguage.LoremIpsum1" type="TMenuItem" state="unused">
+            <properties>
+              <property name="Caption">
+                <value>LoremIpsum</value>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.PanelTop.ButtonAdd" type="TButton">
+            <properties>
+              <property name="Caption">
                 <value>Add text</value>
                 <translations>
                   <translation language="1030">Tilføj tekst</translation>
                   <translation language="1031" status="proposed">Text hinzufügen</translation>
                   <translation language="3073" status="proposed">إضافة نص</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.PanelTop.EditValue" type="TEdit">
+            <properties>
+              <property name="TextHint">
+                <value>(enter some text)</value>
+                <translations>
+                  <translation language="1030">(indtast noget tekst)</translation>
+                  <translation language="1031" status="proposed">(text eingeben )</translation>
+                  <translation language="3073" status="proposed">(ادخل بعض النص)</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="FormMain.PanelTop.LabelValue" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Text:</value>
+                <translations>
+                  <translation language="1030">Tekst:</translation>
+                  <translation language="1031" status="proposed">Text:</translation>
+                  <translation language="3073" status="proposed">النص:</translation>
                 </translations>
               </property>
             </properties>
