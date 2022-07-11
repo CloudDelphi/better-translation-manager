@@ -137,7 +137,8 @@ begin
   AProject.Traverse(
     function(Module: TLocalizerModule): boolean
     begin
-      Write(Module);
+      if (Module.Status = ItemStatusTranslate) then
+        Write(Module);
       Result := True;
     end, True); // Must sort or output will be confusing for the user
 end;
@@ -149,7 +150,8 @@ begin
   AModule.Traverse(
     function(Prop: TLocalizerProperty): boolean
     begin
-      Write(Prop);
+      if (Prop.Status = ItemStatusTranslate) then
+        Write(Prop);
       Result := True;
     end, True); // Must sort or output will be confusing for the user
 end;
