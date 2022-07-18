@@ -3,8 +3,8 @@ object FormMain: TFormMain
   Top = 0
   Action = ActionMain
   Caption = 'Better Translation Manager'
-  ClientHeight = 643
-  ClientWidth = 964
+  ClientHeight = 653
+  ClientWidth = 1060
   Color = clBtnFace
   ParentFont = True
   ShowHint = True
@@ -19,7 +19,7 @@ object FormMain: TFormMain
   object RibbonMain: TdxRibbon
     Left = 0
     Top = 0
-    Width = 964
+    Width = 1060
     Height = 154
     ApplicationButton.Visible = False
     BarManager = BarManager
@@ -33,6 +33,7 @@ object FormMain: TFormMain
     TabAreaToolbar.Toolbar = BarManagerBarFeedback
     TabOrder = 0
     TabStop = False
+    ExplicitWidth = 964
     object RibbonTabMain: TdxRibbonTab
       Active = True
       Caption = 'Main'
@@ -104,8 +105,8 @@ object FormMain: TFormMain
   end
   object StatusBar: TdxRibbonStatusBar
     Left = 0
-    Top = 620
-    Width = 964
+    Top = 630
+    Width = 1060
     Height = 23
     Images = DataModuleMain.ImageListSmall
     Panels = <
@@ -135,41 +136,26 @@ object FormMain: TFormMain
     ParentFont = True
     OnMouseDown = StatusBarMouseDown
     OnMouseMove = StatusBarMouseMove
+    ExplicitTop = 620
+    ExplicitWidth = 964
   end
-  object SplitterTreeLists: TcxSplitter
-    Left = 240
-    Top = 154
-    Width = 10
-    Height = 466
-    HotZoneClassName = 'TcxSimpleStyle'
-    HotZone.ArrowHighlightColor = clHighlight
-    PositionAfterOpen = 120
-    AutoSnap = True
-    MinSize = 80
-    ResizeUpdate = True
-    Control = PanelModules
-    ExplicitTop = 121
-    ExplicitHeight = 499
-  end
-  object PanelModules: TPanel
+  object LayoutControlMain: TdxLayoutControl
     Left = 0
     Top = 154
-    Width = 240
-    Height = 466
-    Align = alLeft
-    BevelOuter = bvNone
-    FullRepaint = False
-    ParentColor = True
-    ShowCaption = False
-    TabOrder = 3
-    ExplicitTop = 121
-    ExplicitHeight = 499
+    Width = 1060
+    Height = 476
+    Align = alClient
+    TabOrder = 6
+    AutoSize = True
+    LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTight
+    ShowDesignSelectors = False
+    ExplicitWidth = 273
+    ExplicitHeight = 466
     object TreeListModules: TcxTreeList
-      Left = 0
-      Top = 0
-      Width = 240
-      Height = 407
-      Align = alClient
+      Left = 3
+      Top = 3
+      Width = 247
+      Height = 432
       Bands = <
         item
           FixedKind = tlbfLeft
@@ -213,7 +199,6 @@ object FormMain: TFormMain
       OnFocusedColumnChanged = TreeListModulesFocusedColumnChanged
       OnFocusedNodeChanged = TreeListModulesFocusedNodeChanged
       OnGetNodeImageIndex = TreeListModulesGetNodeImageIndex
-      ExplicitHeight = 440
       object TreeListColumnModuleName: TcxTreeListColumn
         BestFitMaxWidth = 200
         Caption.AlignVert = vaTop
@@ -260,214 +245,78 @@ object FormMain: TFormMain
         Summary.GroupFooterSummaryItems = <>
       end
     end
-    object LayoutControlModules: TdxLayoutControl
-      Left = 0
-      Top = 407
-      Width = 240
-      Height = 59
-      Align = alBottom
-      TabOrder = 1
-      AutoSize = True
-      LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTight
-      ShowDesignSelectors = False
-      ExplicitTop = 440
-      object LabelCountTranslated: TcxLabel
-        Left = 65
-        Top = 3
-        Caption = '99.999'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 98
-      end
-      object LabelCountPending: TcxLabel
-        Left = 199
-        Top = 3
-        Caption = '999.999'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 238
-      end
-      object LabelCountTranslatedPercent: TcxLabel
-        Left = 102
-        Top = 3
-        Caption = '(100%)'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 138
-      end
-      object LabelCountModuleTranslated: TcxLabel
-        Left = 71
-        Top = 22
-        Caption = '9.999'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 98
-      end
-      object LabelCountModuleTranslatedPercent: TcxLabel
-        Left = 108
-        Top = 21
-        Caption = '(25%)'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 138
-      end
-      object LabelCountModulePending: TcxLabel
-        Left = 205
-        Top = 22
-        Caption = '99.999'
-        Style.HotTrack = False
-        Style.TransparentBorder = False
-        Properties.Alignment.Horz = taRightJustify
-        Properties.ShowAccelChar = False
-        Transparent = True
-        AnchorX = 238
-      end
-      object LayoutControlModulesGroup_Root: TdxLayoutGroup
-        AlignHorz = ahClient
-        AlignVert = avTop
-        Hidden = True
-        ItemIndex = 4
-        LayoutDirection = ldHorizontal
-        ShowBorder = False
-        UseIndent = False
-        Index = -1
-      end
-      object dxLayoutItem2: TdxLayoutItem
-        Parent = LayoutGroupStatsTranslated
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Text = 'Translated:'
-        Control = LabelCountTranslated
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 33
-        ControlOptions.ShowBorder = False
-        Index = 0
-      end
-      object dxLayoutItem1: TdxLayoutItem
-        Parent = LayoutGroupStatsPending
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Text = 'Pending:'
-        Control = LabelCountPending
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 39
-        ControlOptions.ShowBorder = False
-        Index = 0
-      end
-      object dxLayoutItem3: TdxLayoutItem
-        Parent = LayoutGroupStatsPercent
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Visible = False
-        Control = LabelCountTranslatedPercent
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 36
-        ControlOptions.ShowBorder = False
-        Index = 0
-      end
-      object LayoutGroupStatsPercent: TdxLayoutGroup
-        Parent = LayoutControlModulesGroup_Root
-        CaptionOptions.Visible = False
-        ShowBorder = False
-        Index = 2
-      end
-      object dxLayoutItem4: TdxLayoutItem
-        Parent = LayoutGroupStatsTranslated
-        AlignHorz = ahClient
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Text = 'Module:'
-        Control = LabelCountModuleTranslated
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 27
-        ControlOptions.ShowBorder = False
-        Index = 1
-      end
-      object dxLayoutItem5: TdxLayoutItem
-        Parent = LayoutGroupStatsPercent
-        AlignHorz = ahClient
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Visible = False
-        Control = LabelCountModuleTranslatedPercent
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 30
-        ControlOptions.ShowBorder = False
-        Index = 1
-      end
-      object dxLayoutItem6: TdxLayoutItem
-        Parent = LayoutGroupStatsPending
-        AlignHorz = ahClient
-        CaptionOptions.ShowAccelChar = False
-        CaptionOptions.Text = 'Pending:'
-        Control = LabelCountModulePending
-        ControlOptions.AlignHorz = ahRight
-        ControlOptions.OriginalHeight = 15
-        ControlOptions.OriginalWidth = 33
-        ControlOptions.ShowBorder = False
-        Index = 1
-      end
-      object LayoutGroupStatsTranslated: TdxLayoutGroup
-        Parent = LayoutControlModulesGroup_Root
-        CaptionOptions.Visible = False
-        ShowBorder = False
-        Index = 0
-      end
-      object LayoutGroupStatsPending: TdxLayoutGroup
-        Parent = LayoutControlModulesGroup_Root
-        CaptionOptions.Visible = False
-        ShowBorder = False
-        Index = 4
-      end
-      object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
-        Parent = LayoutControlModulesGroup_Root
-        SizeOptions.Height = 10
-        SizeOptions.Width = 10
-        Index = 3
-      end
-      object dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem
-        Parent = LayoutControlModulesGroup_Root
-        SizeOptions.Height = 10
-        SizeOptions.Width = 4
-        Index = 1
-      end
+    object LabelCountTranslated: TcxLabel
+      Left = 65
+      Top = 438
+      Caption = '99.999'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 98
     end
-  end
-  object PanelMain: TPanel
-    Left = 250
-    Top = 154
-    Width = 714
-    Height = 466
-    Align = alClient
-    BevelOuter = bvNone
-    FullRepaint = False
-    ShowCaption = False
-    TabOrder = 4
-    ExplicitTop = 121
-    ExplicitHeight = 499
+    object LabelCountPending: TcxLabel
+      Left = 211
+      Top = 438
+      Caption = '999.999'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 250
+    end
+    object LabelCountTranslatedPercent: TcxLabel
+      Left = 108
+      Top = 438
+      Caption = '(100%)'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 144
+    end
+    object LabelCountModuleTranslated: TcxLabel
+      Left = 71
+      Top = 457
+      Caption = '9.999'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 98
+    end
+    object LabelCountModuleTranslatedPercent: TcxLabel
+      Left = 114
+      Top = 456
+      Caption = '(25%)'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 144
+    end
+    object LabelCountModulePending: TcxLabel
+      Left = 217
+      Top = 457
+      Caption = '99.999'
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      Properties.Alignment.Horz = taRightJustify
+      Properties.ShowAccelChar = False
+      Transparent = True
+      AnchorX = 250
+    end
     object GridItems: TcxGrid
-      Left = 0
-      Top = 0
-      Width = 714
-      Height = 354
-      Align = alClient
-      TabOrder = 0
-      ExplicitHeight = 387
+      Left = 260
+      Top = 3
+      Width = 797
+      Height = 348
+      TabOrder = 7
       object GridItemsTableView: TcxGridTableView
         PopupMenu = PopupMenuTree
         OnMouseDown = GridItemsTableViewMouseDown
@@ -631,189 +480,355 @@ object FormMain: TFormMain
         GridView = GridItemsTableView
       end
     end
-    object PanelEditors: TPanel
-      Left = 0
-      Top = 364
-      Width = 714
-      Height = 102
-      Align = alBottom
-      BevelOuter = bvNone
-      Color = 16053234
-      FullRepaint = False
-      ParentBackground = False
-      ShowCaption = False
-      TabOrder = 1
-      ExplicitTop = 397
-      object SplitterEditors: TcxSplitter
-        Left = 277
-        Top = 0
-        Width = 10
-        Height = 102
-        HotZoneClassName = 'TcxSimpleStyle'
-        HotZone.ArrowHighlightColor = clHighlight
-        PositionAfterOpen = 100
-        AutoSnap = True
-        MinSize = 50
-        ResizeUpdate = True
-      end
-      object PanelSource: TPanel
-        Left = 0
-        Top = 0
-        Width = 277
-        Height = 102
-        Align = alLeft
-        BevelOuter = bvNone
-        FullRepaint = False
-        ParentColor = True
-        ShowCaption = False
-        TabOrder = 1
-        object EditSourceText: TcxRichEdit
-          Left = 0
-          Top = 15
-          TabStop = False
-          Align = alClient
-          Properties.PlainText = True
-          Properties.ReadOnly = True
-          Properties.ScrollBars = ssBoth
-          Properties.WordWrap = False
-          Style.HotTrack = False
-          Style.TextColor = clGrayText
-          TabOrder = 0
-          Height = 87
-          Width = 277
-        end
-        object LabelSourceName: TcxLabel
-          Left = 0
-          Top = 0
-          Align = alTop
-          Caption = 'Lorem ipsum'
-          Style.TransparentBorder = False
-          Properties.Alignment.Horz = taCenter
-          Properties.ShowAccelChar = False
-          Transparent = True
-          AnchorX = 139
-        end
-      end
-      object PanelText: TPanel
-        Left = 287
-        Top = 0
-        Width = 405
-        Height = 102
-        Align = alClient
-        BevelOuter = bvNone
-        FullRepaint = False
-        ParentColor = True
-        ShowCaption = False
-        TabOrder = 2
-        object EditTargetText: TcxRichEdit
-          Left = 0
-          Top = 15
-          Align = alClient
-          Properties.PlainText = True
-          Properties.ReadOnly = True
-          Properties.ScrollBars = ssBoth
-          Properties.WordWrap = False
-          Properties.OnEditValueChanged = EditTargetTextPropertiesEditValueChanged
-          Style.HotTrack = False
-          TabOrder = 0
-          OnEnter = EditTargetTextEnter
-          OnExit = EditTargetTextExit
-          Height = 87
-          Width = 405
-        end
-        object LabelTargetName: TcxLabel
-          Left = 0
-          Top = 0
-          Align = alTop
-          Caption = 'Lorem ipsum'
-          Style.TransparentBorder = False
-          Properties.Alignment.Horz = taCenter
-          Properties.ShowAccelChar = False
-          Transparent = True
-          AnchorX = 203
-        end
-      end
-      object PanelTextEditButtons: TPanel
-        Left = 692
-        Top = 0
-        Width = 22
-        Height = 102
-        Align = alRight
-        BevelOuter = bvNone
-        FullRepaint = False
-        TabOrder = 3
-        object ButtonTextEditApply: TcxButton
-          Left = 0
-          Top = 0
-          Width = 22
-          Height = 22
-          Align = alTop
-          Action = ActionTextEditApply
-          PaintStyle = bpsGlyph
-          SpeedButtonOptions.CanBeFocused = False
-          SpeedButtonOptions.AllowAllUp = True
-          SpeedButtonOptions.Flat = True
-          SpeedButtonOptions.Transparent = True
-          TabOrder = 0
-        end
-        object ButtonTextEditCancel: TcxButton
-          Left = 0
-          Top = 22
-          Width = 22
-          Height = 22
-          Align = alTop
-          Action = ActionTextEditCancel
-          PaintStyle = bpsGlyph
-          SpeedButtonOptions.CanBeFocused = False
-          SpeedButtonOptions.AllowAllUp = True
-          SpeedButtonOptions.Flat = True
-          SpeedButtonOptions.Transparent = True
-          TabOrder = 1
-        end
-        object ButtonTextEditPrev: TcxButton
-          Left = 0
-          Top = 44
-          Width = 22
-          Height = 22
-          Align = alTop
-          Action = ActionTextEditPrevious
-          PaintStyle = bpsGlyph
-          SpeedButtonOptions.CanBeFocused = False
-          SpeedButtonOptions.AllowAllUp = True
-          SpeedButtonOptions.Flat = True
-          SpeedButtonOptions.Transparent = True
-          TabOrder = 2
-        end
-        object ButtonTextEditNext: TcxButton
-          Left = 0
-          Top = 66
-          Width = 22
-          Height = 22
-          Align = alTop
-          Action = ActionTextEditNext
-          PaintStyle = bpsGlyph
-          SpeedButtonOptions.CanBeFocused = False
-          SpeedButtonOptions.AllowAllUp = True
-          SpeedButtonOptions.Flat = True
-          SpeedButtonOptions.Transparent = True
-          TabOrder = 3
-        end
-      end
+    object EditSourceText: TcxRichEdit
+      Left = 260
+      Top = 386
+      TabStop = False
+      Properties.PlainText = True
+      Properties.ReadOnly = True
+      Properties.ScrollBars = ssBoth
+      Properties.WordWrap = False
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      TabOrder = 8
+      Height = 87
+      Width = 277
     end
-    object SplitterMainEditors: TcxSplitter
-      Left = 0
-      Top = 354
-      Width = 714
-      Height = 10
-      HotZoneClassName = 'TcxSimpleStyle'
-      HotZone.ArrowHighlightColor = clHighlight
-      AlignSplitter = salBottom
-      PositionAfterOpen = 100
-      AutoSnap = True
-      MinSize = 40
-      ResizeUpdate = True
-      Control = PanelEditors
-      ExplicitTop = 387
+    object EditTargetText: TcxRichEdit
+      Left = 553
+      Top = 386
+      Properties.PlainText = True
+      Properties.ReadOnly = True
+      Properties.ScrollBars = ssBoth
+      Properties.WordWrap = False
+      Properties.OnEditValueChanged = EditTargetTextPropertiesEditValueChanged
+      Style.HotTrack = False
+      Style.TransparentBorder = False
+      TabOrder = 9
+      OnEnter = EditTargetTextEnter
+      OnExit = EditTargetTextExit
+      Height = 87
+      Width = 479
+    end
+    object ButtonTextEditApply: TcxButton
+      Left = 1035
+      Top = 367
+      Width = 22
+      Height = 22
+      Action = ActionTextEditApply
+      PaintStyle = bpsGlyph
+      SpeedButtonOptions.CanBeFocused = False
+      SpeedButtonOptions.AllowAllUp = True
+      SpeedButtonOptions.Flat = True
+      SpeedButtonOptions.Transparent = True
+      TabOrder = 10
+    end
+    object ButtonTextEditCancel: TcxButton
+      Left = 1035
+      Top = 392
+      Width = 22
+      Height = 22
+      Action = ActionTextEditCancel
+      PaintStyle = bpsGlyph
+      SpeedButtonOptions.CanBeFocused = False
+      SpeedButtonOptions.AllowAllUp = True
+      SpeedButtonOptions.Flat = True
+      SpeedButtonOptions.Transparent = True
+      TabOrder = 11
+    end
+    object ButtonTextEditPrev: TcxButton
+      Left = 1035
+      Top = 417
+      Width = 22
+      Height = 22
+      Action = ActionTextEditPrevious
+      PaintStyle = bpsGlyph
+      SpeedButtonOptions.CanBeFocused = False
+      SpeedButtonOptions.AllowAllUp = True
+      SpeedButtonOptions.Flat = True
+      SpeedButtonOptions.Transparent = True
+      TabOrder = 12
+    end
+    object ButtonTextEditNext: TcxButton
+      Left = 1035
+      Top = 442
+      Width = 22
+      Height = 22
+      Action = ActionTextEditNext
+      PaintStyle = bpsGlyph
+      SpeedButtonOptions.CanBeFocused = False
+      SpeedButtonOptions.AllowAllUp = True
+      SpeedButtonOptions.Flat = True
+      SpeedButtonOptions.Transparent = True
+      TabOrder = 13
+    end
+    object LayoutControlMainGroup_Root: TdxLayoutGroup
+      AlignHorz = ahClient
+      AlignVert = avClient
+      Hidden = True
+      ItemIndex = 2
+      LayoutDirection = ldHorizontal
+      ShowBorder = False
+      UseIndent = False
+      Index = -1
+    end
+    object dxLayoutItem2: TdxLayoutItem
+      Parent = LayoutGroupStatsTranslated
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Text = 'Translated:'
+      Control = LabelCountTranslated
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 33
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutItem1: TdxLayoutItem
+      Parent = LayoutGroupStatsPending
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Text = 'Pending:'
+      Control = LabelCountPending
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 39
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutItem3: TdxLayoutItem
+      Parent = LayoutGroupStatsPercent
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Visible = False
+      Control = LabelCountTranslatedPercent
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 36
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object LayoutGroupStatsPercent: TdxLayoutGroup
+      Parent = LayoutGroupStatus
+      CaptionOptions.Text = 'Hidden Group'
+      CaptionOptions.Visible = False
+      Hidden = True
+      ShowBorder = False
+      Index = 2
+    end
+    object dxLayoutItem4: TdxLayoutItem
+      Parent = LayoutGroupStatsTranslated
+      AlignHorz = ahClient
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Text = 'Module:'
+      Control = LabelCountModuleTranslated
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 27
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object dxLayoutItem5: TdxLayoutItem
+      Parent = LayoutGroupStatsPercent
+      AlignHorz = ahClient
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Visible = False
+      Control = LabelCountModuleTranslatedPercent
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 30
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object dxLayoutItem6: TdxLayoutItem
+      Parent = LayoutGroupStatsPending
+      AlignHorz = ahClient
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Text = 'Pending:'
+      Control = LabelCountModulePending
+      ControlOptions.AlignHorz = ahRight
+      ControlOptions.OriginalHeight = 15
+      ControlOptions.OriginalWidth = 33
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object LayoutGroupStatsTranslated: TdxLayoutGroup
+      Parent = LayoutGroupStatus
+      CaptionOptions.Text = 'Hidden Group'
+      CaptionOptions.Visible = False
+      Hidden = True
+      ShowBorder = False
+      Index = 0
+    end
+    object LayoutGroupStatsPending: TdxLayoutGroup
+      Parent = LayoutGroupStatus
+      CaptionOptions.Text = 'Hidden Group'
+      CaptionOptions.Visible = False
+      Hidden = True
+      ShowBorder = False
+      Index = 4
+    end
+    object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
+      Parent = LayoutGroupStatus
+      SizeOptions.Height = 10
+      SizeOptions.Width = 10
+      Index = 3
+    end
+    object dxLayoutEmptySpaceItem2: TdxLayoutEmptySpaceItem
+      Parent = LayoutGroupStatus
+      SizeOptions.Height = 10
+      SizeOptions.Width = 4
+      Index = 1
+    end
+    object LayoutGroupStatus: TdxLayoutGroup
+      Parent = LayoutGroupModules
+      AlignVert = avBottom
+      CaptionOptions.Visible = False
+      Hidden = True
+      ItemIndex = 3
+      LayoutDirection = ldHorizontal
+      ShowBorder = False
+      Index = 1
+    end
+    object LayoutItemModules: TdxLayoutItem
+      Parent = LayoutGroupModules
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Control = TreeListModules
+      ControlOptions.OriginalHeight = 440
+      ControlOptions.OriginalWidth = 240
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object LayoutGroupModules: TdxLayoutGroup
+      Parent = LayoutControlMainGroup_Root
+      AlignHorz = ahLeft
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Hidden = True
+      ItemIndex = 1
+      ShowBorder = False
+      Index = 0
+    end
+    object LayoutItemMain: TdxLayoutItem
+      Parent = LayoutGroupMain
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Control = GridItems
+      ControlOptions.OriginalHeight = 387
+      ControlOptions.OriginalWidth = 714
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object LayoutSplitterItemModules: TdxLayoutSplitterItem
+      Parent = LayoutControlMainGroup_Root
+      AlignHorz = ahLeft
+      SizeOptions.AssignedValues = [sovSizableHorz, sovSizableVert]
+      SizeOptions.SizableHorz = False
+      SizeOptions.SizableVert = False
+      AllowCloseOnClick = True
+      Index = 1
+    end
+    object LayoutGroupEditors: TdxLayoutGroup
+      Parent = LayoutGroupMain
+      AlignVert = avBottom
+      CaptionOptions.Visible = False
+      Hidden = True
+      ItemIndex = 2
+      LayoutDirection = ldHorizontal
+      ShowBorder = False
+      Index = 2
+    end
+    object LayoutGroupMain: TdxLayoutGroup
+      Parent = LayoutControlMainGroup_Root
+      AlignHorz = ahClient
+      CaptionOptions.Visible = False
+      Hidden = True
+      ItemIndex = 2
+      ShowBorder = False
+      Index = 2
+    end
+    object LayoutSplitterItemMainEditors: TdxLayoutSplitterItem
+      Parent = LayoutGroupMain
+      AlignVert = avBottom
+      SizeOptions.AssignedValues = [sovSizableHorz, sovSizableVert]
+      SizeOptions.SizableHorz = False
+      SizeOptions.SizableVert = False
+      AllowCloseOnClick = True
+      Index = 1
+    end
+    object LayoutItemEditorSource: TdxLayoutItem
+      Parent = LayoutGroupEditors
+      CaptionOptions.Text = 'Lorem ipsum'
+      CaptionOptions.Layout = clTop
+      Control = EditSourceText
+      ControlOptions.OriginalHeight = 87
+      ControlOptions.OriginalWidth = 277
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object LayoutItemEditorTarget: TdxLayoutItem
+      Parent = LayoutGroupEditors
+      AlignHorz = ahClient
+      CaptionOptions.Text = 'Lorem ipsum'
+      CaptionOptions.Layout = clTop
+      Control = EditTargetText
+      ControlOptions.OriginalHeight = 87
+      ControlOptions.OriginalWidth = 405
+      ControlOptions.ShowBorder = False
+      Index = 2
+    end
+    object LayoutSplitterItemEditors: TdxLayoutSplitterItem
+      Parent = LayoutGroupEditors
+      SizeOptions.AssignedValues = [sovSizableHorz, sovSizableVert]
+      SizeOptions.SizableHorz = False
+      SizeOptions.SizableVert = False
+      Index = 1
+    end
+    object LayoutGroupEditorButtons: TdxLayoutGroup
+      Parent = LayoutGroupEditors
+      CaptionOptions.Visible = False
+      Hidden = True
+      ItemIndex = 3
+      ShowBorder = False
+      Index = 3
+    end
+    object dxLayoutItem9: TdxLayoutItem
+      Parent = LayoutGroupEditorButtons
+      CaptionOptions.Text = 'New Item'
+      CaptionOptions.Visible = False
+      Control = ButtonTextEditApply
+      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalWidth = 22
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutItem10: TdxLayoutItem
+      Parent = LayoutGroupEditorButtons
+      CaptionOptions.Text = 'New Item'
+      CaptionOptions.Visible = False
+      Control = ButtonTextEditCancel
+      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalWidth = 22
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object dxLayoutItem11: TdxLayoutItem
+      Parent = LayoutGroupEditorButtons
+      CaptionOptions.Text = 'New Item'
+      CaptionOptions.Visible = False
+      Control = ButtonTextEditPrev
+      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalWidth = 22
+      ControlOptions.ShowBorder = False
+      Index = 2
+    end
+    object dxLayoutItem12: TdxLayoutItem
+      Parent = LayoutGroupEditorButtons
+      CaptionOptions.Text = 'New Item'
+      CaptionOptions.Visible = False
+      Control = ButtonTextEditNext
+      ControlOptions.OriginalHeight = 22
+      ControlOptions.OriginalWidth = 22
+      ControlOptions.ShowBorder = False
+      Index = 3
     end
   end
   object BarManager: TdxBarManager

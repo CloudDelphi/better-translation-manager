@@ -29,6 +29,7 @@ uses
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
   dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons, dxCore, dxScrollbarAnnotations,
+  dxLayoutControlAdapters,
 
   amLanguageInfo,
   amProgress.API,
@@ -147,7 +148,6 @@ type
     dxBarButton13: TdxBarButton;
     dxBarButton14: TdxBarButton;
     PopupMenuTree: TdxRibbonPopupMenu;
-    SplitterTreeLists: TcxSplitter;
     TreeListModules: TcxTreeList;
     TreeListColumnModuleName: TcxTreeListColumn;
     TreeListColumnModuleStatus: TcxTreeListColumn;
@@ -171,9 +171,8 @@ type
     dxBarButton22: TdxBarButton;
     BarButtonTMAdd: TdxBarButton;
     BarButtonTMLookup: TdxBarButton;
-    PanelModules: TPanel;
-    LayoutControlModulesGroup_Root: TdxLayoutGroup;
-    LayoutControlModules: TdxLayoutControl;
+    LayoutControlMainGroup_Root: TdxLayoutGroup;
+    LayoutControlMain: TdxLayoutControl;
     dxLayoutItem2: TdxLayoutItem;
     LabelCountTranslated: TcxLabel;
     dxLayoutItem1: TdxLayoutItem;
@@ -296,17 +295,8 @@ type
     GridItemsTableViewColumnState: TcxGridColumn;
     GridItemsTableViewColumnSource: TcxGridColumn;
     GridItemsTableViewColumnTarget: TcxGridColumn;
-    PanelMain: TPanel;
-    PanelEditors: TPanel;
-    SplitterEditors: TcxSplitter;
-    PanelSource: TPanel;
     EditSourceText: TcxRichEdit;
-    LabelSourceName: TcxLabel;
-    PanelText: TPanel;
     EditTargetText: TcxRichEdit;
-    LabelTargetName: TcxLabel;
-    SplitterMainEditors: TcxSplitter;
-    PanelTextEditButtons: TPanel;
     ButtonTextEditApply: TcxButton;
     ButtonTextEditCancel: TcxButton;
     ButtonTextEditPrev: TcxButton;
@@ -340,6 +330,22 @@ type
     dxBarButton23: TdxBarButton;
     ActionIntegrationTracking: TAction;
     TimerBlink: TTimer;
+    LayoutGroupStatus: TdxLayoutGroup;
+    LayoutItemModules: TdxLayoutItem;
+    LayoutGroupModules: TdxLayoutGroup;
+    LayoutItemMain: TdxLayoutItem;
+    LayoutSplitterItemModules: TdxLayoutSplitterItem;
+    LayoutGroupEditors: TdxLayoutGroup;
+    LayoutGroupMain: TdxLayoutGroup;
+    LayoutSplitterItemMainEditors: TdxLayoutSplitterItem;
+    LayoutItemEditorSource: TdxLayoutItem;
+    LayoutItemEditorTarget: TdxLayoutItem;
+    LayoutSplitterItemEditors: TdxLayoutSplitterItem;
+    LayoutGroupEditorButtons: TdxLayoutGroup;
+    dxLayoutItem9: TdxLayoutItem;
+    dxLayoutItem10: TdxLayoutItem;
+    dxLayoutItem11: TdxLayoutItem;
+    dxLayoutItem12: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ActionProjectUpdateExecute(Sender: TObject);
@@ -889,6 +895,10 @@ type
 type
   TdxSpellCheckerCracker = class(TdxCustomSpellChecker);
 
+type
+  // https://supportcenter.devexpress.com/ticket/details/t881955/tdxlayoutsplitteritem-provide-the-close-and-open-methods
+  TdxLayoutSplitterItemCracker = class(TdxLayoutSplitterItem);
+
 // -----------------------------------------------------------------------------
 
 function TreeListFindFilter(ANode: TcxTreeListNode; AData: Pointer): Boolean;
@@ -910,11 +920,6 @@ begin
   SaveCursor(crAppStart, True);
 
   inherited;
-
-  // Only way to avoid skinning splitter
-  TcxSplitterCracker(SplitterTreeLists).LookAndFeel.SkinName := '';
-  TcxSplitterCracker(SplitterMainEditors).LookAndFeel.SkinName := '';
-  TcxSplitterCracker(SplitterEditors).LookAndFeel.SkinName := '';
 end;
 
 destructor TFormMain.Destroy;
@@ -1065,7 +1070,7 @@ begin
   Application.OnShowHint := DoShowHint;
 
   RibbonTabMain.Active := True;
-  SplitterMainEditors.CloseSplitter;
+  TdxLayoutSplitterItemCracker(LayoutSplitterItemMainEditors).Close;
 
   for i := 0 to StatusBar.Panels.Count-1 do
     StatusBar.Panels[i].Text := '';
@@ -3097,7 +3102,7 @@ begin
     // Restore caret position
     EditTargetText.SelStart := SelStart;
 
-    SplitterMainEditors.OpenSplitter;
+    TdxLayoutSplitterItemCracker(LayoutSplitterItemMainEditors).Open;
     EditTargetText.SetFocus;
 
     // Ensure that grid row is still visible in case opening the editor scrolled
@@ -3129,7 +3134,7 @@ begin
     // Restore caret position
     TcxTextEdit(GridItemsTableView.Controller.EditingController.Edit).SelStart := SelStart;
 
-    SplitterMainEditors.CloseSplitter;
+    TdxLayoutSplitterItemCracker(LayoutSplitterItemMainEditors).Close;
   end;
 
 (*
@@ -5454,7 +5459,7 @@ begin
   BarEditItemSourceLanguage.EditValue := FSourceLanguage.LocaleName;
   FProject.SourceLanguage := FSourceLanguage;
   GridItemsTableViewColumnSource.Caption := FSourceLanguage.LanguageName;
-  LabelSourceName.Caption := FSourceLanguage.LanguageName;
+  LayoutItemEditorSource.CaptionOptions.text := FSourceLanguage.LanguageName;
   if (FSourceLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
   begin
     // Source language is Right-to-Left but rest of UI isn't - or vice versa
@@ -5534,7 +5539,7 @@ begin
     CreateTranslationMemoryPeeker(True);
 
     GridItemsTableViewColumnTarget.Caption := FTargetLanguage.LanguageName;
-    LabelTargetName.Caption := FTargetLanguage.LanguageName;
+    LayoutItemEditorTarget.CaptionOptions.Text := FTargetLanguage.LanguageName;
     if (FTargetLanguage.IsRightToLeft <> IsRightToLeft) and (TranslationManagerSettings.Editor.EditBiDiMode) then
     begin
       // Target language is Right-to-Left but rest of UI isn't - or vice versa
@@ -6502,7 +6507,7 @@ begin
   if (AItem <> GridItemsTableViewColumnTarget) then
     exit;
 
-  if (TranslationManagerSettings.Editor.AutoShowMultiLineEditor) and (SplitterMainEditors.State = ssClosed) and (FocusedProperty.Value.Contains(#13)) then
+  if (TranslationManagerSettings.Editor.AutoShowMultiLineEditor) and (TdxLayoutSplitterItemCracker(LayoutSplitterItemMainEditors).IsClosed) and (FocusedProperty.Value.Contains(#13)) then
   begin
     ActionEditTranslationText.Execute;
     AAllow := False;
@@ -7579,7 +7584,7 @@ end;
 procedure TFormMain.DoRefreshModuleStats;
 begin
   try
-    LayoutControlModules.BeginUpdate;
+    LayoutControlMain.BeginUpdate;
     try
       // Module stats
       var TranslatedCount := 0;
@@ -7612,7 +7617,7 @@ begin
         LabelCountTranslatedPercent.Caption := '';
 
     finally
-      LayoutControlModules.EndUpdate;
+      LayoutControlMain.EndUpdate;
     end;
   finally
     FRefreshModuleStatsQueued := False;
