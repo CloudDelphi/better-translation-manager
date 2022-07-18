@@ -341,7 +341,7 @@ object FormMain: TFormMain
         OptionsBehavior.IncSearchItem = GridItemsTableViewColumnItemName
         OptionsBehavior.FocusCellOnCycle = True
         OptionsBehavior.ImmediateEditor = False
-        OptionsBehavior.RecordScrollMode = rsmByRecord
+        OptionsBehavior.RecordScrollMode = rsmByPixel
         OptionsCustomize.ColumnGrouping = False
         OptionsCustomize.ColumnHiding = True
         OptionsCustomize.ColumnsQuickCustomization = True
