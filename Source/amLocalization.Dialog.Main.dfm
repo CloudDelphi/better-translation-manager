@@ -322,13 +322,33 @@ object FormMain: TFormMain
         OnMouseDown = GridItemsTableViewMouseDown
         OnMouseMove = GridItemsTableViewMouseMove
         Navigator.Buttons.CustomButtons = <>
-        ScrollbarAnnotations.CustomAnnotations = <>
+        ScrollbarAnnotations.CustomAnnotations = <
+          item
+            Alignment = saaClient
+            Color = -2134606020
+            MinHeight = 4
+          end
+          item
+            Alignment = saaCenter
+            Color = -2143501245
+          end
+          item
+            Alignment = saaCenter
+            Color = -2134623172
+          end
+          item
+            Color = -2143513404
+          end>
+        ScrollbarAnnotations.ShowErrors = False
+        ScrollbarAnnotations.ShowSearchResults = False
+        ScrollbarAnnotations.ShowSelectedRows = False
         OnCanFocusRecord = GridItemsTableViewCanFocusRecord
         OnCellDblClick = GridItemsTableViewCellDblClick
         OnCustomDrawCell = GridItemsTableViewCustomDrawCell
         OnEditing = GridItemsTableViewEditing
         OnFocusedItemChanged = GridItemsTableViewFocusedItemChanged
         OnFocusedRecordChanged = GridItemsTableViewFocusedRecordChanged
+        OnPopulateCustomScrollbarAnnotationRowIndexList = GridItemsTableViewPopulateCustomScrollbarAnnotationRowIndexList
         OnInitEdit = GridItemsTableViewInitEdit
         DataController.Options = [dcoAnsiSort, dcoCaseInsensitive, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
         DataController.Summary.DefaultGroupSummaryItems = <>

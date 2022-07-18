@@ -508,6 +508,9 @@ type
       APrevFocusedNode, AFocusedNode: TcxTreeListNode);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure TimerBlinkTimer(Sender: TObject);
+    procedure GridItemsTableViewPopulateCustomScrollbarAnnotationRowIndexList(
+      Sender: TcxCustomGridTableView; AAnnotationIndex: Integer;
+      ARowIndexList: TdxScrollbarAnnotationRowIndexList);
   private
     FProject: TLocalizerProject;
     FProjectFilename: string;
@@ -898,6 +901,9 @@ type
 type
   // https://supportcenter.devexpress.com/ticket/details/t881955/tdxlayoutsplitteritem-provide-the-close-and-open-methods
   TdxLayoutSplitterItemCracker = class(TdxLayoutSplitterItem);
+
+type
+  TcxGridTableViewCracker = class(TcxCustomGridTableView);
 
 // -----------------------------------------------------------------------------
 
@@ -5110,6 +5116,11 @@ begin
       // Prop is now translatable again - check for match in TM
       QueueTranslationMemoryPeek(Prop, True);
     end;
+
+    // https://supportcenter.devexpress.com/ticket/details/t934687/add-custom-scrollbar-annotation-at-runtime
+    if (GridItemsTableView.ScrollbarAnnotations.Active) then
+      TcxGridTableViewCracker(GridItemsTableView).RefreshScrollbarAnnotations;
+
   finally
     GridItemsTableView.EndUpdate;
   end;
@@ -6767,6 +6778,41 @@ begin
   TimerHint.Enabled := False;
   TimerHint.Interval := HintStyleController.HintPause;
   TimerHint.Enabled := True;
+end;
+
+procedure TFormMain.GridItemsTableViewPopulateCustomScrollbarAnnotationRowIndexList(
+  Sender: TcxCustomGridTableView; AAnnotationIndex: Integer;
+  ARowIndexList: TdxScrollbarAnnotationRowIndexList);
+begin
+  if (FModuleItemsDataSource = nil) then
+    exit;
+
+  for var i := 0 to Sender.ViewData.RecordCount-1 do
+  begin
+    var Prop := FModuleItemsDataSource.Properties[Sender.ViewData.Records[i].RecordIndex];
+    if (Prop.EffectiveStatus <> ItemStatusTranslate) then
+      continue;
+
+    var Translation := Prop.Translations.FindTranslation(TranslationLanguage);
+
+    case AAnnotationIndex of
+      0: // Validation warnings
+        if (Translation <> nil) and (Translation.Warnings <> []) then
+          ARowIndexList.Add(i);
+
+      1: // Translated
+        if (Translation <> nil) then
+          ARowIndexList.Add(i);
+
+      2: // Untranslated
+        if (Translation = nil) then
+          ARowIndexList.Add(i);
+
+      3: // New
+        if (ItemStateNew in Prop.State) then
+          ARowIndexList.Add(i);
+    end;
+  end;
 end;
 
 procedure TFormMain.GridItemsTableViewStylesGetContentStyle(Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem; var AStyle: TcxStyle);
