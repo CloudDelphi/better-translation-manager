@@ -78,8 +78,6 @@ type
     ComboBoxOptions: TcxCheckComboBox;
     LayoutGroupDuplicates: TdxLayoutGroup;
     dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem;
-    StyleRepository: TcxStyleRepository;
-    StyleDuplicateOdd: TcxStyle;
     PopupMenuGrid: TPopupMenu;
     Viewduplicates1: TMenuItem;
     ActionRowInsert: TAction;
@@ -87,8 +85,6 @@ type
     N2: TMenuItem;
     Insertrow1: TMenuItem;
     Deleterows1: TMenuItem;
-    StyleDuplicateEven: TcxStyle;
-    StyleDuplicate: TcxStyle;
     procedure FormCreate(Sender: TObject);
     procedure GridTMDBTableViewCustomDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
       AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
@@ -979,9 +975,9 @@ begin
     if (FDuplicateColumn.SortIndex = 0) then
     begin
       if (Odd(FDuplicates[ARecord.RecordIndex])) then
-        AStyle := StyleDuplicateOdd
+        AStyle := DataModuleMain.StyleOdd
       else
-        AStyle := StyleDuplicateEven;
+        AStyle := DataModuleMain.StyleEven;
     end;
   end;
 end;

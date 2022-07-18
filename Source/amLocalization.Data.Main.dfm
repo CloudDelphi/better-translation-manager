@@ -5008,6 +5008,10 @@ object DataModuleMain: TDataModuleMain
       AssignedValues = [svColor]
       Color = 15532012
     end
+    object StyleOdd: TcxStyle
+    end
+    object StyleEven: TcxStyle
+    end
   end
   object SkinController: TdxSkinController
     ScrollbarMode = sbmClassic

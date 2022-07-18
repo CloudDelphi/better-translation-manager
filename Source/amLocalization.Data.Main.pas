@@ -93,6 +93,8 @@ type
     SkinController: TdxSkinController;
     LookAndFeelControllerMain: TcxLookAndFeelController;
     LayoutSkinLookAndFeelNoPadding: TdxLayoutSkinLookAndFeel;
+    StyleOdd: TcxStyle;
+    StyleEven: TcxStyle;
     procedure DataModuleCreate(Sender: TObject);
     procedure GridTableViewTargetLanguagesDataControllerFilterRecord(ADataController: TcxCustomDataController;
       ARecordIndex: Integer; var Accept: Boolean);
@@ -527,7 +529,7 @@ var
       // Contrast is too poor. Use a text color with better contrast.
       if (Abs(BrushLuminance - DefaultBrushColorLuminance) >= 127) then
         // Use default brush color if we can so we use a color in the color scheme
-        Style.TextColor := RootLookAndFeel.Painter.DefaultContentColor
+        Style.TextColor := RootLookAndFeel.Painter.GridLikeControlContentColor
       else
       if (BrushLuminance >= 128) then
         Style.TextColor := clBlack
@@ -546,7 +548,7 @@ var
       // Contrast is too poor. Use a brush color with better contrast.
       if (Abs(TextLuminance - DefaultTextColorLuminance) >= 127) then
         // Use default text color if we can so we use a color in the color scheme
-        Style.Color := RootLookAndFeel.Painter.DefaultContentTextColor
+        Style.Color := RootLookAndFeel.Painter.GridLikeControlContentTextColor
       else
       if (TextLuminance >= 128) then
         Style.Color := clBlack
@@ -625,11 +627,14 @@ begin
 *)
 
   // We need the default colors as a style for use in OnGetContentStyle event handlers
-  StyleDefault.Color := RootLookAndFeel.Painter.DefaultContentColor;
-  StyleDefault.TextColor := RootLookAndFeel.Painter.DefaultContentTextColor;
+  StyleDefault.Color := RootLookAndFeel.Painter.GridLikeControlContentColor;
+  StyleDefault.TextColor := RootLookAndFeel.Painter.GridLikeControlContentTextColor;
+  // Get default odd/even colors as a style for use in OnGetContentStyle event handlers
+  StyleOdd.Color := RootLookAndFeel.Painter.GridLikeControlContentOddColor;
+  StyleEven.Color := RootLookAndFeel.Painter.GridLikeControlContentEvenColor;
 
-  DefaultTextColorLuminance := Luminance(RootLookAndFeel.Painter.DefaultContentTextColor);
-  DefaultBrushColorLuminance := Luminance(RootLookAndFeel.Painter.DefaultContentColor);
+  DefaultTextColorLuminance := Luminance(RootLookAndFeel.Painter.GridLikeControlContentTextColor);
+  DefaultBrushColorLuminance := Luminance(RootLookAndFeel.Painter.GridLikeControlContentColor);
 
   ApplyListStyle(ListStyleDefault, DataModuleMain.StyleDefault);
   ApplyListStyle(ListStyleSelected, DataModuleMain.StyleSelected);

@@ -363,23 +363,6 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Left = 76
     Top = 63
   end
-  object StyleRepository: TcxStyleRepository
-    Left = 340
-    Top = 295
-    PixelsPerInch = 96
-    object StyleDuplicateOdd: TcxStyle
-      AssignedValues = [svColor]
-      Color = 15918295
-    end
-    object StyleDuplicateEven: TcxStyle
-      AssignedValues = [svColor]
-      Color = clWindow
-    end
-    object StyleDuplicate: TcxStyle
-      AssignedValues = [svColor]
-      Color = 15389113
-    end
-  end
   object PopupMenuGrid: TPopupMenu
     Left = 396
     Top = 207
