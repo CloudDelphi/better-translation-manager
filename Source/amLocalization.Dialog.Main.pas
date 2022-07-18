@@ -28,7 +28,7 @@ uses
   cxDropDownEdit, cxLookupEdit, cxDBLookupEdit, cxBarEditItem, cxDataControllerConditionalFormattingRulesManagerDialog, cxButtonEdit,
   dxSpellCheckerCore, dxSpellChecker, cxTLData,
   dxLayoutcxEditAdapters, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl, dxOfficeSearchBox, dxScreenTip, dxCustomHint, cxHint,
-  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons,
+  dxGallery, dxRibbonGallery, dxRibbonMiniToolbar, cxRichEdit, cxButtons, dxCore, dxScrollbarAnnotations,
 
   amLanguageInfo,
   amProgress.API,
@@ -42,7 +42,7 @@ uses
   amLocalization.Index,
   amLocalization.Settings,
   amLocalization.Data.ModuleItemsDataSource,
-  amLocalization.ExceptionHandler.API, dxCore, dxScrollbarAnnotations;
+  amLocalization.ExceptionHandler.API;
 
 
 const
@@ -1241,6 +1241,17 @@ begin
   end;
   // Force redraw
   TreeListModules.LayoutChanged;
+
+  // TdxRibbonStatusBar text panel font doesn't use skin settings unless text
+  // color is clDefault.
+  // https://supportcenter.devexpress.com/ticket/details/t1103081/tdxribbonstatusbar-text-panel-font-color
+  for var i := 0 to StatusBar.Panels.Count-1 do
+    if (StatusBar.Panels[i].PanelStyle is TdxStatusBarTextPanelStyle) then
+    begin
+      var TextPanel := TdxStatusBarTextPanelStyle(StatusBar.Panels[i].PanelStyle);
+      TextPanel.ParentFont :=True;
+      TextPanel.Font.Color := clDefault;
+    end;
 end;
 
 procedure TFormMain.SaveSettings;
