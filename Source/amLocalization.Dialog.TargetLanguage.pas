@@ -56,7 +56,7 @@ end;
 
 function TFormTargetLanguage.Execute(const Prompt: string): boolean;
 begin
-  LabelHeader.Caption := Prompt;
+  SetHeader(Prompt);
 
   Result := (ShowModal = mrOK);
 end;

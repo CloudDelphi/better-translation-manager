@@ -3,7 +3,7 @@ object FormDialog: TFormDialog
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Lorem Ipsum'
-  ClientHeight = 280
+  ClientHeight = 295
   ClientWidth = 537
   Color = clBtnFace
   ParentFont = True
@@ -13,10 +13,13 @@ object FormDialog: TFormDialog
   TextHeight = 15
   object LayoutControlButtons: TdxLayoutControl
     Left = 0
-    Top = 229
+    Top = 240
     Width = 537
-    Height = 51
+    Height = 55
     Align = alBottom
+    BevelEdges = [beTop]
+    BevelInner = bvNone
+    BevelKind = bkFlat
     TabOrder = 0
     AutoSize = True
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelHeader
@@ -80,24 +83,14 @@ object FormDialog: TFormDialog
     Left = 0
     Top = 0
     Width = 537
-    Height = 41
+    Height = 45
     Align = alTop
+    BevelEdges = [beBottom]
+    BevelInner = bvNone
+    BevelKind = bkFlat
     TabOrder = 1
     AutoSize = True
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelHeader
-    object LabelHeader: TcxLabel
-      Left = 13
-      Top = 13
-      Caption = 'Lorem ipsum'
-      Style.HotTrack = False
-      Style.TextStyle = [fsBold]
-      Style.TransparentBorder = False
-      Properties.ShowAccelChar = False
-      Properties.ShowEndEllipsis = True
-      Properties.WordWrap = True
-      Transparent = True
-      Width = 511
-    end
     object LayoutControlHeaderGroup_Root: TdxLayoutGroup
       AlignHorz = ahParentManaged
       AlignVert = avParentManaged
@@ -105,28 +98,25 @@ object FormDialog: TFormDialog
       ShowBorder = False
       Index = -1
     end
-    object LayoutItemHeader: TdxLayoutItem
+    object LayoutItemHeader: TdxLayoutLabeledItem
       Parent = LayoutControlHeaderGroup_Root
-      CaptionOptions.Visible = False
-      Control = LabelHeader
-      ControlOptions.OriginalHeight = 15
-      ControlOptions.OriginalWidth = 7
-      ControlOptions.ShowBorder = False
+      LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelTitle
+      CaptionOptions.ShowAccelChar = False
+      CaptionOptions.Text = 'Lorem Ipsum'
+      CaptionOptions.WordWrap = True
       Index = 0
     end
   end
   object LayoutControl: TdxLayoutControl
     Left = 0
-    Top = 41
+    Top = 45
     Width = 537
-    Height = 188
+    Height = 195
     Align = alClient
     TabOrder = 2
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitLeft = 8
-    ExplicitTop = 4
-    ExplicitWidth = 521
-    ExplicitHeight = 181
+    ExplicitTop = 41
+    ExplicitHeight = 188
     object LayoutControlGroup_Root: TdxLayoutGroup
       AlignHorz = ahClient
       AlignVert = avTop

@@ -1,14 +1,14 @@
 inherited FormSelectModule: TFormSelectModule
   AutoSize = True
   Caption = 'Select module'
-  ClientHeight = 185
+  ClientHeight = 193
   ClientWidth = 337
   ExplicitWidth = 353
-  ExplicitHeight = 223
+  ExplicitHeight = 231
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 134
+    Top = 138
     Width = 337
     Align = alTop
     ExplicitTop = 134
@@ -29,14 +29,16 @@ inherited FormSelectModule: TFormSelectModule
       ExplicitWidth = 311
       Width = 311
     end
+    inherited LayoutItemHeader: TdxLayoutItem
+      AlignVert = avClient
+    end
   end
   inherited LayoutControl: TdxLayoutControl
     Width = 337
     Height = 93
     Align = alTop
     AutoSize = True
-    ExplicitLeft = 0
-    ExplicitTop = 144
+    ExplicitTop = 45
     ExplicitWidth = 337
     ExplicitHeight = 93
     object ComboBoxModule: TcxComboBox [0]

@@ -10,26 +10,22 @@ inherited FormTranslationMemory: TFormTranslationMemory
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 388
+    Top = 381
     Width = 702
-    ExplicitTop = 388
+    ExplicitTop = 381
     ExplicitWidth = 702
     inherited ButtonOK: TcxButton
-      Left = 515
-      Top = 13
+      Left = 532
       TabOrder = 3
-      ExplicitLeft = 515
-      ExplicitTop = 13
+      ExplicitLeft = 532
     end
     inherited ButtonCancel: TcxButton
-      Left = 597
-      Top = 13
+      Left = 614
       TabOrder = 4
-      ExplicitLeft = 597
-      ExplicitTop = 13
+      ExplicitLeft = 614
     end
     object ButtonClose: TcxButton [2]
-      Left = 433
+      Left = 450
       Top = 13
       Width = 75
       Height = 25
@@ -100,165 +96,153 @@ inherited FormTranslationMemory: TFormTranslationMemory
     Width = 702
     Visible = False
     ExplicitWidth = 702
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 659
-      Width = 659
-    end
   end
-  inherited PanelMain: TPanel
+  inherited LayoutControl: TdxLayoutControl
     Width = 702
-    Height = 349
-    ExplicitTop = 39
+    Height = 336
+    ExplicitTop = 45
     ExplicitWidth = 702
-    ExplicitHeight = 349
-    inherited LayoutControl: TdxLayoutControl
-      Width = 686
-      Height = 337
-      ExplicitLeft = 8
-      ExplicitWidth = 686
-      ExplicitHeight = 337
-      object GridTM: TcxGrid [0]
-        Left = 7
-        Top = 84
-        Width = 672
-        Height = 246
-        TabOrder = 2
-        object GridTMDBTableView: TcxGridDBTableView
-          Navigator.Buttons.CustomButtons = <>
-          ScrollbarAnnotations.CustomAnnotations = <>
-          OnCellDblClick = GridTMDBTableViewCellDblClick
-          OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
-          OnInitEdit = GridTMDBTableViewInitEdit
-          DataController.DataSource = DataSourceTranslationMemory
-          DataController.Options = [dcoAnsiSort, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
-          DataController.Summary.DefaultGroupSummaryItems = <>
-          DataController.Summary.FooterSummaryItems = <>
-          DataController.Summary.SummaryGroups = <>
-          DataController.OnFilterRecord = GridTMDBTableViewDataControllerFilterRecord
-          OptionsBehavior.CellHints = True
-          OptionsBehavior.FocusCellOnTab = True
-          OptionsBehavior.GoToNextCellOnEnter = True
-          OptionsBehavior.IncSearch = True
-          OptionsBehavior.FixedGroups = True
-          OptionsBehavior.ImmediateEditor = False
-          OptionsCustomize.ColumnFiltering = False
-          OptionsCustomize.ColumnHiding = True
-          OptionsCustomize.ColumnsQuickCustomization = True
-          OptionsData.Deleting = False
-          OptionsData.Inserting = False
-          OptionsSelection.MultiSelect = True
-          OptionsSelection.InvertSelect = False
-          OptionsSelection.UnselectFocusedRecordOnExit = False
-          OptionsView.CellEndEllipsis = True
-          OptionsView.GroupByBox = False
-          OptionsView.HeaderEndEllipsis = True
-          OptionsView.Indicator = True
-          Styles.OnGetContentStyle = GridTMDBTableViewStylesGetContentStyle
-          Styles.Inactive = DataModuleMain.StyleInactive
-          Styles.Selection = DataModuleMain.StyleSelected
-          OnColumnPosChanged = GridTMDBTableViewColumnPosChanged
-        end
-        object GridTMLevel: TcxGridLevel
-          GridView = GridTMDBTableView
-        end
+    ExplicitHeight = 340
+    object GridTM: TcxGrid [0]
+      Left = 7
+      Top = 102
+      Width = 688
+      Height = 227
+      TabOrder = 2
+      object GridTMDBTableView: TcxGridDBTableView
+        Navigator.Buttons.CustomButtons = <>
+        ScrollbarAnnotations.CustomAnnotations = <>
+        OnCellDblClick = GridTMDBTableViewCellDblClick
+        OnCustomDrawCell = GridTMDBTableViewCustomDrawCell
+        OnInitEdit = GridTMDBTableViewInitEdit
+        DataController.DataSource = DataSourceTranslationMemory
+        DataController.Options = [dcoAnsiSort, dcoAssignGroupingValues, dcoAssignMasterDetailKeys, dcoSaveExpanding]
+        DataController.Summary.DefaultGroupSummaryItems = <>
+        DataController.Summary.FooterSummaryItems = <>
+        DataController.Summary.SummaryGroups = <>
+        DataController.OnFilterRecord = GridTMDBTableViewDataControllerFilterRecord
+        OptionsBehavior.CellHints = True
+        OptionsBehavior.FocusCellOnTab = True
+        OptionsBehavior.GoToNextCellOnEnter = True
+        OptionsBehavior.IncSearch = True
+        OptionsBehavior.FixedGroups = True
+        OptionsBehavior.ImmediateEditor = False
+        OptionsCustomize.ColumnFiltering = False
+        OptionsCustomize.ColumnHiding = True
+        OptionsCustomize.ColumnsQuickCustomization = True
+        OptionsData.Deleting = False
+        OptionsData.Inserting = False
+        OptionsSelection.MultiSelect = True
+        OptionsSelection.InvertSelect = False
+        OptionsSelection.UnselectFocusedRecordOnExit = False
+        OptionsView.CellEndEllipsis = True
+        OptionsView.GroupByBox = False
+        OptionsView.HeaderEndEllipsis = True
+        OptionsView.Indicator = True
+        Styles.OnGetContentStyle = GridTMDBTableViewStylesGetContentStyle
+        Styles.Selection = DataModuleMain.StyleSelected
+        OnColumnPosChanged = GridTMDBTableViewColumnPosChanged
       end
-      object ComboBoxLanguages: TcxComboBox [1]
-        Left = 77
-        Top = 41
-        Properties.DropDownListStyle = lsFixedList
-        Properties.OnChange = ComboBoxLanguagesPropertiesChange
-        Style.HotTrack = False
-        TabOrder = 0
-        Width = 162
+      object GridTMLevel: TcxGridLevel
+        GridView = GridTMDBTableView
       end
-      object ComboBoxOptions: TcxCheckComboBox [2]
-        Left = 314
-        Top = 41
-        RepositoryItem = DataModuleMain.EditRepositoryCheckComboBoxNormalization
-        Properties.Items = <>
-        Properties.OnChange = ComboBoxOptionsPropertiesChange
-        Style.HotTrack = False
-        TabOrder = 1
-        Width = 168
-      end
-      inherited LayoutControlGroup_Root: TdxLayoutGroup
-        AlignVert = avClient
-      end
-      object dxLayoutItem2: TdxLayoutItem
-        Parent = LayoutControlGroup_Root
-        AlignVert = avClient
-        CaptionOptions.Visible = False
-        Control = GridTM
-        ControlOptions.OriginalHeight = 200
-        ControlOptions.OriginalWidth = 250
-        ControlOptions.ShowBorder = False
-        Index = 1
-      end
-      object dxLayoutItem5: TdxLayoutItem
-        Parent = LayoutGroupDuplicates
-        CaptionOptions.Text = 'Language:'
-        Control = ComboBoxLanguages
-        ControlOptions.OriginalHeight = 23
-        ControlOptions.OriginalWidth = 162
-        ControlOptions.ShowBorder = False
-        Index = 0
-      end
-      object dxLayoutItem6: TdxLayoutItem
-        Parent = LayoutGroupDuplicates
-        CaptionOptions.Text = 'Options:'
-        Control = ComboBoxOptions
-        ControlOptions.OriginalHeight = 23
-        ControlOptions.OriginalWidth = 168
-        ControlOptions.ShowBorder = False
-        Index = 2
-      end
-      object LayoutGroupDuplicates: TdxLayoutGroup
-        Parent = LayoutControlGroup_Root
-        CaptionOptions.Text = '&View duplicates'
-        Visible = False
-        ButtonOptions.ShowExpandButton = True
-        ItemIndex = 1
-        LayoutDirection = ldHorizontal
-        Index = 0
-        Buttons = <
-          item
-            Glyph.SourceDPI = 96
-            Glyph.Data = {
-              89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
-              610000001D744558745469746C6500436C6F73653B457869743B426172733B52
-              6962626F6E3B4603B9E8000002AD49444154785E85934B4C546714C77FF73232
-              0C041DC2237644C368F109868D98A0290BDA60E2DE9526921856C3C2A08C2E1A
-              A336A64DB48D81A8892D6E241A7CA20B1530261849DA4D47596818082F015118
-              0698B973DFB7773EB1333BEE97FFCD3927DFF97DE77B1CE9E3AF17293FF3B30C
-              48426B7D9939765A1290337AE1DC4B8F2CD73B0E802306C24CEB9BE7ACFA6206
-              86650FECFCE55283079025DBAE2F3D5CB79A94B58E206692C5CF1606933DAF7F
-              006451BA69986099A8C3C38C3C7846D791D3BCB97413351A151AFCADD38D8589
-              DE7F412A3A426A388AC801D92300A689E36A2A1225129923D8D1C9FC9387FCDD
-              D587244BC4037BDC581B91AB97716C93F2AA6D989A004802A0AF28382EF19F3B
-              FD34F4F7515852C4E2AE20FFFED10140CDC9101B0ABD54B4FFCEAB1F7F62D3F9
-              0AB4643203589E9C469F9926B8BF8AF947DD94B5849072246A5A43E040913F9F
-              BC75394C3DEE2658BB9BD4F07BE2E3B35915A83AFAA719766CCDE7C3403F43C8
-              6C6D6EC65FE8C391C0B660E8FA359203BD546EF7A34E4C60A49C2C8066602514
-              B4D94F98F12596150DDB721043DC84CC4A3A168FA14FA75CA085A17D05885B30
-              D280548AE8FB39947D8D048E3661D936DE5C99BC5C8FB0BF3BD684527B88D1D1
-              18B6AAE22E9A5D8186954C105B50680C87503D3EF2BDEE9E6FFD0940F9F11380
-              8FFA700BBD4FEEB2A94842D73D990A74DDC45C49B2A37A336FDB4E5122AB8C5F
-              6FE7CBBDDB7C763571A39D328FCEBB702BDF6F2FC352750C4DCFBC0343750189
-              243E3381131BE369DD018A4BD71328CE136730D7D3CDD3CEBFD8B2A518AF99C0
-              4C030CFEDF82EBE802602C2CE22DC8676F7500633981E2DE0C1694FAFD6C2C29
-              419D8FA12515B06C4C43461080822B6595CF7D927410475A3DF9ACA6B0859FDD
-              50C2566C7BF0ECD258A3E846200FF066B5AAB4462B3B800628FF0122CC6063F4
-              5F96130000000049454E44AE426082}
-            OnClick = LayoutGroupDuplicatesButton0Click
-          end>
-      end
-      object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
-        Parent = LayoutGroupDuplicates
-        SizeOptions.Height = 10
-        SizeOptions.Width = 10
-        CaptionOptions.Text = 'Empty Space Item'
-        Index = 1
-      end
+    end
+    object ComboBoxLanguages: TcxComboBox [1]
+      Left = 83
+      Top = 53
+      Properties.DropDownListStyle = lsFixedList
+      Properties.OnChange = ComboBoxLanguagesPropertiesChange
+      Style.HotTrack = False
+      TabOrder = 0
+      Width = 162
+    end
+    object ComboBoxOptions: TcxCheckComboBox [2]
+      Left = 320
+      Top = 53
+      RepositoryItem = DataModuleMain.EditRepositoryCheckComboBoxNormalization
+      Properties.Items = <>
+      Properties.OnChange = ComboBoxOptionsPropertiesChange
+      Style.HotTrack = False
+      TabOrder = 1
+      Width = 168
+    end
+    inherited LayoutControlGroup_Root: TdxLayoutGroup
+      AlignVert = avClient
+    end
+    object dxLayoutItem2: TdxLayoutItem
+      Parent = LayoutControlGroup_Root
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Control = GridTM
+      ControlOptions.OriginalHeight = 200
+      ControlOptions.OriginalWidth = 250
+      ControlOptions.ShowBorder = False
+      Index = 1
+    end
+    object dxLayoutItem5: TdxLayoutItem
+      Parent = LayoutGroupDuplicates
+      CaptionOptions.Text = 'Language:'
+      Control = ComboBoxLanguages
+      ControlOptions.OriginalHeight = 23
+      ControlOptions.OriginalWidth = 162
+      ControlOptions.ShowBorder = False
+      Index = 0
+    end
+    object dxLayoutItem6: TdxLayoutItem
+      Parent = LayoutGroupDuplicates
+      CaptionOptions.Text = 'Options:'
+      Control = ComboBoxOptions
+      ControlOptions.OriginalHeight = 23
+      ControlOptions.OriginalWidth = 168
+      ControlOptions.ShowBorder = False
+      Index = 2
+    end
+    object LayoutGroupDuplicates: TdxLayoutGroup
+      Parent = LayoutControlGroup_Root
+      CaptionOptions.Text = '&View duplicates'
+      Visible = False
+      ButtonOptions.ShowExpandButton = True
+      ItemIndex = 1
+      LayoutDirection = ldHorizontal
+      Index = 0
+      Buttons = <
+        item
+          Glyph.SourceDPI = 96
+          Glyph.Data = {
+            89504E470D0A1A0A0000000D49484452000000100000001008060000001FF3FF
+            610000001D744558745469746C6500436C6F73653B457869743B426172733B52
+            6962626F6E3B4603B9E8000002AD49444154785E85934B4C546714C77FF73232
+            0C041DC2237644C368F109868D98A0290BDA60E2DE9526921856C3C2A08C2E1A
+            A336A64DB48D81A8892D6E241A7CA20B1530261849DA4D47596818082F015118
+            0698B973DFB7773EB1333BEE97FFCD3927DFF97DE77B1CE9E3AF17293FF3B30C
+            48426B7D9939765A1290337AE1DC4B8F2CD73B0E802306C24CEB9BE7ACFA6206
+            86650FECFCE55283079025DBAE2F3D5CB79A94B58E206692C5CF1606933DAF7F
+            006451BA69986099A8C3C38C3C7846D791D3BCB97413351A151AFCADD38D8589
+            DE7F412A3A426A388AC801D92300A689E36A2A1225129923D8D1C9FC9387FCDD
+            D587244BC4037BDC581B91AB97716C93F2AA6D989A004802A0AF28382EF19F3B
+            FD34F4F7515852C4E2AE20FFFED10140CDC9101B0ABD54B4FFCEAB1F7F62D3F9
+            0AB4643203589E9C469F9926B8BF8AF947DD94B5849072246A5A43E040913F9F
+            BC75394C3DEE2658BB9BD4F07BE2E3B35915A83AFAA719766CCDE7C3403F43C8
+            6C6D6EC65FE8C391C0B660E8FA359203BD546EF7A34E4C60A49C2C8066602514
+            B4D94F98F12596150DDB721043DC84CC4A3A168FA14FA75CA085A17D05885B30
+            D280548AE8FB39947D8D048E3661D936DE5C99BC5C8FB0BF3BD684527B88D1D1
+            18B6AAE22E9A5D8186954C105B50680C87503D3EF2BDEE9E6FFD0940F9F11380
+            8FFA700BBD4FEEB2A94842D73D990A74DDC45C49B2A37A336FDB4E5122AB8C5F
+            6FE7CBBDDB7C763571A39D328FCEBB702BDF6F2FC352750C4DCFBC0343750189
+            243E3381131BE369DD018A4BD71328CE136730D7D3CDD3CEBFD8B2A518AF99C0
+            4C030CFEDF82EBE802602C2CE22DC8676F7500633981E2DE0C1694FAFD6C2C29
+            419D8FA12515B06C4C43461080822B6595CF7D927410475A3DF9ACA6B0859FDD
+            50C2566C7BF0ECD258A3E846200FF066B5AAB4462B3B800628FF0122CC6063F4
+            5F96130000000049454E44AE426082}
+          OnClick = LayoutGroupDuplicatesButton0Click
+        end>
+    end
+    object dxLayoutEmptySpaceItem1: TdxLayoutEmptySpaceItem
+      Parent = LayoutGroupDuplicates
+      SizeOptions.Height = 10
+      SizeOptions.Width = 10
+      CaptionOptions.Text = 'Empty Space Item'
+      Index = 1
     end
   end
   inherited ActionList: TActionList

@@ -32,8 +32,7 @@ type
     LayoutControlGroup_Root: TdxLayoutGroup;
     LayoutControlHeader: TdxLayoutControl;
     LayoutControlHeaderGroup_Root: TdxLayoutGroup;
-    LayoutItemHeader: TdxLayoutItem;
-    LabelHeader: TcxLabel;
+    LayoutItemHeader: TdxLayoutLabeledItem;
     procedure ActionOKExecute(Sender: TObject);
     procedure ActionCancelExecute(Sender: TObject);
   private
@@ -60,7 +59,7 @@ end;
 
 procedure TFormDialog.SetHeader(const Value: string);
 begin
-  LabelHeader.Caption := Value;
+  LayoutItemHeader.CaptionOptions.Text := Value;
   LayoutControlHeader.Visible := (Value <> '');
 end;
 

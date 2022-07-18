@@ -7,42 +7,33 @@ inherited FormNewProject: TFormNewProject
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 186
+    Top = 179
     Width = 471
-    ExplicitTop = 186
+    ExplicitTop = 179
     ExplicitWidth = 471
     inherited ButtonOK: TcxButton
-      Left = 284
-      ExplicitLeft = 284
+      Left = 301
+      ExplicitLeft = 301
     end
     inherited ButtonCancel: TcxButton
-      Left = 366
-      ExplicitLeft = 366
+      Left = 383
+      ExplicitLeft = 383
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
     Width = 471
     ExplicitWidth = 471
-    inherited LabelHeader: TcxLabel
-      Caption = 'Create a new translation project'
-      ExplicitWidth = 428
-      Width = 428
+    inherited LayoutItemHeader: TdxLayoutLabeledItem
+      CaptionOptions.Text = 'Create a new translation project'
     end
-  end
-  inherited PanelMain: TPanel
-    Width = 471
-    Height = 147
-    ExplicitWidth = 471
-    ExplicitHeight = 147
   end
   inherited LayoutControl: TdxLayoutControl
     Width = 471
-    Height = 147
+    Height = 134
     AutoSize = True
-    ExplicitLeft = 0
-    ExplicitTop = 39
+    ExplicitTop = 45
     ExplicitWidth = 471
-    ExplicitHeight = 147
+    ExplicitHeight = 138
     object EditSourceApplication: TcxMRUEdit [0]
       Left = 114
       Top = 7

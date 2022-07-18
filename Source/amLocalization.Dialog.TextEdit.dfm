@@ -13,18 +13,18 @@ inherited FormTextEditor: TFormTextEditor
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 327
+    Top = 324
     Width = 597
     TabOrder = 1
-    ExplicitTop = 327
+    ExplicitTop = 324
     ExplicitWidth = 597
     inherited ButtonOK: TcxButton
-      Left = 410
-      ExplicitLeft = 410
+      Left = 427
+      ExplicitLeft = 427
     end
     inherited ButtonCancel: TcxButton
-      Left = 492
-      ExplicitLeft = 492
+      Left = 509
+      ExplicitLeft = 509
     end
   end
   inherited LayoutControlHeader: TdxLayoutControl
@@ -33,155 +33,138 @@ inherited FormTextEditor: TFormTextEditor
     Visible = False
     ExplicitWidth = 597
     inherited LabelHeader: TcxLabel
-      ExplicitWidth = 554
-      Width = 554
+      ExplicitWidth = 571
+      Width = 571
     end
   end
-  inherited PanelMain: TPanel
-    Top = 65
+  inherited LayoutControl: TdxLayoutControl
+    Top = 67
     Width = 597
-    Height = 262
-    ExplicitTop = 65
+    Height = 257
+    ExplicitTop = 67
     ExplicitWidth = 597
-    ExplicitHeight = 262
-    inherited LayoutControl: TdxLayoutControl
-      Width = 581
-      Height = 250
-      ExplicitLeft = 8
-      ExplicitWidth = 581
-      ExplicitHeight = 250
-      object PanelEditors: TPanel [0]
-        Left = 7
-        Top = 7
-        Width = 567
-        Height = 236
+    ExplicitHeight = 257
+    object PanelEditors: TPanel [0]
+      Left = 7
+      Top = 7
+      Width = 583
+      Height = 243
+      BevelOuter = bvNone
+      Color = 4206115
+      FullRepaint = False
+      ParentBackground = False
+      ShowCaption = False
+      TabOrder = 0
+      object SplitterEditors: TcxSplitter
+        Left = 277
+        Top = 0
+        Width = 10
+        Height = 243
+        HotZoneClassName = 'TcxSimpleStyle'
+        HotZone.ArrowHighlightColor = clHighlight
+        PositionAfterOpen = 80
+        AutoSnap = True
+        MinSize = 50
+        Control = PanelSource
+      end
+      object PanelSource: TPanel
+        Left = 0
+        Top = 0
+        Width = 277
+        Height = 243
+        Align = alLeft
         BevelOuter = bvNone
-        Color = 16053234
         FullRepaint = False
-        ParentBackground = False
+        ParentColor = True
         ShowCaption = False
-        TabOrder = 0
-        object SplitterEditors: TcxSplitter
-          Left = 277
-          Top = 0
-          Width = 4
-          Height = 236
-          HotZoneClassName = 'TcxSimpleStyle'
-          HotZone.ArrowHighlightColor = clHighlight
-          PositionAfterOpen = 80
-          AutoSnap = True
-          MinSize = 50
-          Control = PanelSource
-          ExplicitHeight = 238
+        TabOrder = 1
+        object EditSourceText: TcxRichEdit
+          Left = 0
+          Top = 15
+          TabStop = False
+          Align = alClient
+          PopupMenu = PopupActionBar1
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ReadOnly = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          Style.TextColor = clGrayText
+          TabOrder = 0
+          Height = 228
+          Width = 277
         end
-        object PanelSource: TPanel
+        object LabelSourceName: TcxLabel
           Left = 0
           Top = 0
-          Width = 277
-          Height = 236
-          Align = alLeft
-          BevelOuter = bvNone
-          FullRepaint = False
-          ParentColor = True
-          ShowCaption = False
-          TabOrder = 1
-          ExplicitHeight = 238
-          object EditSourceText: TcxRichEdit
-            Left = 0
-            Top = 15
-            TabStop = False
-            Align = alClient
-            PopupMenu = PopupActionBar1
-            Properties.MemoMode = True
-            Properties.PlainText = True
-            Properties.ReadOnly = True
-            Properties.ScrollBars = ssVertical
-            Style.HotTrack = False
-            Style.TextColor = clGrayText
-            TabOrder = 0
-            ExplicitTop = 13
-            ExplicitHeight = 225
-            Height = 221
-            Width = 277
-          end
-          object LabelSourceName: TcxLabel
-            Left = 0
-            Top = 0
-            Align = alTop
-            Caption = 'Lorem ipsum'
-            Style.TransparentBorder = False
-            Properties.Alignment.Horz = taCenter
-            Properties.ShowAccelChar = False
-            Transparent = True
-            Visible = False
-            AnchorX = 139
-          end
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          Visible = False
+          AnchorX = 139
         end
-        object PanelText: TPanel
-          Left = 281
-          Top = 0
-          Width = 286
-          Height = 236
+      end
+      object PanelText: TPanel
+        Left = 287
+        Top = 0
+        Width = 296
+        Height = 243
+        Align = alClient
+        BevelOuter = bvNone
+        FullRepaint = False
+        ParentColor = True
+        ShowCaption = False
+        TabOrder = 2
+        object EditText: TcxRichEdit
+          Left = 0
+          Top = 15
           Align = alClient
-          BevelOuter = bvNone
-          FullRepaint = False
-          ParentColor = True
-          ShowCaption = False
-          TabOrder = 2
-          ExplicitWidth = 288
-          ExplicitHeight = 238
-          object EditText: TcxRichEdit
-            Left = 0
-            Top = 15
-            Align = alClient
-            PopupMenu = PopupActionBar1
-            Properties.MemoMode = True
-            Properties.PlainText = True
-            Properties.ScrollBars = ssVertical
-            Style.HotTrack = False
-            TabOrder = 0
-            ExplicitTop = 13
-            ExplicitWidth = 288
-            ExplicitHeight = 225
-            Height = 221
-            Width = 286
-          end
-          object LabelTargetName: TcxLabel
-            Left = 0
-            Top = 0
-            Align = alTop
-            Caption = 'Lorem ipsum'
-            Style.TransparentBorder = False
-            Properties.Alignment.Horz = taCenter
-            Properties.ShowAccelChar = False
-            Transparent = True
-            Visible = False
-            ExplicitWidth = 288
-            AnchorX = 143
-          end
+          PopupMenu = PopupActionBar1
+          Properties.MemoMode = True
+          Properties.PlainText = True
+          Properties.ScrollBars = ssVertical
+          Style.HotTrack = False
+          TabOrder = 0
+          Height = 228
+          Width = 296
+        end
+        object LabelTargetName: TcxLabel
+          Left = 0
+          Top = 0
+          Align = alTop
+          Caption = 'Lorem ipsum'
+          Style.TransparentBorder = False
+          Properties.Alignment.Horz = taCenter
+          Properties.ShowAccelChar = False
+          Transparent = True
+          Visible = False
+          AnchorX = 148
         end
       end
-      inherited LayoutControlGroup_Root: TdxLayoutGroup
-        AlignVert = avClient
-        LayoutDirection = ldHorizontal
-      end
-      object LayoutItemEditors: TdxLayoutItem
-        Parent = LayoutControlGroup_Root
-        AlignHorz = ahClient
-        AlignVert = avClient
-        CaptionOptions.Visible = False
-        Control = PanelEditors
-        ControlOptions.AutoColor = True
-        ControlOptions.OriginalHeight = 179
-        ControlOptions.OriginalWidth = 443
-        ControlOptions.ShowBorder = False
-        Index = 0
-      end
+    end
+    inherited LayoutControlGroup_Root: TdxLayoutGroup
+      AlignVert = avClient
+      LayoutDirection = ldHorizontal
+    end
+    object LayoutItemEditors: TdxLayoutItem
+      Parent = LayoutControlGroup_Root
+      AlignHorz = ahClient
+      AlignVert = avClient
+      CaptionOptions.Visible = False
+      Control = PanelEditors
+      ControlOptions.AutoColor = True
+      ControlOptions.OriginalHeight = 179
+      ControlOptions.OriginalWidth = 443
+      ControlOptions.ShowBorder = False
+      Index = 0
     end
   end
   object ToolActionBar2: TActionToolBar [3]
     Left = 0
-    Top = 39
+    Top = 41
     Width = 597
     Height = 26
     ActionManager = ActionManager1
