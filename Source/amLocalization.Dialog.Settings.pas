@@ -504,7 +504,7 @@ resourcestring
 
 const
   FolderOrder: array[Ord(Low(TTranslationManagerFolder))..Ord(High(TTranslationManagerFolder))] of TTranslationManagerFolder =
-    (tmFolderAppData, tmFolderDocuments, tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
+    (tmFolderAppData, tmFolderDocuments, tmFolderSpellCheck, tmFolderUserSpellCheck);
 
 // -----------------------------------------------------------------------------
 

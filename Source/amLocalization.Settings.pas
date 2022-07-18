@@ -100,7 +100,7 @@ type
 
 
 type
-  TTranslationManagerFolder = (tmFolderAppData, tmFolderDocuments, tmFolderSkins, tmFolderUserSkins, tmFolderSpellCheck, tmFolderUserSpellCheck);
+  TTranslationManagerFolder = (tmFolderAppData, tmFolderDocuments, tmFolderSpellCheck, tmFolderUserSpellCheck);
 
 type
   TTranslationManagerFolderSettings = class(TConfigurationSection)
@@ -113,8 +113,6 @@ type
     sFolderDisplayName: array[TTranslationManagerFolder] of string = ( // TODO : Localization
       'Application data',
       'Project default',
-      'Skins (system)',
-      'Skins (user)',
       'Spell Check dictionaries (system)',
       'Spell Check dictionaries (user)'
       );
@@ -122,17 +120,12 @@ type
       True,
       False,
       True,
-      False,
-      True,
       False
       );
-    sSkinFolder = 'Skins\';
     sSpellCheckFolder = 'Dictionaries\';
     sFolderDefault: array[TTranslationManagerFolder] of string = (
       '%DATA%\',
       '%DOCUMENTS%\',
-      '%INSTALL%\' + sSkinFolder,
-      '%DATA%\' + sSkinFolder,
       '%INSTALL%\' + sSpellCheckFolder,
       '%DATA%\' + sSpellCheckFolder
       );
@@ -163,8 +156,6 @@ type
 
     property FolderAppData: string index tmFolderAppData read GetFolder write SetFolder;
     property FolderDocuments: string index tmFolderDocuments read GetFolder write SetFolder;
-    property FolderSkins: string index tmFolderSkins read GetFolder write SetFolder;
-    property FolderUserSkins: string index tmFolderUserSkins read GetFolder write SetFolder;
     property FolderSpellCheck: string index tmFolderSpellCheck read GetFolder write SetFolder;
     property FolderUserSpellCheck: string index tmFolderUserSpellCheck read GetFolder write SetFolder;
 
