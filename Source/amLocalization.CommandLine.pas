@@ -368,6 +368,7 @@ end;
 
 procedure TLocalizationCommandLineTool.LoadFromFile(const Filename: string);
 var
+  LoadProperties: TLocalizationLoadProperties;
   LanguageItem: TLanguageItem;
   i: integer;
   CountItem, CountProperty: integer;
@@ -380,7 +381,7 @@ begin
   FProject.BeginUpdate;
   try
 
-    TLocalizationProjectFiler.LoadFromFile(FProject, Filename);
+    TLocalizationProjectFiler.LoadFromFile(FProject, LoadProperties, Filename);
 
   finally
     FProject.EndUpdate;

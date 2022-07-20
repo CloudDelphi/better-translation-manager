@@ -3968,9 +3968,13 @@ var
   BestLanguage: TTranslationLanguage;
   i: integer;
   Progress: IProgress;
+  LoadProperties: TLocalizationLoadProperties;
 resourcestring
   sFileNotFound = 'File not found: %s';
   sErrorLoadingProjectTitle = 'Error loading project';
+  sProjectFileUpgradedTitle = 'Project file format upgrade';
+  sProjectFileUpgraded = 'The file format of the translation project file will be upgraded from version %d to %d when you save the project.'+#13#13+
+    'The upgrade is not backward compatible so if you need to be able to open the project with older versions of Better Translation Manager then you should not save the project with this version of the application.';
 begin
   Result := True;
 
@@ -4005,7 +4009,7 @@ begin
             ProgressStream := TProgressStream.Create(Stream, Progress);
             try
 
-              TLocalizationProjectFiler.LoadFromStream(FProject, ProgressStream, Progress);
+              TLocalizationProjectFiler.LoadFromStream(FProject, LoadProperties, ProgressStream, Progress);
 
             finally
               ProgressStream.Free;
@@ -4073,6 +4077,10 @@ begin
   end;
 
   AddRecentFile(FProjectFilename);
+
+  // Warn user if project file format will be upgraded on save
+  if (LoadProperties.FileFormatVersion < LocalizationFileFormatVersionCurrent) then
+    TaskMessageDlg(sProjectFileUpgradedTitle, Format(sProjectFileUpgraded, [LoadProperties.FileFormatVersion, LocalizationFileFormatVersionCurrent]), mtInformation, [mbOK], -1);
 
   (* This must be optional or not done at all. We don't need access to the EXE in order to edit translations.
   if (CheckSourceFile) then

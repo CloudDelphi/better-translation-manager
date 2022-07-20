@@ -27,6 +27,12 @@ type
   TLocalizationSaveOption = (soOmitDontTranslateItems, soSort, soOmitNewState);
   TLocalizationSaveOptions = set of TLocalizationSaveOption;
 
+  TLocalizationLoadProperties = record
+    FileFormatVersion: integer;
+    ToolName: string;
+    ToolVersion: integer;
+  end;
+
   TLocalizationProjectFiler = class
   private
     const
@@ -39,8 +45,8 @@ type
     class function DecodeStringOld(const Value: string): string;
     class function DecodeString(const Value: string): string;
   public
-    class procedure LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress = nil);
-    class procedure LoadFromFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress = nil);
+    class procedure LoadFromStream(Project: TLocalizerProject; var LoadProperties: TLocalizationLoadProperties; Stream: TStream; const Progress: IProgress = nil);
+    class procedure LoadFromFile(Project: TLocalizerProject; var LoadProperties: TLocalizationLoadProperties; const Filename: string; const Progress: IProgress = nil);
 
     class procedure SaveToStream(Project: TLocalizerProject; Stream: TStream; AOptions: TLocalizationSaveOptions = []; const Progress: IProgress = nil);
     class procedure SaveToFile(Project: TLocalizerProject; const Filename: string; AOptions: TLocalizationSaveOptions = []; const Progress: IProgress = nil);
@@ -178,13 +184,13 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.LoadFromFile(Project: TLocalizerProject; const Filename: string; const Progress: IProgress);
+class procedure TLocalizationProjectFiler.LoadFromFile(Project: TLocalizerProject; var LoadProperties: TLocalizationLoadProperties; const Filename: string; const Progress: IProgress);
 var
   Stream: TStream;
 begin
   Stream := TFileStream.Create(Filename, fmOpenRead);
   try
-    LoadFromStream(Project, Stream, Progress);
+    LoadFromStream(Project, LoadProperties, Stream, Progress);
   finally
     Stream.Free;
   end;
@@ -192,7 +198,7 @@ end;
 
 // -----------------------------------------------------------------------------
 
-class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProject; Stream: TStream; const Progress: IProgress);
+class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProject; var LoadProperties: TLocalizationLoadProperties; Stream: TStream; const Progress: IProgress);
 
   function StringToModuleKind(const Value: string): TLocalizerModuleKind;
   begin
@@ -260,7 +266,6 @@ class procedure TLocalizationProjectFiler.LoadFromStream(Project: TLocalizerProj
 type
   TTextDecoder = reference to function(const Value: string): string;
 var
-  FileFormatVersion: integer;
   XML: IXMLDocument;
   RootNode, ProjectNode, Node: IXMLNode;
   LanguagesNode, LanguageNode: IXMLNode;
@@ -283,8 +288,10 @@ begin
   if (Progress <> nil) then
     Progress.UpdateMessage(sProgressProjectLoad);
 
+  LoadProperties := Default(TLocalizationLoadProperties);
+
   TextDecoder := DecodeString;
-  FileFormatVersion := LocalizationFileFormatVersionUnknown;
+  LoadProperties.FileFormatVersion := LocalizationFileFormatVersionUnknown;
 
   XML := TXMLDocument.Create(nil);
   XML.Options := XML.Options + [doAttrNull];
@@ -297,19 +304,22 @@ begin
 
   Node := RootNode.ChildNodes['meta'];
   if (Node <> nil) then
-    FileFormatVersion := StrToIntDef(Node.ChildValues['version'], LocalizationFileFormatVersionUnknown);
+  begin
+    LoadProperties.FileFormatVersion := StrToIntDef(Node.ChildValues['version'], LocalizationFileFormatVersionUnknown);
+    LoadProperties.ToolName := VarToStr(Node.ChildValues['tool']);
+    LoadProperties.ToolVersion := StrToIntDef(Node.ChildValues['toolversion'], 0);
+  end;
 
   // Reject future file format versions
-  if (FileFormatVersion > LocalizationFileFormatVersionCurrent) then
+  if (LoadProperties.FileFormatVersion > LocalizationFileFormatVersionCurrent) then
   begin
-    var ThisAppVersion := TVersionInfo.FileVersionString(ParamStr(0));
-    var FileAppVersion := VarToStr(Node.ChildValues['toolversion']);
+    var ThisToolVersion := TVersionInfo.FileVersionString(ParamStr(0));
     raise ELocalizationPersistence.CreateFmt(sUnsupportedFutureVersion,
-      [ThisAppVersion, IntToStr(LocalizationFileFormatVersionCurrent), FileAppVersion, FileFormatVersion.ToString]);
+      [ThisToolVersion, IntToStr(LocalizationFileFormatVersionCurrent), LoadProperties.ToolVersion, LoadProperties.FileFormatVersion.ToString]);
   end;
 
   // Select text decoder based on file format version
-  if (FileFormatVersion = LocalizationFileFormatVersionBadTextEncoding) then
+  if (LoadProperties.FileFormatVersion = LocalizationFileFormatVersionBadTextEncoding) then
     TextDecoder := DecodeStringOld;
 
   ProjectNode := RootNode.ChildNodes['project'];
