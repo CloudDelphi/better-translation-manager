@@ -1189,11 +1189,19 @@ begin
     if (Module.Purge) then
       Result := True;
 
+    (*
+    Do not delete empty module.
+    If it has become empty because it's marked "Don't Translate" (or whatever)
+    and we delete it, then the "Don't Translate" status will be lost and the
+    module will reappear without "Don't Translate" next time we update the
+    project.
+
     if (Module.Items.Count = 0) then
     begin
       Module.Free;
       Result := True;
     end;
+    *)
   end;
 end;
 
@@ -1503,11 +1511,16 @@ begin
       if (Item.Purge) then
         Result := True;
 
+      (*
+      Do not delete empty item.
+      See explanation in TLocalizerProject.Purge
+
       if (Item.Properties.Count = 0) then
       begin
         Item.Free;
         Result := True;
       end;
+      *)
     end;
 
     if (Result) then

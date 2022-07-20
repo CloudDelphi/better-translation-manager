@@ -4352,6 +4352,9 @@ begin
   GridItemsTableView.BeginUpdate;
   try
 
+    // We purge manually instead of using the Project.Purge method so we can
+    // update the treelist and data sources while we do it.
+
     for LoopModule in FProject.Modules.Values.ToArray do // ToArray for stability since we delete from dictionary
     begin
       Module := LoopModule;
@@ -4401,6 +4404,10 @@ begin
                 Prop.Free;
               end;
 
+            (*
+            Do not delete empty item.
+            See explanation in TLocalizerProject.Purge
+
             if (Item.Properties.Count = 0) then
             begin
               NeedReload := True;
@@ -4411,12 +4418,17 @@ begin
               end;
               FreeAndNil(Item);
             end;
+            *)
 
           finally
             if (Item <> nil) then
               Item.EndUpdate;
           end;
         end;
+
+        (*
+        Do not delete empty item.
+        See explanation in TLocalizerProject.Purge
 
         if (Module.Items.Count = 0) then
         begin
@@ -4430,6 +4442,7 @@ begin
           Node.Free;
           FreeAndNil(Module);
         end;
+        *)
 
       finally
         if (Module <> nil) then

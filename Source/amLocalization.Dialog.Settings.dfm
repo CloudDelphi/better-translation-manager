@@ -870,9 +870,10 @@ inherited FormSettings: TFormSettings
       Left = 10000
       Top = 10000
       Hint = 
-        'Do not save items (modules, properties, etc.) that are marked "D' +
-        'on'#39't translate". This can save considerable space in the file. T' +
-        'he item values can be recreated by updating the project.'
+        'Do not save details for items (modules, properties, etc.) that a' +
+        're marked "Don'#39't translate". This can save considerable space in' +
+        ' the file. The item values can be recreated by updating the proj' +
+        'ect.'
       Caption = 'Omit "Don'#39't translate" items when saving'
       Style.HotTrack = False
       Style.TransparentBorder = False

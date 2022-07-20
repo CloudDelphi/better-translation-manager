@@ -592,8 +592,8 @@ begin
   Node := RootNode.AddChild('options');
   // Store the stringlist handling setting that was used with the project
   Node.AddChild('stringlisthandling').Text := IntToStr(Ord(StringListHandling));
-  // Indicate if "Don't Translate" items were included
-  Node.AddChild('junksaved').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
+  // Indicate if Status="Don't Translate" items were included
+  Node.AddChild('omitdonttranslate').Text := (not(soOmitDontTranslateItems in AOptions)).ToString(TUseBoolStrs.True);
   // Indicate if nodes are sorted
   Node.AddChild('sorted').Text := (soSort in AOptions).ToString(TUseBoolStrs.True);
   // Indicate if State="New" is saved
