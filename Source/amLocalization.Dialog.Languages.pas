@@ -111,6 +111,7 @@ begin
   FTreeView.OnGetText := TreeViewGetText;
   FTreeView.OnIncrementalSearch := TreeViewIncrementalSearch;
   FTreeView.TreeOptions.MiscOptions := FTreeView.TreeOptions.MiscOptions + [toCheckSupport];
+  FTreeView.TreeOptions.SelectionOptions := FTreeView.TreeOptions.SelectionOptions + [toFullRowSelect];
   FTreeView.IncrementalSearch := isAll;
   FTreeView.CheckImageKind := ckSystemDefault;
 
