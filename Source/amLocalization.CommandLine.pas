@@ -31,6 +31,7 @@ type
     FVerbose: boolean;
     FModuleNameScheme: TModuleNameScheme;
     FOutputFolder: string;
+    FIncludeVersionInfo: boolean;
   protected
     procedure Message(const Msg: string);
     procedure Error(const Msg: string);
@@ -55,6 +56,7 @@ type
     class function OptionSymbols(var Filename: string): boolean;
     class function OptionHelp: boolean;
     class function OptionVerbose: boolean;
+    class function OptionIncludeVersionInfo: boolean;
     class function OptionName(ADefault: TModuleNameScheme): TModuleNameScheme;
     class function OptionLanguage(ADefault: string = ''): string;
   end;
@@ -79,6 +81,7 @@ resourcestring
     '  -y:<symbol file>   Specify string symbols file'+#13+
     '  -o:<output folder> Specify resource module output folder'+#13+
     '  -v                 Display verbose messages'+#13+
+    '  -i                 Include version info resource from source'+#13+
     '  -n:<scheme>        File name scheme:'+#13+
     '                     0: ISO 639-2 (e.g. ENU, DAN, DEU, etc)'+#13+
     '                     1: ISO 639-1 (e.g. EN, DA, DE, etc)'+#13+
@@ -140,6 +143,11 @@ end;
 class function TLocalizationCommandLineTool.OptionHelp: boolean;
 begin
   Result := (FindCmdLineSwitch('help')) or (FindCmdLineSwitch('?')) or (FindCmdLineSwitch('h'));
+end;
+
+class function TLocalizationCommandLineTool.OptionIncludeVersionInfo: boolean;
+begin
+  Result := (FindCmdLineSwitch('versioninfo')) or (FindCmdLineSwitch('i'));
 end;
 
 class function TLocalizationCommandLineTool.OptionLanguage(ADefault: string): string;
@@ -243,6 +251,7 @@ begin
     Error(Format('Project file not found: %s', [Filename]));
 
   FVerbose := OptionVerbose;
+  FIncludeVersionInfo := OptionIncludeVersionInfo;
 
   LoadFromFile(Filename);
 
@@ -355,6 +364,8 @@ begin
   try
     ResourceWriter := TResourceModuleWriter.Create(TargetFilename);
     try
+
+      ProjectProcessor.IncludeVersionInfo := FIncludeVersionInfo;
 
       ProjectProcessor.Execute(liaTranslate, FProject, FProject.SourceFilename, TranslationLanguage, ResourceWriter);
 
