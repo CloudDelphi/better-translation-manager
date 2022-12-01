@@ -13,10 +13,10 @@ inherited FormTextEditor: TFormTextEditor
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 324
+    Top = 320
     Width = 597
     TabOrder = 1
-    ExplicitTop = 324
+    ExplicitTop = 320
     ExplicitWidth = 597
     inherited ButtonOK: TcxButton
       Left = 427
@@ -32,15 +32,11 @@ inherited FormTextEditor: TFormTextEditor
     TabOrder = 0
     Visible = False
     ExplicitWidth = 597
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 571
-      Width = 571
-    end
   end
   inherited LayoutControl: TdxLayoutControl
-    Top = 67
+    Top = 71
     Width = 597
-    Height = 257
+    Height = 249
     ExplicitTop = 67
     ExplicitWidth = 597
     ExplicitHeight = 257
@@ -48,7 +44,7 @@ inherited FormTextEditor: TFormTextEditor
       Left = 7
       Top = 7
       Width = 583
-      Height = 243
+      Height = 235
       BevelOuter = bvNone
       Color = 4206115
       FullRepaint = False
@@ -59,25 +55,27 @@ inherited FormTextEditor: TFormTextEditor
         Left = 277
         Top = 0
         Width = 10
-        Height = 243
+        Height = 235
         HotZoneClassName = 'TcxSimpleStyle'
         HotZone.ArrowHighlightColor = clHighlight
         PositionAfterOpen = 80
         AutoSnap = True
         MinSize = 50
         Control = PanelSource
+        ExplicitHeight = 243
       end
       object PanelSource: TPanel
         Left = 0
         Top = 0
         Width = 277
-        Height = 243
+        Height = 235
         Align = alLeft
         BevelOuter = bvNone
         FullRepaint = False
         ParentColor = True
         ShowCaption = False
         TabOrder = 1
+        ExplicitHeight = 243
         object EditSourceText: TcxRichEdit
           Left = 0
           Top = 15
@@ -91,7 +89,8 @@ inherited FormTextEditor: TFormTextEditor
           Style.HotTrack = False
           Style.TextColor = clGrayText
           TabOrder = 0
-          Height = 228
+          ExplicitHeight = 228
+          Height = 220
           Width = 277
         end
         object LabelSourceName: TcxLabel
@@ -111,13 +110,14 @@ inherited FormTextEditor: TFormTextEditor
         Left = 287
         Top = 0
         Width = 296
-        Height = 243
+        Height = 235
         Align = alClient
         BevelOuter = bvNone
         FullRepaint = False
         ParentColor = True
         ShowCaption = False
         TabOrder = 2
+        ExplicitHeight = 243
         object EditText: TcxRichEdit
           Left = 0
           Top = 15
@@ -128,7 +128,8 @@ inherited FormTextEditor: TFormTextEditor
           Properties.ScrollBars = ssVertical
           Style.HotTrack = False
           TabOrder = 0
-          Height = 228
+          ExplicitHeight = 228
+          Height = 220
           Width = 296
         end
         object LabelTargetName: TcxLabel
@@ -164,7 +165,7 @@ inherited FormTextEditor: TFormTextEditor
   end
   object ToolActionBar2: TActionToolBar [3]
     Left = 0
-    Top = 41
+    Top = 45
     Width = 597
     Height = 26
     ActionManager = ActionManager1

@@ -89,6 +89,7 @@ object FormDialog: TFormDialog
     BevelInner = bvNone
     BevelKind = bkFlat
     TabOrder = 1
+    Visible = False
     AutoSize = True
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeelHeader
     object LayoutControlHeaderGroup_Root: TdxLayoutGroup
@@ -115,8 +116,6 @@ object FormDialog: TFormDialog
     Align = alClient
     TabOrder = 2
     LayoutLookAndFeel = DataModuleMain.LayoutSkinLookAndFeel
-    ExplicitTop = 41
-    ExplicitHeight = 188
     object LayoutControlGroup_Root: TdxLayoutGroup
       AlignHorz = ahClient
       AlignVert = avTop

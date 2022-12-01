@@ -10,9 +10,9 @@ inherited FormStopList: TFormStopList
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 477
+    Top = 473
     Width = 655
-    ExplicitTop = 477
+    ExplicitTop = 473
     ExplicitWidth = 655
     inherited ButtonOK: TcxButton
       Left = 485
@@ -71,25 +71,22 @@ inherited FormStopList: TFormStopList
   end
   inherited LayoutControlHeader: TdxLayoutControl
     Width = 655
+    Visible = True
     ExplicitWidth = 655
-    inherited LabelHeader: TcxLabel
-      Caption = 'List of items that should never be translated'
-      ExplicitWidth = 629
-      Width = 629
+    inherited LayoutItemHeader: TdxLayoutLabeledItem
+      CaptionOptions.Text = 'List of items that should never be translated'
     end
   end
   inherited LayoutControl: TdxLayoutControl
     Width = 655
-    Height = 436
-    ExplicitLeft = 0
-    ExplicitTop = 41
+    Height = 428
     ExplicitWidth = 655
-    ExplicitHeight = 441
+    ExplicitHeight = 428
     object TreeListStopList: TcxTreeList [0]
       Left = 7
       Top = 7
       Width = 641
-      Height = 422
+      Height = 414
       Bands = <
         item
         end>

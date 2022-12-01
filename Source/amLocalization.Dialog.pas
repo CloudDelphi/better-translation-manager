@@ -37,6 +37,8 @@ type
     procedure ActionCancelExecute(Sender: TObject);
   private
   public
+    constructor Create(AOwner: TComponent); override;
+
     procedure SetHeader(const Value: string);
   end;
 
@@ -55,6 +57,14 @@ end;
 procedure TFormDialog.ActionOKExecute(Sender: TObject);
 begin
 //
+end;
+
+constructor TFormDialog.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  if (LayoutControlHeader.Visible) then
+    SetHeader(LayoutItemHeader.CaptionOptions.Text);
 end;
 
 procedure TFormDialog.SetHeader(const Value: string);

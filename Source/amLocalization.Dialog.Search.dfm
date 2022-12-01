@@ -14,9 +14,9 @@ inherited FormSearch: TFormSearch
   PixelsPerInch = 96
   TextHeight = 15
   inherited LayoutControlButtons: TdxLayoutControl
-    Top = 288
+    Top = 284
     Width = 707
-    ExplicitTop = 288
+    ExplicitTop = 284
     ExplicitWidth = 707
     inherited ButtonOK: TcxButton
       Left = 537
@@ -155,19 +155,15 @@ inherited FormSearch: TFormSearch
     Width = 707
     Visible = False
     ExplicitWidth = 707
-    inherited LabelHeader: TcxLabel
-      ExplicitWidth = 681
-      Width = 681
-    end
   end
   inherited LayoutControl: TdxLayoutControl
     Width = 707
-    Height = 247
+    Height = 239
     ExplicitWidth = 707
-    ExplicitHeight = 247
+    ExplicitHeight = 239
     DesignSize = (
       707
-      247)
+      239)
     object EditSearchText: TcxMRUEdit [0]
       Left = 48
       Top = 7
@@ -366,7 +362,7 @@ inherited FormSearch: TFormSearch
       Left = 7
       Top = 97
       Width = 693
-      Height = 136
+      Height = 128
       TabOrder = 12
       OnEnter = GridResultEnter
       OnExit = GridResultExit

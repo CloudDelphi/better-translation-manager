@@ -18,7 +18,7 @@ uses
   cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, dxSkinsCore, dxLayoutControlAdapters,
   dxLayoutcxEditAdapters, dxLayoutContainer, cxContainer, cxEdit, cxCustomData, cxStyles, cxTL, cxTextEdit,
   cxTLdxBarBuiltInMenu, cxInplaceContainer, cxLabel, cxClasses, cxButtons, dxLayoutControl, cxDropDownEdit,
-  cxImageComboBox, cxEditRepositoryItems,
+  cxImageComboBox, cxEditRepositoryItems, dxScrollbarAnnotations,
 
   amLocalization.Dialog,
   amLocalization.StopList;
