@@ -40,6 +40,8 @@ type
     FSymbols: TDictionary<string, Word>;
     FIDs: TDictionary<Word, string>;
     FConflicts: TList<string>;
+  private
+    function DemangleSymbolName(const Value: string): string;
   public
     constructor Create;
     destructor Destroy; override;
@@ -106,7 +108,9 @@ implementation
 
 uses
   Classes,
+  Math,
   IOUtils,
+  StrUtils,
   RegularExpressions,
   amPath,
   amLocalization.Settings;
@@ -123,6 +127,77 @@ begin
 
   FSymbols := TDictionary<string, Word>.Create;
   FIDs := TDictionary<Word, string>.Create;
+end;
+
+function TResourceStringSymbolMap.DemangleSymbolName(const Value: string): string;
+begin
+  // Issue 37: Handle C++ mangling
+  // https://en.wikipedia.org/wiki/Name_mangling#Complex_example
+
+  (*
+    Demangles a mangled symbol on the form
+    (from https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling)
+
+      <mangled-name> ::= _Z <encoding>
+
+      <encoding> ::= <data name>
+
+      <name> ::= <nested-name>
+
+      <nested-name> ::= N [<CV-qualifiers>] [<ref-qualifier>] <prefix> <unqualified-name> E
+
+      <prefix> ::= <unqualified-name>                 # global class or namespace
+               ::= <prefix> <unqualified-name>        # nested class or namespace
+
+      <unqualified-name> ::= <source-name>
+
+      <source-name> ::= <positive length number> <identifier>
+
+      <identifier> ::= <unqualified source code identifier>
+
+    Like so:
+
+      _ZN3Vcl7Comstrs13_sDateTimeMaxE -> Vcl_Comstrs_sDateTimeMax
+
+  *)
+
+  if (not StartsText('_ZN', Value)) then
+    Exit(Value);
+
+  SetLength(Result, Length(Value));
+
+  var p := PChar(Result); // Target pointer
+  var Count := 0; // Length of result
+  var Index := 4; // Current source index. Skip leading "_ZN"
+  while (Index <= Length(Value)) and (Value[Index] <> 'E') do
+  begin
+    // Calculate length of segment
+    var Len := 0; // Length of segment
+    while (Value[Index] >= '0') and (Value[Index] <= '9') do
+    begin
+      Len := Len * 10 + Ord(Value[Index]) - Ord('0');
+      Inc(Index);
+    end;
+    Len := Min(Len, Length(Value)-Index+1);
+
+    // Insert "_" between unit namespace segments
+    if (Count > 0) and (Value[Index] <> '_') then
+    begin
+      p^ := '_';
+      Inc(p);
+      Inc(Count);
+    end;
+
+    // Copy segment
+    Move(Value[Index], p^, Len * SizeOf(Char));
+
+    Inc(Count, Len);
+    Inc(Index, Len);
+    Inc(p, Len);
+  end;
+
+  // Truncate result
+  SetLength(Result, Count);
 end;
 
 destructor TResourceStringSymbolMap.Destroy;
@@ -180,7 +255,7 @@ begin
       if (i < 2) then
         continue;
 
-      Symbol := Copy(s, 1, i-1);
+      Symbol := DemangleSymbolName(Copy(s, 1, i-1));
       Value := Copy(s, i+1, MaxInt);
 
       if (TryStrToInt(Value, ResourceID)) then
